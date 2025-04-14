@@ -22,7 +22,7 @@ export default function ExploreScreen() {
       }
       title="About Athena">
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">About Athena</ThemedText>
+        <ThemedText type="title" style={styles.titleText}>About Athena</ThemedText>
       </ThemedView>
       
       <ThemedText style={styles.description}>
@@ -145,7 +145,7 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   logoContainer: {
-    backgroundColor: '#e47a9c',
+    backgroundColor: '#d76e8b',
     justifyContent: 'center',
     alignItems: 'center',
     height: 250,
@@ -165,6 +165,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+    fontFamily: 'Roboto-Bold',
   },
   description: {
     fontSize: 16,

@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#000',
+    color: '#FF6B6B',
     textAlign: 'center',
   },
   retryButton: {
@@ -251,5 +251,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     textAlign: 'center',
+    color: '#000000',
   },
 });
