@@ -5,6 +5,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Colors } from '@/constants/Colors';
 
 export default function ExploreScreen() {
   return (
@@ -14,11 +15,12 @@ export default function ExploreScreen() {
         <View style={styles.logoContainer}>
           <Image
             source={require('./../../assets/images/real-athena-logo.png')}
-            style={styles.reactLogo}
+            style={[styles.reactLogo, styles.roundedImage]}
             resizeMode="contain"
           />
         </View>
-      }>
+      }
+      title="About Athena">
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">About Athena</ThemedText>
       </ThemedView>
@@ -153,6 +155,10 @@ const styles = StyleSheet.create({
     height: 200,
     width: 300,
     alignSelf: 'center',
+  },
+  roundedImage: {
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   titleContainer: {
     flexDirection: 'row',

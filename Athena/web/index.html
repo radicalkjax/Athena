@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1.00001, viewport-fit=cover"
+    />
+    <title>Athena</title>
+    
+    <!-- Load Roboto font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Load custom font override CSS -->
+    <link href="./font-override.css" rel="stylesheet">
+    
+    <style>
+      /* Make sure the app takes up the full height of the browser */
+      html,
+      body,
+      #root {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      
+      /* Prevent text size adjustment after orientation changes in IE on Windows Phone and in iOS */
+      html {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      
+      /* Force Roboto font on all elements */
+      html, body, div, span, applet, object, iframe,
+      h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+      a, abbr, acronym, address, big, cite, code,
+      del, dfn, em, img, ins, kbd, q, s, samp,
+      small, strike, strong, sub, sup, tt, var,
+      b, u, i, center,
+      dl, dt, dd, ol, ul, li,
+      fieldset, form, label, legend,
+      table, caption, tbody, tfoot, thead, tr, th, td,
+      article, aside, canvas, details, embed, 
+      figure, figcaption, footer, header, hgroup, 
+      menu, nav, output, ruby, section, summary,
+      time, mark, audio, video, input, textarea, button {
+        font-family: 'Roboto', sans-serif !important;
+      }
+      
+      /* Additional override for React Native Web */
+      * {
+        font-family: 'Roboto', sans-serif !important;
+      }
+      
+      /* Override specific React Native Web classes */
+      .r-fontFamily-1qd0xha {
+        font-family: 'Roboto', sans-serif !important;
+      }
+      
+      /* Override for text components */
+      div[dir="auto"] {
+        font-family: 'Roboto', sans-serif !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
