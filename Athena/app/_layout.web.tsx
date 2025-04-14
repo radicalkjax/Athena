@@ -5,11 +5,45 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { StyleSheet } from 'react-native';
+
+// Import global CSS for web
+import '../assets/global.css';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Force Roboto font for web
+if (typeof document !== 'undefined') {
+  // Create a style element
+  const style = document.createElement('style');
+  style.textContent = `
+    * {
+      font-family: 'Roboto', sans-serif !important;
+    }
+    
+    .r-fontFamily-1qd0xha {
+      font-family: 'Roboto', sans-serif !important;
+    }
+    
+    div[dir="auto"] {
+      font-family: 'Roboto', sans-serif !important;
+    }
+  `;
+  
+  // Append the style element to the head
+  document.head.appendChild(style);
+  
+  // Create a link element for Google Fonts
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap';
+  
+  // Append the link element to the head
+  document.head.appendChild(link);
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -41,3 +75,10 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+// Add global styles to override font family
+StyleSheet.create({
+  text: {
+    fontFamily: 'Roboto',
+  },
+});

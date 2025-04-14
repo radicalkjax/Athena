@@ -33,30 +33,38 @@ export function ThemedText({
   );
 }
 
+// Use Roboto fonts for all platforms
+const fontFamilies = {
+  regular: 'Roboto',
+  medium: 'Roboto-Medium',
+  bold: 'Roboto-Bold',
+  light: 'Roboto-Light',
+};
+
 const styles = StyleSheet.create({
   default: {
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: 'Nunito',
+    fontFamily: fontFamilies.regular,
   },
   defaultSemiBold: {
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: 'Nunito-SemiBold',
+    fontFamily: fontFamilies.medium,
   },
   title: {
     fontSize: 32,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: fontFamilies.bold,
     lineHeight: 32,
   },
   subtitle: {
     fontSize: 20,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: fontFamilies.bold,
   },
   link: {
     lineHeight: 30,
     fontSize: 16,
-    fontFamily: 'Nunito-Medium',
+    fontFamily: fontFamilies.medium,
     color: '#0a7ea4',
   },
 });

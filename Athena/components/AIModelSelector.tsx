@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   selectedModelText: {
-    color: '#FFFFFF',
+    color: '#000',
   },
   loadingContainer: {
     padding: 20,
@@ -220,13 +220,13 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF0F0',
+    backgroundColor: '#000',
     borderRadius: 8,
   },
   errorText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#FF6B6B',
+    color: '#000',
     textAlign: 'center',
   },
   retryButton: {

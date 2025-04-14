@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { Text, View, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -96,13 +96,17 @@ export default function HomeScreen() {
         <View style={styles.logoContainer}>
           <Image
             source={require('./../../assets/images/real-athena-logo.png')}
-            style={styles.reactLogo}
+            style={[styles.reactLogo, styles.roundedImage]}
             resizeMode="contain"
           />
         </View>
-      }>
+      }
+      title="Athena Malware Analysis">
       <View style={styles.titleContainer}>
-        <ThemedText type="title">Athena Malware Analysis</ThemedText>
+        <ThemedText type="title"
+          style={styles.titleText}
+        >
+          Athena Malware Analysis</ThemedText>
       </View>
       
       <ThemedText style={styles.description}>
@@ -162,7 +166,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   logoContainer: {
-    backgroundColor: '#e47a9c',
+    backgroundColor: '#d76e8b',
     justifyContent: 'center',
     alignItems: 'center',
     height: 250,
@@ -173,11 +177,21 @@ const styles = StyleSheet.create({
     width: 300,
     alignSelf: 'center',
   },
+  roundedImage: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+    fontFamily: 'Roboto-Bold',
   },
   description: {
     fontSize: 16,
@@ -209,10 +223,12 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 16,
+    color: '#000',
     fontWeight: 'bold',
   },
   optionDescription: {
     fontSize: 14,
+    color: '#000',
     opacity: 0.7,
   },
   analyzeButton: {

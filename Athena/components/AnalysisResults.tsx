@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { IconSymbol } from './ui/IconSymbol';
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     maxHeight: 400,
   },
   codeText: {
-    fontFamily: 'Nunito',
+    fontFamily: 'Roboto',
     fontSize: 14,
   },
   reportContainer: {
