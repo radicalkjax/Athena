@@ -1,0 +1,105 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "createDebugMiddleware", {
+    enumerable: true,
+    get: ()=>createDebugMiddleware
+});
+function _chalk() {
+    const data = /*#__PURE__*/ _interopRequireDefault(require("chalk"));
+    _chalk = function() {
+        return data;
+    };
+    return data;
+}
+function _ws() {
+    const data = require("ws");
+    _ws = function() {
+        return data;
+    };
+    return data;
+}
+const _createHandlersFactory = require("./createHandlersFactory");
+const _log = require("../../../../log");
+const _env = require("../../../../utils/env");
+const _networkResponse = require("./messageHandlers/NetworkResponse");
+function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+        default: obj
+    };
+}
+const debug = require("debug")("expo:metro:debugging:middleware");
+function createDebugMiddleware(metroBundler) {
+    // Load the React Native debugging tools from project
+    // TODO: check if this works with isolated modules
+    const { createDevMiddleware  } = require("@react-native/dev-middleware");
+    const { middleware , websocketEndpoints  } = createDevMiddleware({
+        projectRoot: metroBundler.projectRoot,
+        serverBaseUrl: metroBundler.getUrlCreator().constructUrl({
+            scheme: "http",
+            hostType: "localhost"
+        }),
+        logger: createLogger(_chalk().default.bold("Debug:")),
+        unstable_customInspectorMessageHandler: (0, _createHandlersFactory.createHandlersFactory)(),
+        unstable_experiments: {
+            // Enable the Network tab in React Native DevTools
+            enableNetworkInspector: true,
+            // Only enable opening the browser version of React Native DevTools when debugging.
+            // This is useful when debugging the React Native DevTools by going to `/open-debugger` in the browser.
+            enableOpenDebuggerRedirect: _env.env.EXPO_DEBUG
+        }
+    });
+    // NOTE(cedric): add a temporary websocket to handle Network-related CDP events
+    websocketEndpoints["/inspector/network"] = createNetworkWebsocket(websocketEndpoints["/inspector/debug"]);
+    return {
+        debugMiddleware: middleware,
+        debugWebsocketEndpoints: websocketEndpoints
+    };
+}
+function createLogger(logPrefix) {
+    return {
+        info: (...args)=>_log.Log.log(logPrefix, ...args),
+        warn: (...args)=>_log.Log.warn(logPrefix, ...args),
+        error: (...args)=>_log.Log.error(logPrefix, ...args)
+    };
+}
+/**
+ * This adds a dedicated websocket connection that handles Network-related CDP events.
+ * It's a temporary solution until Fusebox either implements the Network CDP domain,
+ * or allows external domain agents that can send messages over the CDP socket to the debugger.
+ * The Network websocket rebroadcasts events on the debugger CDP connections.
+ */ function createNetworkWebsocket(debuggerWebsocket) {
+    const wss = new (_ws()).WebSocketServer({
+        noServer: true,
+        perMessageDeflate: true,
+        // Don't crash on exceptionally large messages - assume the device is
+        // well-behaved and the debugger is prepared to handle large messages.
+        maxPayload: 0
+    });
+    wss.on("connection", (networkSocket)=>{
+        networkSocket.on("message", (data)=>{
+            try {
+                // Parse the network message, to determine how the message should be handled
+                const message = JSON.parse(data.toString());
+                if (message.method === "Expo(Network.receivedResponseBody)" && message.params) {
+                    // If its a response body, write it to the global storage
+                    const { requestId , ...requestInfo } = message.params;
+                    _networkResponse.NETWORK_RESPONSE_STORAGE.set(requestId, requestInfo);
+                } else {
+                    // Otherwise, directly re-broadcast the Network events to all connected debuggers
+                    debuggerWebsocket.clients.forEach((debuggerSocket)=>{
+                        if (debuggerSocket.readyState === debuggerSocket.OPEN) {
+                            debuggerSocket.send(data.toString());
+                        }
+                    });
+                }
+            } catch (error) {
+                debug("Failed to handle Network CDP event", error);
+            }
+        });
+    });
+    return wss;
+}
+
+//# sourceMappingURL=createDebugMiddleware.js.map

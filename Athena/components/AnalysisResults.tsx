@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     maxHeight: 400,
   },
   codeText: {
-    fontFamily: 'SpaceMono',
+    fontFamily: 'Nunito',
     fontSize: 14,
   },
   reportContainer: {

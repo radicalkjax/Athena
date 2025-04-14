@@ -91,12 +91,13 @@ export default function HomeScreen() {
   
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#d06c86', dark: '#d06c86' }}
+      headerBackgroundColor={{ light: '#e47a9c', dark: '#d06c86' }}
       headerImage={
         <View style={styles.logoContainer}>
           <Image
-            source={require('@/assets/images/real-athena-logo.jpg')}
+            source={require('./../../assets/images/real-athena-logo.png')}
             style={styles.reactLogo}
+            resizeMode="contain"
           />
         </View>
       }>
@@ -161,17 +162,21 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   logoContainer: {
-    backgroundColor: '#d06c86',
+    backgroundColor: '#e47a9c',
     justifyContent: 'center',
     alignItems: 'center',
-    alignContent: 'center',
     height: 250,
-    marginBottom: 10,
+    width: '100%',
+  },
+  reactLogo: {
+    height: 200,
+    width: 300,
+    alignSelf: 'center',
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
     marginBottom: 10,
   },
   description: {
@@ -196,7 +201,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#ffd1dd',
     borderRadius: 8,
   },
   optionTextContainer: {
@@ -214,7 +219,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#d06c86',
     padding: 15,
     borderRadius: 8,
     marginBottom: 20,
@@ -231,12 +236,5 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     marginBottom: 20,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
   },
 });

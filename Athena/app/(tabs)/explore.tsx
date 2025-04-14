@@ -1,4 +1,4 @@
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, View, Image } from 'react-native';
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -9,14 +9,15 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 export default function ExploreScreen() {
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#4A90E2', dark: '#2A5A8E' }}
+      headerBackgroundColor={{ light: '#e47a9c', dark: '#d06c86' }}
       headerImage={
-        <IconSymbol
-          size={310}
-          color="#FFFFFF"
-          name="shield.lefthalf.filled"
-          style={styles.headerImage}
-        />
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('./../../assets/images/real-athena-logo.png')}
+            style={styles.reactLogo}
+            resizeMode="contain"
+          />
+        </View>
       }>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">About Athena</ThemedText>
@@ -31,25 +32,25 @@ export default function ExploreScreen() {
           Athena supports multiple AI models for malware analysis:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="sparkles" size={16} color="#4A90E2" />
+          <IconSymbol name="sparkles" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>
             <ThemedText type="defaultSemiBold">OpenAI GPT-4</ThemedText> - Advanced code analysis and deobfuscation
           </ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="person.circle" size={16} color="#4A90E2" />
+          <IconSymbol name="person.circle" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>
             <ThemedText type="defaultSemiBold">Claude 3 Opus</ThemedText> - Detailed malware analysis
           </ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="magnifyingglass.circle" size={16} color="#4A90E2" />
+          <IconSymbol name="magnifyingglass.circle" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>
             <ThemedText type="defaultSemiBold">DeepSeek Coder</ThemedText> - Specialized code model for deobfuscation
           </ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="desktopcomputer" size={16} color="#4A90E2" />
+          <IconSymbol name="desktopcomputer" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>
             <ThemedText type="defaultSemiBold">Local Models</ThemedText> - Support for locally running AI models
           </ThemedText>
@@ -64,19 +65,19 @@ export default function ExploreScreen() {
           The container provides:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="shield.fill" size={16} color="#4CAF50" />
+          <IconSymbol name="shield.fill" size={16} color="#e47a9c" />
           <ThemedText style={styles.listItemText}>Isolated execution environment</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="network" size={16} color="#4CAF50" />
+          <IconSymbol name="network" size={16} color="#e47a9c" />
           <ThemedText style={styles.listItemText}>Network activity monitoring</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="doc.text" size={16} color="#4CAF50" />
+          <IconSymbol name="doc.text" size={16} color="#e47a9c" />
           <ThemedText style={styles.listItemText}>File system activity tracking</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="terminal.fill" size={16} color="#4CAF50" />
+          <IconSymbol name="terminal.fill" size={16} color="#e47a9c" />
           <ThemedText style={styles.listItemText}>Execution logs and behavior analysis</ThemedText>
         </ThemedView>
       </Collapsible>
@@ -89,19 +90,19 @@ export default function ExploreScreen() {
           This integration helps you:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="exclamationmark.shield" size={16} color="#FF6B6B" />
+          <IconSymbol name="exclamationmark.shield" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Identify known vulnerabilities</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="link" size={16} color="#FF6B6B" />
+          <IconSymbol name="link" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Find related Metasploit modules</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="doc.text.magnifyingglass" size={16} color="#FF6B6B" />
+          <IconSymbol name="doc.text.magnifyingglass" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Get detailed vulnerability information</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="number" size={16} color="#FF6B6B" />
+          <IconSymbol name="number" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Reference CVE IDs when available</ThemedText>
         </ThemedView>
       </Collapsible>
@@ -111,19 +112,19 @@ export default function ExploreScreen() {
           Athena is designed with security in mind:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="lock.fill" size={16} color="#4A90E2" />
+          <IconSymbol name="lock.fill" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Secure API key storage using expo-secure-store</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="shield.lefthalf.filled" size={16} color="#4A90E2" />
+          <IconSymbol name="shield.lefthalf.filled" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Input sanitization to prevent injection attacks</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="rectangle.stack" size={16} color="#4A90E2" />
+          <IconSymbol name="rectangle.stack" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Isolated container execution for malware</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <IconSymbol name="eye.slash" size={16} color="#4A90E2" />
+          <IconSymbol name="eye.slash" size={16} color="#d06c86" />
           <ThemedText style={styles.listItemText}>Local file storage for sensitive data</ThemedText>
         </ThemedView>
       </Collapsible>
@@ -141,20 +142,27 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#FFFFFF',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-    opacity: 0.5,
+  logoContainer: {
+    backgroundColor: '#e47a9c',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 250,
+    width: '100%',
+  },
+  reactLogo: {
+    height: 200,
+    width: 300,
+    alignSelf: 'center',
   },
   titleContainer: {
     flexDirection: 'row',
-    gap: 8,
     marginBottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   description: {
-    fontSize: 16,
+    fontSize: 24,
+    fontWeight: '700',
     lineHeight: 24,
     marginBottom: 20,
   },
