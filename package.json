@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@expo-google-fonts/nunito": "^0.3.0",
+    "expo-font": "^13.0.4"
+  }
+}
