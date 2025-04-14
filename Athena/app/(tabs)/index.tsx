@@ -235,6 +235,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   resultsContainer: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
 });
