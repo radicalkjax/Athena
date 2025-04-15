@@ -9,6 +9,8 @@ import * as fileManagerService from '@/services/fileManager';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { formatFileSize, truncateString } from '@/utils/helpers';
+import { AiFillAliwangwang } from 'react-icons/ai';
+import { FaTrash } from 'react-icons/fa';
 
 interface FileUploaderProps {
   onFileSelect: (file: MalwareFile) => void;
@@ -36,22 +38,40 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
       setLoading(true);
       setError(null);
       
-      // Initialize file system
-      await fileManagerService.initFileSystem();
+      // Check if running on web
+      const isWeb = typeof document !== 'undefined';
       
-      // Load existing malware files if the store is empty
-      if (malwareFiles.length === 0) {
-        const files = await fileManagerService.listMalwareFiles();
-        files.forEach(file => {
-          addMalwareFile(file);
-        });
-      }
-      
-      // If a file is already selected, make sure it's in the malware files
-      if (selectedMalwareId) {
-        const selectedFile = malwareFiles.find(file => file.id === selectedMalwareId);
-        if (selectedFile) {
-          onFileSelect(selectedFile);
+      if (isWeb) {
+        console.log('Using web implementation for loading files');
+        // On web, we can't load files from the file system
+        // We'll just check if there are any files in the store
+        
+        // If a file is already selected, make sure it's in the malware files
+        if (selectedMalwareId) {
+          const selectedFile = malwareFiles.find(file => file.id === selectedMalwareId);
+          if (selectedFile) {
+            onFileSelect(selectedFile);
+          }
+        }
+      } else {
+        console.log('Using native implementation for loading files');
+        // Initialize file system
+        await fileManagerService.initFileSystem();
+        
+        // Load existing malware files if the store is empty
+        if (malwareFiles.length === 0) {
+          const files = await fileManagerService.listMalwareFiles();
+          files.forEach(file => {
+            addMalwareFile(file);
+          });
+        }
+        
+        // If a file is already selected, make sure it's in the malware files
+        if (selectedMalwareId) {
+          const selectedFile = malwareFiles.find(file => file.id === selectedMalwareId);
+          if (selectedFile) {
+            onFileSelect(selectedFile);
+          }
         }
       }
     } catch (error) {
@@ -67,19 +87,135 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
       setLoading(true);
       setError(null);
       
-      const file = await fileManagerService.pickFile();
+      console.log('Starting file upload process...');
       
-      if (file) {
-        // Add file to store
-        addMalwareFile(file);
+      // Check if running on web
+      const isWeb = typeof document !== 'undefined';
+      
+      if (isWeb) {
+        // Web implementation using standard File API
+        console.log('Using web file upload implementation');
         
-        // Select the file
-        selectMalwareFile(file.id);
-        onFileSelect(file);
+        // Create a file input element
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '*/*';
+        
+        // Create a promise to handle the file selection
+        const filePromise = new Promise<MalwareFile | null>((resolve) => {
+          input.onchange = async (e) => {
+            const target = e.target as HTMLInputElement;
+            const files = target.files;
+            
+            if (files && files.length > 0) {
+              const selectedFile = files[0];
+              console.log('Selected file:', selectedFile.name, 'Size:', selectedFile.size, 'Type:', selectedFile.type);
+              
+              // Read file content for small text files
+              let content = '';
+              if (
+                selectedFile.size < 1024 * 1024 && // Less than 1MB
+                (selectedFile.type.includes('text') || 
+                 selectedFile.type.includes('javascript') || 
+                 selectedFile.type.includes('json') || 
+                 selectedFile.type.includes('xml') || 
+                 selectedFile.type.includes('html') || 
+                 selectedFile.type.includes('css') ||
+                 selectedFile.name.endsWith('.js') ||
+                 selectedFile.name.endsWith('.py') ||
+                 selectedFile.name.endsWith('.php') ||
+                 selectedFile.name.endsWith('.java') ||
+                 selectedFile.name.endsWith('.c') ||
+                 selectedFile.name.endsWith('.cpp') ||
+                 selectedFile.name.endsWith('.cs') ||
+                 selectedFile.name.endsWith('.go') ||
+                 selectedFile.name.endsWith('.rb') ||
+                 selectedFile.name.endsWith('.pl') ||
+                 selectedFile.name.endsWith('.sh'))
+              ) {
+                const reader = new FileReader();
+                content = await new Promise<string>((resolve) => {
+                  reader.onload = () => resolve(reader.result as string);
+                  reader.readAsText(selectedFile);
+                });
+              }
+              
+              // Create a MalwareFile object
+              const fileId = Math.random().toString(36).substring(2, 15);
+              const malwareFile: MalwareFile = {
+                id: fileId,
+                name: selectedFile.name,
+                size: selectedFile.size,
+                type: selectedFile.type,
+                uri: URL.createObjectURL(selectedFile), // Create a blob URL
+                content,
+              };
+              
+              resolve(malwareFile);
+            } else {
+              resolve(null);
+            }
+          };
+          
+          // Trigger the file dialog
+          input.click();
+        });
+        
+        // Wait for file selection
+        const file = await filePromise;
+        console.log('File selection result:', file ? 'File selected' : 'No file selected');
+        
+        if (file) {
+          // Add file to store
+          addMalwareFile(file);
+          console.log('File added to store');
+          
+          // Select the file
+          selectMalwareFile(file.id);
+          onFileSelect(file);
+          console.log('File selected for analysis');
+          
+          // Show success message
+          Alert.alert('Success', `File "${file.name}" uploaded successfully.`);
+        } else {
+          console.log('No file was selected or the picker was cancelled');
+        }
+      } else {
+        // Native implementation using Expo File System
+        console.log('Using native file upload implementation');
+        
+        // Initialize file system first
+        await fileManagerService.initFileSystem();
+        console.log('File system initialized');
+        
+        // Pick a file
+        console.log('Opening document picker...');
+        const file = await fileManagerService.pickFile();
+        console.log('Document picker result:', file ? 'File selected' : 'No file selected');
+        
+        if (file) {
+          console.log('Selected file:', file.name, 'Size:', file.size, 'Type:', file.type);
+          
+          // Add file to store
+          addMalwareFile(file);
+          console.log('File added to store');
+          
+          // Select the file
+          selectMalwareFile(file.id);
+          onFileSelect(file);
+          console.log('File selected for analysis');
+          
+          // Show success message
+          Alert.alert('Success', `File "${file.name}" uploaded successfully.`);
+        } else {
+          console.log('No file was selected or the picker was cancelled');
+        }
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      setError('Failed to upload file.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Failed to upload file: ${errorMessage}`);
+      Alert.alert('Error', `Failed to upload file: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -90,86 +226,65 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
     onFileSelect(file);
   };
   
-  const handleFileDelete = (fileId: string) => {
-    Alert.alert(
-      'Delete File',
-      'Are you sure you want to delete this file?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const file = malwareFiles.find(f => f.id === fileId);
-              
-              if (file) {
-                // Delete file from file system
-                await fileManagerService.deleteFile(file.uri);
-                
-                // Remove file from store
-                removeMalwareFile(fileId);
-                
-                // If the deleted file was selected, clear selection
-                if (selectedMalwareId === fileId) {
-                  selectMalwareFile(null);
-                }
-              }
-            } catch (error) {
-              console.error('Error deleting file:', error);
-              Alert.alert('Error', 'Failed to delete file.');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  const handleFileDelete = async (fileId: string) => {
+    console.log('Delete button clicked for file ID:', fileId);
+    
+    try {
+      // Check if the file exists in the store
+      const fileToDelete = malwareFiles.find(f => f.id === fileId);
+      if (!fileToDelete) {
+        console.error('File not found in store:', fileId);
+        Alert.alert('Error', 'File not found.');
+        return;
+      }
+      
+      console.log('File to delete:', fileToDelete.name);
+      
+      // Check if running on web
+      const isWeb = typeof document !== 'undefined';
+      
+      if (isWeb) {
+        console.log('Using web implementation for deleting file');
+        // On web, we just need to revoke the blob URL if it exists
+        if (fileToDelete.uri && fileToDelete.uri.startsWith('blob:')) {
+          console.log('Revoking blob URL:', fileToDelete.uri);
+          URL.revokeObjectURL(fileToDelete.uri);
+        }
+      } else {
+        console.log('Using native implementation for deleting file');
+        // Delete file from file system
+        console.log('Deleting file from file system:', fileToDelete.uri);
+        const deleteResult = await fileManagerService.deleteFile(fileToDelete.uri);
+        console.log('Delete file result:', deleteResult);
+      }
+      
+      console.log('Removing file from store:', fileId);
+      // Remove file from store
+      removeMalwareFile(fileId);
+      
+      // Log the current state of the store
+      const currentFiles = useAppStore.getState().malwareFiles;
+      console.log('Current files in store after removal:', currentFiles.length);
+      currentFiles.forEach(f => console.log(' - File:', f.name, 'ID:', f.id));
+      
+      // If the deleted file was selected, clear selection
+      if (selectedMalwareId === fileId) {
+        console.log('Clearing selected file');
+        selectMalwareFile(null);
+      }
+      
+      // Show success message
+      Alert.alert('Success', `File "${fileToDelete.name}" deleted successfully.`);
+      
+      // Force a re-render
+      setLoading(true);
+      setTimeout(() => setLoading(false), 100);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      Alert.alert('Error', `Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
   
-  const handleCreateTextFile = () => {
-    Alert.prompt(
-      'Create Text File',
-      'Enter file name:',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Create',
-          onPress: async (fileName?: string) => {
-            if (fileName) {
-              try {
-                setLoading(true);
-                
-                // Create empty text file
-                const file = await fileManagerService.createTextFile(
-                  fileName.endsWith('.txt') ? fileName : `${fileName}.txt`,
-                  ''
-                );
-                
-                // Add file to store
-                addMalwareFile(file);
-                
-                // Select the file
-                selectMalwareFile(file.id);
-                onFileSelect(file);
-              } catch (error) {
-                console.error('Error creating text file:', error);
-                Alert.alert('Error', 'Failed to create text file.');
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-        },
-      ],
-      'plain-text'
-    );
-  };
   
   if (loading) {
     return (
@@ -183,15 +298,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>Malware Files</ThemedText>
+        <View style={{ flex: 1 }}></View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.createButton]}
-            onPress={handleCreateTextFile}
-          >
-            <IconSymbol name="doc.badge.plus" size={16} color="#FFFFFF" />
-            <ThemedText style={styles.buttonText}>New</ThemedText>
-          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.uploadButton]}
             onPress={handleFileUpload}
@@ -212,9 +320,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
       <ThemedView style={styles.fileListContainer}>
         {malwareFiles.length === 0 ? (
           <ThemedView style={styles.emptyContainer}>
-            <IconSymbol name="doc.text" size={32} color="#AAAAAA" />
+            <AiFillAliwangwang size={32} color="#AAAAAA" />
             <ThemedText style={styles.emptyText}>
-              No files yet. Upload a file or create a new one.
+              No files yet. Upload a file to get started.
             </ThemedText>
           </ThemedView>
         ) : (
@@ -256,8 +364,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
                 style={styles.deleteButton}
                 onPress={() => handleFileDelete(file.id)}
               >
-                <IconSymbol
-                  name="trash"
+                <FaTrash
                   size={18}
                   color={selectedMalwareId === file.id ? '#FFFFFF' : '#FF6B6B'}
                 />
@@ -336,10 +443,12 @@ const styles = StyleSheet.create({
   fileName: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#000000', // Black color for unselected files
   },
   fileSize: {
     fontSize: 14,
     opacity: 0.7,
+    color: '#000000', // Black color for unselected files
   },
   selectedFileText: {
     color: '#FFFFFF',

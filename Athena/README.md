@@ -29,62 +29,152 @@ Athena is a React Native application designed to help security researchers analy
    - Web browser
    - Expo Go app on a physical device
 
-## Usage
+## Technical Documentation
 
-1. **Select an AI Model**: Choose from available AI models for analysis
-2. **Upload or Create a File**: Upload a malware file or create a new text file
-3. **Configure Analysis Options**: Choose whether to use container isolation
-4. **Run Analysis**: Click "Analyze Malware" to start the analysis process
-5. **View Results**: Examine the deobfuscated code, analysis report, and detected vulnerabilities
+### Architecture Overview
 
-## Security Features
+Athena follows a modular architecture with clear separation of concerns. The application is built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms.
 
-- Secure API key storage using expo-secure-store
-- Input sanitization to prevent injection attacks
-- Isolated container execution for malware
-- Local file storage for sensitive data
+```mermaid
+flowchart TD
+    A[User Interface] --> B[State Management]
+    B --> C[Services Layer]
+    C --> D[External APIs]
+    C --> E[Local Storage]
+```
 
-## AI Model Configuration
+### Data Flow
 
-To use the AI models, you need to configure API keys in the app settings:
+The application follows a unidirectional data flow pattern, where user actions trigger state changes through the Zustand store, which then propagate to the UI components.
 
-- **OpenAI**: Requires an OpenAI API key
-- **Claude**: Requires an Anthropic API key
-- **DeepSeek**: Requires a DeepSeek API key
-- **Local Models**: Requires configuration of locally running AI models
+```mermaid
+sequenceDiagram
+    User->>UI: Select AI Model
+    UI->>Store: Update Selected Model
+    User->>UI: Upload File
+    UI->>Services: Handle File Upload
+    Services->>Store: Add File to Store
+    User->>UI: Click Analyze
+    UI->>Services: Run Analysis
+    Services->>External APIs: Send to AI Model
+    External APIs->>Services: Return Results
+    Services->>Store: Add Analysis Result
+    Store->>UI: Update UI with Results
+    UI->>User: Display Analysis Results
+```
 
-## Metasploit Integration
+### Component Structure
 
-To use the Metasploit integration, you need to configure:
+Athena is built with a component-based architecture, with reusable UI components that can be composed to create complex interfaces.
 
-- Metasploit API URL
-- Metasploit API key
+```mermaid
+flowchart TD
+    A[App] --> B[Navigation]
+    B --> C[Tab Navigator]
+    C --> D[Home Screen]
+    C --> E[Settings Screen]
+    C --> F[About Screen]
+    
+    D --> G[AIModelSelector]
+    D --> H[FileUploader]
+    D --> I[AnalysisResults]
+```
 
-## Container Configuration
+### State Management
 
-To use the container feature, you need to configure:
+Athena uses Zustand for state management, providing a simple and efficient way to manage application state.
 
-- Container API URL
-- Container API key
+```mermaid
+flowchart LR
+    A[Zustand Store] --> B[AI Models State]
+    A --> C[Malware Files State]
+    A --> D[Analysis Results State]
+    A --> E[Containers State]
+    A --> F[Settings State]
+    A --> G[UI State]
+```
 
-## Development
+### Services Layer
 
-This project is built with:
+The services layer provides a clean API for interacting with external systems and performing business logic.
 
-- React Native
-- Expo
-- TypeScript
-- Zustand for state management
-- Expo Router for navigation
+```mermaid
+flowchart TD
+    A[Analysis Service] --> B[OpenAI Service]
+    A --> C[Claude Service]
+    A --> D[DeepSeek Service]
+    A --> E[Local Models Service]
+    A --> F[Container Service]
+    A --> G[File Manager Service]
+    A --> H[Metasploit Service]
+```
 
-## Project Structure
+### Cross-Platform Implementation
 
-- `app/`: Main application screens and navigation
-- `components/`: Reusable UI components
-- `services/`: API services for AI models, container management, etc.
-- `store/`: Zustand store for state management
-- `types/`: TypeScript type definitions
-- `utils/`: Utility functions
+Athena is designed to work across multiple platforms, with platform-specific implementations where necessary.
+
+```mermaid
+flowchart TD
+    A[Cross-Platform Code] --> B[Platform-Specific Code]
+    
+    B --> C[Web Implementation]
+    B --> D[Native Implementation]
+    
+    C --> C1[Web File Handling]
+    C --> C2[Web UI Components]
+    
+    D --> D1[Native File Handling]
+    D --> D2[Native UI Components]
+```
+
+### Security Architecture
+
+Athena implements several security measures to protect sensitive data and provide a secure environment for malware analysis.
+
+```mermaid
+flowchart TD
+    A[Security Features] --> B[API Key Security]
+    A --> C[Container Isolation]
+    A --> D[Input Sanitization]
+    A --> E[Secure Storage]
+```
+
+## Key Components
+
+### FileUploader
+
+The FileUploader component handles file selection and management, with separate implementations for web and native platforms.
+
+- **Web Implementation**: Uses the browser's File API to select files
+- **Native Implementation**: Uses Expo's DocumentPicker and FileSystem APIs
+
+### AIModelSelector
+
+The AIModelSelector component allows users to select from available AI models for analysis.
+
+- Displays a list of configured AI models
+- Checks for API key availability
+- Allows selection of a model for analysis
+
+### AnalysisResults
+
+The AnalysisResults component displays the results of malware analysis in three tabs:
+
+- **Deobfuscated Code**: Shows the cleaned, readable version of the malware code
+- **Analysis Report**: Provides a detailed report of the analysis findings
+- **Vulnerabilities**: Lists detected vulnerabilities with severity ratings and details
+
+## Analysis Process
+
+1. **File Selection**: User selects a malware file for analysis
+2. **AI Model Selection**: User selects an AI model for analysis
+3. **Container Configuration**: User decides whether to use container isolation
+4. **Analysis Execution**:
+   - If container isolation is enabled, the file is uploaded to a secure container
+   - The AI model analyzes the file for malicious patterns
+   - Deobfuscation is performed to make the code readable
+   - Vulnerability analysis identifies potential security issues
+5. **Results Display**: The analysis results are displayed to the user
 
 ## License
 
