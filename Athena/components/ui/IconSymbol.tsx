@@ -5,20 +5,39 @@ import { SymbolWeight } from 'expo-symbols';
 import React from 'react';
 import { OpaqueColorValue, StyleProp, ViewStyle } from 'react-native';
 
+
 // Add your SFSymbol to MaterialIcons mappings here.
-const MAPPING = {
+const MAPPING: Record<string, string> = {
   // See MaterialIcons here: https://icons.expo.fyi
   // See SF Symbols in the SF Symbols app on Mac.
   'house.fill': 'home',
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
-} as Partial<
-  Record<
-    import('expo-symbols').SymbolViewProps['name'],
-    React.ComponentProps<typeof MaterialIcons>['name']
-  >
->;
+  'sparkles': 'auto-awesome',
+  'person.circle': 'person',
+  'magnifyingglass.circle': 'search',
+  'desktopcomputer': 'computer',
+  'shield.fill': 'shield',
+  'network': 'wifi',
+  'doc.text': 'description',
+  'terminal.fill': 'terminal',
+  'exclamationmark.shield': 'security',
+  'link': 'link',
+  'doc.text.magnifyingglass': 'find_in_page',
+  'number': 'tag',
+  'lock.fill': 'lock',
+  'shield.lefthalf.filled': 'security',
+  'rectangle.stack': 'layers',
+  'eye.slash': 'visibility_off',
+  'info.circle': 'info',
+  'checkmark.square': 'check_box',
+  'square': 'check_box_outline_blank',
+  'play.fill': 'play_arrow',
+  'trash': 'delete',
+  'checkmark': 'check',
+  'gear': 'settings'
+};
 
 export type IconSymbolName = keyof typeof MAPPING;
 
@@ -32,12 +51,13 @@ export function IconSymbol({
   size = 24,
   color,
   style,
+  weight
 }: {
   name: IconSymbolName;
   size?: number;
   color: string | OpaqueColorValue;
-  style?: StyleProp<ViewStyle>;
+  style?: any;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  return <MaterialIcons color={color} size={size} name={MAPPING[name] as any} style={style} />;
 }
