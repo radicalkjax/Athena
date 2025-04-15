@@ -15,7 +15,7 @@ Athena is a React Native application designed to help security researchers analy
 
 ### Home Screen
 
-![Home Screen](./Athena/screenshots/Screenshot%202025-04-14%20at%2010.56.47%20PM.png)
+![Home Screen](./Athena/screenshots/homePage.png)
 
 The Home screen is the main interface for analyzing malware files. It features:
 - AI Model selection
@@ -26,7 +26,7 @@ The Home screen is the main interface for analyzing malware files. It features:
 
 ### About Screen
 
-![About Screen](./Athena/screenshots/Screenshot%202025-04-14%20at%2010.55.53%20PM.png)
+![About Screen](./Athena/screenshots/aboutPage.png)
 
 The About screen provides information about Athena and its features:
 - Overview of Athena's purpose
@@ -37,7 +37,7 @@ The About screen provides information about Athena and its features:
 
 ### Settings Screen
 
-![Settings Screen](./Athena/screenshots/Screenshot%202025-04-14%20at%2010.56.25%20PM.png)
+![Settings Screen](./Athena/screenshots/settingsPage.png)
 
 The Settings screen allows configuration of API keys and other settings:
 - OpenAI API key configuration
