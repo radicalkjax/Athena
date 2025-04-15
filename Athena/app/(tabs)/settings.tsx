@@ -194,7 +194,7 @@ export default function SettingsScreen() {
         <ThemedView style={styles.sectionContainer}>
           <ThemedText style={styles.sectionTitle}>Local Models</ThemedText>
           <ThemedView style={styles.switchContainer}>
-            <ThemedText style={styles.switchLabel}>Use Local Models</ThemedText>
+            <ThemedText style={styles.switchLabel}>Flip Switch To Use Local Models</ThemedText>
             <Switch
               value={useLocalModels}
               onValueChange={setUseLocalModels}
@@ -272,6 +272,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
+    backgroundColor: 'transparent',
   },
   titleText: {
     fontSize: 32,
@@ -296,14 +297,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#000',
   },
   inputContainer: {
     marginBottom: 10,
+    borderRadius: 8,
+    padding: 10,
   },
   inputLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: '#000',
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -317,16 +322,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 5,
     opacity: 0.7,
+    color: '#000',
   },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
+    borderRadius: 8,
+    padding: 10,
   },
   switchLabel: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#000',
   },
   buttonContainer: {
     flexDirection: 'row',

@@ -1,6 +1,5 @@
 import { PropsWithChildren, useState } from 'react';
 import { StyleSheet, TouchableOpacity, Text } from 'react-native';
-import Emoji from 'react-emojis';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -17,7 +16,7 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
         style={styles.heading}
         onPress={() => setIsOpen((value) => !value)}
         activeOpacity={0.8}>
-        <Emoji emoji="sparkles" size={18} />
+        <Text style={{ fontSize: 18 }}>✨</Text>
 
         <ThemedText type="defaultSemiBold" style={{ color: '#000' , fontWeight: 'bold', fontSize: 25}}>{title}</ThemedText>
       </TouchableOpacity>
