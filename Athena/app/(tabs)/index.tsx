@@ -12,6 +12,7 @@ import { useAppStore } from '@/store';
 import * as analysisService from '@/services/analysisService';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { AiOutlineCodepenCircle } from "react-icons/ai";
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -119,6 +120,7 @@ export default function HomeScreen() {
         </View>
         
         <View style={styles.sectionContainer}>
+        <ThemedText style={styles.optionsTitle}>Uploaded Files</ThemedText>
           <FileUploader onFileSelect={handleFileSelect} />
         </View>
         
@@ -128,8 +130,7 @@ export default function HomeScreen() {
             style={styles.optionItem}
             onPress={() => setUseContainer(!useContainer)}
           >
-            <IconSymbol
-              name={useContainer ? 'checkmark.square' : 'square'}
+            <AiOutlineCodepenCircle
               size={24}
               color={Colors[colorScheme ?? 'light'].tint}
             />
@@ -150,9 +151,8 @@ export default function HomeScreen() {
           onPress={handleAnalyze}
           disabled={isAnalyzing || !selectedModel || !selectedFile}
         >
-          <IconSymbol name="play.fill" size={20} color="#FFFFFF" />
           <ThemedText style={styles.analyzeButtonText}>
-            {isAnalyzing ? 'Analyzing...' : 'Analyze Malware'}
+            {isAnalyzing ? 'Analyzing...' : 'Waiting To Analyze Malware'}
           </ThemedText>
         </TouchableOpacity>
         

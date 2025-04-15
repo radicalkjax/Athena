@@ -1,0 +1,15 @@
+declare module 'react-icons/ai' {
+  import { ComponentType } from 'react';
+
+  interface IconProps {
+    size?: number | string;
+    color?: string;
+    title?: string;
+    className?: string;
+    style?: React.CSSProperties;
+  }
+
+  export const AiFillRobot: ComponentType<IconProps>;
+  export const AiFillAliwangwang: ComponentType<IconProps>;
+  export const AiOutlineCodepenCircle: ComponentType<IconProps>;
+}
