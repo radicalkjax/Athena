@@ -8,6 +8,7 @@ import { useAppStore } from '@/store';
 import * as analysisService from '@/services/analysisService';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { AiFillRobot } from 'react-icons/ai';
 
 interface AIModelSelectorProps {
   onModelSelect: (model: AIModel) => void;
@@ -104,7 +105,7 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
   if (availableModels.length === 0) {
     return (
       <ThemedView style={styles.emptyContainer}>
-        <IconSymbol name="info.circle" size={24} color="#4A90E2" />
+        <AiFillRobot size={24} color="#4A90E2" />
         <ThemedText style={styles.emptyText}>
           No AI models available. Please add API keys in settings.
         </ThemedText>
