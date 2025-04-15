@@ -11,6 +11,41 @@ Athena is a React Native application designed to help security researchers analy
 - **Vulnerability Detection**: Identify potential security vulnerabilities in the analyzed code
 - **Cross-Platform**: Works on iOS, Android, and web platforms
 
+## Application Screenshots
+
+### Home Screen
+
+![Home Screen](./screenshots/home-screen.png)
+
+The Home screen is the main interface for analyzing malware files. It features:
+- AI Model selection
+- File upload functionality
+- Container isolation option
+- Analysis button
+- Results display area
+
+### About Screen
+
+![About Screen](./screenshots/about-screen.png)
+
+The About screen provides information about Athena and its features:
+- Overview of Athena's purpose
+- Detailed information about AI models
+- Secure container analysis features
+- Metasploit integration details
+- Security features
+
+### Settings Screen
+
+![Settings Screen](./screenshots/settings-screen.png)
+
+The Settings screen allows configuration of API keys and other settings:
+- OpenAI API key configuration
+- Claude API key configuration
+- DeepSeek API key configuration
+- Local model settings
+- Save and clear options
+
 ## Getting Started
 
 1. Install dependencies:
