@@ -4,7 +4,9 @@ Athena is a React Native application designed to help security researchers analy
 
 ## Features
 
-- **Multiple AI Models**: Connect to different AI models including OpenAI GPT-4, Claude 3 Opus, DeepSeek Coder, and local models
+> **Note:** Local model functionality is currently disabled to focus on connecting to online AI agents. The codebase includes the infrastructure for local models, but this feature is not active in the current version.
+
+- **Multiple AI Models**: Connect to different AI models including OpenAI GPT-4, Claude 3 Opus, and DeepSeek Coder
 - **Secure Container Analysis**: Run malware in an isolated container environment for safer analysis
 - **Metasploit Integration**: Access the Metasploit database to identify vulnerabilities and related exploits
 - **Deobfuscation**: Convert obfuscated malicious code into readable, understandable code
