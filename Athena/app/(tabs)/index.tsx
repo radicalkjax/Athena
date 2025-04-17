@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text, View, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -20,6 +21,7 @@ export default function HomeScreen() {
   const [selectedFile, setSelectedFile] = useState<MalwareFile | null>(null);
   const [useContainer, setUseContainer] = useState(true);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [aiModelSelectorKey, setAiModelSelectorKey] = useState(0); // Add a key to force re-render
   
   const { isAnalyzing, setIsAnalyzing, analysisResults, selectedResultId, selectAnalysisResult } = useAppStore(state => ({
     isAnalyzing: state.isAnalyzing,
@@ -28,6 +30,14 @@ export default function HomeScreen() {
     selectedResultId: state.selectedResultId,
     selectAnalysisResult: state.selectAnalysisResult,
   }));
+  
+  // Refresh AIModelSelector when the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Increment the key to force a re-render of AIModelSelector
+      setAiModelSelectorKey(prevKey => prevKey + 1);
+    }, [])
+  );
   
   useEffect(() => {
     // If a result is already selected, load it
@@ -116,7 +126,10 @@ export default function HomeScreen() {
       
       <ScrollView style={styles.contentContainer}>
         <View style={styles.sectionContainer}>
-          <AIModelSelector onModelSelect={handleModelSelect} />
+          <AIModelSelector 
+            key={aiModelSelectorKey} 
+            onModelSelect={handleModelSelect} 
+          />
         </View>
         
         <View style={styles.sectionContainer}>

@@ -15,7 +15,7 @@ Athena is a React Native application designed to help security researchers analy
 
 ### Home Screen
 
-![Home Screen](./screenshots/Screenshot%202025-04-14%20at%2010.56.47%20PM.png)
+![Home Screen](./screenshots/homePage.png)
 
 The Home screen is the main interface for analyzing malware files. It features:
 - AI Model selection
@@ -26,7 +26,7 @@ The Home screen is the main interface for analyzing malware files. It features:
 
 ### About Screen
 
-![About Screen](./screenshots/Screenshot%202025-04-14%20at%2010.55.53%20PM.png)
+![About Screen](./screenshots/aboutPage.png)
 
 The About screen provides information about Athena and its features:
 - Overview of Athena's purpose
@@ -37,7 +37,7 @@ The About screen provides information about Athena and its features:
 
 ### Settings Screen
 
-![Settings Screen](./screenshots/Screenshot%202025-04-14%20at%2010.56.25%20PM.png)
+![Settings Screen](./screenshots/settingsPage.png)
 
 The Settings screen allows configuration of API keys and other settings:
 - OpenAI API key configuration
@@ -91,8 +91,15 @@ sequenceDiagram
     Services->>Store: Add File to Store
     User->>UI: Click Analyze
     UI->>Services: Run Analysis
-    Services->>External APIs: Send to AI Model
-    External APIs->>Services: Return Results
+    
+    alt Cloud AI Model
+        Services->>External APIs: Send to Cloud AI Model
+        External APIs->>Services: Return Results
+    else Local AI Model
+        Services->>Local Model: Send to Local Model API
+        Local Model->>Services: Return Results
+    end
+    
     Services->>Store: Add Analysis Result
     Store->>UI: Update UI with Results
     UI->>User: Display Analysis Results
@@ -127,6 +134,16 @@ flowchart LR
     A --> E[Containers State]
     A --> F[Settings State]
     A --> G[UI State]
+    
+    B --> B1[Cloud Models]
+    B --> B2[Local Models]
+    
+    B1 --> B1a[OpenAI]
+    B1 --> B1b[Claude]
+    B1 --> B1c[DeepSeek]
+    
+    B2 --> B2a[Model Config]
+    B2 --> B2b[API Settings]
 ```
 
 ### Services Layer
@@ -142,6 +159,19 @@ flowchart TD
     A --> F[Container Service]
     A --> G[File Manager Service]
     A --> H[Metasploit Service]
+    
+    E --> E1[Local Model Config]
+    E --> E2[Model Execution]
+    E --> E3[API Integration]
+    
+    E1 --> E1a[Config Storage]
+    E1 --> E1b[Model Discovery]
+    
+    E2 --> E2a[Deobfuscation]
+    E2 --> E2b[Vulnerability Analysis]
+    
+    E3 --> E3a[API Endpoints]
+    E3 --> E3b[Request Handling]
 ```
 
 ### Cross-Platform Implementation
@@ -187,9 +217,14 @@ The FileUploader component handles file selection and management, with separate 
 
 The AIModelSelector component allows users to select from available AI models for analysis.
 
-- Displays a list of configured AI models
-- Checks for API key availability
+- Displays a list of configured AI models (cloud and local)
+- Checks for API key availability for cloud models
+- Verifies connectivity for local models
 - Allows selection of a model for analysis
+- Provides configuration options for local models including:
+  - Model path
+  - API URL and port
+  - Model type (llama, gpt4all, deepseek, other)
 
 ### AnalysisResults
 
@@ -202,14 +237,20 @@ The AnalysisResults component displays the results of malware analysis in three 
 ## Analysis Process
 
 1. **File Selection**: User selects a malware file for analysis
-2. **AI Model Selection**: User selects an AI model for analysis
+2. **AI Model Selection**: User selects an AI model for analysis (cloud-based or local)
 3. **Container Configuration**: User decides whether to use container isolation
 4. **Analysis Execution**:
    - If container isolation is enabled, the file is uploaded to a secure container
-   - The AI model analyzes the file for malicious patterns
+   - For cloud models:
+     - The file is sent to the appropriate cloud API (OpenAI, Claude, or DeepSeek)
+     - The API analyzes the file and returns results
+   - For local models:
+     - The file is sent to the local model API running on the specified port
+     - The local model performs analysis using the configured model
+     - Results are returned via the local API endpoint
    - Deobfuscation is performed to make the code readable
    - Vulnerability analysis identifies potential security issues
-5. **Results Display**: The analysis results are displayed to the user
+5. **Results Display**: The analysis results are displayed to the user in the AnalysisResults component
 
 ## License
 
