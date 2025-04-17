@@ -34,27 +34,27 @@ export default function AboutScreen() {
           Athena supports multiple AI models for malware analysis:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>
             <ThemedText style={styles.featureDescription}>OpenAI GPT-4</ThemedText> - Advanced code analysis and deobfuscation
           </ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>
             <ThemedText style={styles.featureDescription}>Claude 3 Opus</ThemedText> - Detailed malware analysis
           </ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>
             <ThemedText style={styles.featureDescription}>DeepSeek Coder</ThemedText> - Specialized code model for deobfuscation
-          </ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
-          <ThemedText style={styles.listItemText}>
-            <ThemedText style={styles.featureDescription}>Local Models</ThemedText> - Support for locally running AI models
           </ThemedText>
         </ThemedView>
       </Collapsible>
@@ -67,19 +67,27 @@ export default function AboutScreen() {
           The container provides:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Isolated execution environment</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Network activity monitoring</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>File system activity tracking</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Execution logs and behavior analysis</ThemedText>
         </ThemedView>
       </Collapsible>
@@ -92,19 +100,27 @@ export default function AboutScreen() {
           This integration helps you:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Identify known vulnerabilities</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Find related Metasploit modules</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Get detailed vulnerability information</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Reference CVE IDs when available</ThemedText>
         </ThemedView>
       </Collapsible>
@@ -114,19 +130,27 @@ export default function AboutScreen() {
           Athena is designed with security in mind:
         </ThemedText>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Secure API key storage using expo-secure-store</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Input sanitization to prevent injection attacks</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Isolated container execution for malware</ThemedText>
         </ThemedView>
         <ThemedView style={styles.listItem}>
-          <Emoji emoji="sparkles" size={16} />
+          <View style={styles.emojiContainer}>
+            <Emoji emoji="sparkles" size={16} />
+          </View>
           <ThemedText style={styles.listItemText}>Local file storage for sensitive data</ThemedText>
         </ThemedView>
       </Collapsible>
@@ -184,6 +208,14 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     paddingHorizontal: 5,
     color: '#000',
+  },
+  emojiContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#d76e8b',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listItemText: {
     color: '#000',

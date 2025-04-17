@@ -1,9 +1,8 @@
 import OpenAI from 'openai';
 import { sanitizeString } from '@/utils/helpers';
-import * as SecureStore from 'expo-secure-store';
 
-// API key storage key
-const OPENAI_API_KEY_STORAGE = 'athena_openai_api_key';
+// API key storage - using localStorage for web
+let cachedApiKey: string | null = null;
 
 /**
  * Initialize OpenAI client with API key
@@ -11,25 +10,54 @@ const OPENAI_API_KEY_STORAGE = 'athena_openai_api_key';
  * @returns OpenAI client instance
  */
 export const initOpenAI = async (apiKey?: string): Promise<OpenAI> => {
-  // Use provided API key or retrieve from secure storage
-  const key = apiKey || await SecureStore.getItemAsync(OPENAI_API_KEY_STORAGE);
-  
-  if (!key) {
-    throw new Error('OpenAI API key not found. Please set your API key in the settings.');
+  try {
+    // Use provided API key or retrieve from storage
+    let key = apiKey || cachedApiKey;
+    
+    if (!key) {
+      // Try to get from localStorage in web environment
+      if (typeof window !== 'undefined' && window.localStorage) {
+        key = localStorage.getItem('athena_openai_api_key');
+        console.log('Checking localStorage for OpenAI key:', !!key);
+      }
+    }
+    
+    if (!key) {
+      throw new Error('OpenAI API key not found. Please set your API key in the settings.');
+    }
+    
+    console.log('Initializing OpenAI client with key');
+    
+    return new OpenAI({
+      apiKey: key,
+      dangerouslyAllowBrowser: true, // Required for React Native
+    });
+  } catch (error) {
+    console.error('Error initializing OpenAI client:', error);
+    throw error;
   }
-  
-  return new OpenAI({
-    apiKey: key,
-    dangerouslyAllowBrowser: true, // Required for React Native
-  });
 };
 
 /**
- * Save OpenAI API key to secure storage
+ * Save OpenAI API key to storage
  * @param apiKey The API key to save
  */
 export const saveOpenAIApiKey = async (apiKey: string): Promise<void> => {
-  await SecureStore.setItemAsync(OPENAI_API_KEY_STORAGE, apiKey);
+  try {
+    // Cache the API key in memory
+    cachedApiKey = apiKey;
+    
+    // Save to localStorage for web environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('athena_openai_api_key', apiKey);
+      console.log('Saved OpenAI API key to localStorage');
+    }
+    
+    console.log('Saved OpenAI API key to memory cache');
+  } catch (error) {
+    console.error('Error saving OpenAI API key:', error);
+    throw error;
+  }
 };
 
 /**
@@ -37,15 +65,41 @@ export const saveOpenAIApiKey = async (apiKey: string): Promise<void> => {
  * @returns True if API key exists, false otherwise
  */
 export const hasOpenAIApiKey = async (): Promise<boolean> => {
-  const key = await SecureStore.getItemAsync(OPENAI_API_KEY_STORAGE);
-  return !!key;
+  // Check memory cache first
+  if (cachedApiKey) {
+    return true;
+  }
+  
+  // Check localStorage for web environment
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const key = localStorage.getItem('athena_openai_api_key');
+    if (key) {
+      cachedApiKey = key; // Cache it for future use
+      return true;
+    }
+  }
+  
+  return false;
 };
 
 /**
  * Delete stored OpenAI API key
  */
 export const deleteOpenAIApiKey = async (): Promise<void> => {
-  await SecureStore.deleteItemAsync(OPENAI_API_KEY_STORAGE);
+  try {
+    // Clear memory cache
+    cachedApiKey = null;
+    
+    // Clear from localStorage for web environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem('athena_openai_api_key');
+      console.log('Deleted OpenAI API key from localStorage');
+    }
+    
+    console.log('Deleted OpenAI API key from memory cache');
+  } catch (error) {
+    console.error('Error deleting OpenAI API key:', error);
+  }
 };
 
 /**

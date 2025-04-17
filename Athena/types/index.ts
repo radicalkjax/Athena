@@ -10,6 +10,9 @@ export interface AIModel {
   apiKey?: string;
   baseUrl?: string;
   modelId?: string;
+  path?: string;
+  apiUrl?: string;
+  apiPort?: number;
 }
 
 // Malware Analysis Types

@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { sanitizeString } from '@/utils/helpers';
-import * as SecureStore from 'expo-secure-store';
 
-// API key storage key
-const CLAUDE_API_KEY_STORAGE = 'athena_claude_api_key';
+// API key storage - using localStorage for web
+let cachedApiKey: string | null = null;
 const CLAUDE_API_BASE_URL = 'https://api.anthropic.com/v1';
 
 /**
@@ -12,22 +11,51 @@ const CLAUDE_API_BASE_URL = 'https://api.anthropic.com/v1';
  * @returns API key for Claude
  */
 export const initClaude = async (apiKey?: string): Promise<string> => {
-  // Use provided API key or retrieve from secure storage
-  const key = apiKey || await SecureStore.getItemAsync(CLAUDE_API_KEY_STORAGE);
-  
-  if (!key) {
-    throw new Error('Claude API key not found. Please set your API key in the settings.');
+  try {
+    // Use provided API key or retrieve from storage
+    let key = apiKey || cachedApiKey;
+    
+    if (!key) {
+      // Try to get from localStorage in web environment
+      if (typeof window !== 'undefined' && window.localStorage) {
+        key = localStorage.getItem('athena_claude_api_key');
+        console.log('Checking localStorage for Claude key:', !!key);
+      }
+    }
+    
+    if (!key) {
+      throw new Error('Claude API key not found. Please set your API key in the settings.');
+    }
+    
+    console.log('Initializing Claude client with key');
+    
+    return key;
+  } catch (error) {
+    console.error('Error initializing Claude client:', error);
+    throw error;
   }
-  
-  return key;
 };
 
 /**
- * Save Claude API key to secure storage
+ * Save Claude API key to storage
  * @param apiKey The API key to save
  */
 export const saveClaudeApiKey = async (apiKey: string): Promise<void> => {
-  await SecureStore.setItemAsync(CLAUDE_API_KEY_STORAGE, apiKey);
+  try {
+    // Cache the API key in memory
+    cachedApiKey = apiKey;
+    
+    // Save to localStorage for web environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('athena_claude_api_key', apiKey);
+      console.log('Saved Claude API key to localStorage');
+    }
+    
+    console.log('Saved Claude API key to memory cache');
+  } catch (error) {
+    console.error('Error saving Claude API key:', error);
+    throw error;
+  }
 };
 
 /**
@@ -35,15 +63,41 @@ export const saveClaudeApiKey = async (apiKey: string): Promise<void> => {
  * @returns True if API key exists, false otherwise
  */
 export const hasClaudeApiKey = async (): Promise<boolean> => {
-  const key = await SecureStore.getItemAsync(CLAUDE_API_KEY_STORAGE);
-  return !!key;
+  // Check memory cache first
+  if (cachedApiKey) {
+    return true;
+  }
+  
+  // Check localStorage for web environment
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const key = localStorage.getItem('athena_claude_api_key');
+    if (key) {
+      cachedApiKey = key; // Cache it for future use
+      return true;
+    }
+  }
+  
+  return false;
 };
 
 /**
  * Delete stored Claude API key
  */
 export const deleteClaudeApiKey = async (): Promise<void> => {
-  await SecureStore.deleteItemAsync(CLAUDE_API_KEY_STORAGE);
+  try {
+    // Clear memory cache
+    cachedApiKey = null;
+    
+    // Clear from localStorage for web environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem('athena_claude_api_key');
+      console.log('Deleted Claude API key from localStorage');
+    }
+    
+    console.log('Deleted Claude API key from memory cache');
+  } catch (error) {
+    console.error('Error deleting Claude API key:', error);
+  }
 };
 
 /**

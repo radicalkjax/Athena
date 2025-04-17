@@ -25,9 +25,100 @@ export const initLocalModelsDirectory = async (): Promise<void> => {
       await FileSystem.makeDirectoryAsync(LOCAL_MODELS_DIR, { intermediates: true });
       await saveLocalModelsConfig([]);
     }
+    
+    // Initialize local models from store
+    await initLocalModelsFromStore();
   } catch (error) {
     console.error('Error initializing local models directory:', error);
     throw new Error(`Failed to initialize local models directory: ${(error as Error).message}`);
+  }
+};
+
+/**
+ * Initialize local models from store
+ */
+export const initLocalModelsFromStore = async (): Promise<void> => {
+  try {
+    // Get models from the AIModelSelector component instead of directly from the store
+    // This avoids circular dependencies
+    
+    // Get existing local model configs
+    const existingConfigs = await getLocalModelsConfig();
+    const existingIds = existingConfigs.map(config => config.id);
+    
+    // Add new local models from the provided models
+    const newConfigs: LocalModelConfig[] = [];
+    
+    // The actual models will be passed from the AIModelSelector component
+    // This function is now just a placeholder that will be called with the models
+    
+    console.log('Local models initialization ready');
+    
+    return;
+  } catch (error) {
+    console.error('Error initializing local models from store:', error);
+  }
+};
+
+/**
+ * Save local model from AIModel
+ * @param model The AIModel to save as a local model
+ */
+export const saveLocalModelFromAIModel = async (model: any): Promise<void> => {
+  try {
+    if (model.type !== 'local') {
+      console.log('Not a local model:', model);
+      return;
+    }
+    
+    // Get default values for missing properties
+    const path = model.path || '';
+    const apiUrl = model.apiUrl || 'http://localhost';
+    const apiPort = model.apiPort || 8000;
+    
+    console.log(`Saving local model ${model.name} to config with path: ${path}`);
+    
+    // Get existing local model configs
+    const existingConfigs = await getLocalModelsConfig();
+    const existingIds = existingConfigs.map(config => config.id);
+    
+    // Check if model already exists
+    if (existingIds.includes(model.id)) {
+      console.log(`Local model ${model.name} already exists in config, updating...`);
+      
+      // Update existing model
+      const updatedConfigs = existingConfigs.map(config => {
+        if (config.id === model.id) {
+          return {
+            ...config,
+            name: model.name,
+            path: path || config.path,
+            apiUrl: apiUrl || config.apiUrl,
+            apiPort: apiPort || config.apiPort,
+          };
+        }
+        return config;
+      });
+      
+      await saveLocalModelsConfig(updatedConfigs);
+      console.log(`Updated local model ${model.name} in config`);
+      return;
+    }
+    
+    // Add new local model
+    const newConfig: LocalModelConfig = {
+      id: model.id,
+      name: model.name,
+      path: path,
+      type: 'llama', // Default to llama
+      apiUrl: apiUrl,
+      apiPort: apiPort,
+    };
+    
+    await saveLocalModelsConfig([...existingConfigs, newConfig]);
+    console.log(`Added local model ${model.name} to config`);
+  } catch (error) {
+    console.error('Error saving local model from AIModel:', error);
   }
 };
 

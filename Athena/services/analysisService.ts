@@ -258,16 +258,15 @@ export const getAvailableModels = async (): Promise<AIModel[]> => {
   const models = useAppStore.getState().aiModels;
   const availableModels: AIModel[] = [];
   
+  console.log('Checking available models from store:', models.length);
+  
   for (const model of models) {
     try {
+      console.log(`Checking model ${model.name} (${model.type}), isLocal: ${model.isLocal}`);
+      
       if (model.isLocal) {
-        // Check if local model is available
-        const localModels = await localModelsService.getLocalModelsConfig();
-        const localModel = localModels.find(m => m.id === model.id);
-        
-        if (localModel && await localModelsService.isLocalModelRunning(localModel)) {
-          availableModels.push(model);
-        }
+        // Skip local models
+        console.log(`Skipping local model ${model.name}`);
       } else {
         // Check if API key is available for hosted models
         let hasApiKey = false;
@@ -275,17 +274,23 @@ export const getAvailableModels = async (): Promise<AIModel[]> => {
         switch (model.type) {
           case 'openai':
             hasApiKey = await openaiService.hasOpenAIApiKey();
+            console.log(`OpenAI model ${model.name} has API key: ${hasApiKey}`);
             break;
           case 'claude':
             hasApiKey = await claudeService.hasClaudeApiKey();
+            console.log(`Claude model ${model.name} has API key: ${hasApiKey}`);
             break;
           case 'deepseek':
             hasApiKey = await deepseekService.hasDeepSeekApiKey();
+            console.log(`DeepSeek model ${model.name} has API key: ${hasApiKey}`);
             break;
         }
         
         if (hasApiKey) {
+          console.log(`Adding model ${model.name} to available models`);
           availableModels.push(model);
+        } else {
+          console.log(`Model ${model.name} is not available (no API key)`);
         }
       }
     } catch (error) {
@@ -294,5 +299,6 @@ export const getAvailableModels = async (): Promise<AIModel[]> => {
     }
   }
   
+  console.log(`Returning ${availableModels.length} available models`);
   return availableModels;
 };
