@@ -28,6 +28,6 @@ npx expo start
 
 The application screenshots are stored in the `./screenshots` directory:
 
-- [Home Screen](./screenshots/homePage.png)
-- [About Screen](./screenshots/aboutPage.png)
-- [Settings Screen](./screenshots/settingsPage.png)
+- [Home Screen](./screenshots/home2.png)
+- [About Screen](./screenshots/about2.png)
+- [Settings Screen](./screenshots/settings2.png)
