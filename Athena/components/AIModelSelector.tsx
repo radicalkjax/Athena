@@ -8,7 +8,8 @@ import { useAppStore } from '@/store';
 import * as analysisService from '@/services/analysisService';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { AiFillRobot } from 'react-icons/ai';
+import { AiFillRobot, AiFillOpenAI, AiFillMeh, AiOutlineQq, AiOutlineWeibo } from 'react-icons/ai';
+// Using localStorage for web environment
 
 interface AIModelSelectorProps {
   onModelSelect: (model: AIModel) => void;
@@ -28,34 +29,135 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
   
   useEffect(() => {
     loadAvailableModels();
-  }, []);
+  }, [aiModels]);
   
   const loadAvailableModels = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const models = await analysisService.getAvailableModels();
-      setAvailableModels(models);
+      // Direct check for API keys with error handling
+      let openaiKey = null;
+      let claudeKey = null;
+      let deepseekKey = null;
+      
+      try {
+        // Try to get API keys from localStorage for web environments
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            openaiKey = localStorage.getItem('athena_openai_api_key');
+            claudeKey = localStorage.getItem('athena_claude_api_key');
+            deepseekKey = localStorage.getItem('athena_deepseek_api_key');
+            
+            console.log('API key check from localStorage:');
+            console.log('- OpenAI key exists:', !!openaiKey);
+            console.log('- Claude key exists:', !!claudeKey);
+            console.log('- DeepSeek key exists:', !!deepseekKey);
+          } catch (e) {
+            console.error('Error checking localStorage:', e);
+          }
+        }
+      } catch (error) {
+        console.error('Error accessing storage:', error);
+        // If storage access fails, we'll try to use the service functions
+        console.log('Falling back to service functions for model availability');
+      }
+      
+      // EMERGENCY FIX: Always add OpenAI model if API key exists
+      console.log('EMERGENCY FIX: Always add OpenAI model if API key exists');
+      const availableModels: AIModel[] = [];
+      
+      // First, check if we have an OpenAI API key
+      if (openaiKey) {
+        console.log('OpenAI API key found, length:', openaiKey.length);
+        // Find all OpenAI models in the store
+        const openaiModels = aiModels.filter(model => model.type === 'openai');
+        if (openaiModels.length > 0) {
+          console.log(`Adding ${openaiModels.length} OpenAI models to available models`);
+          openaiModels.forEach(model => {
+            console.log('- Adding OpenAI model:', model.name);
+            availableModels.push(model);
+          });
+        } else {
+          console.log('No OpenAI models found in aiModels');
+        }
+      } else {
+        console.log('No OpenAI API key found');
+      }
+      
+      // Check for Claude API key
+      if (claudeKey) {
+        console.log('Claude API key found');
+        // Find all Claude models in the store
+        const claudeModels = aiModels.filter(model => model.type === 'claude');
+        if (claudeModels.length > 0) {
+          console.log(`Adding ${claudeModels.length} Claude models to available models`);
+          claudeModels.forEach(model => {
+            console.log('- Adding Claude model:', model.name);
+            availableModels.push(model);
+          });
+        } else {
+          console.log('No Claude models found in aiModels');
+        }
+      }
+      
+      // Check for DeepSeek API key
+      if (deepseekKey) {
+        console.log('DeepSeek API key found');
+        // Find all DeepSeek models in the store
+        const deepseekModels = aiModels.filter(model => model.type === 'deepseek');
+        if (deepseekModels.length > 0) {
+          console.log(`Adding ${deepseekModels.length} DeepSeek models to available models`);
+          deepseekModels.forEach(model => {
+            console.log('- Adding DeepSeek model:', model.name);
+            availableModels.push(model);
+          });
+        } else {
+          console.log('No DeepSeek models found in aiModels');
+        }
+      }
+      
+      
+      // If no models are available, try to use the service functions as a fallback
+      if (availableModels.length === 0) {
+        console.log('No models available from direct key check, trying service functions');
+        try {
+          const serviceModels = await analysisService.getAvailableModels();
+          console.log('Models returned from analysisService:', serviceModels.length);
+          availableModels.push(...serviceModels);
+        } catch (serviceError) {
+          console.error('Error getting models from service:', serviceError);
+        }
+      }
+      
+      console.log(`Found ${availableModels.length} available models`);
+      setAvailableModels(availableModels);
       
       // If no model is selected and we have available models, select the first one
-      if (!selectedModelId && models.length > 0) {
-        selectAIModel(models[0].id);
-        onModelSelect(models[0]);
+      if (!selectedModelId && availableModels.length > 0) {
+        selectAIModel(availableModels[0].id);
+        onModelSelect(availableModels[0]);
       } else if (selectedModelId) {
         // If a model is already selected, make sure it's in the available models
-        const selectedModel = models.find(model => model.id === selectedModelId);
+        const selectedModel = availableModels.find((model: AIModel) => model.id === selectedModelId);
         if (selectedModel) {
           onModelSelect(selectedModel);
-        } else if (models.length > 0) {
+        } else if (availableModels.length > 0) {
           // If the selected model is not available, select the first available one
-          selectAIModel(models[0].id);
-          onModelSelect(models[0]);
+          selectAIModel(availableModels[0].id);
+          onModelSelect(availableModels[0]);
         }
       }
     } catch (error) {
       console.error('Error loading available models:', error);
-      setError('Failed to load available AI models. Please check your API keys in settings.');
+      // Log more details about the error
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        setError(`Error: ${error.message}`);
+      } else {
+        setError('Failed to load available AI models. Please check your API keys in settings.');
+      }
     } finally {
       setLoading(false);
     }
@@ -69,7 +171,7 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
   const getModelIcon = (type: string) => {
     switch (type) {
       case 'openai':
-        return 'sparkles';
+        return 'openai'; // Special case for OpenAI
       case 'claude':
         return 'person.circle';
       case 'deepseek':
@@ -115,7 +217,15 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
   
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Select AI Model</ThemedText>
+      <View style={styles.headerContainer}>
+        <ThemedText style={styles.title}>Select AI Model</ThemedText>
+        <TouchableOpacity 
+          style={styles.refreshButton} 
+          onPress={loadAvailableModels}
+        >
+          <IconSymbol name="arrow.clockwise" size={20} color={Colors[colorScheme ?? 'light'].text} />
+        </TouchableOpacity>
+      </View>
       <ScrollView style={styles.modelList}>
         {availableModels.map(model => (
           <TouchableOpacity
@@ -127,17 +237,39 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
             onPress={() => handleModelSelect(model)}
           >
             <View style={styles.modelIconContainer}>
-              <IconSymbol
-                name={getModelIcon(model.type)}
-                size={24}
-                color={selectedModelId === model.id ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
-              />
+              {model.type === 'openai' ? (
+                <AiFillOpenAI
+                  size={24}
+                  color="#FFFFFF" // Always white to contrast with pink background
+                />
+              ) : model.type === 'claude' ? (
+                <AiFillMeh
+                  size={24}
+                  color="#FFFFFF" // Always white to contrast with pink background
+                />
+              ) : model.type === 'local' ? (
+                <AiOutlineQq
+                  size={24}
+                  color="#FFFFFF" // Always white to contrast with pink background
+                />
+              ) : model.type === 'deepseek' ? (
+                <AiOutlineWeibo
+                  size={24}
+                  color="#FFFFFF" // Always white to contrast with pink background
+                />
+              ) : (
+                <IconSymbol
+                  name={getModelIcon(model.type)}
+                  size={24}
+                  color="#FFFFFF" // Always white to contrast with pink background
+                />
+              )}
             </View>
             <View style={styles.modelInfo}>
               <ThemedText
                 style={[
                   styles.modelName,
-                  selectedModelId === model.id && styles.selectedModelText,
+                  { color: '#000000' }, // Always black
                 ]}
               >
                 {model.name}
@@ -145,7 +277,7 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
               <ThemedText
                 style={[
                   styles.modelDescription,
-                  selectedModelId === model.id && styles.selectedModelText,
+                  { color: '#000000' }, // Always black
                 ]}
               >
                 {model.isLocal ? 'Local Model' : 'Hosted Model'}
@@ -167,10 +299,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
+  },
+  refreshButton: {
+    padding: 5,
+    borderRadius: 15,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modelList: {
     maxHeight: 300,
@@ -193,6 +337,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
+    backgroundColor: '#d76e8b', // Pink background color to match the header
   },
   modelInfo: {
     flex: 1,

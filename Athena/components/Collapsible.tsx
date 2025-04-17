@@ -16,7 +16,9 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
         style={styles.heading}
         onPress={() => setIsOpen((value) => !value)}
         activeOpacity={0.8}>
-        <Text style={{ fontSize: 18 }}>✨</Text>
+        <ThemedView style={styles.emojiContainer}>
+          <Text style={{ fontSize: 18 }}>✨</Text>
+        </ThemedView>
 
         <ThemedText type="defaultSemiBold" style={{ color: '#000' , fontWeight: 'bold', fontSize: 25}}>{title}</ThemedText>
       </TouchableOpacity>
@@ -50,5 +52,14 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     borderRadius: 12,
     padding: 10,
+  },
+  emojiContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#d76e8b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
   },
 });
