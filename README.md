@@ -256,4 +256,4 @@ The AnalysisResults component displays the results of malware analysis in three 
 
 ## License
 
-This project is intended to serve the infosec community. No more wasted hours ripping apart and reordering code. Let Athena guide your way and unwravel the mysteries of obfuscated code so that you can be the best researcher you can be.
+This project is intended to serve the infosec community. No more wasted hours ripping apart and reordering code. Let Athena guide your way and unravel the mysteries of obfuscated code so that you can be the best researcher you can be.
