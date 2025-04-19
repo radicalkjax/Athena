@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createContainerClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import * as SecureStore from 'expo-secure-store';
 import { Container } from '@/types';
 import { generateId } from '@/utils/helpers';
@@ -11,12 +11,12 @@ const CONTAINER_API_URL_STORAGE = 'athena_container_api_url';
  * Initialize Container API client
  * @param apiKey Optional API key to use instead of stored key
  * @param apiUrl Optional API URL to use instead of stored URL
- * @returns API configuration for Container service
+ * @returns Axios instance configured for Container service
  */
 export const initContainerService = async (
   apiKey?: string,
   apiUrl?: string
-): Promise<{ apiKey: string; apiUrl: string }> => {
+): Promise<ReturnType<typeof createContainerClient>> => {
   // Use provided values or retrieve from secure storage
   const key = apiKey || await SecureStore.getItemAsync(CONTAINER_API_KEY_STORAGE);
   const url = apiUrl || await SecureStore.getItemAsync(CONTAINER_API_URL_STORAGE);
@@ -29,7 +29,7 @@ export const initContainerService = async (
     throw new Error('Container API URL not found. Please set the API URL in the settings.');
   }
   
-  return { apiKey: key, apiUrl: url };
+  return createContainerClient(key, url);
 };
 
 /**
@@ -73,24 +73,20 @@ export const createContainer = async (
   malwareName: string
 ): Promise<Container> => {
   try {
-    const { apiKey, apiUrl } = await initContainerService();
+    const client = await initContainerService();
     
     const containerId = generateId();
     
-    const response = await axios.post(
-      `${apiUrl}/api/v1/containers`,
-      {
-        containerId,
-        malwareId,
-        malwareContent,
-        malwareName,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    const requestData = sanitizeRequestData({
+      containerId,
+      malwareId,
+      malwareContent,
+      malwareName,
+    });
+    
+    const response = await safeApiCall(
+      () => client.post('/api/v1/containers', requestData),
+      'Container creation error'
     );
     
     return {
@@ -98,14 +94,11 @@ export const createContainer = async (
       status: 'creating',
       malwareId,
       createdAt: Date.now(),
-      ...response.data.container,
+      ...response.container,
     };
   } catch (error) {
     console.error('Container creation error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Container API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Container API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -116,25 +109,19 @@ export const createContainer = async (
  */
 export const getContainerStatus = async (containerId: string): Promise<'creating' | 'running' | 'stopped' | 'error'> => {
   try {
-    const { apiKey, apiUrl } = await initContainerService();
+    const client = await initContainerService();
     
-    const response = await axios.get(
-      `${apiUrl}/api/v1/containers/${containerId}/status`,
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    const sanitizedId = sanitizeRequestData(containerId);
+    
+    const response = await safeApiCall(
+      () => client.get(`/api/v1/containers/${sanitizedId}/status`),
+      'Container status error'
     );
     
-    return response.data.status;
+    return response.status;
   } catch (error) {
     console.error('Container status error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Container API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Container API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -149,31 +136,25 @@ export const executeCommand = async (
   command: string
 ): Promise<{ output: string; exitCode: number }> => {
   try {
-    const { apiKey, apiUrl } = await initContainerService();
+    const client = await initContainerService();
     
-    const response = await axios.post(
-      `${apiUrl}/api/v1/containers/${containerId}/exec`,
-      {
-        command,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    const sanitizedId = sanitizeRequestData(containerId);
+    const requestData = sanitizeRequestData({
+      command,
+    });
+    
+    const response = await safeApiCall(
+      () => client.post(`/api/v1/containers/${sanitizedId}/exec`, requestData),
+      'Container exec error'
     );
     
     return {
-      output: response.data.output || '',
-      exitCode: response.data.exitCode || 0,
+      output: response.output || '',
+      exitCode: response.exitCode || 0,
     };
   } catch (error) {
     console.error('Container exec error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Container API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Container API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -184,25 +165,19 @@ export const executeCommand = async (
  */
 export const removeContainer = async (containerId: string): Promise<boolean> => {
   try {
-    const { apiKey, apiUrl } = await initContainerService();
+    const client = await initContainerService();
     
-    const response = await axios.delete(
-      `${apiUrl}/api/v1/containers/${containerId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    const sanitizedId = sanitizeRequestData(containerId);
+    
+    const response = await safeApiCall(
+      () => client.delete(`/api/v1/containers/${sanitizedId}`),
+      'Container removal error'
     );
     
-    return response.data.success || false;
+    return response.success || false;
   } catch (error) {
     console.error('Container removal error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Container API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Container API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -213,25 +188,19 @@ export const removeContainer = async (containerId: string): Promise<boolean> => 
  */
 export const getContainerLogs = async (containerId: string): Promise<string> => {
   try {
-    const { apiKey, apiUrl } = await initContainerService();
+    const client = await initContainerService();
     
-    const response = await axios.get(
-      `${apiUrl}/api/v1/containers/${containerId}/logs`,
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    const sanitizedId = sanitizeRequestData(containerId);
+    
+    const response = await safeApiCall(
+      () => client.get(`/api/v1/containers/${sanitizedId}/logs`),
+      'Container logs error'
     );
     
-    return response.data.logs || '';
+    return response.logs || '';
   } catch (error) {
     console.error('Container logs error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Container API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Container API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -246,26 +215,22 @@ export const getContainerFile = async (
   filePath: string
 ): Promise<string> => {
   try {
-    const { apiKey, apiUrl } = await initContainerService();
+    const client = await initContainerService();
     
-    const response = await axios.get(
-      `${apiUrl}/api/v1/containers/${containerId}/files`,
-      {
-        params: { path: filePath },
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    const sanitizedId = sanitizeRequestData(containerId);
+    const sanitizedPath = sanitizeRequestData(filePath);
+    
+    const response = await safeApiCall(
+      () => client.get(`/api/v1/containers/${sanitizedId}/files`, {
+        params: { path: sanitizedPath }
+      }),
+      'Container file error'
     );
     
-    return response.data.content || '';
+    return response.content || '';
   } catch (error) {
     console.error('Container file error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Container API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Container API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -280,31 +245,25 @@ export const runMalwareAnalysis = async (
   timeout: number = 60
 ): Promise<{ logs: string; networkActivity: any[]; fileActivity: any[] }> => {
   try {
-    const { apiKey, apiUrl } = await initContainerService();
+    const client = await initContainerService();
     
-    const response = await axios.post(
-      `${apiUrl}/api/v1/containers/${containerId}/analyze`,
-      {
-        timeout,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    const sanitizedId = sanitizeRequestData(containerId);
+    const requestData = sanitizeRequestData({
+      timeout,
+    });
+    
+    const response = await safeApiCall(
+      () => client.post(`/api/v1/containers/${sanitizedId}/analyze`, requestData),
+      'Malware analysis error'
     );
     
     return {
-      logs: response.data.logs || '',
-      networkActivity: response.data.networkActivity || [],
-      fileActivity: response.data.fileActivity || [],
+      logs: response.logs || '',
+      networkActivity: response.networkActivity || [],
+      fileActivity: response.fileActivity || [],
     };
   } catch (error) {
     console.error('Malware analysis error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Container API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Container API error: ${(error as Error).message}`);
+    throw error;
   }
 };

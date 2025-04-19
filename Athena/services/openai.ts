@@ -1,23 +1,27 @@
-import OpenAI from 'openai';
+import { createOpenAIClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { sanitizeString } from '@/utils/helpers';
 
 // API key storage - using localStorage for web
 let cachedApiKey: string | null = null;
+let cachedBaseUrl: string | null = null;
 
 /**
  * Initialize OpenAI client with API key
  * @param apiKey Optional API key to use instead of stored key
- * @returns OpenAI client instance
+ * @param baseUrl Optional base URL to use instead of stored URL
+ * @returns Axios instance configured for OpenAI
  */
-export const initOpenAI = async (apiKey?: string): Promise<OpenAI> => {
+export const initOpenAI = async (apiKey?: string, baseUrl?: string): Promise<ReturnType<typeof createOpenAIClient>> => {
   try {
     // Use provided API key or retrieve from storage
     let key = apiKey || cachedApiKey;
+    let url = baseUrl || cachedBaseUrl || 'https://api.openai.com/v1';
     
     if (!key) {
       // Try to get from localStorage in web environment
       if (typeof window !== 'undefined' && window.localStorage) {
         key = localStorage.getItem('athena_openai_api_key');
+        url = localStorage.getItem('athena_openai_base_url') || url;
         console.log('Checking localStorage for OpenAI key:', !!key);
       }
     }
@@ -28,10 +32,7 @@ export const initOpenAI = async (apiKey?: string): Promise<OpenAI> => {
     
     console.log('Initializing OpenAI client with key');
     
-    return new OpenAI({
-      apiKey: key,
-      dangerouslyAllowBrowser: true, // Required for React Native
-    });
+    return createOpenAIClient(key, url);
   } catch (error) {
     console.error('Error initializing OpenAI client:', error);
     throw error;
@@ -39,17 +40,29 @@ export const initOpenAI = async (apiKey?: string): Promise<OpenAI> => {
 };
 
 /**
- * Save OpenAI API key to storage
+ * Save OpenAI API configuration to storage
  * @param apiKey The API key to save
+ * @param baseUrl Optional base URL to save
  */
-export const saveOpenAIApiKey = async (apiKey: string): Promise<void> => {
+export const saveOpenAIApiKey = async (apiKey: string, baseUrl?: string): Promise<void> => {
   try {
     // Cache the API key in memory
     cachedApiKey = apiKey;
     
+    // Cache the base URL in memory if provided
+    if (baseUrl) {
+      cachedBaseUrl = baseUrl;
+    }
+    
     // Save to localStorage for web environment
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem('athena_openai_api_key', apiKey);
+      
+      if (baseUrl) {
+        localStorage.setItem('athena_openai_base_url', baseUrl);
+        console.log('Saved OpenAI base URL to localStorage');
+      }
+      
       console.log('Saved OpenAI API key to localStorage');
     }
     
@@ -75,6 +88,13 @@ export const hasOpenAIApiKey = async (): Promise<boolean> => {
     const key = localStorage.getItem('athena_openai_api_key');
     if (key) {
       cachedApiKey = key; // Cache it for future use
+      
+      // Also cache the base URL if it exists
+      const baseUrl = localStorage.getItem('athena_openai_base_url');
+      if (baseUrl) {
+        cachedBaseUrl = baseUrl;
+      }
+      
       return true;
     }
   }
@@ -83,22 +103,24 @@ export const hasOpenAIApiKey = async (): Promise<boolean> => {
 };
 
 /**
- * Delete stored OpenAI API key
+ * Delete stored OpenAI API configuration
  */
 export const deleteOpenAIApiKey = async (): Promise<void> => {
   try {
     // Clear memory cache
     cachedApiKey = null;
+    cachedBaseUrl = null;
     
     // Clear from localStorage for web environment
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem('athena_openai_api_key');
-      console.log('Deleted OpenAI API key from localStorage');
+      localStorage.removeItem('athena_openai_base_url');
+      console.log('Deleted OpenAI API configuration from localStorage');
     }
     
-    console.log('Deleted OpenAI API key from memory cache');
+    console.log('Deleted OpenAI API configuration from memory cache');
   } catch (error) {
-    console.error('Error deleting OpenAI API key:', error);
+    console.error('Error deleting OpenAI API configuration:', error);
   }
 };
 
@@ -113,7 +135,7 @@ export const deobfuscateCode = async (
   modelId: string = 'gpt-4-turbo'
 ): Promise<{ deobfuscatedCode: string; analysisReport: string }> => {
   try {
-    const openai = await initOpenAI();
+    const openaiClient = await initOpenAI();
     
     // Sanitize input for security
     const sanitizedCode = sanitizeString(code);
@@ -130,7 +152,7 @@ export const deobfuscateCode = async (
     1. DEOBFUSCATED CODE: The clean, readable version of the code
     2. ANALYSIS: Your detailed explanation of what the code does and any security concerns`;
     
-    const response = await openai.chat.completions.create({
+    const requestData = sanitizeRequestData({
       model: modelId,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -139,6 +161,11 @@ export const deobfuscateCode = async (
       temperature: 0.2, // Lower temperature for more deterministic results
       max_tokens: 4000,
     });
+    
+    const response = await safeApiCall(
+      () => openaiClient.post('/chat/completions', requestData),
+      'OpenAI deobfuscation error'
+    );
     
     const content = response.choices[0]?.message?.content || '';
     
@@ -167,7 +194,7 @@ export const analyzeVulnerabilities = async (
   modelId: string = 'gpt-4-turbo'
 ): Promise<{ vulnerabilities: any[]; analysisReport: string }> => {
   try {
-    const openai = await initOpenAI();
+    const openaiClient = await initOpenAI();
     
     // Sanitize input for security
     const sanitizedCode = sanitizeString(code);
@@ -194,7 +221,7 @@ export const analyzeVulnerabilities = async (
       "analysisReport": "Detailed explanation of findings"
     }`;
     
-    const response = await openai.chat.completions.create({
+    const requestData = sanitizeRequestData({
       model: modelId,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -204,6 +231,11 @@ export const analyzeVulnerabilities = async (
       max_tokens: 4000,
       response_format: { type: 'json_object' }
     });
+    
+    const response = await safeApiCall(
+      () => openaiClient.post('/chat/completions', requestData),
+      'OpenAI vulnerability analysis error'
+    );
     
     const content = response.choices[0]?.message?.content || '{}';
     

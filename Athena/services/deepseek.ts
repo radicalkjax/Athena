@@ -1,24 +1,27 @@
-import axios from 'axios';
+import { createDeepSeekClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { sanitizeString } from '@/utils/helpers';
 
 // API key storage - using localStorage for web
 let cachedApiKey: string | null = null;
-const DEEPSEEK_API_BASE_URL = 'https://api.deepseek.com/v1';
+let cachedBaseUrl: string | null = null;
 
 /**
  * Initialize DeepSeek API client
  * @param apiKey Optional API key to use instead of stored key
- * @returns API key for DeepSeek
+ * @param baseUrl Optional base URL to use instead of stored URL
+ * @returns Axios instance configured for DeepSeek
  */
-export const initDeepSeek = async (apiKey?: string): Promise<string> => {
+export const initDeepSeek = async (apiKey?: string, baseUrl?: string): Promise<ReturnType<typeof createDeepSeekClient>> => {
   try {
     // Use provided API key or retrieve from storage
     let key = apiKey || cachedApiKey;
+    let url = baseUrl || cachedBaseUrl || 'https://api.deepseek.com/v1';
     
     if (!key) {
       // Try to get from localStorage in web environment
       if (typeof window !== 'undefined' && window.localStorage) {
         key = localStorage.getItem('athena_deepseek_api_key');
+        url = localStorage.getItem('athena_deepseek_base_url') || url;
         console.log('Checking localStorage for DeepSeek key:', !!key);
       }
     }
@@ -29,7 +32,7 @@ export const initDeepSeek = async (apiKey?: string): Promise<string> => {
     
     console.log('Initializing DeepSeek client with key');
     
-    return key;
+    return createDeepSeekClient(key, url);
   } catch (error) {
     console.error('Error initializing DeepSeek client:', error);
     throw error;
@@ -37,17 +40,29 @@ export const initDeepSeek = async (apiKey?: string): Promise<string> => {
 };
 
 /**
- * Save DeepSeek API key to storage
+ * Save DeepSeek API configuration to storage
  * @param apiKey The API key to save
+ * @param baseUrl Optional base URL to save
  */
-export const saveDeepSeekApiKey = async (apiKey: string): Promise<void> => {
+export const saveDeepSeekApiKey = async (apiKey: string, baseUrl?: string): Promise<void> => {
   try {
     // Cache the API key in memory
     cachedApiKey = apiKey;
     
+    // Cache the base URL in memory if provided
+    if (baseUrl) {
+      cachedBaseUrl = baseUrl;
+    }
+    
     // Save to localStorage for web environment
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem('athena_deepseek_api_key', apiKey);
+      
+      if (baseUrl) {
+        localStorage.setItem('athena_deepseek_base_url', baseUrl);
+        console.log('Saved DeepSeek base URL to localStorage');
+      }
+      
       console.log('Saved DeepSeek API key to localStorage');
     }
     
@@ -73,6 +88,13 @@ export const hasDeepSeekApiKey = async (): Promise<boolean> => {
     const key = localStorage.getItem('athena_deepseek_api_key');
     if (key) {
       cachedApiKey = key; // Cache it for future use
+      
+      // Also cache the base URL if it exists
+      const baseUrl = localStorage.getItem('athena_deepseek_base_url');
+      if (baseUrl) {
+        cachedBaseUrl = baseUrl;
+      }
+      
       return true;
     }
   }
@@ -81,62 +103,50 @@ export const hasDeepSeekApiKey = async (): Promise<boolean> => {
 };
 
 /**
- * Delete stored DeepSeek API key
+ * Delete stored DeepSeek API configuration
  */
 export const deleteDeepSeekApiKey = async (): Promise<void> => {
   try {
     // Clear memory cache
     cachedApiKey = null;
+    cachedBaseUrl = null;
     
     // Clear from localStorage for web environment
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem('athena_deepseek_api_key');
-      console.log('Deleted DeepSeek API key from localStorage');
+      localStorage.removeItem('athena_deepseek_base_url');
+      console.log('Deleted DeepSeek API configuration from localStorage');
     }
     
-    console.log('Deleted DeepSeek API key from memory cache');
+    console.log('Deleted DeepSeek API configuration from memory cache');
   } catch (error) {
-    console.error('Error deleting DeepSeek API key:', error);
+    console.error('Error deleting DeepSeek API configuration:', error);
   }
 };
 
 /**
  * Make a request to the DeepSeek API
- * @param apiKey DeepSeek API key
+ * @param client Axios instance configured for DeepSeek
  * @param messages Array of messages to send
  * @param model DeepSeek model to use (defaults to deepseek-coder)
  * @returns Response from DeepSeek API
  */
 const makeDeepSeekRequest = async (
-  apiKey: string,
+  client: ReturnType<typeof createDeepSeekClient>,
   messages: Array<{ role: string; content: string }>,
   model: string = 'deepseek-coder'
 ) => {
-  try {
-    const response = await axios.post(
-      `${DEEPSEEK_API_BASE_URL}/chat/completions`,
-      {
-        model,
-        messages,
-        max_tokens: 4000,
-        temperature: 0.2,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-      }
-    );
-    
-    return response.data;
-  } catch (error) {
-    console.error('DeepSeek API error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`DeepSeek API error: ${error.response.status} - ${error.response.data.error?.message || 'Unknown error'}`);
-    }
-    throw new Error(`DeepSeek API error: ${(error as Error).message}`);
-  }
+  const requestData = sanitizeRequestData({
+    model,
+    messages,
+    max_tokens: 4000,
+    temperature: 0.2,
+  });
+  
+  return safeApiCall(
+    () => client.post('/chat/completions', requestData),
+    'DeepSeek API error'
+  );
 };
 
 /**
@@ -150,7 +160,7 @@ export const deobfuscateCode = async (
   model: string = 'deepseek-coder'
 ): Promise<{ deobfuscatedCode: string; analysisReport: string }> => {
   try {
-    const apiKey = await initDeepSeek();
+    const deepseekClient = await initDeepSeek();
     
     // Sanitize input for security
     const sanitizedCode = sanitizeString(code);
@@ -168,7 +178,7 @@ export const deobfuscateCode = async (
     2. ANALYSIS: Your detailed explanation of what the code does and any security concerns`;
     
     const response = await makeDeepSeekRequest(
-      apiKey,
+      deepseekClient,
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Analyze and deobfuscate this code:\n\n${sanitizedCode}` }
@@ -203,7 +213,7 @@ export const analyzeVulnerabilities = async (
   model: string = 'deepseek-coder'
 ): Promise<{ vulnerabilities: any[]; analysisReport: string }> => {
   try {
-    const apiKey = await initDeepSeek();
+    const deepseekClient = await initDeepSeek();
     
     // Sanitize input for security
     const sanitizedCode = sanitizeString(code);
@@ -231,7 +241,7 @@ export const analyzeVulnerabilities = async (
     }`;
     
     const response = await makeDeepSeekRequest(
-      apiKey,
+      deepseekClient,
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Analyze this code for security vulnerabilities:\n\n${sanitizedCode}` }

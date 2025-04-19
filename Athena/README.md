@@ -8,6 +8,8 @@ This is the Athena project directory. For comprehensive documentation, please re
 - [Application Screenshots](../README.md#application-screenshots)
 - [Getting Started](../README.md#getting-started)
 - [Technical Documentation](../README.md#technical-documentation)
+- [API Client Architecture](../README.md#api-client-architecture)
+- [Services Documentation](./services/README.md)
 - [Key Components](../README.md#key-components)
 - [Analysis Process](../README.md#analysis-process)
 - [License](../README.md#license)

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createMetasploitClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import * as SecureStore from 'expo-secure-store';
 
 // Storage keys
@@ -9,12 +9,12 @@ const METASPLOIT_API_URL_STORAGE = 'athena_metasploit_api_url';
  * Initialize Metasploit API client
  * @param apiKey Optional API key to use instead of stored key
  * @param apiUrl Optional API URL to use instead of stored URL
- * @returns API configuration for Metasploit
+ * @returns Axios instance configured for Metasploit
  */
 export const initMetasploit = async (
   apiKey?: string,
   apiUrl?: string
-): Promise<{ apiKey: string; apiUrl: string }> => {
+): Promise<ReturnType<typeof createMetasploitClient>> => {
   // Use provided values or retrieve from secure storage
   const key = apiKey || await SecureStore.getItemAsync(METASPLOIT_API_KEY_STORAGE);
   const url = apiUrl || await SecureStore.getItemAsync(METASPLOIT_API_URL_STORAGE);
@@ -27,7 +27,7 @@ export const initMetasploit = async (
     throw new Error('Metasploit API URL not found. Please set the API URL in the settings.');
   }
   
-  return { apiKey: key, apiUrl: url };
+  return createMetasploitClient(key, url);
 };
 
 /**
@@ -65,23 +65,19 @@ export const deleteMetasploitConfig = async (): Promise<void> => {
  */
 export const searchModules = async (query: string): Promise<any[]> => {
   try {
-    const { apiKey, apiUrl } = await initMetasploit();
+    const client = await initMetasploit();
     
-    const response = await axios.get(`${apiUrl}/api/v1/modules/search`, {
-      params: { query },
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await safeApiCall(
+      () => client.get('/api/v1/modules/search', {
+        params: { query: sanitizeRequestData(query) }
+      }),
+      'Metasploit module search error'
+    );
     
-    return response.data.modules || [];
+    return response.modules || [];
   } catch (error) {
     console.error('Metasploit module search error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Metasploit API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Metasploit API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -93,22 +89,20 @@ export const searchModules = async (query: string): Promise<any[]> => {
  */
 export const getModuleDetails = async (moduleType: string, moduleName: string): Promise<any> => {
   try {
-    const { apiKey, apiUrl } = await initMetasploit();
+    const client = await initMetasploit();
     
-    const response = await axios.get(`${apiUrl}/api/v1/modules/${moduleType}/${moduleName}`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const sanitizedModuleType = sanitizeRequestData(moduleType);
+    const sanitizedModuleName = sanitizeRequestData(moduleName);
     
-    return response.data.module || {};
+    const response = await safeApiCall(
+      () => client.get(`/api/v1/modules/${sanitizedModuleType}/${sanitizedModuleName}`),
+      'Metasploit module details error'
+    );
+    
+    return response.module || {};
   } catch (error) {
     console.error('Metasploit module details error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Metasploit API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Metasploit API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -119,23 +113,19 @@ export const getModuleDetails = async (moduleType: string, moduleName: string): 
  */
 export const searchVulnerabilityByCVE = async (cveId: string): Promise<any[]> => {
   try {
-    const { apiKey, apiUrl } = await initMetasploit();
+    const client = await initMetasploit();
     
-    const response = await axios.get(`${apiUrl}/api/v1/vulnerabilities/search`, {
-      params: { cve: cveId },
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await safeApiCall(
+      () => client.get('/api/v1/vulnerabilities/search', {
+        params: { cve: sanitizeRequestData(cveId) }
+      }),
+      'Metasploit vulnerability search error'
+    );
     
-    return response.data.vulnerabilities || [];
+    return response.vulnerabilities || [];
   } catch (error) {
     console.error('Metasploit vulnerability search error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Metasploit API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Metasploit API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -146,22 +136,19 @@ export const searchVulnerabilityByCVE = async (cveId: string): Promise<any[]> =>
  */
 export const getVulnerabilityDetails = async (id: string): Promise<any> => {
   try {
-    const { apiKey, apiUrl } = await initMetasploit();
+    const client = await initMetasploit();
     
-    const response = await axios.get(`${apiUrl}/api/v1/vulnerabilities/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const sanitizedId = sanitizeRequestData(id);
     
-    return response.data.vulnerability || {};
+    const response = await safeApiCall(
+      () => client.get(`/api/v1/vulnerabilities/${sanitizedId}`),
+      'Metasploit vulnerability details error'
+    );
+    
+    return response.vulnerability || {};
   } catch (error) {
     console.error('Metasploit vulnerability details error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Metasploit API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Metasploit API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 
@@ -172,22 +159,19 @@ export const getVulnerabilityDetails = async (id: string): Promise<any> => {
  */
 export const findRelatedModules = async (vulnerabilityId: string): Promise<any[]> => {
   try {
-    const { apiKey, apiUrl } = await initMetasploit();
+    const client = await initMetasploit();
     
-    const response = await axios.get(`${apiUrl}/api/v1/vulnerabilities/${vulnerabilityId}/modules`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const sanitizedId = sanitizeRequestData(vulnerabilityId);
     
-    return response.data.modules || [];
+    const response = await safeApiCall(
+      () => client.get(`/api/v1/vulnerabilities/${sanitizedId}/modules`),
+      'Metasploit related modules error'
+    );
+    
+    return response.modules || [];
   } catch (error) {
     console.error('Metasploit related modules error:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(`Metasploit API error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-    }
-    throw new Error(`Metasploit API error: ${(error as Error).message}`);
+    throw error;
   }
 };
 

@@ -8,7 +8,7 @@ import { useAppStore } from '@/store';
 import * as analysisService from '@/services/analysisService';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { AiFillRobot, AiFillOpenAI, AiFillMeh, AiOutlineQq, AiOutlineWeibo } from 'react-icons/ai';
+import { AiFillRobot, AiFillOpenAI, AiFillMeh, AiOutlineQq, AiOutlineWeibo, AiOutlineSync } from 'react-icons/ai';
 // Using localStorage for web environment
 
 interface AIModelSelectorProps {
@@ -218,12 +218,12 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
   return (
     <ThemedView style={styles.container}>
       <View style={styles.headerContainer}>
-        <ThemedText style={styles.title}>Select AI Model</ThemedText>
+        <View style={{ flex: 1 }}></View>
         <TouchableOpacity 
           style={styles.refreshButton} 
           onPress={loadAvailableModels}
         >
-          <IconSymbol name="arrow.clockwise" size={20} color={Colors[colorScheme ?? 'light'].text} />
+          <AiOutlineSync size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.modelList}>
@@ -310,9 +310,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   refreshButton: {
-    padding: 5,
-    borderRadius: 15,
-    backgroundColor: '#F0F0F0',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#d76e8b', // Pink background color to match the header
     justifyContent: 'center',
     alignItems: 'center',
   },

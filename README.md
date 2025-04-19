@@ -76,8 +76,24 @@ Athena follows a modular architecture with clear separation of concerns. The app
 flowchart TD
     A[User Interface] --> B[State Management]
     B --> C[Services Layer]
-    C --> D[External APIs]
+    C --> D[API Client]
     C --> E[Local Storage]
+    D --> F[External APIs]
+    
+    subgraph "Core Architecture"
+        A
+        B
+        C
+    end
+    
+    subgraph "External Communication"
+        D
+        F
+    end
+    
+    subgraph "Persistence"
+        E
+    end
 ```
 
 ### Data Flow
@@ -95,11 +111,18 @@ sequenceDiagram
     UI->>Services: Run Analysis
     
     alt Cloud AI Model
-        Services->>External APIs: Send to Cloud AI Model
-        External APIs->>Services: Return Results
+        Services->>API Client: Prepare Request
+        API Client->>API Client: Sanitize Data
+        API Client->>API Client: Add Auth Headers
+        API Client->>External APIs: Send to Cloud API
+        External APIs->>API Client: Return Response
+        API Client->>API Client: Handle Errors
+        API Client->>Services: Return Results
     else Local AI Model
-        Services->>Local Model: Send to Local Model API
-        Local Model->>Services: Return Results
+        Services->>API Client: Prepare Request
+        API Client->>Local Model: Send to Local Model API
+        Local Model->>API Client: Return Results
+        API Client->>Services: Return Results
     end
     
     Services->>Store: Add Analysis Result
@@ -162,6 +185,19 @@ flowchart TD
     A --> G[File Manager Service]
     A --> H[Metasploit Service]
     
+    I[API Client] --> I1[Client Factory]
+    I --> I2[Request Interceptors]
+    I --> I3[Response Interceptors]
+    I --> I4[Error Handling]
+    I --> I5[Client Cache]
+    
+    I1 --> B
+    I1 --> C
+    I1 --> D
+    I1 --> E
+    I1 --> F
+    I1 --> H
+    
     E --> E1[Local Model Config]
     E --> E2[Model Execution]
     E --> E3[API Integration]
@@ -175,6 +211,17 @@ flowchart TD
     E3 --> E3a[API Endpoints]
     E3 --> E3b[Request Handling]
 ```
+
+#### API Client Architecture
+
+Athena uses a centralized API client architecture to provide consistent, secure, and efficient communication with various APIs. The architecture includes:
+
+- A configurable axios instance factory with built-in interceptors for authentication, logging, and error handling
+- Specialized client factories for each API (OpenAI, Claude, DeepSeek, etc.)
+- Utility functions for safe API calls and request data sanitization
+- Caching mechanism to avoid recreating clients unnecessarily
+
+For detailed documentation on the API client architecture and service implementations, see the [Services README](./Athena/services/README.md).
 
 ### Cross-Platform Implementation
 
@@ -204,6 +251,19 @@ flowchart TD
     A --> C[Container Isolation]
     A --> D[Input Sanitization]
     A --> E[Secure Storage]
+    
+    B --> B1[Secure API Key Storage]
+    B --> B2[API Key Validation]
+    
+    D --> D1[Request Data Sanitization]
+    D --> D2[Response Validation]
+    
+    F[API Client Security] --> F1[Request Interceptors]
+    F --> F2[Error Handling]
+    F --> F3[Logging Controls]
+    
+    F1 --> B
+    F1 --> D
 ```
 
 ## Key Components
