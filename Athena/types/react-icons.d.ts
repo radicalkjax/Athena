@@ -16,4 +16,5 @@ declare module 'react-icons/ai' {
   export const AiFillMeh: ComponentType<IconProps>;
   export const AiOutlineQq: ComponentType<IconProps>;
   export const AiOutlineWeibo: ComponentType<IconProps>;
+  export const AiOutlineSync: ComponentType<IconProps>;
 }

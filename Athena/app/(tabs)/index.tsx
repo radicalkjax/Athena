@@ -125,6 +125,7 @@ export default function HomeScreen() {
       </ThemedText>
       
       <ScrollView style={styles.contentContainer}>
+      <ThemedText style={styles.optionsTitle}>Select AI Model</ThemedText>
         <View style={styles.sectionContainer}>
           <AIModelSelector 
             key={aiModelSelectorKey} 
@@ -157,10 +158,7 @@ export default function HomeScreen() {
         </View>
         
         <TouchableOpacity
-          style={[
-            styles.analyzeButton,
-            (isAnalyzing || !selectedModel || !selectedFile) && styles.disabledButton,
-          ]}
+          style={styles.analyzeButton}
           onPress={handleAnalyze}
           disabled={isAnalyzing || !selectedModel || !selectedFile}
         >
@@ -248,7 +246,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#d06c86',
+    backgroundColor: '#f9b4c6',
     padding: 15,
     borderRadius: 8,
     marginBottom: 20,
@@ -258,7 +256,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   analyzeButtonText: {
-    color: '#FFFFFF',
+    color: '#000',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 10,

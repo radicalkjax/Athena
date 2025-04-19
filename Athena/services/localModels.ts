@@ -1,3 +1,4 @@
+import { createLocalModelClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { sanitizeString } from '@/utils/helpers';
 import * as FileSystem from 'expo-file-system';
 
@@ -198,14 +199,11 @@ export const removeLocalModel = async (id: string): Promise<void> => {
  */
 export const isLocalModelRunning = async (config: LocalModelConfig): Promise<boolean> => {
   try {
-    const response = await fetch(`http://localhost:${config.apiPort}/v1/models`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const baseURL = `http://localhost:${config.apiPort}`;
+    const client = createLocalModelClient(baseURL);
     
-    return response.ok;
+    const response = await client.get('/v1/models');
+    return response.status === 200;
   } catch (error) {
     return false;
   }
@@ -227,25 +225,20 @@ const makeLocalModelRequest = async (
       throw new Error(`Local model ${config.name} is not running. Please start the model server.`);
     }
     
-    const response = await fetch(`http://localhost:${config.apiPort}/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: config.name,
-        messages,
-        max_tokens: 4000,
-        temperature: 0.2,
-      }),
+    const baseURL = `http://localhost:${config.apiPort}`;
+    const client = createLocalModelClient(baseURL);
+    
+    const requestData = sanitizeRequestData({
+      model: config.name,
+      messages,
+      max_tokens: 4000,
+      temperature: 0.2,
     });
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Local model error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-    
-    return await response.json();
+    return safeApiCall(
+      () => client.post('/v1/chat/completions', requestData),
+      'Local model request error'
+    );
   } catch (error) {
     console.error('Local model request error:', error);
     throw new Error(`Local model request failed: ${(error as Error).message}`);
