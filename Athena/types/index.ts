@@ -64,7 +64,29 @@ export interface ContainerConfig {
   architecture: ArchitectureType;
   version?: string;
   imageTag?: string;
+  distribution?: string; // For Linux distributions
 }
+
+// Linux specific types
+export type LinuxDistribution = 'ubuntu' | 'debian' | 'centos' | 'fedora' | 'alpine';
+export type LinuxVersion = 
+  // Ubuntu versions
+  | 'ubuntu-18.04' | 'ubuntu-20.04' | 'ubuntu-22.04' 
+  // Debian versions
+  | 'debian-10' | 'debian-11' | 'debian-12'
+  // CentOS versions
+  | 'centos-7' | 'centos-8' | 'centos-9'
+  // Fedora versions
+  | 'fedora-36' | 'fedora-37' | 'fedora-38'
+  // Alpine versions
+  | 'alpine-3.16' | 'alpine-3.17' | 'alpine-3.18';
+
+// macOS specific types
+export type MacOSVersion = 
+  | 'macos-11' // Big Sur
+  | 'macos-12' // Monterey
+  | 'macos-13' // Ventura
+  | 'macos-14'; // Sonoma
 
 // Settings Types
 export interface AppSettings {

@@ -116,6 +116,102 @@ graph TD
 
 When creating a container, you can specify the OS, architecture, and version to match the target environment of the malware you're analyzing. If not specified, the system defaults to Windows 10 x64.
 
+#### Linux Containers
+
+Linux containers are available in multiple distributions and architectures to analyze Linux-targeted malware:
+
+| Architecture | Linux Distributions | Versions | Use Case |
+|--------------|-------------------|----------|----------|
+| x86 (32-bit) | Ubuntu, Debian, CentOS, Fedora, Alpine | Multiple per distro | Analyzing 32-bit Linux malware |
+| x64 (64-bit) | Ubuntu, Debian, CentOS, Fedora, Alpine | Multiple per distro | Analyzing 64-bit Linux malware |
+| ARM | Ubuntu, Debian, CentOS, Fedora, Alpine | Multiple per distro | Analyzing ARM-based Linux malware |
+| ARM64 | Ubuntu, Debian, CentOS, Fedora, Alpine | Multiple per distro | Analyzing ARM64-based Linux malware |
+
+Available Linux distributions and versions:
+
+- **Ubuntu**: 18.04, 20.04, 22.04
+- **Debian**: 10, 11, 12
+- **CentOS**: 7, 8, 9
+- **Fedora**: 36, 37, 38
+- **Alpine**: 3.16, 3.17, 3.18
+
+```mermaid
+graph TD
+    A[Linux Containers] --> B[x86 Architecture]
+    A --> C[x64 Architecture]
+    A --> D[ARM Architecture]
+    A --> E[ARM64 Architecture]
+    
+    B --> B1[Ubuntu]
+    B --> B2[Debian]
+    B --> B3[CentOS]
+    B --> B4[Fedora]
+    B --> B5[Alpine]
+    
+    C --> C1[Ubuntu]
+    C --> C2[Debian]
+    C --> C3[CentOS]
+    C --> C4[Fedora]
+    C --> C5[Alpine]
+    
+    D --> D1[Ubuntu]
+    D --> D2[Debian]
+    D --> D3[CentOS]
+    D --> D4[Fedora]
+    D --> D5[Alpine]
+    
+    E --> E1[Ubuntu]
+    E --> E2[Debian]
+    E --> E3[CentOS]
+    E --> E4[Fedora]
+    E --> E5[Alpine]
+    
+    B1 --> B1a[18.04]
+    B1 --> B1b[20.04]
+    B1 --> B1c[22.04]
+```
+
+Linux containers are particularly useful for analyzing:
+- ELF binaries and Linux-specific malware
+- Cross-platform malware that targets both Windows and Linux
+- Server-focused malware that targets common Linux server distributions
+- IoT malware targeting Linux-based embedded systems
+
+The default Linux container is Ubuntu 22.04 x64 if no specific configuration is provided.
+
+#### macOS Containers
+
+macOS containers are available for analyzing macOS-targeted malware:
+
+| Architecture | macOS Versions | Use Case |
+|--------------|---------------|----------|
+| x64 (64-bit) | macOS 11 (Big Sur), 12 (Monterey), 13 (Ventura), 14 (Sonoma) | Analyzing Intel-based macOS malware |
+| ARM64 | macOS 11 (Big Sur), 12 (Monterey), 13 (Ventura), 14 (Sonoma) | Analyzing Apple Silicon-based macOS malware |
+
+```mermaid
+graph TD
+    A[macOS Containers] --> B[x64 Architecture]
+    A --> C[ARM64 Architecture]
+    
+    B --> B1[macOS 11 - Big Sur]
+    B --> B2[macOS 12 - Monterey]
+    B --> B3[macOS 13 - Ventura]
+    B --> B4[macOS 14 - Sonoma]
+    
+    C --> C1[macOS 11 - Big Sur]
+    C --> C2[macOS 12 - Monterey]
+    C --> C3[macOS 13 - Ventura]
+    C --> C4[macOS 14 - Sonoma]
+```
+
+macOS containers are particularly useful for analyzing:
+- macOS-specific malware and malicious applications
+- Cross-platform malware that targets macOS alongside Windows and Linux
+- Malware targeting Apple's ecosystem
+- Malicious code that exploits macOS-specific features or vulnerabilities
+
+The default macOS container is macOS 14 (Sonoma) ARM64 if no specific configuration is provided, reflecting the current trend toward Apple Silicon-based Macs.
+
 ## Container Lifecycle
 
 ```mermaid
@@ -370,6 +466,157 @@ export const getAvailableWindowsVersions = (architecture: ArchitectureType): Win
 // Example of getting available architectures for Windows containers
 export const getAvailableWindowsArchitectures = (): ArchitectureType[] => {
   return Object.keys(WINDOWS_CONTAINERS) as ArchitectureType[];
+};
+```
+
+### Linux Container Creation
+
+```typescript
+// Example of creating a Linux container with specific architecture and version
+export const createLinuxContainer = async (
+  malwareId: string,
+  malwareContent: string,
+  malwareName: string,
+  architecture: ArchitectureType = 'x64',
+  version: LinuxVersion = 'ubuntu-22.04'
+): Promise<Container> => {
+  // Get the Linux container configuration
+  const linuxConfig = getLinuxContainerConfig(architecture, version);
+  
+  // Create the container with the Linux configuration
+  return createContainer(malwareId, malwareContent, malwareName, linuxConfig);
+};
+```
+
+### Getting Linux Container Configurations
+
+```typescript
+// Example of getting Linux container configuration
+export const getLinuxContainerConfig = (
+  architecture: ArchitectureType = 'x64',
+  version: LinuxVersion = 'ubuntu-22.04'
+): ContainerConfig => {
+  // Check if the requested architecture is supported
+  if (!LINUX_CONTAINERS[architecture]) {
+    console.warn(`Architecture ${architecture} not supported for Linux, falling back to x64`);
+    architecture = 'x64';
+  }
+
+  // Check if the requested version is supported for this architecture
+  if (!LINUX_CONTAINERS[architecture][version]) {
+    console.warn(`Linux version ${version} not supported for ${architecture}, falling back to ubuntu-22.04`);
+    version = 'ubuntu-22.04';
+  }
+
+  const imageTag = LINUX_CONTAINERS[architecture][version].imageTag;
+  const distribution = version.split('-')[0] as LinuxDistribution;
+
+  return {
+    os: 'linux',
+    architecture,
+    version,
+    distribution,
+    imageTag,
+  };
+};
+```
+
+### Getting Available Linux Versions, Architectures, and Distributions
+
+```typescript
+// Example of getting available Linux versions for a specific architecture
+export const getAvailableLinuxVersions = (architecture: ArchitectureType): LinuxVersion[] => {
+  if (!LINUX_CONTAINERS[architecture]) {
+    return [];
+  }
+  
+  return Object.keys(LINUX_CONTAINERS[architecture]) as LinuxVersion[];
+};
+
+// Example of getting available architectures for Linux containers
+export const getAvailableLinuxArchitectures = (): ArchitectureType[] => {
+  return Object.keys(LINUX_CONTAINERS) as ArchitectureType[];
+};
+
+// Example of getting available Linux distributions
+export const getAvailableLinuxDistributions = (): LinuxDistribution[] => {
+  const distributions = new Set<LinuxDistribution>();
+  
+  // Extract unique distribution names from all versions
+  getAvailableLinuxVersions('x64').forEach(version => {
+    const distribution = version.split('-')[0] as LinuxDistribution;
+    distributions.add(distribution);
+  });
+  
+  return Array.from(distributions);
+};
+```
+
+### macOS Container Creation
+
+```typescript
+// Example of creating a macOS container with specific architecture and version
+export const createMacOSContainer = async (
+  malwareId: string,
+  malwareContent: string,
+  malwareName: string,
+  architecture: ArchitectureType = 'arm64',
+  version: MacOSVersion = 'macos-14'
+): Promise<Container> => {
+  // Get the macOS container configuration
+  const macOSConfig = getMacOSContainerConfig(architecture, version);
+  
+  // Create the container with the macOS configuration
+  return createContainer(malwareId, malwareContent, malwareName, macOSConfig);
+};
+```
+
+### Getting macOS Container Configurations
+
+```typescript
+// Example of getting macOS container configuration
+export const getMacOSContainerConfig = (
+  architecture: ArchitectureType = 'arm64',
+  version: MacOSVersion = 'macos-14'
+): ContainerConfig => {
+  // Check if the requested architecture is supported
+  if (!MACOS_CONTAINERS[architecture]) {
+    console.warn(`Architecture ${architecture} not supported for macOS, falling back to arm64`);
+    architecture = 'arm64';
+  }
+
+  // Check if the requested version is supported for this architecture
+  if (!MACOS_CONTAINERS[architecture][version]) {
+    console.warn(`macOS version ${version} not supported for ${architecture}, falling back to macos-14`);
+    version = 'macos-14';
+  }
+
+  const imageTag = MACOS_CONTAINERS[architecture][version].imageTag;
+
+  return {
+    os: 'macos',
+    architecture,
+    version,
+    imageTag,
+  };
+};
+```
+
+### Getting Available macOS Versions and Architectures
+
+```typescript
+// Example of getting available macOS versions for a specific architecture
+export const getAvailableMacOSVersions = (architecture: ArchitectureType): MacOSVersion[] => {
+  if (!MACOS_CONTAINERS[architecture]) {
+    return [];
+  }
+  
+  return Object.keys(MACOS_CONTAINERS[architecture]) as MacOSVersion[];
+};
+
+// Example of getting available architectures for macOS containers
+export const getAvailableMacOSArchitectures = (): ArchitectureType[] => {
+  return Object.keys(MACOS_CONTAINERS) as ArchitectureType[];
 };
 ```
 
