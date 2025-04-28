@@ -8,7 +8,8 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { AIModelSelector } from '@/components/AIModelSelector';
 import { FileUploader } from '@/components/FileUploader';
 import { AnalysisResults } from '@/components/AnalysisResults';
-import { AIModel, MalwareFile, AnalysisResult } from '@/types';
+import AnalysisOptionsPanel, { AnalysisOptions } from '@/components/AnalysisOptionsPanel';
+import { AIModel, MalwareFile, AnalysisResult, ContainerConfig } from '@/types';
 import { useAppStore } from '@/store';
 import * as analysisService from '@/services/analysisService';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -19,7 +20,24 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [selectedFile, setSelectedFile] = useState<MalwareFile | null>(null);
-  const [useContainer, setUseContainer] = useState(true);
+  const [analysisOptions, setAnalysisOptions] = useState<AnalysisOptions>({
+    useContainerIsolation: true,
+    containerConfig: {
+      os: 'windows',
+      architecture: 'x64',
+      version: 'windows-10',
+      resources: {
+        cpu: 1,
+        memory: 2048,
+        diskSpace: 5120,
+        networkSpeed: 10,
+        ioOperations: 1000
+      }
+    },
+    aiModel: 'openai',
+    deepAnalysis: false,
+    saveResults: true
+  });
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [aiModelSelectorKey, setAiModelSelectorKey] = useState(0); // Add a key to force re-render
   
@@ -86,7 +104,8 @@ export default function HomeScreen() {
       const result = await analysisService.runAnalysis(
         selectedFile,
         selectedModel,
-        useContainer
+        analysisOptions.useContainerIsolation,
+        analysisOptions.containerConfig
       );
       
       // Set result
@@ -140,21 +159,10 @@ export default function HomeScreen() {
         
         <View style={styles.optionsContainer}>
           <ThemedText style={styles.optionsTitle}>Analysis Options</ThemedText>
-          <TouchableOpacity
-            style={styles.optionItem}
-            onPress={() => setUseContainer(!useContainer)}
-          >
-            <AiOutlineCodepenCircle
-              size={24}
-              color={Colors[colorScheme ?? 'light'].tint}
-            />
-            <View style={styles.optionTextContainer}>
-              <ThemedText style={styles.optionText}>Use Container</ThemedText>
-              <ThemedText style={styles.optionDescription}>
-                Run malware in an isolated container for safer analysis
-              </ThemedText>
-            </View>
-          </TouchableOpacity>
+          <AnalysisOptionsPanel
+            onOptionsChange={setAnalysisOptions}
+            initialOptions={analysisOptions}
+          />
         </View>
         
         <TouchableOpacity

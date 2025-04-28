@@ -1,10 +1,12 @@
 {
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.3.0",
+    "@react-native-community/slider": "^4.5.6",
+    "@react-native-picker/picker": "^2.11.0",
     "expo-font": "^13.0.4"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "@types/react": "~18.3.12"
+    "@types/react": "~18.3.12",
+    "typescript": "^5.3.3"
   }
 }

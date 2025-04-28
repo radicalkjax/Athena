@@ -32,3 +32,10 @@ time, mark, audio, video, input, textarea, button {
 div[dir="auto"] {
   font-family: 'Roboto', sans-serif !important;
 }
+
+/* Override for picker items */
+select, option {
+  font-family: 'Roboto', sans-serif !important;
+  color: #000000 !important;
+  font-weight: bold !important;
+}
