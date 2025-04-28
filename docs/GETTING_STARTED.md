@@ -104,9 +104,11 @@ npx serve dist
 
 This will serve the built app from the dist directory using a static file server. Open your web browser and navigate to `http://localhost:3000` to access Athena.
 
-### Mobile Version
+### Mobile Version (Currently Not Working)
 
-To run Athena on a mobile device using Expo Go:
+> **Important:** The Expo launch method is currently not working. Please use the web version with `npx serve dist` instead.
+
+When working, to run Athena on a mobile device using Expo Go:
 
 1. Install the Expo Go app on your device:
    - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
@@ -122,7 +124,7 @@ To run Athena on a mobile device using Expo Go:
    - iOS: Use the device's camera
    - Android: Use the Expo Go app's QR code scanner
 
-The app will load on your device.
+The app would then load on your device.
 
 ## Your First Analysis
 

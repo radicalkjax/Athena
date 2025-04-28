@@ -92,9 +92,17 @@ run_android() {
 # Function to run using Expo
 run_expo() {
     echo -e "${BLUE}Starting Athena using Expo...${NC}"
-    echo -e "${YELLOW}This will display a QR code that you can scan with the Expo Go app on your device${NC}"
+    echo -e "${RED}WARNING: The Expo launch method is currently not working.${NC}"
+    echo -e "${YELLOW}Please use the web version instead: ./scripts/run.sh web${NC}"
     
-    cd Athena && npx expo start
+    echo -e "\n${YELLOW}Do you still want to try running with Expo? (y/n)${NC}"
+    read -r response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+        echo -e "${YELLOW}This will display a QR code that you can scan with the Expo Go app on your device${NC}"
+        cd Athena && npx expo start
+    else
+        echo -e "${GREEN}Exiting. Try using the web version with: ./scripts/run.sh web${NC}"
+    fi
 }
 
 # Parse command line arguments

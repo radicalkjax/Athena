@@ -133,12 +133,14 @@ npx serve dist
 
 This command serves the built app from the dist directory using a static file server.
 
-For mobile development:
+For mobile development (Note: Currently not working):
 ```bash
 npx expo start
 ```
 
-This will start the Expo development server, allowing you to run the app on:
+> **Note:** The Expo launch method is currently not working. Please use the web version with `npx serve dist` instead.
+
+When working, this would start the Expo development server, allowing you to run the app on:
 - iOS simulator
 - Android emulator
 - Web browser
