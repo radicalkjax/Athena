@@ -75,6 +75,47 @@ flowchart TD
 4. **Process Monitor**: Tracks process creation and execution
 5. **Behavior Analysis**: Analyzes malware behavior within the container
 
+### OS-Specific Containers
+
+Athena supports different operating system containers to provide the most accurate analysis environment for various types of malware. Each OS container is available in different architectures to match the target environment of the malware.
+
+#### Windows Containers
+
+Windows containers are available in the following configurations:
+
+| Architecture | Windows Versions | Use Case |
+|--------------|-----------------|----------|
+| x86 (32-bit) | Windows 7, 8, 10, 11 | Analyzing 32-bit Windows malware |
+| x64 (64-bit) | Windows 7, 8, 10, 11 | Analyzing 64-bit Windows malware |
+| ARM | Windows 10, 11 | Analyzing ARM-based Windows malware |
+| ARM64 | Windows 10, 11 | Analyzing ARM64-based Windows malware |
+
+```mermaid
+graph TD
+    A[Windows Containers] --> B[x86 Architecture]
+    A --> C[x64 Architecture]
+    A --> D[ARM Architecture]
+    A --> E[ARM64 Architecture]
+    
+    B --> B1[Windows 7]
+    B --> B2[Windows 8]
+    B --> B3[Windows 10]
+    B --> B4[Windows 11]
+    
+    C --> C1[Windows 7]
+    C --> C2[Windows 8]
+    C --> C3[Windows 10]
+    C --> C4[Windows 11]
+    
+    D --> D1[Windows 10]
+    D --> D2[Windows 11]
+    
+    E --> E1[Windows 10]
+    E --> E2[Windows 11]
+```
+
+When creating a container, you can specify the OS, architecture, and version to match the target environment of the malware you're analyzing. If not specified, the system defaults to Windows 10 x64.
+
 ## Container Lifecycle
 
 ```mermaid
@@ -208,49 +249,127 @@ interface FileActivity {
 
 ### Container Creation
 
-```javascript
-// Example of container creation
+```typescript
+// Example of container creation with OS-specific configuration
 export const createContainer = async (
   malwareId: string,
-  fileBase64: string,
-  fileName: string
+  malwareContent: string,
+  malwareName: string,
+  containerConfig?: Partial<ContainerConfig>
 ): Promise<Container> => {
   try {
-    // Create a unique container ID
+    const client = await initContainerService();
+    
     const containerId = generateId();
     
-    // Create container configuration
-    const containerConfig = {
-      id: containerId,
-      malwareId,
-      fileName,
-      fileContent: fileBase64,
-      createdAt: Date.now(),
-    };
+    // Use provided container config or default to Windows x64
+    const config = containerConfig ? 
+      { ...DEFAULT_CONTAINER_CONFIG, ...containerConfig } : 
+      DEFAULT_CONTAINER_CONFIG;
     
-    // Send request to container service
-    const response = await axios.post(
-      `${CONTAINER_SERVICE_URL}/containers`,
-      containerConfig,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${API_KEY}`,
-        },
-      }
+    // If it's a Windows container, get the specific Windows container config
+    let finalConfig = config;
+    if (config.os === 'windows') {
+      finalConfig = getWindowsContainerConfig(
+        config.architecture,
+        config.version as WindowsVersion
+      );
+    }
+    
+    const requestData = sanitizeRequestData({
+      containerId,
+      malwareId,
+      malwareContent,
+      malwareName,
+      containerConfig: finalConfig,
+    });
+    
+    const response = await safeApiCall(
+      () => client.post('/api/v1/containers', requestData),
+      'Container creation error'
     );
     
-    // Return container information
     return {
       id: containerId,
       status: 'creating',
       malwareId,
       createdAt: Date.now(),
+      os: finalConfig.os,
+      architecture: finalConfig.architecture,
+      ...response.container,
     };
   } catch (error) {
-    console.error('Error creating container:', error);
-    throw new Error(`Failed to create container: ${(error as Error).message}`);
+    console.error('Container creation error:', error);
+    throw error;
   }
+};
+```
+
+### Windows Container Creation
+
+```typescript
+// Example of creating a Windows container with specific architecture and version
+export const createWindowsContainer = async (
+  malwareId: string,
+  malwareContent: string,
+  malwareName: string,
+  architecture: ArchitectureType = 'x64',
+  version: WindowsVersion = 'windows-10'
+): Promise<Container> => {
+  // Get the Windows container configuration
+  const windowsConfig = getWindowsContainerConfig(architecture, version);
+  
+  // Create the container with the Windows configuration
+  return createContainer(malwareId, malwareContent, malwareName, windowsConfig);
+};
+```
+
+### Getting Windows Container Configurations
+
+```typescript
+// Example of getting Windows container configuration
+export const getWindowsContainerConfig = (
+  architecture: ArchitectureType = 'x64',
+  version: WindowsVersion = 'windows-10'
+): ContainerConfig => {
+  // Check if the requested architecture is supported
+  if (!WINDOWS_CONTAINERS[architecture]) {
+    console.warn(`Architecture ${architecture} not supported, falling back to x64`);
+    architecture = 'x64';
+  }
+
+  // Check if the requested version is supported for this architecture
+  if (!WINDOWS_CONTAINERS[architecture][version]) {
+    console.warn(`Windows version ${version} not supported for ${architecture}, falling back to windows-10`);
+    version = 'windows-10';
+  }
+
+  const imageTag = WINDOWS_CONTAINERS[architecture][version].imageTag;
+
+  return {
+    os: 'windows',
+    architecture,
+    version,
+    imageTag,
+  };
+};
+```
+
+### Getting Available Windows Versions and Architectures
+
+```typescript
+// Example of getting available Windows versions for a specific architecture
+export const getAvailableWindowsVersions = (architecture: ArchitectureType): WindowsVersion[] => {
+  if (!WINDOWS_CONTAINERS[architecture]) {
+    return [];
+  }
+  
+  return Object.keys(WINDOWS_CONTAINERS[architecture]) as WindowsVersion[];
+};
+
+// Example of getting available architectures for Windows containers
+export const getAvailableWindowsArchitectures = (): ArchitectureType[] => {
+  return Object.keys(WINDOWS_CONTAINERS) as ArchitectureType[];
 };
 ```
 
