@@ -128,10 +128,10 @@ Or you can use the standard commands:
 
 For web development (recommended approach):
 ```bash
-npm run start:web
+npx serve dist
 ```
 
-This command builds the app with environment variables properly bundled and serves it using a static file server.
+This command serves the built app from the dist directory using a static file server.
 
 For mobile development:
 ```bash
