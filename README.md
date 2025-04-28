@@ -8,7 +8,6 @@ Athena is a cross-platform application designed to help security researchers ana
 
 - [Overview](#overview)
 - [Features](#features)
-- [Screenshots](#screenshots)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -16,7 +15,7 @@ Athena is a cross-platform application designed to help security researchers ana
 - [Usage Guide](#usage-guide)
 - [Architecture](#architecture)
 - [Documentation](#documentation)
-- [License](#license)
+- [Screenshots](#screenshots)
 
 ## 🔍 Overview
 
@@ -37,41 +36,6 @@ The application is designed with security in mind, providing isolated container 
 - **Deobfuscation**: Convert obfuscated malicious code into readable, understandable code
 - **Vulnerability Detection**: Identify potential security vulnerabilities in the analyzed code
 - **Cross-Platform**: Works on iOS, Android, and web platforms
-
-## 📱 Screenshots
-
-### Home Screen
-
-![Home Screen](./Athena/screenshots/home2.png)
-
-The Home screen is the main interface for analyzing malware files. It features:
-- AI Model selection
-- File upload functionality
-- Container isolation option
-- Analysis button
-- Results display area
-
-### About Screen
-
-![About Screen](./Athena/screenshots/about2.png)
-
-The About screen provides information about Athena and its features:
-- Overview of Athena's purpose
-- Detailed information about AI models
-- Secure container analysis features
-- Metasploit integration details
-- Security features
-
-### Settings Screen
-
-![Settings Screen](./Athena/screenshots/settings2.png)
-
-The Settings screen allows configuration of API keys and other settings:
-- OpenAI API key configuration
-- Claude API key configuration
-- DeepSeek API key configuration
-- Local model settings
-- Save and clear options
 
 ## 🚀 Getting Started
 
@@ -230,3 +194,25 @@ Athena comes with comprehensive documentation to help you understand and use the
 - [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md) - Documentation for the AI model selection component
 - [FileUploader](./docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
 - [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md) - Documentation for the analysis results component
+
+## 📱 Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>Home Screen</b></td>
+      <td align="center"><b>About Screen</b></td>
+      <td align="center"><b>Settings Screen</b></td>
+    </tr>
+    <tr>
+      <td><img src="./Athena/screenshots/home2.png" width="250" alt="Home Screen"/></td>
+      <td><img src="./Athena/screenshots/about2.png" width="250" alt="About Screen"/></td>
+      <td><img src="./Athena/screenshots/settings2.png" width="250" alt="Settings Screen"/></td>
+    </tr>
+    <tr>
+      <td>Main interface for analyzing malware files</td>
+      <td>Information about Athena's features</td>
+      <td>Configuration of API keys and settings</td>
+    </tr>
+  </table>
+</div>
