@@ -59,12 +59,21 @@ export interface Container {
 export type OSType = 'windows' | 'linux' | 'macos';
 export type ArchitectureType = 'x86' | 'x64' | 'arm' | 'arm64';
 
+export interface ContainerResourceLimits {
+  cpu?: number;       // CPU cores (e.g., 1 = 1 core, 0.5 = half a core)
+  memory?: number;    // Memory in MB
+  diskSpace?: number; // Disk space in MB
+  networkSpeed?: number; // Network speed in Mbps
+  ioOperations?: number; // Max I/O operations per second
+}
+
 export interface ContainerConfig {
   os: OSType;
   architecture: ArchitectureType;
   version?: string;
   imageTag?: string;
   distribution?: string; // For Linux distributions
+  resources?: ContainerResourceLimits; // Resource limits for the container
 }
 
 // Linux specific types
