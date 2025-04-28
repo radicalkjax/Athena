@@ -55,16 +55,23 @@ The Settings screen allows configuration of API keys and other settings:
    npm install
    ```
 
-2. Start the app:
+2. Set up environment variables for API keys:
+   - Create a `.env` file in the Athena directory
+   - Add your API keys (see [Environment Variables](./Athena/README.md#environment-variables) for details)
+   - You can use the provided `.env.example` file as a template
+
+3. Start the app:
    ```bash
    npx expo start
    ```
 
-3. Open the app in your preferred environment:
+4. Open the app in your preferred environment:
    - iOS simulator
    - Android emulator
    - Web browser
    - Expo Go app on a physical device
+
+> **Note:** API keys can be set either through environment variables or in the Settings screen of the app. Using environment variables is recommended for development.
 
 ## Technical Documentation
 
@@ -204,7 +211,20 @@ flowchart TD
     A --> C[Container Isolation]
     A --> D[Input Sanitization]
     A --> E[Secure Storage]
+    
+    B --> B1[Environment Variables]
+    B --> B2[AsyncStorage]
+    B --> B3[Memory Cache]
+    
+    E --> E1[Secure API Key Storage]
+    E --> E2[File Isolation]
 ```
+
+The API key security implementation uses a multi-layered approach:
+1. **Environment Variables**: API keys are primarily stored in `.env` files which are excluded from version control
+2. **AsyncStorage**: For keys entered through the UI, secure AsyncStorage is used for persistence
+3. **Memory Cache**: During runtime, keys are cached in memory for efficient access
+4. **Fallback Mechanism**: The system checks environment variables first, then AsyncStorage if needed
 
 ## Key Components
 
