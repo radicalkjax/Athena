@@ -12,7 +12,7 @@ Athena is a cross-platform application designed to help security researchers ana
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Configuration](#configuration)
-- [Usage Guide](#usage-guide)
+- [User Guide](#user-guide)
 - [Architecture](#architecture)
 - [Documentation](#documentation)
 - [Screenshots](#screenshots)
@@ -32,6 +32,10 @@ The application is designed with security in mind, providing isolated container 
   - Claude 3 Opus
   - DeepSeek Coder
 - **Secure Container Analysis**: Run malware in an isolated container environment for safer analysis
+  - Support for Windows, Linux, and macOS containers
+  - Configurable resource limits (CPU, memory, disk)
+  - Isolated network environment
+- **Advanced Analysis Options**: Configure analysis depth and focus areas
 - **Metasploit Integration**: Access the Metasploit database to identify vulnerabilities and related exploits
 - **Deobfuscation**: Convert obfuscated malicious code into readable, understandable code
 - **Vulnerability Detection**: Identify potential security vulnerabilities in the analyzed code
@@ -99,7 +103,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 
 3. You can use the provided `.env.example` file as a template
 
-## 📖 Usage Guide
+## 📖 User Guide
 
 ### Starting the Application
 
@@ -142,7 +146,10 @@ This will start the Expo development server, allowing you to run the app on:
 
 1. **Select an AI Model**: Choose from available AI models in the dropdown
 2. **Upload a File**: Click the "Upload" button to select a malware file for analysis
-3. **Configure Analysis Options**: Choose whether to use container isolation
+3. **Configure Analysis Options**: 
+   - **Container Isolation**: Enable to run analysis in an isolated container environment
+   - **Container Configuration**: Select the container type (Windows, Linux, or macOS) and configure resource limits
+   - **Analysis Depth**: Choose between quick scan or deep analysis
 4. **Start Analysis**: Click the "Analyze" button to begin the analysis process
 5. **View Results**: Once analysis is complete, view the results in the three tabs:
    - Deobfuscated Code: Shows the cleaned, readable version of the malware code
@@ -192,8 +199,10 @@ Athena comes with comprehensive documentation to help you understand and use the
 ### Component Documentation
 
 - [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md) - Documentation for the AI model selection component
-- [FileUploader](./docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
+- [AnalysisOptionsPanel](./docs/components/ANALYSIS_OPTIONS_PANEL.md) - Documentation for the analysis options panel component
 - [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md) - Documentation for the analysis results component
+- [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md) - Documentation for the container configuration component
+- [FileUploader](./docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
 
 ## 📱 Screenshots
 

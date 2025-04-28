@@ -7,11 +7,11 @@ This is the Athena project directory. For comprehensive documentation, please re
 ## Quick Links
 
 - [Features](../README.md#features)
-- [Screenshots](../README.md#screenshots)
 - [Getting Started](../README.md#getting-started)
-- [Usage Guide](../README.md#usage-guide)
+- [User Guide](../README.md#user-guide)
 - [Architecture](../README.md#architecture)
 - [Documentation](../README.md#documentation)
+- [Screenshots](../README.md#screenshots)
 
 ## Documentation
 
@@ -26,8 +26,10 @@ Athena comes with comprehensive documentation to help you understand and use the
 ### Component Documentation
 
 - [AIModelSelector](../docs/components/AI_MODEL_SELECTOR.md) - Documentation for the AI model selection component
-- [FileUploader](../docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
+- [AnalysisOptionsPanel](../docs/components/ANALYSIS_OPTIONS_PANEL.md) - Documentation for the analysis options panel component
 - [AnalysisResults](../docs/components/ANALYSIS_RESULTS.md) - Documentation for the analysis results component
+- [ContainerConfigSelector](../docs/components/CONTAINER_CONFIG_SELECTOR.md) - Documentation for the container configuration component
+- [FileUploader](../docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
 
 ## Helper Scripts
 
