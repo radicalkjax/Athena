@@ -6,10 +6,13 @@ import { IconSymbol } from './ui/IconSymbol';
 import { AIModel } from '@/types';
 import { useAppStore } from '@/store';
 import * as analysisService from '@/services/analysisService';
+import * as openaiService from '@/services/openai';
+import * as claudeService from '@/services/claude';
+import * as deepseekService from '@/services/deepseek';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { AiFillRobot, AiFillOpenAI, AiFillMeh, AiOutlineQq, AiOutlineWeibo } from 'react-icons/ai';
-// Using localStorage for web environment
+import { OPENAI_API_KEY, CLAUDE_API_KEY, DEEPSEEK_API_KEY } from '@env';
 
 interface AIModelSelectorProps {
   onModelSelect: (model: AIModel) => void;
@@ -36,40 +39,61 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
       setLoading(true);
       setError(null);
       
-      // Direct check for API keys with error handling
-      let openaiKey = null;
-      let claudeKey = null;
-      let deepseekKey = null;
+      // Check for API keys using environment variables and service functions
+      let hasOpenAIKey = false;
+      let hasClaudeKey = false;
+      let hasDeepSeekKey = false;
       
-      try {
-        // Try to get API keys from localStorage for web environments
-        if (typeof window !== 'undefined' && window.localStorage) {
-          try {
-            openaiKey = localStorage.getItem('athena_openai_api_key');
-            claudeKey = localStorage.getItem('athena_claude_api_key');
-            deepseekKey = localStorage.getItem('athena_deepseek_api_key');
-            
-            console.log('API key check from localStorage:');
-            console.log('- OpenAI key exists:', !!openaiKey);
-            console.log('- Claude key exists:', !!claudeKey);
-            console.log('- DeepSeek key exists:', !!deepseekKey);
-          } catch (e) {
-            console.error('Error checking localStorage:', e);
-          }
-        }
-      } catch (error) {
-        console.error('Error accessing storage:', error);
-        // If storage access fails, we'll try to use the service functions
-        console.log('Falling back to service functions for model availability');
+      // First check environment variables
+      if (OPENAI_API_KEY) {
+        console.log('Found OpenAI key in environment variables');
+        hasOpenAIKey = true;
       }
       
-      // EMERGENCY FIX: Always add OpenAI model if API key exists
-      console.log('EMERGENCY FIX: Always add OpenAI model if API key exists');
+      if (CLAUDE_API_KEY) {
+        console.log('Found Claude key in environment variables');
+        hasClaudeKey = true;
+      }
+      
+      if (DEEPSEEK_API_KEY) {
+        console.log('Found DeepSeek key in environment variables');
+        hasDeepSeekKey = true;
+      }
+      
+      // If not found in environment variables, check using service functions
+      if (!hasOpenAIKey) {
+        try {
+          hasOpenAIKey = await openaiService.hasOpenAIApiKey();
+          console.log('OpenAI key check from service:', hasOpenAIKey);
+        } catch (e) {
+          console.error('Error checking OpenAI key with service:', e);
+        }
+      }
+      
+      if (!hasClaudeKey) {
+        try {
+          hasClaudeKey = await claudeService.hasClaudeApiKey();
+          console.log('Claude key check from service:', hasClaudeKey);
+        } catch (e) {
+          console.error('Error checking Claude key with service:', e);
+        }
+      }
+      
+      if (!hasDeepSeekKey) {
+        try {
+          hasDeepSeekKey = await deepseekService.hasDeepSeekApiKey();
+          console.log('DeepSeek key check from service:', hasDeepSeekKey);
+        } catch (e) {
+          console.error('Error checking DeepSeek key with service:', e);
+        }
+      }
+      
+      // Add models based on available API keys
       const availableModels: AIModel[] = [];
       
-      // First, check if we have an OpenAI API key
-      if (openaiKey) {
-        console.log('OpenAI API key found, length:', openaiKey.length);
+      // Add OpenAI models if API key exists
+      if (hasOpenAIKey) {
+        console.log('OpenAI API key is available');
         // Find all OpenAI models in the store
         const openaiModels = aiModels.filter(model => model.type === 'openai');
         if (openaiModels.length > 0) {
@@ -82,12 +106,12 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
           console.log('No OpenAI models found in aiModels');
         }
       } else {
-        console.log('No OpenAI API key found');
+        console.log('No OpenAI API key available');
       }
       
-      // Check for Claude API key
-      if (claudeKey) {
-        console.log('Claude API key found');
+      // Add Claude models if API key exists
+      if (hasClaudeKey) {
+        console.log('Claude API key is available');
         // Find all Claude models in the store
         const claudeModels = aiModels.filter(model => model.type === 'claude');
         if (claudeModels.length > 0) {
@@ -99,11 +123,13 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
         } else {
           console.log('No Claude models found in aiModels');
         }
+      } else {
+        console.log('No Claude API key available');
       }
       
-      // Check for DeepSeek API key
-      if (deepseekKey) {
-        console.log('DeepSeek API key found');
+      // Add DeepSeek models if API key exists
+      if (hasDeepSeekKey) {
+        console.log('DeepSeek API key is available');
         // Find all DeepSeek models in the store
         const deepseekModels = aiModels.filter(model => model.type === 'deepseek');
         if (deepseekModels.length > 0) {
@@ -115,6 +141,8 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
         } else {
           console.log('No DeepSeek models found in aiModels');
         }
+      } else {
+        console.log('No DeepSeek API key available');
       }
       
       

@@ -2,5 +2,9 @@
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.3.0",
     "expo-font": "^13.0.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/react": "~18.3.12"
   }
 }
