@@ -1,9 +1,12 @@
 import { createDeepSeekClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { sanitizeString } from '@/utils/helpers';
+import { DEEPSEEK_API_KEY, DEEPSEEK_API_BASE_URL as ENV_DEEPSEEK_API_BASE_URL } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-// API key storage - using localStorage for web
+// API key storage - using AsyncStorage for persistence
 let cachedApiKey: string | null = null;
-let cachedBaseUrl: string | null = null;
+const DEEPSEEK_API_BASE_URL = ENV_DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com/v1';
 
 /**
  * Initialize DeepSeek API client
@@ -18,16 +21,22 @@ export const initDeepSeek = async (apiKey?: string, baseUrl?: string): Promise<R
     let url = baseUrl || cachedBaseUrl || 'https://api.deepseek.com/v1';
     
     if (!key) {
-      // Try to get from localStorage in web environment
-      if (typeof window !== 'undefined' && window.localStorage) {
-        key = localStorage.getItem('athena_deepseek_api_key');
-        url = localStorage.getItem('athena_deepseek_base_url') || url;
-        console.log('Checking localStorage for DeepSeek key:', !!key);
+      // Try to get from environment variable
+      key = DEEPSEEK_API_KEY || Constants.manifest?.extra?.deepseekApiKey || null;
+    }
+    
+    if (!key) {
+      // Try to get from AsyncStorage
+      try {
+        key = await AsyncStorage.getItem('athena_deepseek_api_key');
+        console.log('Checking AsyncStorage for DeepSeek key:', !!key);
+      } catch (error) {
+        console.error('Error accessing AsyncStorage:', error);
       }
     }
     
     if (!key) {
-      throw new Error('DeepSeek API key not found. Please set your API key in the settings.');
+      throw new Error('DeepSeek API key not found. Please set your API key in the settings or .env file.');
     }
     
     console.log('Initializing DeepSeek client with key');
@@ -54,16 +63,12 @@ export const saveDeepSeekApiKey = async (apiKey: string, baseUrl?: string): Prom
       cachedBaseUrl = baseUrl;
     }
     
-    // Save to localStorage for web environment
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('athena_deepseek_api_key', apiKey);
-      
-      if (baseUrl) {
-        localStorage.setItem('athena_deepseek_base_url', baseUrl);
-        console.log('Saved DeepSeek base URL to localStorage');
-      }
-      
-      console.log('Saved DeepSeek API key to localStorage');
+    // Save to AsyncStorage
+    try {
+      await AsyncStorage.setItem('athena_deepseek_api_key', apiKey);
+      console.log('Saved DeepSeek API key to AsyncStorage');
+    } catch (error) {
+      console.error('Error saving to AsyncStorage:', error);
     }
     
     console.log('Saved DeepSeek API key to memory cache');
@@ -83,9 +88,15 @@ export const hasDeepSeekApiKey = async (): Promise<boolean> => {
     return true;
   }
   
-  // Check localStorage for web environment
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const key = localStorage.getItem('athena_deepseek_api_key');
+  // Check environment variable
+  if (DEEPSEEK_API_KEY || Constants.manifest?.extra?.deepseekApiKey) {
+    cachedApiKey = DEEPSEEK_API_KEY || Constants.manifest?.extra?.deepseekApiKey; // Cache it for future use
+    return true;
+  }
+  
+  // Check AsyncStorage
+  try {
+    const key = await AsyncStorage.getItem('athena_deepseek_api_key');
     if (key) {
       cachedApiKey = key; // Cache it for future use
       
@@ -97,6 +108,8 @@ export const hasDeepSeekApiKey = async (): Promise<boolean> => {
       
       return true;
     }
+  } catch (error) {
+    console.error('Error accessing AsyncStorage:', error);
   }
   
   return false;
@@ -111,11 +124,12 @@ export const deleteDeepSeekApiKey = async (): Promise<void> => {
     cachedApiKey = null;
     cachedBaseUrl = null;
     
-    // Clear from localStorage for web environment
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem('athena_deepseek_api_key');
-      localStorage.removeItem('athena_deepseek_base_url');
-      console.log('Deleted DeepSeek API configuration from localStorage');
+    // Clear from AsyncStorage
+    try {
+      await AsyncStorage.removeItem('athena_deepseek_api_key');
+      console.log('Deleted DeepSeek API key from AsyncStorage');
+    } catch (error) {
+      console.error('Error deleting from AsyncStorage:', error);
     }
     
     console.log('Deleted DeepSeek API configuration from memory cache');
