@@ -8,16 +8,16 @@ Athena is a cross-platform application designed to help security researchers ana
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Getting Started](#getting-started)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Configuration](#configuration)
-- [User Guide](#user-guide)
-- [Architecture](#architecture)
-- [Documentation](#documentation)
-- [Screenshots](#screenshots)
+- [User Guide](#-user-guide)
+- [Architecture](#️-architecture)
+- [Documentation](#-documentation)
+- [Screenshots](#-screenshots)
 
 ## 🔍 Overview
 

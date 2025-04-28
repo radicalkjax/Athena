@@ -10,12 +10,12 @@ This is the Athena project directory. For comprehensive documentation, please re
 
 ## Quick Links
 
-- [Features](../README.md#features)
-- [Getting Started](../README.md#getting-started)
-- [User Guide](../README.md#user-guide)
-- [Architecture](../README.md#architecture)
-- [Documentation](../README.md#documentation)
-- [Screenshots](../README.md#screenshots)
+- [Features](../README.md#-features)
+- [Getting Started](../README.md#-getting-started)
+- [User Guide](../README.md#-user-guide)
+- [Architecture](../README.md#️-architecture)
+- [Documentation](../README.md#-documentation)
+- [Screenshots](../README.md#-screenshots)
 
 ## Documentation
 
