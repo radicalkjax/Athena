@@ -212,6 +212,55 @@ macOS containers are particularly useful for analyzing:
 
 The default macOS container is macOS 14 (Sonoma) ARM64 if no specific configuration is provided, reflecting the current trend toward Apple Silicon-based Macs.
 
+### Container Resource Management
+
+Athena provides fine-grained control over container resources to optimize performance and resource utilization. You can specify resource limits for each container, including:
+
+- **CPU**: Number of CPU cores allocated to the container (e.g., 1 = 1 core, 0.5 = half a core)
+- **Memory**: Amount of RAM in MB allocated to the container
+- **Disk Space**: Amount of disk space in MB allocated to the container
+- **Network Speed**: Network bandwidth in Mbps allocated to the container
+- **I/O Operations**: Maximum I/O operations per second (IOPS) allowed for the container
+
+#### Resource Presets
+
+Athena provides predefined resource presets for common use cases:
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 0.5 | 1,024 | 2,048 | 5 | 500 | Simple malware analysis with minimal resource requirements |
+| Standard | 1 | 2,048 | 5,120 | 10 | 1,000 | General-purpose malware analysis |
+| Performance | 2 | 4,096 | 10,240 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 4 | 8,192 | 20,480 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+```mermaid
+graph TD
+    A[Container Resource Management] --> B[CPU Allocation]
+    A --> C[Memory Allocation]
+    A --> D[Disk Space Allocation]
+    A --> E[Network Bandwidth]
+    A --> F[I/O Operations]
+    
+    B --> B1[0.5 Core - Minimal]
+    B --> B2[1 Core - Standard]
+    B --> B3[2 Cores - Performance]
+    B --> B4[4 Cores - Intensive]
+    
+    C --> C1[1 GB - Minimal]
+    C --> C2[2 GB - Standard]
+    C --> C3[4 GB - Performance]
+    C --> C4[8 GB - Intensive]
+```
+
+#### Custom Resource Limits
+
+In addition to the predefined presets, you can create custom resource limits tailored to specific analysis requirements. This is particularly useful for:
+
+- Analyzing malware with specific resource requirements
+- Simulating different target environments
+- Optimizing resource utilization for parallel analysis
+- Testing malware behavior under different resource constraints
+
 ## Container Lifecycle
 
 ```mermaid
@@ -617,6 +666,119 @@ export const getAvailableMacOSVersions = (architecture: ArchitectureType): MacOS
 // Example of getting available architectures for macOS containers
 export const getAvailableMacOSArchitectures = (): ArchitectureType[] => {
   return Object.keys(MACOS_CONTAINERS) as ArchitectureType[];
+};
+```
+
+### Resource Management
+
+```typescript
+// Default resource configurations
+const DEFAULT_RESOURCE_LIMITS: ContainerResourceLimits = {
+  cpu: 1,         // 1 CPU core
+  memory: 2048,   // 2 GB RAM
+  diskSpace: 5120, // 5 GB disk space
+  networkSpeed: 10, // 10 Mbps
+  networkSpeed: 10, // 10 Mbps
+  ioOperations: 1000 // 1000 IOPS
+};
+
+// Resource presets for different analysis types
+const RESOURCE_PRESETS = {
+  minimal: {
+    cpu: 0.5,
+    memory: 1024,
+    diskSpace: 2048,
+    networkSpeed: 5,
+    ioOperations: 500
+  },
+  standard: DEFAULT_RESOURCE_LIMITS,
+  performance: {
+    cpu: 2,
+    memory: 4096,
+    diskSpace: 10240,
+    networkSpeed: 50,
+    ioOperations: 5000
+  },
+  intensive: {
+    cpu: 4,
+    memory: 8192,
+    diskSpace: 20480,
+    networkSpeed: 100,
+    ioOperations: 10000
+  }
+};
+```
+
+### Getting Resource Presets
+
+```typescript
+/**
+ * Get resource limits by preset name
+ * @param preset Resource preset name (minimal, standard, performance, intensive)
+ * @returns Resource limits configuration
+ */
+export const getResourcePreset = (
+  preset: 'minimal' | 'standard' | 'performance' | 'intensive' = 'standard'
+): ContainerResourceLimits => {
+  return RESOURCE_PRESETS[preset] || DEFAULT_RESOURCE_LIMITS;
+};
+```
+
+### Creating Custom Resource Limits
+
+```typescript
+/**
+ * Create custom resource limits configuration
+ * @param cpu CPU cores (e.g., 1 = 1 core, 0.5 = half a core)
+ * @param memory Memory in MB
+ * @param diskSpace Disk space in MB
+ * @param networkSpeed Network speed in Mbps
+ * @param ioOperations Max I/O operations per second
+ * @returns Custom resource limits configuration
+ */
+export const createResourceLimits = (
+  cpu?: number,
+  memory?: number,
+  diskSpace?: number,
+  networkSpeed?: number,
+  ioOperations?: number
+): ContainerResourceLimits => {
+  return {
+    cpu: cpu !== undefined ? cpu : DEFAULT_RESOURCE_LIMITS.cpu,
+    memory: memory !== undefined ? memory : DEFAULT_RESOURCE_LIMITS.memory,
+    diskSpace: diskSpace !== undefined ? diskSpace : DEFAULT_RESOURCE_LIMITS.diskSpace,
+    networkSpeed: networkSpeed !== undefined ? networkSpeed : DEFAULT_RESOURCE_LIMITS.networkSpeed,
+    ioOperations: ioOperations !== undefined ? ioOperations : DEFAULT_RESOURCE_LIMITS.ioOperations
+  };
+};
+```
+
+### Creating Containers with Resource Limits
+
+```typescript
+/**
+ * Create a Windows container with resource limits
+ * @param malwareId ID of the malware file to analyze
+ * @param malwareContent Base64-encoded content of the malware file
+ * @param malwareName Name of the malware file
+ * @param architecture Architecture type (x86, x64, arm, arm64)
+ * @param version Windows version (windows-7, windows-8, windows-10, windows-11)
+ * @param resources Resource limits for the container
+ * @returns Container object
+ */
+export const createWindowsContainer = async (
+  malwareId: string,
+  malwareContent: string,
+  malwareName: string,
+  architecture: ArchitectureType = 'x64',
+  version: WindowsVersion = 'windows-10',
+  resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
+): Promise<Container> => {
+  // Get the Windows container configuration with resource limits
+  const windowsConfig = getWindowsContainerConfig(architecture, version, resources);
+  
+  // Create the container with the Windows configuration
+  return createContainer(malwareId, malwareContent, malwareName, windowsConfig);
 };
 ```
 

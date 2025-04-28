@@ -1,6 +1,6 @@
 import { createContainerClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import * as SecureStore from 'expo-secure-store';
-import { Container, ContainerConfig, OSType, ArchitectureType, LinuxVersion, LinuxDistribution, MacOSVersion } from '@/types';
+import { Container, ContainerConfig, OSType, ArchitectureType, LinuxVersion, LinuxDistribution, MacOSVersion, ContainerResourceLimits } from '@/types';
 import { generateId } from '@/utils/helpers';
 
 // Storage keys
@@ -151,11 +151,47 @@ const MACOS_CONTAINERS: MacOSContainersConfig = {
   },
 };
 
+// Default resource configurations
+const DEFAULT_RESOURCE_LIMITS: ContainerResourceLimits = {
+  cpu: 1,         // 1 CPU core
+  memory: 2048,   // 2 GB RAM
+  diskSpace: 5120, // 5 GB disk space
+  networkSpeed: 10, // 10 Mbps
+  ioOperations: 1000 // 1000 IOPS
+};
+
+// Resource presets for different analysis types
+const RESOURCE_PRESETS = {
+  minimal: {
+    cpu: 0.5,
+    memory: 1024,
+    diskSpace: 2048,
+    networkSpeed: 5,
+    ioOperations: 500
+  },
+  standard: DEFAULT_RESOURCE_LIMITS,
+  performance: {
+    cpu: 2,
+    memory: 4096,
+    diskSpace: 10240,
+    networkSpeed: 50,
+    ioOperations: 5000
+  },
+  intensive: {
+    cpu: 4,
+    memory: 8192,
+    diskSpace: 20480,
+    networkSpeed: 100,
+    ioOperations: 10000
+  }
+};
+
 // Default container configurations
 const DEFAULT_CONTAINER_CONFIG: ContainerConfig = {
   os: 'windows',
   architecture: 'x64',
   version: 'windows-10',
+  resources: DEFAULT_RESOURCE_LIMITS
 };
 
 // Default Linux container configuration
@@ -164,6 +200,7 @@ const DEFAULT_LINUX_CONFIG: ContainerConfig = {
   architecture: 'x64',
   version: 'ubuntu-22.04',
   distribution: 'ubuntu',
+  resources: DEFAULT_RESOURCE_LIMITS
 };
 
 // Default macOS container configuration
@@ -171,6 +208,7 @@ const DEFAULT_MACOS_CONFIG: ContainerConfig = {
   os: 'macos',
   architecture: 'arm64',
   version: 'macos-14', // Sonoma
+  resources: DEFAULT_RESOURCE_LIMITS
 };
 
 /**
@@ -227,14 +265,52 @@ export const deleteContainerConfig = async (): Promise<void> => {
 };
 
 /**
+ * Get resource limits by preset name
+ * @param preset Resource preset name (minimal, standard, performance, intensive)
+ * @returns Resource limits configuration
+ */
+export const getResourcePreset = (
+  preset: 'minimal' | 'standard' | 'performance' | 'intensive' = 'standard'
+): ContainerResourceLimits => {
+  return RESOURCE_PRESETS[preset] || DEFAULT_RESOURCE_LIMITS;
+};
+
+/**
+ * Create custom resource limits configuration
+ * @param cpu CPU cores (e.g., 1 = 1 core, 0.5 = half a core)
+ * @param memory Memory in MB
+ * @param diskSpace Disk space in MB
+ * @param networkSpeed Network speed in Mbps
+ * @param ioOperations Max I/O operations per second
+ * @returns Custom resource limits configuration
+ */
+export const createResourceLimits = (
+  cpu?: number,
+  memory?: number,
+  diskSpace?: number,
+  networkSpeed?: number,
+  ioOperations?: number
+): ContainerResourceLimits => {
+  return {
+    cpu: cpu !== undefined ? cpu : DEFAULT_RESOURCE_LIMITS.cpu,
+    memory: memory !== undefined ? memory : DEFAULT_RESOURCE_LIMITS.memory,
+    diskSpace: diskSpace !== undefined ? diskSpace : DEFAULT_RESOURCE_LIMITS.diskSpace,
+    networkSpeed: networkSpeed !== undefined ? networkSpeed : DEFAULT_RESOURCE_LIMITS.networkSpeed,
+    ioOperations: ioOperations !== undefined ? ioOperations : DEFAULT_RESOURCE_LIMITS.ioOperations
+  };
+};
+
+/**
  * Get Windows container configuration
  * @param architecture Architecture type (x86, x64, arm, arm64)
  * @param version Windows version (windows-7, windows-8, windows-10, windows-11)
- * @returns Container configuration with image tag
+ * @param resources Resource limits for the container
+ * @returns Container configuration with image tag and resource limits
  */
 export const getWindowsContainerConfig = (
   architecture: ArchitectureType = DEFAULT_CONTAINER_CONFIG.architecture,
-  version: WindowsVersion = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion
+  version: WindowsVersion = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion,
+  resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): ContainerConfig => {
   // Check if the requested architecture is supported
   if (!WINDOWS_CONTAINERS[architecture]) {
@@ -255,6 +331,7 @@ export const getWindowsContainerConfig = (
     architecture,
     version,
     imageTag,
+    resources,
   };
 };
 
@@ -283,11 +360,13 @@ export const getAvailableWindowsArchitectures = (): ArchitectureType[] => {
  * Get Linux container configuration
  * @param architecture Architecture type (x86, x64, arm, arm64)
  * @param version Linux version (e.g., ubuntu-22.04, debian-11, etc.)
- * @returns Container configuration with image tag
+ * @param resources Resource limits for the container
+ * @returns Container configuration with image tag and resource limits
  */
 export const getLinuxContainerConfig = (
   architecture: ArchitectureType = DEFAULT_LINUX_CONFIG.architecture,
-  version: LinuxVersion = DEFAULT_LINUX_CONFIG.version as LinuxVersion
+  version: LinuxVersion = DEFAULT_LINUX_CONFIG.version as LinuxVersion,
+  resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): ContainerConfig => {
   // Check if the requested architecture is supported
   if (!LINUX_CONTAINERS[architecture]) {
@@ -310,6 +389,7 @@ export const getLinuxContainerConfig = (
     version,
     distribution,
     imageTag,
+    resources,
   };
 };
 
@@ -354,11 +434,13 @@ export const getAvailableLinuxDistributions = (): LinuxDistribution[] => {
  * Get macOS container configuration
  * @param architecture Architecture type (x64, arm64)
  * @param version macOS version (macos-11, macos-12, macos-13, macos-14)
- * @returns Container configuration with image tag
+ * @param resources Resource limits for the container
+ * @returns Container configuration with image tag and resource limits
  */
 export const getMacOSContainerConfig = (
   architecture: ArchitectureType = DEFAULT_MACOS_CONFIG.architecture,
-  version: MacOSVersion = DEFAULT_MACOS_CONFIG.version as MacOSVersion
+  version: MacOSVersion = DEFAULT_MACOS_CONFIG.version as MacOSVersion,
+  resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): ContainerConfig => {
   // Check if the requested architecture is supported
   if (!MACOS_CONTAINERS[architecture]) {
@@ -379,6 +461,7 @@ export const getMacOSContainerConfig = (
     architecture,
     version,
     imageTag,
+    resources,
   };
 };
 
@@ -432,17 +515,20 @@ export const createContainer = async (
     if (config.os === 'windows') {
       finalConfig = getWindowsContainerConfig(
         config.architecture,
-        config.version as WindowsVersion
+        config.version as WindowsVersion,
+        config.resources
       );
     } else if (config.os === 'linux') {
       finalConfig = getLinuxContainerConfig(
         config.architecture,
-        config.version as LinuxVersion
+        config.version as LinuxVersion,
+        config.resources
       );
     } else if (config.os === 'macos') {
       finalConfig = getMacOSContainerConfig(
         config.architecture,
-        config.version as MacOSVersion
+        config.version as MacOSVersion,
+        config.resources
       );
     }
     
@@ -647,6 +733,7 @@ export const runMalwareAnalysis = async (
  * @param malwareName Name of the malware file
  * @param architecture Architecture type (x86, x64, arm, arm64)
  * @param version Windows version (windows-7, windows-8, windows-10, windows-11)
+ * @param resources Resource limits for the container (optional)
  * @returns Container object
  */
 export const createWindowsContainer = async (
@@ -654,10 +741,11 @@ export const createWindowsContainer = async (
   malwareContent: string,
   malwareName: string,
   architecture: ArchitectureType = DEFAULT_CONTAINER_CONFIG.architecture,
-  version: WindowsVersion = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion
+  version: WindowsVersion = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion,
+  resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): Promise<Container> => {
   // Get the Windows container configuration
-  const windowsConfig = getWindowsContainerConfig(architecture, version);
+  const windowsConfig = getWindowsContainerConfig(architecture, version, resources);
   
   // Create the container with the Windows configuration
   return createContainer(malwareId, malwareContent, malwareName, windowsConfig);
@@ -670,6 +758,7 @@ export const createWindowsContainer = async (
  * @param malwareName Name of the malware file
  * @param architecture Architecture type (x86, x64, arm, arm64)
  * @param version Linux version (e.g., ubuntu-22.04, debian-11, etc.)
+ * @param resources Resource limits for the container (optional)
  * @returns Container object
  */
 export const createLinuxContainer = async (
@@ -677,10 +766,11 @@ export const createLinuxContainer = async (
   malwareContent: string,
   malwareName: string,
   architecture: ArchitectureType = DEFAULT_LINUX_CONFIG.architecture,
-  version: LinuxVersion = DEFAULT_LINUX_CONFIG.version as LinuxVersion
+  version: LinuxVersion = DEFAULT_LINUX_CONFIG.version as LinuxVersion,
+  resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): Promise<Container> => {
   // Get the Linux container configuration
-  const linuxConfig = getLinuxContainerConfig(architecture, version);
+  const linuxConfig = getLinuxContainerConfig(architecture, version, resources);
   
   // Create the container with the Linux configuration
   return createContainer(malwareId, malwareContent, malwareName, linuxConfig);
@@ -693,6 +783,7 @@ export const createLinuxContainer = async (
  * @param malwareName Name of the malware file
  * @param architecture Architecture type (x64, arm64)
  * @param version macOS version (macos-11, macos-12, macos-13, macos-14)
+ * @param resources Resource limits for the container (optional)
  * @returns Container object
  */
 export const createMacOSContainer = async (
@@ -700,10 +791,11 @@ export const createMacOSContainer = async (
   malwareContent: string,
   malwareName: string,
   architecture: ArchitectureType = DEFAULT_MACOS_CONFIG.architecture,
-  version: MacOSVersion = DEFAULT_MACOS_CONFIG.version as MacOSVersion
+  version: MacOSVersion = DEFAULT_MACOS_CONFIG.version as MacOSVersion,
+  resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): Promise<Container> => {
   // Get the macOS container configuration
-  const macOSConfig = getMacOSContainerConfig(architecture, version);
+  const macOSConfig = getMacOSContainerConfig(architecture, version, resources);
   
   // Create the container with the macOS configuration
   return createContainer(malwareId, malwareContent, malwareName, macOSConfig);
