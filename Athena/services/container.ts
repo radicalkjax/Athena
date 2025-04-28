@@ -1,11 +1,52 @@
 import { createContainerClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import * as SecureStore from 'expo-secure-store';
-import { Container } from '@/types';
+import { Container, ContainerConfig, OSType, ArchitectureType } from '@/types';
 import { generateId } from '@/utils/helpers';
 
 // Storage keys
 const CONTAINER_API_KEY_STORAGE = 'athena_container_api_key';
 const CONTAINER_API_URL_STORAGE = 'athena_container_api_url';
+
+// Container configuration types
+type WindowsVersion = 'windows-7' | 'windows-8' | 'windows-10' | 'windows-11';
+type ContainerImageConfig = { imageTag: string };
+type ArchitectureConfig = Record<WindowsVersion, ContainerImageConfig>;
+type WindowsContainersConfig = Record<ArchitectureType, ArchitectureConfig>;
+
+// Container configurations
+const WINDOWS_CONTAINERS: WindowsContainersConfig = {
+  x86: {
+    'windows-7': { imageTag: 'windows-7-x86:latest' },
+    'windows-8': { imageTag: 'windows-8-x86:latest' },
+    'windows-10': { imageTag: 'windows-10-x86:latest' },
+    'windows-11': { imageTag: 'windows-11-x86:latest' },
+  },
+  x64: {
+    'windows-7': { imageTag: 'windows-7-x64:latest' },
+    'windows-8': { imageTag: 'windows-8-x64:latest' },
+    'windows-10': { imageTag: 'windows-10-x64:latest' },
+    'windows-11': { imageTag: 'windows-11-x64:latest' },
+  },
+  arm: {
+    'windows-7': { imageTag: 'windows-7-arm:latest' },
+    'windows-8': { imageTag: 'windows-8-arm:latest' },
+    'windows-10': { imageTag: 'windows-10-arm:latest' },
+    'windows-11': { imageTag: 'windows-11-arm:latest' },
+  },
+  arm64: {
+    'windows-7': { imageTag: 'windows-7-arm64:latest' },
+    'windows-8': { imageTag: 'windows-8-arm64:latest' },
+    'windows-10': { imageTag: 'windows-10-arm64:latest' },
+    'windows-11': { imageTag: 'windows-11-arm64:latest' },
+  },
+};
+
+// Default container configurations
+const DEFAULT_CONTAINER_CONFIG: ContainerConfig = {
+  os: 'windows',
+  architecture: 'x64',
+  version: 'windows-10',
+};
 
 /**
  * Initialize Container API client
@@ -61,27 +102,97 @@ export const deleteContainerConfig = async (): Promise<void> => {
 };
 
 /**
+ * Get Windows container configuration
+ * @param architecture Architecture type (x86, x64, arm, arm64)
+ * @param version Windows version (windows-7, windows-8, windows-10, windows-11)
+ * @returns Container configuration with image tag
+ */
+export const getWindowsContainerConfig = (
+  architecture: ArchitectureType = DEFAULT_CONTAINER_CONFIG.architecture,
+  version: WindowsVersion = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion
+): ContainerConfig => {
+  // Check if the requested architecture is supported
+  if (!WINDOWS_CONTAINERS[architecture]) {
+    console.warn(`Architecture ${architecture} not supported, falling back to ${DEFAULT_CONTAINER_CONFIG.architecture}`);
+    architecture = DEFAULT_CONTAINER_CONFIG.architecture;
+  }
+
+  // Check if the requested version is supported for this architecture
+  if (!WINDOWS_CONTAINERS[architecture][version as WindowsVersion]) {
+    console.warn(`Windows version ${version} not supported for ${architecture}, falling back to ${DEFAULT_CONTAINER_CONFIG.version}`);
+    version = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion;
+  }
+
+  const imageTag = WINDOWS_CONTAINERS[architecture][version].imageTag;
+
+  return {
+    os: 'windows',
+    architecture,
+    version,
+    imageTag,
+  };
+};
+
+/**
+ * Get available Windows versions for a specific architecture
+ * @param architecture Architecture type (x86, x64, arm, arm64)
+ * @returns Array of available Windows versions
+ */
+export const getAvailableWindowsVersions = (architecture: ArchitectureType): WindowsVersion[] => {
+  if (!WINDOWS_CONTAINERS[architecture]) {
+    return [];
+  }
+  
+  return Object.keys(WINDOWS_CONTAINERS[architecture]) as WindowsVersion[];
+};
+
+/**
+ * Get available architectures for Windows containers
+ * @returns Array of available architecture types
+ */
+export const getAvailableWindowsArchitectures = (): ArchitectureType[] => {
+  return Object.keys(WINDOWS_CONTAINERS) as ArchitectureType[];
+};
+
+/**
  * Create a new container for malware analysis
  * @param malwareId ID of the malware file to analyze
  * @param malwareContent Base64-encoded content of the malware file
  * @param malwareName Name of the malware file
+ * @param containerConfig Optional container configuration (OS, architecture, version)
  * @returns Container object
  */
 export const createContainer = async (
   malwareId: string,
   malwareContent: string,
-  malwareName: string
+  malwareName: string,
+  containerConfig?: Partial<ContainerConfig>
 ): Promise<Container> => {
   try {
     const client = await initContainerService();
     
     const containerId = generateId();
     
+    // Use provided container config or default to Windows x64
+    const config = containerConfig ? 
+      { ...DEFAULT_CONTAINER_CONFIG, ...containerConfig } : 
+      DEFAULT_CONTAINER_CONFIG;
+    
+    // If it's a Windows container, get the specific Windows container config
+    let finalConfig = config;
+    if (config.os === 'windows') {
+      finalConfig = getWindowsContainerConfig(
+        config.architecture,
+        config.version as WindowsVersion
+      );
+    }
+    
     const requestData = sanitizeRequestData({
       containerId,
       malwareId,
       malwareContent,
       malwareName,
+      containerConfig: finalConfig,
     });
     
     const response = await safeApiCall(
@@ -94,6 +205,8 @@ export const createContainer = async (
       status: 'creating',
       malwareId,
       createdAt: Date.now(),
+      os: finalConfig.os,
+      architecture: finalConfig.architecture,
       ...response.container,
     };
   } catch (error) {
@@ -266,4 +379,27 @@ export const runMalwareAnalysis = async (
     console.error('Malware analysis error:', error);
     throw error;
   }
+};
+
+/**
+ * Create a Windows container for malware analysis
+ * @param malwareId ID of the malware file to analyze
+ * @param malwareContent Base64-encoded content of the malware file
+ * @param malwareName Name of the malware file
+ * @param architecture Architecture type (x86, x64, arm, arm64)
+ * @param version Windows version (windows-7, windows-8, windows-10, windows-11)
+ * @returns Container object
+ */
+export const createWindowsContainer = async (
+  malwareId: string,
+  malwareContent: string,
+  malwareName: string,
+  architecture: ArchitectureType = DEFAULT_CONTAINER_CONFIG.architecture,
+  version: WindowsVersion = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion
+): Promise<Container> => {
+  // Get the Windows container configuration
+  const windowsConfig = getWindowsContainerConfig(architecture, version);
+  
+  // Create the container with the Windows configuration
+  return createContainer(malwareId, malwareContent, malwareName, windowsConfig);
 };

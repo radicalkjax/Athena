@@ -52,6 +52,18 @@ export interface Container {
   malwareId: string;
   createdAt: number;
   error?: string;
+  os?: OSType;
+  architecture?: ArchitectureType;
+}
+
+export type OSType = 'windows' | 'linux' | 'macos';
+export type ArchitectureType = 'x86' | 'x64' | 'arm' | 'arm64';
+
+export interface ContainerConfig {
+  os: OSType;
+  architecture: ArchitectureType;
+  version?: string;
+  imageTag?: string;
 }
 
 // Settings Types
