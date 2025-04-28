@@ -1,6 +1,8 @@
 # Athena - AI-Powered Malware Analysis Assistant
 
-<img src="./Athena/assets/images/real-athena-logo.png" alt="Athena Logo" width="300" />
+<div align="center">
+  <img src="./Athena/assets/images/real-athena-logo.png" alt="Athena Logo" width="300" />
+</div>
 
 Athena is a cross-platform application designed to help security researchers analyze and deobfuscate malware using various AI models. It provides a secure environment for malware analysis with features like isolated container execution and integration with the Metasploit database.
 
