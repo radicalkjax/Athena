@@ -7,10 +7,12 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useAppStore } from '@/store';
-// Using localStorage for web environment
+// Import services for API key management
 import * as openaiService from '@/services/openai';
 import * as claudeService from '@/services/claude';
 import * as deepseekService from '@/services/deepseek';
+// Import environment variables
+import { OPENAI_API_KEY, CLAUDE_API_KEY, DEEPSEEK_API_KEY } from '@env';
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -30,7 +32,23 @@ export default function SettingsScreen() {
     try {
       console.log('Loading API keys...');
       
-      // Try to load using service functions first
+      // Check for environment variables first
+      if (OPENAI_API_KEY) {
+        console.log('Found OpenAI key in environment variables');
+        setOpenAIKey(OPENAI_API_KEY);
+      }
+      
+      if (CLAUDE_API_KEY) {
+        console.log('Found Claude key in environment variables');
+        setClaudeKey(CLAUDE_API_KEY);
+      }
+      
+      if (DEEPSEEK_API_KEY) {
+        console.log('Found DeepSeek key in environment variables');
+        setDeepseekKey(DEEPSEEK_API_KEY);
+      }
+      
+      // Try to load using service functions next
       let hasOpenAIKey = false;
       let hasClaudeKey = false;
       let hasDeepSeekKey = false;
@@ -48,33 +66,42 @@ export default function SettingsScreen() {
         console.error('Error checking API keys with services:', serviceError);
       }
       
-      // Try to load from localStorage
-      let savedOpenAIKey = null;
-      let savedClaudeKey = null;
-      let savedDeepseekKey = null;
+      // Try to load from AsyncStorage via the service functions
+      try {
+        if (hasOpenAIKey && !openAIKey) {
+          const key = await openaiService.initOpenAI();
+          if (key) setOpenAIKey(key.apiKey || '');
+        }
+        
+        if (hasClaudeKey && !claudeKey) {
+          const key = await claudeService.initClaude();
+          if (key) setClaudeKey(key);
+        }
+        
+        if (hasDeepSeekKey && !deepseekKey) {
+          const key = await deepseekService.initDeepSeek();
+          if (key) setDeepseekKey(key);
+        }
+      } catch (error) {
+        console.error('Error loading keys from services:', error);
+      }
+      
+      // Load local model settings
       let savedUseLocalModels = null;
       let savedLocalModelPath = null;
       
-      // Try localStorage for web environments
-      if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-          savedOpenAIKey = localStorage.getItem('athena_openai_api_key');
-          savedClaudeKey = localStorage.getItem('athena_claude_api_key');
-          savedDeepseekKey = localStorage.getItem('athena_deepseek_api_key');
+      // Try AsyncStorage for local model settings
+      try {
+        // This would use AsyncStorage in a real implementation
+        // For now, we'll keep the localStorage fallback for web
+        if (typeof window !== 'undefined' && window.localStorage) {
           savedUseLocalModels = localStorage.getItem('use_local_models');
           savedLocalModelPath = localStorage.getItem('local_model_path');
-          
-          console.log('Found OpenAI key in localStorage:', !!savedOpenAIKey);
-          console.log('Found Claude key in localStorage:', !!savedClaudeKey);
-          console.log('Found DeepSeek key in localStorage:', !!savedDeepseekKey);
-        } catch (e) {
-          console.error('Error checking localStorage:', e);
         }
+      } catch (e) {
+        console.error('Error loading local model settings:', e);
       }
       
-      if (savedOpenAIKey) setOpenAIKey(savedOpenAIKey);
-      if (savedClaudeKey) setClaudeKey(savedClaudeKey);
-      if (savedDeepseekKey) setDeepseekKey(savedDeepseekKey);
       if (savedUseLocalModels) setUseLocalModels(savedUseLocalModels === 'true');
       if (savedLocalModelPath) setLocalModelPath(savedLocalModelPath);
     } catch (error) {
@@ -93,22 +120,20 @@ export default function SettingsScreen() {
       console.log('DeepSeek key length:', deepseekKey ? deepseekKey.length : 0);
       
       // Save API keys using service functions
-      console.log('Saving OpenAI API key:', openAIKey);
+      console.log('Saving OpenAI API key');
       await openaiService.saveOpenAIApiKey(openAIKey);
       await claudeService.saveClaudeApiKey(claudeKey);
       await deepseekService.saveDeepSeekApiKey(deepseekKey);
       
-      // Save to localStorage for web environments
+      // Save local model settings
+      // For now, we'll keep the localStorage fallback for web
       if (typeof window !== 'undefined' && window.localStorage) {
         try {
-          localStorage.setItem('athena_openai_api_key', openAIKey);
-          localStorage.setItem('athena_claude_api_key', claudeKey);
-          localStorage.setItem('athena_deepseek_api_key', deepseekKey);
           localStorage.setItem('use_local_models', useLocalModels.toString());
           localStorage.setItem('local_model_path', localModelPath);
-          console.log('Saved keys to localStorage for web environment');
+          console.log('Saved local model settings');
         } catch (e) {
-          console.error('Error saving to localStorage:', e);
+          console.error('Error saving local model settings:', e);
         }
       }
       
@@ -145,17 +170,14 @@ export default function SettingsScreen() {
                 // Continue with other deletion methods
               }
               
-              // Clear localStorage for web environments
+              // Clear local model settings
               if (typeof window !== 'undefined' && window.localStorage) {
                 try {
-                  localStorage.removeItem('athena_openai_api_key');
-                  localStorage.removeItem('athena_claude_api_key');
-                  localStorage.removeItem('athena_deepseek_api_key');
                   localStorage.removeItem('use_local_models');
                   localStorage.removeItem('local_model_path');
-                  console.log('Cleared keys from localStorage');
+                  console.log('Cleared local model settings');
                 } catch (e) {
-                  console.error('Error clearing localStorage:', e);
+                  console.error('Error clearing local model settings:', e);
                 }
               }
               

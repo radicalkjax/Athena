@@ -1,9 +1,12 @@
 import { createClaudeClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { sanitizeString } from '@/utils/helpers';
+import { CLAUDE_API_KEY, CLAUDE_API_BASE_URL as ENV_CLAUDE_API_BASE_URL } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-// API key storage - using localStorage for web
+// API key storage - using AsyncStorage for persistence
 let cachedApiKey: string | null = null;
-let cachedBaseUrl: string | null = null;
+const CLAUDE_API_BASE_URL = ENV_CLAUDE_API_BASE_URL || 'https://api.anthropic.com/v1';
 
 /**
  * Initialize Claude API client
@@ -18,16 +21,22 @@ export const initClaude = async (apiKey?: string, baseUrl?: string): Promise<Ret
     let url = baseUrl || cachedBaseUrl || 'https://api.anthropic.com/v1';
     
     if (!key) {
-      // Try to get from localStorage in web environment
-      if (typeof window !== 'undefined' && window.localStorage) {
-        key = localStorage.getItem('athena_claude_api_key');
-        url = localStorage.getItem('athena_claude_base_url') || url;
-        console.log('Checking localStorage for Claude key:', !!key);
+      // Try to get from environment variable
+      key = CLAUDE_API_KEY || Constants.manifest?.extra?.claudeApiKey || null;
+    }
+    
+    if (!key) {
+      // Try to get from AsyncStorage
+      try {
+        key = await AsyncStorage.getItem('athena_claude_api_key');
+        console.log('Checking AsyncStorage for Claude key:', !!key);
+      } catch (error) {
+        console.error('Error accessing AsyncStorage:', error);
       }
     }
     
     if (!key) {
-      throw new Error('Claude API key not found. Please set your API key in the settings.');
+      throw new Error('Claude API key not found. Please set your API key in the settings or .env file.');
     }
     
     console.log('Initializing Claude client with key');
@@ -54,16 +63,12 @@ export const saveClaudeApiKey = async (apiKey: string, baseUrl?: string): Promis
       cachedBaseUrl = baseUrl;
     }
     
-    // Save to localStorage for web environment
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('athena_claude_api_key', apiKey);
-      
-      if (baseUrl) {
-        localStorage.setItem('athena_claude_base_url', baseUrl);
-        console.log('Saved Claude base URL to localStorage');
-      }
-      
-      console.log('Saved Claude API key to localStorage');
+    // Save to AsyncStorage
+    try {
+      await AsyncStorage.setItem('athena_claude_api_key', apiKey);
+      console.log('Saved Claude API key to AsyncStorage');
+    } catch (error) {
+      console.error('Error saving to AsyncStorage:', error);
     }
     
     console.log('Saved Claude API key to memory cache');
@@ -83,9 +88,15 @@ export const hasClaudeApiKey = async (): Promise<boolean> => {
     return true;
   }
   
-  // Check localStorage for web environment
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const key = localStorage.getItem('athena_claude_api_key');
+  // Check environment variable
+  if (CLAUDE_API_KEY || Constants.manifest?.extra?.claudeApiKey) {
+    cachedApiKey = CLAUDE_API_KEY || Constants.manifest?.extra?.claudeApiKey; // Cache it for future use
+    return true;
+  }
+  
+  // Check AsyncStorage
+  try {
+    const key = await AsyncStorage.getItem('athena_claude_api_key');
     if (key) {
       cachedApiKey = key; // Cache it for future use
       
@@ -97,6 +108,8 @@ export const hasClaudeApiKey = async (): Promise<boolean> => {
       
       return true;
     }
+  } catch (error) {
+    console.error('Error accessing AsyncStorage:', error);
   }
   
   return false;
@@ -111,11 +124,12 @@ export const deleteClaudeApiKey = async (): Promise<void> => {
     cachedApiKey = null;
     cachedBaseUrl = null;
     
-    // Clear from localStorage for web environment
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem('athena_claude_api_key');
-      localStorage.removeItem('athena_claude_base_url');
-      console.log('Deleted Claude API configuration from localStorage');
+    // Clear from AsyncStorage
+    try {
+      await AsyncStorage.removeItem('athena_claude_api_key');
+      console.log('Deleted Claude API key from AsyncStorage');
+    } catch (error) {
+      console.error('Error deleting from AsyncStorage:', error);
     }
     
     console.log('Deleted Claude API configuration from memory cache');
