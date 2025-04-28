@@ -99,10 +99,10 @@ To run Athena as a web application:
 
 ```bash
 cd Athena
-npm run start:web
+npx serve dist
 ```
 
-This will build the application and start a local web server. Open your web browser and navigate to `http://localhost:3000` to access Athena.
+This will serve the built app from the dist directory using a static file server. Open your web browser and navigate to `http://localhost:3000` to access Athena.
 
 ### Mobile Version
 

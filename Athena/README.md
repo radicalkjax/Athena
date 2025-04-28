@@ -83,10 +83,10 @@ npm install
 npx expo start
 
 # For web development (recommended approach)
-npm run start:web
+npx serve dist
 ```
 
-> **Note:** The `npm run start:web` command is the recommended way to run the web version of the app. It builds the app with environment variables properly bundled and serves it using a static file server.
+> **Note:** The `npx serve dist` command is the recommended way to run the web version of the app. It serves the built app from the dist directory using a static file server.
 
 ## Environment Variables
 

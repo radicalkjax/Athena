@@ -50,7 +50,7 @@ show_help() {
 # Function to run the web version
 run_web() {
     echo -e "${BLUE}Starting Athena web version...${NC}"
-    cd Athena && npm run start:web
+    cd Athena && npx serve dist
 }
 
 # Function to run the iOS version
