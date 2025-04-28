@@ -1,4 +1,4 @@
-import { AIModel, MalwareFile, AnalysisResult, Vulnerability } from '@/types';
+import { AIModel, MalwareFile, AnalysisResult, Vulnerability, ContainerConfig } from '@/types';
 import { useAppStore } from '@/store';
 import { generateId } from '@/utils/helpers';
 import * as openaiService from './openai';
@@ -90,12 +90,14 @@ export const analyzeVulnerabilities = async (
  * @param malwareFile The malware file to analyze
  * @param model The AI model to use
  * @param useContainer Whether to use a container for analysis
+ * @param containerConfig Optional container configuration
  * @returns Analysis result
  */
 export const runAnalysis = async (
   malwareFile: MalwareFile,
   model: AIModel,
-  useContainer: boolean = true
+  useContainer: boolean = true,
+  containerConfig?: ContainerConfig
 ): Promise<AnalysisResult> => {
   try {
     // Set analyzing state
@@ -126,7 +128,8 @@ export const runAnalysis = async (
           const container = await containerService.createContainer(
             malwareFile.id,
             fileBase64,
-            malwareFile.name
+            malwareFile.name,
+            containerConfig
           );
           
           // Add container to store
