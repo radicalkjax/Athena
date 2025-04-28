@@ -79,7 +79,7 @@ For local development, you can use the helper scripts mentioned above, or run th
 # Install dependencies
 npm install
 
-# Start the development server
+# Start the development server (Note: Currently not working)
 npx expo start
 
 # For web development (recommended approach)
@@ -87,6 +87,8 @@ npx serve dist
 ```
 
 > **Note:** The `npx serve dist` command is the recommended way to run the web version of the app. It serves the built app from the dist directory using a static file server.
+
+> **Important:** The Expo launch method is currently not working. Please use the web version with `npx serve dist` instead.
 
 ## Environment Variables
 
