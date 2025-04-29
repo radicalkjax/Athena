@@ -60,11 +60,47 @@ export type OSType = 'windows' | 'linux' | 'macos';
 export type ArchitectureType = 'x86' | 'x64' | 'arm' | 'arm64';
 
 export interface ContainerResourceLimits {
-  cpu?: number;       // CPU cores (e.g., 1 = 1 core, 0.5 = half a core)
-  memory?: number;    // Memory in MB
-  diskSpace?: number; // Disk space in MB
-  networkSpeed?: number; // Network speed in Mbps
-  ioOperations?: number; // Max I/O operations per second
+  cpu: number;       // CPU cores (e.g., 1 = 1 core, 0.5 = half a core)
+  memory: number;    // Memory in MB
+  diskSpace: number; // Disk space in MB
+  networkSpeed: number; // Network speed in Mbps
+  ioOperations: number; // Max I/O operations per second
+}
+
+export interface ContainerSecurityOptions {
+  // Common security options
+  readOnlyRootFilesystem?: boolean;
+  noNewPrivileges?: boolean;
+  seccomp?: boolean;
+  appArmor?: boolean;
+  addressSpaceLayoutRandomization?: boolean;
+  
+  // Windows-specific security options
+  windowsDefender?: boolean;
+  memoryProtection?: boolean;
+  controlFlowGuard?: boolean;
+  dataExecutionPrevention?: boolean;
+  secureBootEnabled?: boolean;
+  hypervisorEnforced?: boolean;
+  
+  // Linux-specific security options
+  selinux?: boolean;
+  capabilities?: string;
+  seccompProfile?: string;
+  privileged?: boolean;
+  namespaceIsolation?: boolean;
+  cgroupsV2?: boolean;
+  restrictSysctls?: boolean;
+  
+  // macOS-specific security options
+  sandboxProfile?: string;
+  transparencyConsent?: boolean;
+  systemIntegrityProtection?: boolean;
+  gatekeeper?: boolean;
+  xpcSecurity?: boolean;
+  appSandbox?: boolean;
+  fileQuarantine?: boolean;
+  libraryValidation?: boolean;
 }
 
 export interface ContainerConfig {
@@ -74,6 +110,7 @@ export interface ContainerConfig {
   imageTag?: string;
   distribution?: string; // For Linux distributions
   resources?: ContainerResourceLimits; // Resource limits for the container
+  securityOptions?: ContainerSecurityOptions; // Security options for the container
 }
 
 // Linux specific types
