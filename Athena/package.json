@@ -12,7 +12,13 @@
     "lint": "expo lint",
     "build:web": "expo export --platform web",
     "serve": "serve dist",
-    "start:web": "npm run build:web && npm run serve"
+    "start:web": "npm run build:web && npm run serve",
+    "init-db": "ts-node ./scripts/init-db.ts",
+    "db:create": "ts-node ./scripts/create-db.ts",
+    "db:test": "ts-node ./scripts/test-db.ts",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:setup": "./scripts/setup-db.sh"
   },
   "jest": {
     "preset": "jest-expo"
