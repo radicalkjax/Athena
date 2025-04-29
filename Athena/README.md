@@ -6,6 +6,8 @@
 
 > **IMPORTANT DISCLAIMER:** The containerization and analysis components described in this documentation are still being designed and developed. Their current implementation and documentation are not reflective of what the final design could be. This documentation represents a conceptual overview and may change significantly as development progresses.
 
+The foundation of Athena's idea and research comes from the groundbreaking research paper by Kali Jackson: [Deep Learning for Malware Analysis](https://radicalkjax.com/2025/04/21/deep-learning-for-malware-analysis.html).
+
 This is the Athena project directory. For comprehensive documentation, please refer to the [main README.md](../README.md) in the root directory.
 
 ## Quick Links
