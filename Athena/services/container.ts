@@ -681,19 +681,14 @@ export const checkSystemRequirements = async (
   // Get system resources
   const systemResources = await getSystemResources();
   
-  // Get resource values with defaults if undefined
-  const requiredCpu: number = typeof resources.cpu === 'number' ? resources.cpu : DEFAULT_RESOURCE_LIMITS.cpu;
-  const requiredMemory: number = typeof resources.memory === 'number' ? resources.memory : DEFAULT_RESOURCE_LIMITS.memory;
-  const requiredDiskSpace: number = typeof resources.diskSpace === 'number' ? resources.diskSpace : DEFAULT_RESOURCE_LIMITS.diskSpace;
-  
   // Check CPU
-  const cpuMeets = systemResources.cpu >= requiredCpu;
+  const cpuMeets = systemResources.cpu >= resources.cpu;
   
   // Check memory
-  const memoryMeets = systemResources.memory >= requiredMemory;
+  const memoryMeets = systemResources.memory >= resources.memory;
   
   // Check disk space
-  const diskSpaceMeets = systemResources.diskSpace >= requiredDiskSpace;
+  const diskSpaceMeets = systemResources.diskSpace >= resources.diskSpace;
   
   // Overall result
   const meetsRequirements = cpuMeets && memoryMeets && diskSpaceMeets;
@@ -701,9 +696,9 @@ export const checkSystemRequirements = async (
   return {
     meetsRequirements,
     details: {
-      cpu: { meets: cpuMeets, available: systemResources.cpu, required: requiredCpu },
-      memory: { meets: memoryMeets, available: systemResources.memory, required: requiredMemory },
-      diskSpace: { meets: diskSpaceMeets, available: systemResources.diskSpace, required: requiredDiskSpace }
+      cpu: { meets: cpuMeets, available: systemResources.cpu, required: resources.cpu },
+      memory: { meets: memoryMeets, available: systemResources.memory, required: resources.memory },
+      diskSpace: { meets: diskSpaceMeets, available: systemResources.diskSpace, required: resources.diskSpace }
     }
   };
 };
@@ -715,7 +710,7 @@ export const checkSystemRequirements = async (
  * @param malwareName Name of the malware file
  * @param containerConfig Optional container configuration (OS, architecture, version)
  * @returns Container object
- * @throws Error if system doesn't meet the requirements
+ * @throws Error if system doesn't meet the requirements or if container creation fails
  */
 export const createContainer = async (
   malwareId: string,
@@ -732,6 +727,16 @@ export const createContainer = async (
     const config = containerConfig ? 
       { ...DEFAULT_CONTAINER_CONFIG, ...containerConfig } : 
       DEFAULT_CONTAINER_CONFIG;
+    
+    // Validate malware content
+    if (!malwareContent) {
+      throw new Error('Malware content is required');
+    }
+    
+    // Validate malware name
+    if (!malwareName) {
+      throw new Error('Malware name is required');
+    }
     
     // Check if system meets the requirements
     if (config.resources) {
@@ -780,6 +785,9 @@ export const createContainer = async (
       );
     }
     
+    // Apply security hardening based on OS type
+    finalConfig = applySecurityHardening(finalConfig);
+    
     const requestData = sanitizeRequestData({
       containerId,
       malwareId,
@@ -792,6 +800,10 @@ export const createContainer = async (
       () => client.post('/api/v1/containers', requestData),
       'Container creation error'
     );
+    
+    if (!response || !response.container) {
+      throw new Error('Failed to create container: Invalid response from container service');
+    }
     
     return {
       id: containerId,
@@ -806,6 +818,69 @@ export const createContainer = async (
     console.error('Container creation error:', error);
     throw error;
   }
+};
+
+/**
+ * Apply security hardening to container configuration based on OS type
+ * @param config Container configuration
+ * @returns Hardened container configuration
+ */
+export const applySecurityHardening = (config: ContainerConfig): ContainerConfig => {
+  // Create a deep copy of the configuration
+  const hardenedConfig = JSON.parse(JSON.stringify(config)) as ContainerConfig;
+  
+  // Ensure resources are properly defined with default values for any undefined properties
+  if (hardenedConfig.resources) {
+    const resources = hardenedConfig.resources;
+    hardenedConfig.resources = {
+      cpu: typeof resources.cpu === 'number' ? resources.cpu : DEFAULT_RESOURCE_LIMITS.cpu,
+      memory: typeof resources.memory === 'number' ? resources.memory : DEFAULT_RESOURCE_LIMITS.memory,
+      diskSpace: typeof resources.diskSpace === 'number' ? resources.diskSpace : DEFAULT_RESOURCE_LIMITS.diskSpace,
+      networkSpeed: typeof resources.networkSpeed === 'number' ? resources.networkSpeed : DEFAULT_RESOURCE_LIMITS.networkSpeed,
+      ioOperations: typeof resources.ioOperations === 'number' ? resources.ioOperations : DEFAULT_RESOURCE_LIMITS.ioOperations
+    };
+  } else {
+    hardenedConfig.resources = { ...DEFAULT_RESOURCE_LIMITS };
+  }
+  
+  // Apply common security hardening
+  hardenedConfig.securityOptions = {
+    readOnlyRootFilesystem: true,
+    noNewPrivileges: true,
+    seccomp: true,
+    appArmor: true,
+    ...hardenedConfig.securityOptions
+  };
+  
+  // Apply OS-specific security hardening
+  switch (config.os) {
+    case 'windows':
+      hardenedConfig.securityOptions = {
+        ...hardenedConfig.securityOptions,
+        windowsDefender: true,
+        memoryProtection: true,
+        controlFlowGuard: true,
+      };
+      break;
+    case 'linux':
+      hardenedConfig.securityOptions = {
+        ...hardenedConfig.securityOptions,
+        selinux: true,
+        capabilities: 'drop-all',
+        seccompProfile: 'default',
+      };
+      break;
+    case 'macos':
+      hardenedConfig.securityOptions = {
+        ...hardenedConfig.securityOptions,
+        sandboxProfile: 'strict',
+        transparencyConsent: true,
+        systemIntegrityProtection: true,
+      };
+      break;
+  }
+  
+  return hardenedConfig;
 };
 
 /**
@@ -992,11 +1067,46 @@ export const createWindowsContainer = async (
   version: WindowsVersion = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion,
   resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): Promise<Container> => {
-  // Get the Windows container configuration
-  const windowsConfig = getWindowsContainerConfig(architecture, version, resources);
-  
-  // Create the container with the Windows configuration
-  return createContainer(malwareId, malwareContent, malwareName, windowsConfig);
+  try {
+    console.log(`Creating Windows container with architecture: ${architecture}, version: ${version}`);
+    
+    // Validate architecture and version
+    if (!WINDOWS_CONTAINERS[architecture]) {
+      console.warn(`Architecture ${architecture} not supported for Windows, falling back to ${DEFAULT_CONTAINER_CONFIG.architecture}`);
+      architecture = DEFAULT_CONTAINER_CONFIG.architecture;
+    }
+    
+    if (!WINDOWS_CONTAINERS[architecture][version]) {
+      console.warn(`Windows version ${version} not supported for ${architecture}, falling back to ${DEFAULT_CONTAINER_CONFIG.version}`);
+      version = DEFAULT_CONTAINER_CONFIG.version as WindowsVersion;
+    }
+    
+    // Apply Windows-specific security enhancements
+    const windowsSecurityOptions = {
+      windowsDefender: true,
+      memoryProtection: true,
+      controlFlowGuard: true,
+      dataExecutionPrevention: true,
+      addressSpaceLayoutRandomization: true,
+      secureBootEnabled: true,
+      hypervisorEnforced: true
+    };
+    
+    // Get the Windows container configuration with enhanced security
+    const windowsConfig = {
+      ...getWindowsContainerConfig(architecture, version, resources),
+      securityOptions: windowsSecurityOptions
+    };
+    
+    // Create the container with the Windows configuration
+    const container = await createContainer(malwareId, malwareContent, malwareName, windowsConfig);
+    
+    console.log(`Windows container created successfully: ${container.id}`);
+    return container;
+  } catch (error) {
+    console.error(`Error creating Windows container: ${error}`);
+    throw error;
+  }
 };
 
 /**
@@ -1017,11 +1127,54 @@ export const createLinuxContainer = async (
   version: LinuxVersion = DEFAULT_LINUX_CONFIG.version as LinuxVersion,
   resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): Promise<Container> => {
-  // Get the Linux container configuration
-  const linuxConfig = getLinuxContainerConfig(architecture, version, resources);
-  
-  // Create the container with the Linux configuration
-  return createContainer(malwareId, malwareContent, malwareName, linuxConfig);
+  try {
+    console.log(`Creating Linux container with architecture: ${architecture}, version: ${version}`);
+    
+    // Validate architecture and version
+    if (!LINUX_CONTAINERS[architecture]) {
+      console.warn(`Architecture ${architecture} not supported for Linux, falling back to ${DEFAULT_LINUX_CONFIG.architecture}`);
+      architecture = DEFAULT_LINUX_CONFIG.architecture;
+    }
+    
+    if (!LINUX_CONTAINERS[architecture][version]) {
+      console.warn(`Linux version ${version} not supported for ${architecture}, falling back to ${DEFAULT_LINUX_CONFIG.version}`);
+      version = DEFAULT_LINUX_CONFIG.version as LinuxVersion;
+    }
+    
+    // Extract distribution from version
+    const distribution = version.split('-')[0] as LinuxDistribution;
+    
+    // Apply Linux-specific security enhancements
+    const linuxSecurityOptions = {
+      selinux: true,
+      appArmor: true,
+      seccomp: true,
+      capabilities: 'drop-all',
+      seccompProfile: 'default',
+      noNewPrivileges: true,
+      readOnlyRootFilesystem: true,
+      privileged: false,
+      namespaceIsolation: true,
+      cgroupsV2: true,
+      restrictSysctls: true
+    };
+    
+    // Get the Linux container configuration with enhanced security
+    const linuxConfig = {
+      ...getLinuxContainerConfig(architecture, version, resources),
+      securityOptions: linuxSecurityOptions,
+      distribution
+    };
+    
+    // Create the container with the Linux configuration
+    const container = await createContainer(malwareId, malwareContent, malwareName, linuxConfig);
+    
+    console.log(`Linux container created successfully: ${container.id}`);
+    return container;
+  } catch (error) {
+    console.error(`Error creating Linux container: ${error}`);
+    throw error;
+  }
 };
 
 /**
@@ -1042,9 +1195,46 @@ export const createMacOSContainer = async (
   version: MacOSVersion = DEFAULT_MACOS_CONFIG.version as MacOSVersion,
   resources: ContainerResourceLimits = DEFAULT_RESOURCE_LIMITS
 ): Promise<Container> => {
-  // Get the macOS container configuration
-  const macOSConfig = getMacOSContainerConfig(architecture, version, resources);
-  
-  // Create the container with the macOS configuration
-  return createContainer(malwareId, malwareContent, malwareName, macOSConfig);
+  try {
+    console.log(`Creating macOS container with architecture: ${architecture}, version: ${version}`);
+    
+    // Validate architecture and version
+    if (!MACOS_CONTAINERS[architecture]) {
+      console.warn(`Architecture ${architecture} not supported for macOS, falling back to ${DEFAULT_MACOS_CONFIG.architecture}`);
+      architecture = DEFAULT_MACOS_CONFIG.architecture;
+    }
+    
+    if (!MACOS_CONTAINERS[architecture][version]) {
+      console.warn(`macOS version ${version} not supported for ${architecture}, falling back to ${DEFAULT_MACOS_CONFIG.version}`);
+      version = DEFAULT_MACOS_CONFIG.version as MacOSVersion;
+    }
+    
+    // Apply macOS-specific security enhancements
+    const macOSSecurityOptions = {
+      sandboxProfile: 'strict',
+      transparencyConsent: true,
+      systemIntegrityProtection: true,
+      gatekeeper: true,
+      xpcSecurity: true,
+      appSandbox: true,
+      fileQuarantine: true,
+      addressSpaceLayoutRandomization: true,
+      libraryValidation: true
+    };
+    
+    // Get the macOS container configuration with enhanced security
+    const macOSConfig = {
+      ...getMacOSContainerConfig(architecture, version, resources),
+      securityOptions: macOSSecurityOptions
+    };
+    
+    // Create the container with the macOS configuration
+    const container = await createContainer(malwareId, malwareContent, malwareName, macOSConfig);
+    
+    console.log(`macOS container created successfully: ${container.id}`);
+    return container;
+  } catch (error) {
+    console.error(`Error creating macOS container: ${error}`);
+    throw error;
+  }
 };
