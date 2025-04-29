@@ -6,6 +6,8 @@
 
 Athena is a cross-platform application designed to help security researchers analyze and deobfuscate malware using various AI models. It provides a secure environment for malware analysis with features like isolated container execution and integration with the Metasploit database.
 
+The foundation of Athena's idea and research comes from the groundbreaking research paper by Kali Jackson: [Deep Learning for Malware Analysis](https://radicalkjax.com/2025/04/21/deep-learning-for-malware-analysis.html).
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
