@@ -64,6 +64,8 @@ Before you begin, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v16 or later)
 - [npm](https://www.npmjs.com/) (v8 or later)
 - [Expo CLI](https://docs.expo.dev/get-started/installation/) (for development)
+- [Docker](https://www.docker.com/products/docker-desktop/) and [Docker Compose](https://docs.docker.com/compose/install/) (for database setup)
+- [PostgreSQL](https://www.postgresql.org/download/) (optional, if not using Docker)
 - API keys for the AI models you want to use:
   - [OpenAI API key](https://platform.openai.com/account/api-keys)
   - [Claude API key](https://console.anthropic.com/account/keys)
@@ -98,10 +100,10 @@ Before you begin, ensure you have the following installed:
 
 ### Configuration
 
-Athena uses environment variables to securely store API keys for various AI services.
+Athena uses environment variables to securely store API keys and database configuration.
 
 1. Create a `.env` file in the root of the Athena directory (this file is already gitignored)
-2. Add your API keys to the `.env` file using the following format:
+2. Add your API keys and database configuration to the `.env` file using the following format:
 
 ```
 # API Keys for AI Models
@@ -113,9 +115,23 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 # OPENAI_API_BASE_URL=https://api.openai.com/v1
 # CLAUDE_API_BASE_URL=https://api.anthropic.com/v1
 # DEEPSEEK_API_BASE_URL=https://api.deepseek.com/v1
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=athena_db
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_DIALECT=postgres
+
+# pgAdmin Configuration (for Docker setup)
+PGADMIN_EMAIL=admin@athena.local
+PGADMIN_PASSWORD=admin
+PGADMIN_PORT=5050
 ```
 
 3. You can use the provided `.env.example` file as a template
+4. For database setup, see the [Database Setup Documentation](./Athena/docs/DATABASE_SETUP.md)
 
 ## 📖 User Guide
 
@@ -211,6 +227,8 @@ Athena comes with comprehensive documentation to help you understand and use the
 - [Architecture Documentation](./docs/ARCHITECTURE.md) - Overview of Athena's architecture and components
 - [API Integration](./docs/API_INTEGRATION.md) - Details about AI model API integration
 - [Container Isolation](./docs/CONTAINER_ISOLATION.md) - Information about the container isolation feature
+- [Database Setup](./Athena/docs/DATABASE_SETUP.md) - Instructions for setting up and using the PostgreSQL database
+- [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md) - Details about the container monitoring system
 
 ### Component Documentation
 
@@ -219,6 +237,7 @@ Athena comes with comprehensive documentation to help you understand and use the
 - [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md) - Documentation for the analysis results component
 - [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md) - Documentation for the container configuration component
 - [FileUploader](./docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
+- [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md) - Documentation for the container monitoring component
 
 ## 📱 Screenshots
 
