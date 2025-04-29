@@ -5,7 +5,7 @@ import * as openaiService from './openai';
 import * as claudeService from './claude';
 import * as deepseekService from './deepseek';
 import * as localModelsService from './localModels';
-import * as containerService from './container';
+import * as containerDbService from './container-db';
 import * as fileManagerService from './fileManager';
 import * as metasploitService from './metasploit';
 
@@ -120,26 +120,33 @@ export const runAnalysis = async (
         fileContent = await fileManagerService.readFileContent(malwareFile.uri);
       }
       
-      if (useContainer && await containerService.hasContainerConfig()) {
+      if (useContainer && await containerDbService.hasContainerConfig()) {
         // Run analysis in container
         try {
           // Create container
           const fileBase64 = await fileManagerService.readFileBase64(malwareFile.uri);
-          const container = await containerService.createContainer(
+          const container = await containerDbService.createContainer(
             malwareFile.id,
             fileBase64,
             malwareFile.name,
             containerConfig
           );
           
+          // Convert database container model to store container model
+          const storeContainer = {
+            ...container,
+            createdAt: container.createdAt instanceof Date ? container.createdAt.getTime() : Date.now(),
+            updatedAt: container.updatedAt instanceof Date ? container.updatedAt.getTime() : Date.now(),
+          };
+          
           // Add container to store
-          useAppStore.getState().addContainer(container);
+          useAppStore.getState().addContainer(storeContainer);
           
           // Wait for container to be ready
           let status = container.status;
           while (status === 'creating') {
             await new Promise(resolve => setTimeout(resolve, 1000));
-            status = await containerService.getContainerStatus(container.id);
+            status = await containerDbService.getContainerStatus(container.id);
             
             // Update container status in store
             useAppStore.getState().updateContainer(container.id, { status });
@@ -150,11 +157,11 @@ export const runAnalysis = async (
           }
           
           // Run malware analysis
-          const analysisResults = await containerService.runMalwareAnalysis(container.id);
+          const analysisResults = await containerDbService.runMalwareAnalysis(container.id);
           
           // Get file content from container if available
           try {
-            const containerFileContent = await containerService.getContainerFile(
+            const containerFileContent = await containerDbService.getContainerFile(
               container.id,
               `/malware/${malwareFile.name}`
             );
@@ -170,10 +177,69 @@ export const runAnalysis = async (
           // Add container logs to analysis report
           analysisReport += `\n\n## Container Analysis\n\n${analysisResults.logs}\n\n`;
           
+          // Get monitoring summary
+          try {
+            const monitoringSummary = await containerDbService.getContainerMonitoringSummary(container.id);
+            analysisReport += `\n\n## Container Monitoring Summary\n\n`;
+            analysisReport += `- Average CPU Usage: ${monitoringSummary.averageCpuUsage.toFixed(2)}%\n`;
+            analysisReport += `- Average Memory Usage: ${monitoringSummary.averageMemoryUsage.toFixed(2)} MB\n`;
+            analysisReport += `- Total Network Inbound: ${monitoringSummary.totalNetworkInbound} bytes\n`;
+            analysisReport += `- Total Network Outbound: ${monitoringSummary.totalNetworkOutbound} bytes\n`;
+            analysisReport += `- Total File Operations: ${monitoringSummary.totalFileOperations}\n`;
+            analysisReport += `- Total Processes: ${monitoringSummary.totalProcesses}\n`;
+            analysisReport += `- Suspicious Activity Count: ${monitoringSummary.suspiciousActivityCount}\n`;
+          } catch (monitoringError) {
+            console.error('Error getting monitoring summary:', monitoringError);
+            analysisReport += `\n\n## Container Monitoring\n\nUnable to retrieve monitoring data: ${(monitoringError as Error).message}\n\n`;
+          }
+          
+          // Get suspicious activities
+          try {
+            const suspiciousActivities = await containerDbService.getSuspiciousActivities(container.id);
+            
+            if (suspiciousActivities.networkActivities.length > 0 || 
+                suspiciousActivities.fileActivities.length > 0 || 
+                suspiciousActivities.processActivities.length > 0) {
+              
+              analysisReport += `\n\n## Suspicious Activities\n\n`;
+              
+              if (suspiciousActivities.networkActivities.length > 0) {
+                analysisReport += `### Suspicious Network Activities\n\n`;
+                suspiciousActivities.networkActivities.forEach(activity => {
+                  analysisReport += `- ${activity.protocol} ${activity.sourceIp}:${activity.sourcePort} -> ${activity.destinationIp}:${activity.destinationPort} (${activity.direction})\n`;
+                  analysisReport += `  Process: ${activity.processName} (PID: ${activity.processId})\n`;
+                  analysisReport += `  Reason: ${activity.maliciousReason}\n\n`;
+                });
+              }
+              
+              if (suspiciousActivities.fileActivities.length > 0) {
+                analysisReport += `### Suspicious File Activities\n\n`;
+                suspiciousActivities.fileActivities.forEach(activity => {
+                  analysisReport += `- ${activity.operation} ${activity.filePath} (${activity.fileType})\n`;
+                  analysisReport += `  Process: ${activity.processName} (PID: ${activity.processId})\n`;
+                  analysisReport += `  Reason: ${activity.maliciousReason}\n\n`;
+                });
+              }
+              
+              if (suspiciousActivities.processActivities.length > 0) {
+                analysisReport += `### Suspicious Process Activities\n\n`;
+                suspiciousActivities.processActivities.forEach(activity => {
+                  analysisReport += `- ${activity.processName} (PID: ${activity.processId})\n`;
+                  analysisReport += `  Command: ${activity.commandLine}\n`;
+                  analysisReport += `  User: ${activity.user}\n`;
+                  analysisReport += `  Status: ${activity.status}\n`;
+                  analysisReport += `  Reason: ${activity.maliciousReason}\n\n`;
+                });
+              }
+            }
+          } catch (suspiciousActivitiesError) {
+            console.error('Error getting suspicious activities:', suspiciousActivitiesError);
+          }
+          
           // Add network activity to analysis report
           if (analysisResults.networkActivity.length > 0) {
             analysisReport += `\n\n## Network Activity\n\n`;
-            analysisResults.networkActivity.forEach(activity => {
+            analysisResults.networkActivity.forEach((activity: { protocol: string; destination: string; port: number }) => {
               analysisReport += `- ${activity.protocol} ${activity.destination} (${activity.port})\n`;
             });
           }
@@ -181,14 +247,46 @@ export const runAnalysis = async (
           // Add file activity to analysis report
           if (analysisResults.fileActivity.length > 0) {
             analysisReport += `\n\n## File Activity\n\n`;
-            analysisResults.fileActivity.forEach(activity => {
+            analysisResults.fileActivity.forEach((activity: { operation: string; path: string }) => {
               analysisReport += `- ${activity.operation} ${activity.path}\n`;
             });
           }
           
+          // Get detailed monitoring data
+          try {
+            // Get network activity
+            const networkActivities = await containerDbService.getNetworkActivityByContainerId(container.id, 10);
+            if (networkActivities.length > 0) {
+              analysisReport += `\n\n## Detailed Network Activity\n\n`;
+              networkActivities.forEach(activity => {
+                analysisReport += `- ${activity.timestamp.toISOString()} | ${activity.protocol} | ${activity.sourceIp}:${activity.sourcePort} -> ${activity.destinationIp}:${activity.destinationPort} | ${activity.status}\n`;
+              });
+            }
+            
+            // Get file activity
+            const fileActivities = await containerDbService.getFileActivityByContainerId(container.id, 10);
+            if (fileActivities.length > 0) {
+              analysisReport += `\n\n## Detailed File Activity\n\n`;
+              fileActivities.forEach(activity => {
+                analysisReport += `- ${activity.timestamp.toISOString()} | ${activity.operation} | ${activity.filePath} | ${activity.processName}\n`;
+              });
+            }
+            
+            // Get process activity
+            const processActivities = await containerDbService.getProcessActivityByContainerId(container.id, 10);
+            if (processActivities.length > 0) {
+              analysisReport += `\n\n## Detailed Process Activity\n\n`;
+              processActivities.forEach(activity => {
+                analysisReport += `- ${activity.timestamp.toISOString()} | ${activity.processName} (PID: ${activity.processId}) | ${activity.status} | ${activity.commandLine.substring(0, 50)}${activity.commandLine.length > 50 ? '...' : ''}\n`;
+              });
+            }
+          } catch (detailedMonitoringError) {
+            console.error('Error getting detailed monitoring data:', detailedMonitoringError);
+          }
+          
           // Remove container when done
           try {
-            await containerService.removeContainer(container.id);
+            await containerDbService.removeContainer(container.id);
             useAppStore.getState().removeContainer(container.id);
           } catch (error) {
             console.error('Error removing container:', error);
