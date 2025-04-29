@@ -280,12 +280,132 @@ The API key security implementation uses a multi-layered approach:
 
 ### Container Isolation
 
-Malware analysis can be performed in isolated containers to prevent potentially harmful code from affecting the host system. The container isolation feature:
+Malware analysis can be performed in isolated containers to prevent potentially harmful code from affecting the host system. The container isolation feature provides a secure environment for executing and analyzing potentially harmful code.
 
-1. Creates a new container for each analysis session
-2. Uploads the malware file to the container
-3. Executes the analysis within the container
-4. Retrieves the results
-5. Destroys the container after analysis is complete
+```mermaid
+flowchart TD
+    A[Container Isolation] --> B[Container Manager]
+    A --> C[Resource Management]
+    A --> D[OS-Specific Containers]
+    A --> E[Security Boundaries]
+    
+    B --> B1[Container Creation]
+    B --> B2[Container Monitoring]
+    B --> B3[Container Destruction]
+    
+    C --> C1[Resource Presets]
+    C --> C2[Custom Resource Limits]
+    C --> C3[System Requirements Check]
+    
+    D --> D1[Windows Containers]
+    D --> D2[Linux Containers]
+    D --> D3[macOS Containers]
+    
+    D1 --> D1a[x86 Architecture]
+    D1 --> D1b[x64 Architecture]
+    D1 --> D1c[ARM Architecture]
+    D1 --> D1d[ARM64 Architecture]
+    
+    D2 --> D2a[Multiple Distributions]
+    D2 --> D2b[Multiple Versions]
+    
+    D3 --> D3a[Intel-based macOS]
+    D3 --> D3b[Apple Silicon-based macOS]
+    
+    E --> E1[Filesystem Isolation]
+    E --> E2[Network Isolation]
+    E --> E3[Process Isolation]
+```
 
-This approach provides an additional layer of security when analyzing potentially dangerous malware samples.
+#### Container Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant AnalysisService
+    participant ContainerService
+    participant Container
+    participant AIModel
+    
+    User->>AnalysisService: Request Analysis with Container Isolation
+    AnalysisService->>ContainerService: Create Container
+    ContainerService->>Container: Initialize Container
+    
+    AnalysisService->>ContainerService: Upload Malware File
+    ContainerService->>Container: Store File
+    
+    AnalysisService->>ContainerService: Run Analysis
+    ContainerService->>Container: Execute Malware (Controlled)
+    Container->>Container: Monitor Behavior
+    
+    Container->>ContainerService: Collect Behavior Data
+    ContainerService->>AnalysisService: Return Behavior Data
+    
+    AnalysisService->>AIModel: Send Code + Behavior Data
+    AIModel->>AnalysisService: Return Analysis Results
+    
+    AnalysisService->>ContainerService: Destroy Container
+    ContainerService->>Container: Terminate
+    
+    AnalysisService->>User: Display Results
+```
+
+#### OS-Specific Resource Management
+
+The container isolation feature includes OS-specific resource management to ensure optimal performance for each operating system:
+
+```mermaid
+graph TD
+    A[Resource Management] --> B[Windows Resources]
+    A --> C[Linux Resources]
+    A --> D[macOS Resources]
+    
+    B --> B1[Minimal: 1 CPU, 2GB RAM]
+    B --> B2[Standard: 2 CPU, 4GB RAM]
+    B --> B3[Performance: 4 CPU, 8GB RAM]
+    B --> B4[Intensive: 8 CPU, 16GB RAM]
+    
+    C --> C1[Minimal: 0.5 CPU, 1GB RAM]
+    C --> C2[Standard: 1 CPU, 2GB RAM]
+    C --> C3[Performance: 2 CPU, 4GB RAM]
+    C --> C4[Intensive: 4 CPU, 8GB RAM]
+    
+    D --> D1[Minimal: 2 CPU, 4GB RAM]
+    D --> D2[Standard: 4 CPU, 8GB RAM]
+    D --> D3[Performance: 6 CPU, 12GB RAM]
+    D --> D4[Intensive: 8 CPU, 16GB RAM]
+```
+
+#### Container Service Integration
+
+The Container Service integrates with the Analysis Service to provide a seamless experience for users:
+
+```mermaid
+flowchart TD
+    A[Analysis Service] --> B[Container Service]
+    A --> C[AI Model Services]
+    
+    B --> B1[Container Creation]
+    B --> B2[Container Execution]
+    B --> B3[Container Monitoring]
+    B --> B4[Container Destruction]
+    
+    B1 --> B1a[Windows Container]
+    B1 --> B1b[Linux Container]
+    B1 --> B1c[macOS Container]
+    
+    B2 --> B2a[File Transfer]
+    B2 --> B2b[Command Execution]
+    B2 --> B2c[Behavior Monitoring]
+    
+    B3 --> B3a[Status Checking]
+    B3 --> B3b[Log Collection]
+    B3 --> B3c[Resource Monitoring]
+    
+    C --> C1[OpenAI Service]
+    C --> C2[Claude Service]
+    C --> C3[DeepSeek Service]
+    C --> C4[Local Models Service]
+```
+
+This approach provides an additional layer of security when analyzing potentially dangerous malware samples, while also offering flexibility in terms of target environment selection and resource allocation.

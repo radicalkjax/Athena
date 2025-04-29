@@ -121,14 +121,130 @@ The Container Configuration Selector includes a resource management section that
 
 ### Resource Presets
 
-The component provides the following predefined resource presets:
+The component provides predefined resource presets that are OS-specific to ensure optimal performance for each operating system:
+
+#### Windows Resource Presets
+
+```mermaid
+graph TD
+    A[Windows Resource Presets] --> B[Minimal]
+    A --> C[Standard]
+    A --> D[Performance]
+    A --> E[Intensive]
+    
+    B --> B1[CPU: 1 core]
+    B --> B2[Memory: 2,048 MB]
+    B --> B3[Disk: 8,192 MB]
+    B --> B4[Network: 5 Mbps]
+    B --> B5[I/O: 500 IOPS]
+    
+    C --> C1[CPU: 2 cores]
+    C --> C2[Memory: 4,096 MB]
+    C --> C3[Disk: 10,240 MB]
+    C --> C4[Network: 20 Mbps]
+    C --> C5[I/O: 2,000 IOPS]
+    
+    D --> D1[CPU: 4 cores]
+    D --> D2[Memory: 8,192 MB]
+    D --> D3[Disk: 20,480 MB]
+    D --> D4[Network: 50 Mbps]
+    D --> D5[I/O: 5,000 IOPS]
+    
+    E --> E1[CPU: 8 cores]
+    E --> E2[Memory: 16,384 MB]
+    E --> E3[Disk: 40,960 MB]
+    E --> E4[Network: 100 Mbps]
+    E --> E5[I/O: 10,000 IOPS]
+```
 
 | Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
 |--------|-----------|------------|-----------------|---------------------|----------------------|----------|
-| Minimal | 0.5 | 1,024 | 2,048 | 5 | 500 | Simple malware analysis with minimal resource requirements |
-| Standard | 1 | 2,048 | 5,120 | 10 | 1,000 | General-purpose malware analysis |
+| Minimal | 1 | 2,048 | 8,192 | 5 | 500 | Simple malware analysis with minimal resource requirements |
+| Standard | 2 | 4,096 | 10,240 | 20 | 2,000 | General-purpose malware analysis |
+| Performance | 4 | 8,192 | 20,480 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 8 | 16,384 | 40,960 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+#### Linux Resource Presets
+
+```mermaid
+graph TD
+    A[Linux Resource Presets] --> B[Minimal]
+    A --> C[Standard]
+    A --> D[Performance]
+    A --> E[Intensive]
+    
+    B --> B1[CPU: 0.5 core]
+    B --> B2[Memory: 1,024 MB]
+    B --> B3[Disk: 4,096 MB]
+    B --> B4[Network: 5 Mbps]
+    B --> B5[I/O: 500 IOPS]
+    
+    C --> C1[CPU: 1 core]
+    C --> C2[Memory: 2,048 MB]
+    C --> C3[Disk: 8,192 MB]
+    C --> C4[Network: 20 Mbps]
+    C --> C5[I/O: 2,000 IOPS]
+    
+    D --> D1[CPU: 2 cores]
+    D --> D2[Memory: 4,096 MB]
+    D --> D3[Disk: 10,240 MB]
+    D --> D4[Network: 50 Mbps]
+    D --> D5[I/O: 5,000 IOPS]
+    
+    E --> E1[CPU: 4 cores]
+    E --> E2[Memory: 8,192 MB]
+    E --> E3[Disk: 20,480 MB]
+    E --> E4[Network: 100 Mbps]
+    E --> E5[I/O: 10,000 IOPS]
+```
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 0.5 | 1,024 | 4,096 | 5 | 500 | Simple malware analysis with minimal resource requirements |
+| Standard | 1 | 2,048 | 8,192 | 20 | 2,000 | General-purpose malware analysis |
 | Performance | 2 | 4,096 | 10,240 | 50 | 5,000 | Complex malware analysis requiring more resources |
 | Intensive | 4 | 8,192 | 20,480 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+#### macOS Resource Presets
+
+```mermaid
+graph TD
+    A[macOS Resource Presets] --> B[Minimal]
+    A --> C[Standard]
+    A --> D[Performance]
+    A --> E[Intensive]
+    
+    B --> B1[CPU: 2 cores]
+    B --> B2[Memory: 4,096 MB]
+    B --> B3[Disk: 16,384 MB]
+    B --> B4[Network: 10 Mbps]
+    B --> B5[I/O: 1,000 IOPS]
+    
+    C --> C1[CPU: 4 cores]
+    C --> C2[Memory: 8,192 MB]
+    C --> C3[Disk: 20,480 MB]
+    C --> C4[Network: 20 Mbps]
+    C --> C5[I/O: 2,000 IOPS]
+    
+    D --> D1[CPU: 6 cores]
+    D --> D2[Memory: 12,288 MB]
+    D --> D3[Disk: 30,720 MB]
+    D --> D4[Network: 50 Mbps]
+    D --> D5[I/O: 5,000 IOPS]
+    
+    E --> E1[CPU: 8 cores]
+    E --> E2[Memory: 16,384 MB]
+    E --> E3[Disk: 40,960 MB]
+    E --> E4[Network: 100 Mbps]
+    E --> E5[I/O: 10,000 IOPS]
+```
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 2 | 4,096 | 16,384 | 10 | 1,000 | Simple malware analysis with minimal resource requirements |
+| Standard | 4 | 8,192 | 20,480 | 20 | 2,000 | General-purpose malware analysis |
+| Performance | 6 | 12,288 | 30,720 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 8 | 16,384 | 40,960 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
 
 Users can also select the "Custom" preset to manually configure each resource limit.
 

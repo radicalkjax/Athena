@@ -6,7 +6,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
+export function Collapsible({ children, title, value }: PropsWithChildren & { title: string, value?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const theme = useColorScheme() ?? 'light';
 
@@ -14,13 +14,15 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
     <ThemedView style={styles.container}>
       <TouchableOpacity
         style={styles.heading}
-        onPress={() => setIsOpen((value) => !value)}
+        onPress={() => setIsOpen((prevValue) => !prevValue)}
         activeOpacity={0.8}>
         <ThemedView style={styles.emojiContainer}>
           <Text style={{ fontSize: 18 }}>✨</Text>
         </ThemedView>
 
-        <ThemedText type="defaultSemiBold" style={{ color: '#000' , fontWeight: 'bold', fontSize: 25}}>{title}</ThemedText>
+        <ThemedText type="defaultSemiBold" style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>
+          {title}{!isOpen && value ? `: ${value}` : ''}
+        </ThemedText>
       </TouchableOpacity>
       {isOpen && (
         <ThemedView style={styles.contentWrapper}>

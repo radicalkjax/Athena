@@ -89,7 +89,7 @@ export const analyzeVulnerabilities = async (
  * Run a full analysis on a malware file
  * @param malwareFile The malware file to analyze
  * @param model The AI model to use
- * @param useContainer Whether to use a container for analysis
+ * @param useContainer This parameter is kept for backward compatibility but is always true
  * @param containerConfig Optional container configuration
  * @returns Analysis result
  */

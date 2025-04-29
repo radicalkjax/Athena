@@ -224,14 +224,56 @@ Athena provides fine-grained control over container resources to optimize perfor
 
 #### Resource Presets
 
-Athena provides predefined resource presets for common use cases:
+Athena provides OS-specific resource presets to ensure optimal performance for each operating system:
+
+```mermaid
+graph TD
+    A[Resource Presets] --> B[Windows Presets]
+    A --> C[Linux Presets]
+    A --> D[macOS Presets]
+    
+    B --> B1[Minimal]
+    B --> B2[Standard]
+    B --> B3[Performance]
+    B --> B4[Intensive]
+    
+    C --> C1[Minimal]
+    C --> C2[Standard]
+    C --> C3[Performance]
+    C --> C4[Intensive]
+    
+    D --> D1[Minimal]
+    D --> D2[Standard]
+    D --> D3[Performance]
+    D --> D4[Intensive]
+```
+
+##### Windows Resource Presets
 
 | Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
 |--------|-----------|------------|-----------------|---------------------|----------------------|----------|
-| Minimal | 0.5 | 1,024 | 2,048 | 5 | 500 | Simple malware analysis with minimal resource requirements |
-| Standard | 1 | 2,048 | 5,120 | 10 | 1,000 | General-purpose malware analysis |
+| Minimal | 1 | 2,048 | 8,192 | 5 | 500 | Simple malware analysis with minimal resource requirements |
+| Standard | 2 | 4,096 | 10,240 | 20 | 2,000 | General-purpose malware analysis |
+| Performance | 4 | 8,192 | 20,480 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 8 | 16,384 | 40,960 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+##### Linux Resource Presets
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 0.5 | 1,024 | 4,096 | 5 | 500 | Simple malware analysis with minimal resource requirements |
+| Standard | 1 | 2,048 | 8,192 | 20 | 2,000 | General-purpose malware analysis |
 | Performance | 2 | 4,096 | 10,240 | 50 | 5,000 | Complex malware analysis requiring more resources |
 | Intensive | 4 | 8,192 | 20,480 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+##### macOS Resource Presets
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 2 | 4,096 | 16,384 | 10 | 1,000 | Simple malware analysis with minimal resource requirements |
+| Standard | 4 | 8,192 | 20,480 | 20 | 2,000 | General-purpose malware analysis |
+| Performance | 6 | 12,288 | 30,720 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 8 | 16,384 | 40,960 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
 
 ```mermaid
 graph TD
