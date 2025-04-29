@@ -165,6 +165,26 @@ flowchart TD
     A --> F[Container Service]
     A --> G[File Manager Service]
     A --> H[Metasploit Service]
+    A --> I[Database Service]
+    A --> J[Container-DB Service]
+    A --> K[Monitoring Service]
+    
+    F --> F1[Container Creation]
+    F --> F2[Container Execution]
+    F --> F3[Container Monitoring]
+    
+    I --> I1[Database Connection]
+    I --> I2[Model Operations]
+    I --> I3[Query Execution]
+    
+    J --> J1[Container Integration]
+    J --> J2[Database Integration]
+    J --> J3[Monitoring Integration]
+    
+    K --> K1[Resource Monitoring]
+    K --> K2[Network Monitoring]
+    K --> K3[File Monitoring]
+    K --> K4[Process Monitoring]
     
     E --> E1[Local Model Config]
     E --> E2[Model Execution]
@@ -178,6 +198,182 @@ flowchart TD
     
     E3 --> E3a[API Endpoints]
     E3 --> E3b[Request Handling]
+```
+
+### Database Integration
+
+The application uses PostgreSQL for persistent storage of container configurations, monitoring data, and analysis results. The database integration is handled by the Database Service, which provides a clean API for interacting with the database.
+
+```mermaid
+flowchart TD
+    A[Database Service] --> B[Sequelize ORM]
+    B --> C[PostgreSQL Database]
+    
+    A --> D[Container Operations]
+    A --> E[Container Config Operations]
+    A --> F[Monitoring Operations]
+    
+    D --> D1[Create Container]
+    D --> D2[Get Container]
+    D --> D3[Update Container]
+    D --> D4[Delete Container]
+    
+    E --> E1[Create Config]
+    E --> E2[Get Config]
+    E --> E3[Update Config]
+    E --> E4[Delete Config]
+    
+    F --> F1[Store Monitoring Data]
+    F --> F2[Retrieve Monitoring Data]
+    F --> F3[Analyze Monitoring Data]
+```
+
+### Database Schema
+
+The database schema consists of several related tables for storing container configurations, monitoring data, and analysis results.
+
+```mermaid
+erDiagram
+    ContainerConfig ||--o{ Container : "has many"
+    ContainerConfig ||--|| ContainerResource : "has one"
+    ContainerConfig ||--|| ContainerSecurity : "has one"
+    Container ||--o{ ContainerMonitoring : "has many"
+    Container ||--o{ NetworkActivity : "has many"
+    Container ||--o{ FileActivity : "has many"
+    Container ||--o{ ProcessActivity : "has many"
+    
+    ContainerConfig {
+        uuid id PK
+        string os
+        string architecture
+        string version
+        string imageTag
+        string distribution
+        datetime createdAt
+        datetime updatedAt
+        datetime deletedAt
+    }
+    
+    ContainerResource {
+        uuid id PK
+        uuid configId FK
+        float cpu
+        int memory
+        int diskSpace
+        int networkSpeed
+        int ioOperations
+        datetime createdAt
+        datetime updatedAt
+        datetime deletedAt
+    }
+    
+    ContainerSecurity {
+        uuid id PK
+        uuid configId FK
+        boolean readOnlyRootFilesystem
+        boolean noNewPrivileges
+        boolean seccomp
+        boolean appArmor
+        boolean addressSpaceLayoutRandomization
+        datetime createdAt
+        datetime updatedAt
+        datetime deletedAt
+    }
+    
+    Container {
+        uuid id PK
+        uuid configId FK
+        string status
+        string malwareId
+        string error
+        string os
+        string architecture
+        string version
+        string imageTag
+        string distribution
+        datetime createdAt
+        datetime updatedAt
+        datetime deletedAt
+    }
+    
+    ContainerMonitoring {
+        uuid id PK
+        uuid containerId FK
+        datetime timestamp
+        float cpuUsage
+        int memoryUsage
+        int diskUsage
+        int networkInbound
+        int networkOutbound
+        int processCount
+        int openFileCount
+        int openSocketCount
+        string[] suspiciousActivities
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    NetworkActivity {
+        uuid id PK
+        uuid containerId FK
+        datetime timestamp
+        string protocol
+        string sourceIp
+        int sourcePort
+        string destinationIp
+        int destinationPort
+        string direction
+        int dataSize
+        int duration
+        string status
+        string processName
+        int processId
+        boolean isMalicious
+        string maliciousReason
+        string payload
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    FileActivity {
+        uuid id PK
+        uuid containerId FK
+        datetime timestamp
+        string operation
+        string filePath
+        string fileType
+        int fileSize
+        string filePermissions
+        string processName
+        int processId
+        boolean isMalicious
+        string maliciousReason
+        string fileHash
+        string fileContent
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    ProcessActivity {
+        uuid id PK
+        uuid containerId FK
+        datetime timestamp
+        int processId
+        int parentProcessId
+        string processName
+        string commandLine
+        string user
+        datetime startTime
+        datetime endTime
+        float cpuUsage
+        int memoryUsage
+        string status
+        int exitCode
+        boolean isMalicious
+        string maliciousReason
+        datetime createdAt
+        datetime updatedAt
+    }
 ```
 
 ### Key Services

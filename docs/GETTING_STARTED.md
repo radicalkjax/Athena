@@ -21,6 +21,8 @@ Before you begin, ensure you have the following installed:
 - **Node.js** (v16 or later): [Download from nodejs.org](https://nodejs.org/)
 - **npm** (v8 or later): Included with Node.js
 - **Git**: [Download from git-scm.com](https://git-scm.com/downloads)
+- **Docker** and **Docker Compose** (for database setup): [Download from docker.com](https://www.docker.com/products/docker-desktop/)
+- **PostgreSQL** (optional, if not using Docker): [Download from postgresql.org](https://www.postgresql.org/download/)
 
 You'll also need API keys for the AI models you want to use:
 
@@ -258,15 +260,95 @@ chmod +x scripts/run.sh
 ./scripts/run.sh help
 ```
 
+## Database Setup
+
+Athena uses PostgreSQL for persistent storage of container configurations, monitoring data, and analysis results. You can set up the database using Docker Compose or connect to an existing PostgreSQL server.
+
+### Using Docker Compose (Recommended)
+
+The easiest way to set up the PostgreSQL database is using Docker Compose:
+
+```bash
+# Make the setup script executable
+chmod +x Athena/scripts/setup-db.sh
+
+# Run the setup script
+./Athena/scripts/setup-db.sh
+```
+
+This script will:
+1. Check if Docker and Docker Compose are installed
+2. Create a `.env` file from `.env.example` if it doesn't exist
+3. Start the PostgreSQL and pgAdmin containers
+4. Create the database
+5. Initialize the database schema
+6. Run a test to verify the setup
+7. Display connection information
+
+You can also manually start the database containers:
+
+```bash
+cd Athena
+docker-compose up -d
+```
+
+This will start:
+- A PostgreSQL container with the configuration from your `.env` file
+- A pgAdmin container for database management
+
+You can access pgAdmin at http://localhost:5050 (or the port specified in your `.env` file) with the credentials from your `.env` file.
+
+### Using an Existing PostgreSQL Server
+
+If you already have PostgreSQL installed or prefer not to use Docker:
+
+1. Update your `.env` file with your PostgreSQL connection details:
+
+```
+DB_HOST=your_postgres_host
+DB_PORT=your_postgres_port
+DB_NAME=athena_db
+DB_USER=your_postgres_user
+DB_PASSWORD=your_postgres_password
+```
+
+2. Create and initialize the database:
+
+```bash
+# Create the database
+npm run db:create
+
+# Initialize the database schema
+npm run init-db
+```
+
+### Verifying the Database Setup
+
+To verify that the database is set up correctly:
+
+```bash
+# Run the database test script
+npm run db:test
+```
+
+This script will:
+- Initialize the database
+- Create container configurations for Windows, Linux, and macOS
+- Create container instances for each OS
+- Retrieve and display all container configurations and instances
+
 ## Next Steps
 
 Now that you've set up Athena and performed your first analysis, here are some next steps to explore:
 
 1. **Try Different AI Models**: Experiment with different AI models to see which ones work best for your specific use cases
 2. **Explore Container Isolation**: If you're analyzing potentially harmful files, set up and use the container isolation feature
-3. **Integrate with Metasploit**: If you're using Metasploit for vulnerability research, configure the Metasploit integration
-4. **Learn More**: Check out the other documentation files to learn more about Athena's architecture and components:
+3. **Set Up Container Monitoring**: Configure the container monitoring system to track container activity during analysis
+4. **Integrate with Metasploit**: If you're using Metasploit for vulnerability research, configure the Metasploit integration
+5. **Learn More**: Check out the other documentation files to learn more about Athena's architecture and components:
    - [Architecture Documentation](./ARCHITECTURE.md)
    - [API Integration](./API_INTEGRATION.md)
    - [Container Isolation](./CONTAINER_ISOLATION.md)
+   - [Database Setup](../Athena/docs/DATABASE_SETUP.md)
+   - [Container Monitoring](../Athena/docs/CONTAINER_MONITORING.md)
    - [Component Documentation](./components/)

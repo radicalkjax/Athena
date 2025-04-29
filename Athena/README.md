@@ -16,6 +16,8 @@ This is the Athena project directory. For comprehensive documentation, please re
 - [Architecture](../README.md#️-architecture)
 - [Documentation](../README.md#-documentation)
 - [Screenshots](../README.md#-screenshots)
+- [Database Setup](./docs/DATABASE_SETUP.md)
+- [Container Monitoring](./docs/CONTAINER_MONITORING.md)
 
 ## Documentation
 

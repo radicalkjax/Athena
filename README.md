@@ -37,7 +37,19 @@ The application is designed with security in mind, providing isolated container 
   - Support for Windows, Linux, and macOS containers
   - Configurable resource limits (CPU, memory, disk)
   - Isolated network environment
+  - Real-time container monitoring
 - **Advanced Analysis Options**: Configure analysis depth and focus areas
+- **Persistent Storage**: PostgreSQL database for storing:
+  - Container configurations
+  - Analysis results
+  - Monitoring data
+  - Activity logs
+- **Container Monitoring**: Comprehensive monitoring of container activity:
+  - Resource usage (CPU, memory, disk, network)
+  - Network connections and traffic
+  - File system operations
+  - Process creation and execution
+  - Suspicious activity detection
 - **Metasploit Integration**: Access the Metasploit database to identify vulnerabilities and related exploits
 - **Deobfuscation**: Convert obfuscated malicious code into readable, understandable code
 - **Vulnerability Detection**: Identify potential security vulnerabilities in the analyzed code

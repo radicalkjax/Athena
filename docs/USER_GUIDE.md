@@ -9,6 +9,7 @@ This guide provides detailed instructions for using Athena, the AI-powered malwa
 - [Installation](#installation)
   - [Web Version](#web-version)
   - [Mobile Version](#mobile-version)
+  - [Database Setup](#database-setup)
 - [Setting Up API Keys](#setting-up-api-keys)
 - [Using Athena](#using-athena)
   - [Home Screen](#home-screen)
@@ -16,6 +17,17 @@ This guide provides detailed instructions for using Athena, the AI-powered malwa
   - [Selecting an AI Model](#selecting-an-ai-model)
   - [Running Analysis](#running-analysis)
   - [Viewing Results](#viewing-results)
+- [Container Isolation](#container-isolation)
+  - [Enabling Container Isolation](#enabling-container-isolation)
+  - [Container Configuration](#container-configuration)
+  - [Resource Presets](#resource-presets)
+- [Container Monitoring](#container-monitoring)
+  - [Monitoring Dashboard](#monitoring-dashboard)
+  - [Resource Usage](#resource-usage)
+  - [Network Activity](#network-activity)
+  - [File Activity](#file-activity)
+  - [Process Activity](#process-activity)
+  - [Suspicious Activity Detection](#suspicious-activity-detection)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 
@@ -50,14 +62,16 @@ The web version is the easiest way to get started with Athena. You don't need to
 4. **Start the Web Application**:
    - In the terminal, run:
      ```bash
-     npm run start:web
+     npx serve dist
      ```
-   - This will build the application and start a local web server
+   - This will serve the built app from the dist directory using a static file server
    - Open your web browser and navigate to `http://localhost:3000` (or the URL shown in the terminal)
 
 ### Mobile Version
 
-To run Athena on a mobile device, you'll need to use the Expo Go app.
+> **Important:** The Expo launch method is currently not working. Please use the web version with `npx serve dist` instead.
+
+When working, to run Athena on a mobile device, you'll need to use the Expo Go app.
 
 1. **Install Expo Go on Your Device**:
    - iOS: [Download from App Store](https://apps.apple.com/app/expo-go/id982107779)
@@ -78,6 +92,43 @@ To run Athena on a mobile device, you'll need to use the Expo Go app.
      - iOS: Use the device's camera
      - Android: Use the Expo Go app's QR code scanner
    - The app will load on your device
+
+### Database Setup
+
+Athena uses PostgreSQL for persistent storage of container configurations, monitoring data, and analysis results.
+
+1. **Using Docker Compose (Recommended)**:
+   - Make sure Docker and Docker Compose are installed
+   - Run the database setup script:
+     ```bash
+     chmod +x Athena/scripts/setup-db.sh
+     ./Athena/scripts/setup-db.sh
+     ```
+   - This will start PostgreSQL and pgAdmin containers and initialize the database
+
+2. **Using an Existing PostgreSQL Server**:
+   - Update your `.env` file with your PostgreSQL connection details:
+     ```
+     DB_HOST=your_postgres_host
+     DB_PORT=your_postgres_port
+     DB_NAME=athena_db
+     DB_USER=your_postgres_user
+     DB_PASSWORD=your_postgres_password
+     ```
+   - Create and initialize the database:
+     ```bash
+     npm run db:create
+     npm run init-db
+     ```
+
+3. **Verifying the Database Setup**:
+   - Run the database test script:
+     ```bash
+     npm run db:test
+     ```
+   - This will create test container configurations and instances to verify the setup
+
+For more detailed instructions, see the [Database Setup Documentation](../Athena/docs/DATABASE_SETUP.md).
 
 ## Setting Up API Keys
 
@@ -196,6 +247,182 @@ Once the analysis is complete, you'll see the results in the "Analysis Results" 
      - CVE ID (if available)
      - Metasploit module (if available)
 
+## Container Isolation
+
+The container isolation feature allows you to run malware analysis in an isolated environment, preventing potentially harmful code from affecting your system.
+
+### Enabling Container Isolation
+
+1. In the Analysis Options panel, toggle the "Use Container" switch to enable container isolation
+2. Configure the container settings:
+   - **OS**: Select the operating system for the container (Windows, Linux, or macOS)
+   - **Architecture**: Select the CPU architecture (x86, x64, ARM, ARM64)
+   - **Version**: Select the OS version
+   - **Resources**: Select a resource preset or configure custom resource limits
+
+### Container Configuration
+
+The container configuration options allow you to customize the container environment to match the target environment of the malware you're analyzing.
+
+#### OS Selection
+
+- **Windows**: For analyzing Windows-specific malware
+- **Linux**: For analyzing Linux-specific malware
+- **macOS**: For analyzing macOS-specific malware
+
+#### Architecture Selection
+
+- **x86 (32-bit)**: For analyzing 32-bit malware
+- **x64 (64-bit)**: For analyzing 64-bit malware
+- **ARM**: For analyzing ARM-based malware
+- **ARM64**: For analyzing ARM64-based malware
+
+#### Version Selection
+
+- **Windows**: Windows 7, 8, 10, 11
+- **Linux**: Various distributions and versions (Ubuntu, Debian, CentOS, etc.)
+- **macOS**: macOS 11 (Big Sur), 12 (Monterey), 13 (Ventura), 14 (Sonoma)
+
+#### Resource Configuration
+
+- **CPU**: Number of CPU cores allocated to the container
+- **Memory**: Amount of RAM allocated to the container
+- **Disk Space**: Amount of disk space allocated to the container
+- **Network Speed**: Network bandwidth allocated to the container
+- **I/O Operations**: Maximum I/O operations per second allowed for the container
+
+### Resource Presets
+
+The container isolation feature provides OS-specific resource presets for common use cases:
+
+#### Windows Resource Presets
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 1 | 2,048 | 8,192 | 5 | 500 | Simple malware analysis with minimal resource requirements |
+| Standard | 2 | 4,096 | 10,240 | 20 | 2,000 | General-purpose malware analysis |
+| Performance | 4 | 8,192 | 20,480 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 8 | 16,384 | 40,960 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+#### Linux Resource Presets
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 0.5 | 1,024 | 4,096 | 5 | 500 | Simple malware analysis with minimal resource requirements |
+| Standard | 1 | 2,048 | 8,192 | 20 | 2,000 | General-purpose malware analysis |
+| Performance | 2 | 4,096 | 10,240 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 4 | 8,192 | 20,480 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+#### macOS Resource Presets
+
+| Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
+|--------|-----------|------------|-----------------|---------------------|----------------------|----------|
+| Minimal | 2 | 4,096 | 16,384 | 10 | 1,000 | Simple malware analysis with minimal resource requirements |
+| Standard | 4 | 8,192 | 20,480 | 20 | 2,000 | General-purpose malware analysis |
+| Performance | 6 | 12,288 | 30,720 | 50 | 5,000 | Complex malware analysis requiring more resources |
+| Intensive | 8 | 16,384 | 40,960 | 100 | 10,000 | Advanced malware analysis for resource-intensive samples |
+
+## Container Monitoring
+
+The container monitoring system tracks various aspects of container activity during malware analysis, providing valuable insights into the behavior of the analyzed malware.
+
+```mermaid
+graph TD
+    A[Container Monitoring] --> B[Resource Usage]
+    A --> C[Network Activity]
+    A --> D[File Activity]
+    A --> E[Process Activity]
+    A --> F[Suspicious Activity Detection]
+    
+    B --> B1[CPU Usage]
+    B --> B2[Memory Usage]
+    B --> B3[Disk Usage]
+    B --> B4[Network Traffic]
+    
+    C --> C1[Connections]
+    C --> C2[Protocols]
+    C --> C3[Data Transfer]
+    
+    D --> D1[File Operations]
+    D --> D2[File Types]
+    D --> D3[File Permissions]
+    
+    E --> E1[Process Creation]
+    E --> E2[Process Termination]
+    E --> E3[Process Resource Usage]
+```
+
+### Monitoring Dashboard
+
+The monitoring dashboard provides a comprehensive view of container activity:
+
+1. Access the monitoring dashboard by clicking the "Monitor" button in the analysis results
+2. The dashboard displays real-time monitoring data for the selected container
+3. Use the refresh button to update the data manually, or enable auto-refresh for real-time updates
+4. Use the tabs to navigate between different monitoring views
+
+### Resource Usage
+
+The resource usage view displays information about the container's resource consumption:
+
+- **CPU Usage**: Percentage of CPU usage over time
+- **Memory Usage**: Memory consumption in MB over time
+- **Disk Usage**: Disk space usage in MB over time
+- **Network Traffic**: Inbound and outbound network traffic in bytes over time
+
+### Network Activity
+
+The network activity view displays information about network connections made by the container:
+
+- **Connection List**: List of all network connections made by the container
+- **Connection Details**: For each connection:
+  - Protocol (TCP, UDP, ICMP, HTTP, HTTPS, DNS)
+  - Source and destination IP addresses and ports
+  - Connection direction (inbound/outbound)
+  - Data size and duration
+  - Process responsible for the connection
+  - Connection status (established, closed, blocked, attempted)
+
+### File Activity
+
+The file activity view displays information about file operations performed by the container:
+
+- **Operation List**: List of all file operations performed by the container
+- **Operation Details**: For each operation:
+  - Operation type (create, read, write, delete, modify, execute, rename, move)
+  - File path and type
+  - File size and permissions
+  - Process responsible for the operation
+  - File hash and content (for suspicious files)
+
+### Process Activity
+
+The process activity view displays information about processes running in the container:
+
+- **Process List**: List of all processes that have run in the container
+- **Process Details**: For each process:
+  - Process ID and parent process ID
+  - Process name and command line
+  - User running the process
+  - Start and end times
+  - CPU and memory usage
+  - Process status (running, stopped, terminated, zombie)
+
+### Suspicious Activity Detection
+
+The suspicious activity detection feature automatically identifies potentially malicious activities:
+
+- **Suspicious Network Activity**: Unusual network connections or data transfers
+- **Suspicious File Activity**: Operations on sensitive files or unusual file types
+- **Suspicious Process Activity**: Unusual process behavior or resource usage
+- **Activity Details**: For each suspicious activity:
+  - Activity type and description
+  - Reason for flagging as suspicious
+  - Severity level (low, medium, high, critical)
+  - Recommendations for further investigation
+
+For more detailed information about the container monitoring system, see the [Container Monitoring Documentation](../Athena/docs/CONTAINER_MONITORING.md).
+
 ## Troubleshooting
 
 ### API Key Issues
@@ -229,6 +456,20 @@ Once the analysis is complete, you'll see the results in the "Analysis Results" 
 3. Try a different AI model
 4. If using container analysis, try disabling it
 5. Check the console for error messages (if you're familiar with developer tools)
+
+### Database Issues
+
+**Problem**: Database connection errors.
+
+**Solution**:
+1. Check if the PostgreSQL server is running
+2. Verify the database connection details in the `.env` file
+3. Make sure the database has been created and initialized
+4. Try running the database test script:
+   ```bash
+   npm run db:test
+   ```
+5. Check the console for error messages
 
 ## FAQ
 
@@ -267,3 +508,11 @@ A: Yes, Athena requires an internet connection to communicate with the AI model 
 **Q: Are my files sent to external servers?**
 
 A: Yes, when using cloud-based AI models (OpenAI, Claude, DeepSeek), your files are sent to their respective APIs for analysis. If you're concerned about sensitive data, consider using the container isolation feature and reviewing the privacy policies of the AI model providers.
+
+**Q: Do I need to set up the database?**
+
+A: The database is required for container monitoring and persistent storage of analysis results. If you're not using these features, you can skip the database setup.
+
+**Q: How can I view monitoring data for a container?**
+
+A: After running an analysis with container isolation enabled, click the "Monitor" button in the analysis results to access the monitoring dashboard.
