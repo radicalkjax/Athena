@@ -2,6 +2,9 @@ import { createContainerClient, safeApiCall, sanitizeRequestData } from './apiCl
 import * as SecureStore from 'expo-secure-store';
 import { Container, ContainerConfig, OSType, ArchitectureType, LinuxVersion, LinuxDistribution, MacOSVersion, ContainerResourceLimits } from '@/types';
 import { generateId } from '@/utils/helpers';
+import { Platform } from 'react-native';
+import * as Device from 'expo-device';
+import * as FileSystem from 'expo-file-system';
 
 // Storage keys
 const CONTAINER_API_KEY_STORAGE = 'athena_container_api_key';
@@ -163,26 +166,128 @@ const DEFAULT_RESOURCE_LIMITS: ContainerResourceLimits = {
 // Resource presets for different analysis types
 const RESOURCE_PRESETS = {
   minimal: {
-    cpu: 0.5,
-    memory: 1024,
-    diskSpace: 2048,
+    cpu: 1,
+    memory: 2048,    // 2GB RAM minimum for Windows
+    diskSpace: 8192, // 8GB disk space minimum
     networkSpeed: 5,
     ioOperations: 500
   },
-  standard: DEFAULT_RESOURCE_LIMITS,
-  performance: {
+  standard: {
     cpu: 2,
-    memory: 4096,
-    diskSpace: 10240,
+    memory: 4096,    // 4GB RAM for standard
+    diskSpace: 10240, // 10GB disk space
+    networkSpeed: 20,
+    ioOperations: 2000
+  },
+  performance: {
+    cpu: 4,
+    memory: 8192,    // 8GB RAM for performance
+    diskSpace: 20480, // 20GB disk space
     networkSpeed: 50,
     ioOperations: 5000
   },
   intensive: {
-    cpu: 4,
-    memory: 8192,
-    diskSpace: 20480,
+    cpu: 8,
+    memory: 16384,   // 16GB RAM for intensive
+    diskSpace: 40960, // 40GB disk space
     networkSpeed: 100,
     ioOperations: 10000
+  }
+};
+
+// OS-specific resource requirements for each preset
+const OS_RESOURCES = {
+  minimal: {
+    windows: {
+      cpu: 1,
+      memory: 2048,    // 2GB RAM minimum for Windows
+      diskSpace: 8192, // 8GB disk space minimum
+      networkSpeed: 5,
+      ioOperations: 500
+    },
+    linux: {
+      cpu: 0.5,
+      memory: 1024,    // 1GB RAM minimum for Linux
+      diskSpace: 4096, // 4GB disk space minimum
+      networkSpeed: 5,
+      ioOperations: 500
+    },
+    macos: {
+      cpu: 2,
+      memory: 4096,    // 4GB RAM minimum for macOS
+      diskSpace: 16384, // 16GB disk space minimum
+      networkSpeed: 10,
+      ioOperations: 1000
+    }
+  },
+  standard: {
+    windows: {
+      cpu: 2,
+      memory: 4096,    // 4GB RAM for Windows
+      diskSpace: 10240, // 10GB disk space
+      networkSpeed: 20,
+      ioOperations: 2000
+    },
+    linux: {
+      cpu: 1,
+      memory: 2048,    // 2GB RAM for Linux
+      diskSpace: 8192,  // 8GB disk space
+      networkSpeed: 20,
+      ioOperations: 2000
+    },
+    macos: {
+      cpu: 4,
+      memory: 8192,    // 8GB RAM for macOS
+      diskSpace: 20480, // 20GB disk space
+      networkSpeed: 20,
+      ioOperations: 2000
+    }
+  },
+  performance: {
+    windows: {
+      cpu: 4,
+      memory: 8192,    // 8GB RAM for Windows
+      diskSpace: 20480, // 20GB disk space
+      networkSpeed: 50,
+      ioOperations: 5000
+    },
+    linux: {
+      cpu: 2,
+      memory: 4096,    // 4GB RAM for Linux
+      diskSpace: 10240, // 10GB disk space
+      networkSpeed: 50,
+      ioOperations: 5000
+    },
+    macos: {
+      cpu: 6,
+      memory: 12288,   // 12GB RAM for macOS
+      diskSpace: 30720, // 30GB disk space
+      networkSpeed: 50,
+      ioOperations: 5000
+    }
+  },
+  intensive: {
+    windows: {
+      cpu: 8,
+      memory: 16384,   // 16GB RAM for Windows
+      diskSpace: 40960, // 40GB disk space
+      networkSpeed: 100,
+      ioOperations: 10000
+    },
+    linux: {
+      cpu: 4,
+      memory: 8192,    // 8GB RAM for Linux
+      diskSpace: 20480, // 20GB disk space
+      networkSpeed: 100,
+      ioOperations: 10000
+    },
+    macos: {
+      cpu: 8,
+      memory: 16384,   // 16GB RAM for macOS
+      diskSpace: 40960, // 40GB disk space
+      networkSpeed: 100,
+      ioOperations: 10000
+    }
   }
 };
 
@@ -267,11 +372,18 @@ export const deleteContainerConfig = async (): Promise<void> => {
 /**
  * Get resource limits by preset name
  * @param preset Resource preset name (minimal, standard, performance, intensive)
+ * @param os Optional OS type to get OS-specific requirements
  * @returns Resource limits configuration
  */
 export const getResourcePreset = (
-  preset: 'minimal' | 'standard' | 'performance' | 'intensive' = 'standard'
+  preset: 'minimal' | 'standard' | 'performance' | 'intensive' = 'standard',
+  os?: OSType
 ): ContainerResourceLimits => {
+  // Use OS-specific requirements if OS is provided
+  if (os && OS_RESOURCES[preset] && OS_RESOURCES[preset][os]) {
+    return OS_RESOURCES[preset][os];
+  }
+  
   return RESOURCE_PRESETS[preset] || DEFAULT_RESOURCE_LIMITS;
 };
 
@@ -487,12 +599,123 @@ export const getAvailableMacOSArchitectures = (): ArchitectureType[] => {
 };
 
 /**
+ * Get system resources information
+ * @returns System resources information
+ */
+export const getSystemResources = async (): Promise<{
+  os: OSType;
+  architecture: ArchitectureType;
+  cpu: number;
+  memory: number;
+  diskSpace: number;
+  isVirtual: boolean;
+}> => {
+  // Get OS type
+  let os: OSType = 'linux';
+  if (Platform.OS === 'ios' || Platform.OS === 'macos') {
+    os = 'macos';
+  } else if (Platform.OS === 'windows') {
+    os = 'windows';
+  } else if (Platform.OS === 'android') {
+    os = 'linux';
+  }
+  
+  // Get architecture
+  let architecture: ArchitectureType = 'x64';
+  const deviceType = await Device.getDeviceTypeAsync();
+  
+  if (deviceType === Device.DeviceType.PHONE || deviceType === Device.DeviceType.TABLET) {
+    architecture = 'arm64';
+  } else {
+    // For desktop, try to determine architecture
+    if (os === 'macos' && Device.osInternalBuildId?.includes('arm64')) {
+      architecture = 'arm64';
+    } else if (os === 'windows' && Device.osInternalBuildId?.includes('arm64')) {
+      architecture = 'arm64';
+    }
+  }
+  
+  // Get CPU cores
+  const cpuCount = Device.isDevice ? Device.totalMemory ? Math.max(1, Math.floor(Device.totalMemory / (1024 * 1024 * 1024))) : 2 : 4;
+  
+  // Get memory (in MB)
+  const totalMemory = Device.totalMemory ? Math.floor(Device.totalMemory / (1024 * 1024)) : 4096;
+  
+  // Get available disk space (in MB)
+  let availableDiskSpace = 10240; // Default to 10GB
+  try {
+    const fileInfo = await FileSystem.getFreeDiskStorageAsync();
+    availableDiskSpace = Math.floor(fileInfo / (1024 * 1024));
+  } catch (error) {
+    console.warn('Error getting disk space:', error);
+  }
+  
+  // Check if running in a virtual environment
+  const isVirtual = Device.isDevice ? false : true;
+  
+  return {
+    os,
+    architecture,
+    cpu: cpuCount,
+    memory: totalMemory,
+    diskSpace: availableDiskSpace,
+    isVirtual
+  };
+};
+
+/**
+ * Check if system meets the requirements for the container
+ * @param resources Container resource requirements
+ * @returns Object with check result and details
+ */
+export const checkSystemRequirements = async (
+  resources: ContainerResourceLimits
+): Promise<{
+  meetsRequirements: boolean;
+  details: {
+    cpu: { meets: boolean; available: number; required: number };
+    memory: { meets: boolean; available: number; required: number };
+    diskSpace: { meets: boolean; available: number; required: number };
+  };
+}> => {
+  // Get system resources
+  const systemResources = await getSystemResources();
+  
+  // Get resource values with defaults if undefined
+  const requiredCpu: number = typeof resources.cpu === 'number' ? resources.cpu : DEFAULT_RESOURCE_LIMITS.cpu;
+  const requiredMemory: number = typeof resources.memory === 'number' ? resources.memory : DEFAULT_RESOURCE_LIMITS.memory;
+  const requiredDiskSpace: number = typeof resources.diskSpace === 'number' ? resources.diskSpace : DEFAULT_RESOURCE_LIMITS.diskSpace;
+  
+  // Check CPU
+  const cpuMeets = systemResources.cpu >= requiredCpu;
+  
+  // Check memory
+  const memoryMeets = systemResources.memory >= requiredMemory;
+  
+  // Check disk space
+  const diskSpaceMeets = systemResources.diskSpace >= requiredDiskSpace;
+  
+  // Overall result
+  const meetsRequirements = cpuMeets && memoryMeets && diskSpaceMeets;
+  
+  return {
+    meetsRequirements,
+    details: {
+      cpu: { meets: cpuMeets, available: systemResources.cpu, required: requiredCpu },
+      memory: { meets: memoryMeets, available: systemResources.memory, required: requiredMemory },
+      diskSpace: { meets: diskSpaceMeets, available: systemResources.diskSpace, required: requiredDiskSpace }
+    }
+  };
+};
+
+/**
  * Create a new container for malware analysis
  * @param malwareId ID of the malware file to analyze
  * @param malwareContent Base64-encoded content of the malware file
  * @param malwareName Name of the malware file
  * @param containerConfig Optional container configuration (OS, architecture, version)
  * @returns Container object
+ * @throws Error if system doesn't meet the requirements
  */
 export const createContainer = async (
   malwareId: string,
@@ -509,6 +732,31 @@ export const createContainer = async (
     const config = containerConfig ? 
       { ...DEFAULT_CONTAINER_CONFIG, ...containerConfig } : 
       DEFAULT_CONTAINER_CONFIG;
+    
+    // Check if system meets the requirements
+    if (config.resources) {
+      const systemCheck = await checkSystemRequirements(config.resources);
+      
+      if (!systemCheck.meetsRequirements) {
+        // System doesn't meet the requirements
+        const details = systemCheck.details;
+        let errorMessage = 'System does not meet the requirements for the container:';
+        
+        if (!details.cpu.meets) {
+          errorMessage += `\n- CPU: ${details.cpu.available} cores available, ${details.cpu.required} cores required`;
+        }
+        
+        if (!details.memory.meets) {
+          errorMessage += `\n- Memory: ${details.memory.available} MB available, ${details.memory.required} MB required`;
+        }
+        
+        if (!details.diskSpace.meets) {
+          errorMessage += `\n- Disk Space: ${details.diskSpace.available} MB available, ${details.diskSpace.required} MB required`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+    }
     
     // Get the OS-specific container configuration
     let finalConfig = config;

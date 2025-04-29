@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Switch } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import ContainerConfigSelector from './ContainerConfigSelector';
-import { ContainerConfig, AIModelType } from '@/types';
+import { ContainerConfig } from '@/types';
 import { getResourcePreset } from '../services/container';
 
 interface AnalysisOptionsPanelProps {
@@ -13,22 +13,18 @@ interface AnalysisOptionsPanelProps {
 }
 
 export interface AnalysisOptions {
-  useContainerIsolation: boolean;
   containerConfig: ContainerConfig;
-  aiModel: AIModelType;
   deepAnalysis: boolean;
   saveResults: boolean;
 }
 
 const DEFAULT_OPTIONS: AnalysisOptions = {
-  useContainerIsolation: true,
   containerConfig: {
     os: 'windows',
     architecture: 'x64',
     version: 'windows-10',
     resources: getResourcePreset('standard')
   },
-  aiModel: 'openai',
   deepAnalysis: false,
   saveResults: true
 };
@@ -64,76 +60,17 @@ const AnalysisOptionsPanel: React.FC<AnalysisOptionsPanelProps> = ({
   
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.section}>
-        <View style={styles.optionRow}>
-          <ThemedText style={styles.optionTitle}>Use Container Isolation</ThemedText>
-          <Switch
-            value={options.useContainerIsolation}
-            onValueChange={(value) => handleOptionChange('useContainerIsolation', value)}
-            trackColor={{ false: '#767577', true: accentColor }}
-            thumbColor="#f4f3f4"
-          />
-        </View>
-        
+      <View style={styles.containerSection}>
+        <ThemedText style={styles.sectionTitle}>Container Configuration</ThemedText>
         <ThemedText style={styles.optionDescription}>
-          Run malware analysis in an isolated container environment for enhanced security.
+          Malware is always analyzed in an isolated container environment for enhanced security.
         </ThemedText>
+        <ContainerConfigSelector
+          onConfigChange={handleContainerConfigChange}
+          initialConfig={options.containerConfig}
+        />
       </View>
       
-      {options.useContainerIsolation && (
-        <View style={styles.containerSection}>
-          <ThemedText style={styles.sectionTitle}>Container Configuration</ThemedText>
-          <ContainerConfigSelector
-            onConfigChange={handleContainerConfigChange}
-            initialConfig={options.containerConfig}
-          />
-        </View>
-      )}
-      
-      <View style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>AI Model</ThemedText>
-        <View style={styles.modelOptions}>
-          <TouchableOpacity
-            style={[
-              styles.modelOption,
-              options.aiModel === 'openai' && { borderColor: accentColor, borderWidth: 2 }
-            ]}
-            onPress={() => handleOptionChange('aiModel', 'openai')}
-          >
-            <ThemedText style={styles.modelButtonText}>OpenAI</ThemedText>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.modelOption,
-              options.aiModel === 'claude' && { borderColor: accentColor, borderWidth: 2 }
-            ]}
-            onPress={() => handleOptionChange('aiModel', 'claude')}
-          >
-            <ThemedText style={styles.modelButtonText}>Claude</ThemedText>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.modelOption,
-              options.aiModel === 'deepseek' && { borderColor: accentColor, borderWidth: 2 }
-            ]}
-            onPress={() => handleOptionChange('aiModel', 'deepseek')}
-          >
-            <ThemedText style={styles.modelButtonText}>Deepseek</ThemedText>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.modelOption,
-              options.aiModel === 'local' && { borderColor: accentColor, borderWidth: 2 }
-            ]}
-            onPress={() => handleOptionChange('aiModel', 'local')}
-          >
-            <ThemedText style={styles.modelButtonText}>Local</ThemedText>
-          </TouchableOpacity>
-        </View>
-      </View>
       
       <View style={styles.section}>
         <View style={styles.optionRow}>
@@ -183,9 +120,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   containerSection: {
-    marginBottom: 24,
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#ffd1dd',
     borderRadius: 8,
-    overflow: 'hidden',
   },
   sectionTitle: {
     fontSize: 18,
@@ -209,27 +147,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: 4,
     color: '#000',
-  },
-  modelOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  modelOption: {
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    marginRight: 12,
-    marginBottom: 12,
-    minWidth: 100,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  modelButtonText: {
-    color: '#000000',
-    fontWeight: '600',
-    fontSize: 14,
   },
 });
 

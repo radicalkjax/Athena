@@ -21,7 +21,6 @@ export default function HomeScreen() {
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [selectedFile, setSelectedFile] = useState<MalwareFile | null>(null);
   const [analysisOptions, setAnalysisOptions] = useState<AnalysisOptions>({
-    useContainerIsolation: true,
     containerConfig: {
       os: 'windows',
       architecture: 'x64',
@@ -34,7 +33,6 @@ export default function HomeScreen() {
         ioOperations: 1000
       }
     },
-    aiModel: 'openai',
     deepAnalysis: false,
     saveResults: true
   });
@@ -104,7 +102,7 @@ export default function HomeScreen() {
       const result = await analysisService.runAnalysis(
         selectedFile,
         selectedModel,
-        analysisOptions.useContainerIsolation,
+        true, // Always use container isolation
         analysisOptions.containerConfig
       );
       

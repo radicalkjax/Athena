@@ -11,14 +11,12 @@ import { getResourcePreset } from '../services/container';
 const AnalysisOptionsExample = () => {
   // Initial options
   const initialOptions: AnalysisOptions = {
-    useContainerIsolation: true,
     containerConfig: {
       os: 'windows',
       architecture: 'x64',
       version: 'windows-10',
       resources: getResourcePreset('standard')
     },
-    aiModel: 'openai',
     deepAnalysis: false,
     saveResults: true
   };
@@ -38,11 +36,9 @@ const AnalysisOptionsExample = () => {
       'Analysis Configuration',
       `Starting analysis with the following configuration:
       
-Container Isolation: ${options.useContainerIsolation ? 'Enabled' : 'Disabled'}
 OS: ${options.containerConfig.os}
 Architecture: ${options.containerConfig.architecture}
 Version: ${options.containerConfig.version}
-AI Model: ${options.aiModel}
 Deep Analysis: ${options.deepAnalysis ? 'Enabled' : 'Disabled'}
 Save Results: ${options.saveResults ? 'Yes' : 'No'}
 CPU Cores: ${options.containerConfig.resources?.cpu || 'Default'}
@@ -63,8 +59,8 @@ I/O Operations: ${options.containerConfig.resources?.ioOperations || 'Default'} 
         <ThemedText style={styles.title}>Analysis Options</ThemedText>
         
         <ThemedText style={styles.description}>
-          Configure the analysis options below. You can enable container isolation for enhanced security,
-          select the container configuration, choose the AI model to use, and set additional analysis options.
+          Configure the analysis options below. You can customize the container configuration
+          for malware isolation and set additional analysis options.
         </ThemedText>
         
         <AnalysisOptionsPanel
