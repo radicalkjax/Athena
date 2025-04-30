@@ -249,16 +249,19 @@ Athena comes with comprehensive documentation to help you understand and use the
       <td align="center"><b>Home Screen</b></td>
       <td align="center"><b>About Screen</b></td>
       <td align="center"><b>Settings Screen</b></td>
+      <td align="center"><b>Expanded Container Config View</b></td>
     </tr>
     <tr>
-      <td><img src="./Athena/screenshots/home2.png" width="250" alt="Home Screen"/></td>
+      <td><img src="./Athena/screenshots/newHome.png" width="250" alt="Home Screen"/></td>
       <td><img src="./Athena/screenshots/about2.png" width="250" alt="About Screen"/></td>
       <td><img src="./Athena/screenshots/settings2.png" width="250" alt="Settings Screen"/></td>
+      <td><img src="./Athena/screenshots/containerConfig.png" width="250" alt="Container Config View"/></td>
     </tr>
     <tr>
       <td>Main interface for analyzing malware files</td>
       <td>Information about Athena's features</td>
       <td>Configuration of API keys and settings</td>
+      <td>Detailed container configuration options</td>
     </tr>
   </table>
 </div>
