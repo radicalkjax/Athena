@@ -10,34 +10,11 @@ The foundation of Athena's idea and research comes from the groundbreaking resea
 
 This is the Athena project directory. For comprehensive documentation, please refer to the [main README.md](../README.md) in the root directory.
 
-## Quick Links
+## 📋 Navigation
 
-- [Features](../README.md#-features)
-- [Getting Started](../README.md#-getting-started)
-- [User Guide](../README.md#-user-guide)
-- [Architecture](../README.md#️-architecture)
-- [Documentation](../README.md#-documentation)
-- [Screenshots](../README.md#-screenshots)
-- [Database Setup](./docs/DATABASE_SETUP.md)
-- [Container Monitoring](./docs/CONTAINER_MONITORING.md)
-
-## Documentation
-
-Athena comes with comprehensive documentation to help you understand and use the application effectively:
-
-- [Getting Started](../docs/GETTING_STARTED.md) - Step-by-step guide to set up and start using Athena
-- [User Guide](../docs/USER_GUIDE.md) - Detailed instructions for using Athena
-- [Architecture Documentation](../docs/ARCHITECTURE.md) - Overview of Athena's architecture and components
-- [API Integration](../docs/API_INTEGRATION.md) - Details about AI model API integration
-- [Container Isolation](../docs/CONTAINER_ISOLATION.md) - Information about the container isolation feature
-
-### Component Documentation
-
-- [AIModelSelector](../docs/components/AI_MODEL_SELECTOR.md) - Documentation for the AI model selection component
-- [AnalysisOptionsPanel](../docs/components/ANALYSIS_OPTIONS_PANEL.md) - Documentation for the analysis options panel component
-- [AnalysisResults](../docs/components/ANALYSIS_RESULTS.md) - Documentation for the analysis results component
-- [ContainerConfigSelector](../docs/components/CONTAINER_CONFIG_SELECTOR.md) - Documentation for the container configuration component
-- [FileUploader](../docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
+| **Quick Links** | **Documentation** |
+| --- | --- |
+| • [Features](../README.md#-features)<br>• [Getting Started](../README.md#-getting-started)<br>• [User Guide](../README.md#-user-guide)<br>• [Architecture](../README.md#️-architecture)<br>• [Documentation](../README.md#-documentation)<br>• [Screenshots](../README.md#-screenshots)<br>• [Database Setup](./docs/DATABASE_SETUP.md)<br>• [Container Monitoring](./docs/CONTAINER_MONITORING.md) | • [Getting Started Guide](../docs/GETTING_STARTED.md)<br>• [User Guide](../docs/USER_GUIDE.md)<br>• [Architecture Documentation](../docs/ARCHITECTURE.md)<br>• [API Integration](../docs/API_INTEGRATION.md)<br>• [Container Isolation](../docs/CONTAINER_ISOLATION.md)<br>• Component Documentation:<br>&nbsp;&nbsp;◦ [AIModelSelector](../docs/components/AI_MODEL_SELECTOR.md)<br>&nbsp;&nbsp;◦ [AnalysisOptionsPanel](../docs/components/ANALYSIS_OPTIONS_PANEL.md)<br>&nbsp;&nbsp;◦ [AnalysisResults](../docs/components/ANALYSIS_RESULTS.md)<br>&nbsp;&nbsp;◦ [ContainerConfigSelector](../docs/components/CONTAINER_CONFIG_SELECTOR.md)<br>&nbsp;&nbsp;◦ [FileUploader](../docs/components/FILE_UPLOADER.md) |
 
 ## Helper Scripts
 
