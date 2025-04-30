@@ -8,18 +8,11 @@ Athena is a cross-platform application designed to help security researchers ana
 
 The foundation of Athena's idea and research comes from the groundbreaking research paper by Kali Jackson: [Deep Learning for Malware Analysis](https://radicalkjax.com/2025/04/21/deep-learning-for-malware-analysis.html).
 
-## 📋 Table of Contents
+## 📋 Navigation
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-- [User Guide](#-user-guide)
-- [Architecture](#️-architecture)
-- [Documentation](#-documentation)
-- [Screenshots](#-screenshots)
+| **Table of Contents** | **Documentation** |
+| --- | --- |
+| • [Overview](#-overview)<br>• [Features](#-features)<br>• [Getting Started](#-getting-started)<br>&nbsp;&nbsp;◦ [Prerequisites](#prerequisites)<br>&nbsp;&nbsp;◦ [Installation](#installation)<br>&nbsp;&nbsp;◦ [Configuration](#configuration)<br>• [User Guide](#-user-guide)<br>• [Architecture](#️-architecture)<br>• [Documentation](#-documentation)<br>• [Screenshots](#-screenshots) | • [Getting Started Guide](./docs/GETTING_STARTED.md)<br>• [User Guide](./docs/USER_GUIDE.md)<br>• [Architecture Documentation](./docs/ARCHITECTURE.md)<br>• [API Integration](./docs/API_INTEGRATION.md)<br>• [Container Isolation](./docs/CONTAINER_ISOLATION.md)<br>• [Database Setup](./Athena/docs/DATABASE_SETUP.md)<br>• [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md)<br>• Component Documentation:<br>&nbsp;&nbsp;◦ [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md)<br>&nbsp;&nbsp;◦ [AnalysisOptionsPanel](./docs/components/ANALYSIS_OPTIONS_PANEL.md)<br>&nbsp;&nbsp;◦ [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md)<br>&nbsp;&nbsp;◦ [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md)<br>&nbsp;&nbsp;◦ [FileUploader](./docs/components/FILE_UPLOADER.md)<br>&nbsp;&nbsp;◦ [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md) |
 
 ## 🔍 Overview
 
