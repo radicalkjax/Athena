@@ -13,9 +13,9 @@ This is the Athena project directory. For comprehensive documentation, please re
 ## 📋 Navigation
 
 <div align="center">
-<table width="90%">
+<table width="100%" cellpadding="10">
 <tr>
-<td width="45%" valign="top">
+<td width="47%" valign="top">
 
 ### Quick Links
 
@@ -29,8 +29,8 @@ This is the Athena project directory. For comprehensive documentation, please re
 • [Container Monitoring](./docs/CONTAINER_MONITORING.md)
 
 </td>
-<td width="5%"></td>
-<td width="45%" valign="top">
+<td width="6%"></td>
+<td width="47%" valign="top">
 
 ### 📚 Documentation
 
