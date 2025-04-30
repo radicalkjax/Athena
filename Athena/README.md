@@ -134,6 +134,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 
 The application screenshots are stored in the `./screenshots` directory:
 
-- [Home Screen](./screenshots/home2.png)
+- [Home Screen](./screenshots/newHome.png)
 - [About Screen](./screenshots/about2.png)
 - [Settings Screen](./screenshots/settings2.png)
+- [Expanded Container Config View](./screenshots/containerConfig.png)
