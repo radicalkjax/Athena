@@ -13,36 +13,42 @@ This is the Athena project directory. For comprehensive documentation, please re
 ## 📋 Navigation
 
 <div align="center">
+<table>
+<tr>
+<td width="50%" valign="top">
 
 ### Quick Links
 
-| • [Features](../README.md#-features) |
-| --- |
-| • [Getting Started](../README.md#-getting-started) |
-| • [User Guide](../README.md#-user-guide) |
-| • [Architecture](../README.md#️-architecture) |
-| • [Documentation](../README.md#-documentation) |
-| • [Screenshots](../README.md#-screenshots) |
-| • [Database Setup](./docs/DATABASE_SETUP.md) |
-| • [Container Monitoring](./docs/CONTAINER_MONITORING.md) |
+• [Features](../README.md#-features)  
+• [Getting Started](../README.md#-getting-started)  
+• [User Guide](../README.md#-user-guide)  
+• [Architecture](../README.md#️-architecture)  
+• [Documentation](../README.md#-documentation)  
+• [Screenshots](../README.md#-screenshots)  
+• [Database Setup](./docs/DATABASE_SETUP.md)  
+• [Container Monitoring](./docs/CONTAINER_MONITORING.md)
 
-<br><br>
+</td>
+<td width="50%" valign="top">
 
 ### 📚 Documentation
 
-| • [Getting Started Guide](../docs/GETTING_STARTED.md) |
-| --- |
-| • [User Guide](../docs/USER_GUIDE.md) |
-| • [Architecture Documentation](../docs/ARCHITECTURE.md) |
-| • [API Integration](../docs/API_INTEGRATION.md) |
-| • [Container Isolation](../docs/CONTAINER_ISOLATION.md) |
-| **Component Documentation:** |
-| &nbsp;&nbsp;◦ [AIModelSelector](../docs/components/AI_MODEL_SELECTOR.md) |
-| &nbsp;&nbsp;◦ [AnalysisOptionsPanel](../docs/components/ANALYSIS_OPTIONS_PANEL.md) |
-| &nbsp;&nbsp;◦ [AnalysisResults](../docs/components/ANALYSIS_RESULTS.md) |
-| &nbsp;&nbsp;◦ [ContainerConfigSelector](../docs/components/CONTAINER_CONFIG_SELECTOR.md) |
-| &nbsp;&nbsp;◦ [FileUploader](../docs/components/FILE_UPLOADER.md) |
+• [Getting Started Guide](../docs/GETTING_STARTED.md)  
+• [User Guide](../docs/USER_GUIDE.md)  
+• [Architecture Documentation](../docs/ARCHITECTURE.md)  
+• [API Integration](../docs/API_INTEGRATION.md)  
+• [Container Isolation](../docs/CONTAINER_ISOLATION.md)  
 
+**Component Documentation:**  
+&nbsp;&nbsp;◦ [AIModelSelector](../docs/components/AI_MODEL_SELECTOR.md)  
+&nbsp;&nbsp;◦ [AnalysisOptionsPanel](../docs/components/ANALYSIS_OPTIONS_PANEL.md)  
+&nbsp;&nbsp;◦ [AnalysisResults](../docs/components/ANALYSIS_RESULTS.md)  
+&nbsp;&nbsp;◦ [ContainerConfigSelector](../docs/components/CONTAINER_CONFIG_SELECTOR.md)  
+&nbsp;&nbsp;◦ [FileUploader](../docs/components/FILE_UPLOADER.md)
+
+</td>
+</tr>
+</table>
 </div>
 
 ## Helper Scripts

@@ -11,41 +11,47 @@ The foundation of Athena's idea and research comes from this research paper by K
 ## 📋 Navigation
 
 <div align="center">
+<table>
+<tr>
+<td width="50%" valign="top">
 
 ### Table of Contents
 
-| • [Overview](#-overview) |
-| --- |
-| • [Features](#-features) |
-| • [Getting Started](#-getting-started) |
-| &nbsp;&nbsp;◦ [Prerequisites](#prerequisites) |
-| &nbsp;&nbsp;◦ [Installation](#installation) |
-| &nbsp;&nbsp;◦ [Configuration](#configuration) |
-| • [User Guide](#-user-guide) |
-| • [Architecture](#️-architecture) |
-| • [Documentation](#-documentation) |
-| • [Screenshots](#-screenshots) |
+• [Overview](#-overview)  
+• [Features](#-features)  
+• [Getting Started](#-getting-started)  
+&nbsp;&nbsp;◦ [Prerequisites](#prerequisites)  
+&nbsp;&nbsp;◦ [Installation](#installation)  
+&nbsp;&nbsp;◦ [Configuration](#configuration)  
+• [User Guide](#-user-guide)  
+• [Architecture](#️-architecture)  
+• [Documentation](#-documentation)  
+• [Screenshots](#-screenshots)
 
-<br><br>
+</td>
+<td width="50%" valign="top">
 
 ### 📚 Documentation
 
-| • [Getting Started Guide](./docs/GETTING_STARTED.md) |
-| --- |
-| • [User Guide](./docs/USER_GUIDE.md) |
-| • [Architecture Documentation](./docs/ARCHITECTURE.md) |
-| • [API Integration](./docs/API_INTEGRATION.md) |
-| • [Container Isolation](./docs/CONTAINER_ISOLATION.md) |
-| • [Database Setup](./Athena/docs/DATABASE_SETUP.md) |
-| • [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md) |
-| **Component Documentation:** |
-| &nbsp;&nbsp;◦ [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md) |
-| &nbsp;&nbsp;◦ [AnalysisOptionsPanel](./docs/components/ANALYSIS_OPTIONS_PANEL.md) |
-| &nbsp;&nbsp;◦ [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md) |
-| &nbsp;&nbsp;◦ [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md) |
-| &nbsp;&nbsp;◦ [FileUploader](./docs/components/FILE_UPLOADER.md) |
-| &nbsp;&nbsp;◦ [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md) |
+• [Getting Started Guide](./docs/GETTING_STARTED.md)  
+• [User Guide](./docs/USER_GUIDE.md)  
+• [Architecture Documentation](./docs/ARCHITECTURE.md)  
+• [API Integration](./docs/API_INTEGRATION.md)  
+• [Container Isolation](./docs/CONTAINER_ISOLATION.md)  
+• [Database Setup](./Athena/docs/DATABASE_SETUP.md)  
+• [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md)  
 
+**Component Documentation:**  
+&nbsp;&nbsp;◦ [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md)  
+&nbsp;&nbsp;◦ [AnalysisOptionsPanel](./docs/components/ANALYSIS_OPTIONS_PANEL.md)  
+&nbsp;&nbsp;◦ [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md)  
+&nbsp;&nbsp;◦ [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md)  
+&nbsp;&nbsp;◦ [FileUploader](./docs/components/FILE_UPLOADER.md)  
+&nbsp;&nbsp;◦ [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md)
+
+</td>
+</tr>
+</table>
 </div>
 
 ## 🔍 Overview
