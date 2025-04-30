@@ -6,15 +6,50 @@
 
 > **IMPORTANT DISCLAIMER:** The containerization and analysis components described in this documentation are still being designed and developed. Their current implementation and documentation are not reflective of what the final design could be. This documentation represents a conceptual overview and may change significantly as development progresses.
 
-The foundation of Athena's idea and research comes from the groundbreaking research paper by Kali Jackson: [Deep Learning for Malware Analysis](https://radicalkjax.com/2025/04/21/deep-learning-for-malware-analysis.html).
+The foundation of Athena's idea and research comes from this research paper by Kali Jackson: [Deep Learning for Malware Analysis](https://radicalkjax.com/2025/04/21/deep-learning-for-malware-analysis.html).
 
 This is the Athena project directory. For comprehensive documentation, please refer to the [main README.md](../README.md) in the root directory.
 
 ## 📋 Navigation
 
-| **Quick Links** | **Documentation** |
-| --- | --- |
-| • [Features](../README.md#-features)<br>• [Getting Started](../README.md#-getting-started)<br>• [User Guide](../README.md#-user-guide)<br>• [Architecture](../README.md#️-architecture)<br>• [Documentation](../README.md#-documentation)<br>• [Screenshots](../README.md#-screenshots)<br>• [Database Setup](./docs/DATABASE_SETUP.md)<br>• [Container Monitoring](./docs/CONTAINER_MONITORING.md) | • [Getting Started Guide](../docs/GETTING_STARTED.md)<br>• [User Guide](../docs/USER_GUIDE.md)<br>• [Architecture Documentation](../docs/ARCHITECTURE.md)<br>• [API Integration](../docs/API_INTEGRATION.md)<br>• [Container Isolation](../docs/CONTAINER_ISOLATION.md)<br>• Component Documentation:<br>&nbsp;&nbsp;◦ [AIModelSelector](../docs/components/AI_MODEL_SELECTOR.md)<br>&nbsp;&nbsp;◦ [AnalysisOptionsPanel](../docs/components/ANALYSIS_OPTIONS_PANEL.md)<br>&nbsp;&nbsp;◦ [AnalysisResults](../docs/components/ANALYSIS_RESULTS.md)<br>&nbsp;&nbsp;◦ [ContainerConfigSelector](../docs/components/CONTAINER_CONFIG_SELECTOR.md)<br>&nbsp;&nbsp;◦ [FileUploader](../docs/components/FILE_UPLOADER.md) |
+<table width="100%">
+<tr>
+<th width="45%" align="center">Quick Links</th>
+<th width="10%"></th>
+<th width="45%" align="center">📚 Documentation</th>
+</tr>
+<tr valign="top">
+<td>
+
+• [Features](../README.md#-features)  
+• [Getting Started](../README.md#-getting-started)  
+• [User Guide](../README.md#-user-guide)  
+• [Architecture](../README.md#️-architecture)  
+• [Documentation](../README.md#-documentation)  
+• [Screenshots](../README.md#-screenshots)  
+• [Database Setup](./docs/DATABASE_SETUP.md)  
+• [Container Monitoring](./docs/CONTAINER_MONITORING.md)
+
+</td>
+<td></td>
+<td>
+
+• [Getting Started Guide](../docs/GETTING_STARTED.md)  
+• [User Guide](../docs/USER_GUIDE.md)  
+• [Architecture Documentation](../docs/ARCHITECTURE.md)  
+• [API Integration](../docs/API_INTEGRATION.md)  
+• [Container Isolation](../docs/CONTAINER_ISOLATION.md)  
+
+**Component Documentation:**  
+&nbsp;&nbsp;◦ [AIModelSelector](../docs/components/AI_MODEL_SELECTOR.md)  
+&nbsp;&nbsp;◦ [AnalysisOptionsPanel](../docs/components/ANALYSIS_OPTIONS_PANEL.md)  
+&nbsp;&nbsp;◦ [AnalysisResults](../docs/components/ANALYSIS_RESULTS.md)  
+&nbsp;&nbsp;◦ [ContainerConfigSelector](../docs/components/CONTAINER_CONFIG_SELECTOR.md)  
+&nbsp;&nbsp;◦ [FileUploader](../docs/components/FILE_UPLOADER.md)
+
+</td>
+</tr>
+</table>
 
 ## Helper Scripts
 

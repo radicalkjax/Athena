@@ -6,13 +6,53 @@
 
 Athena is a cross-platform application designed to help security researchers analyze and deobfuscate malware using various AI models. It provides a secure environment for malware analysis with features like isolated container execution and integration with the Metasploit database.
 
-The foundation of Athena's idea and research comes from the groundbreaking research paper by Kali Jackson: [Deep Learning for Malware Analysis](https://radicalkjax.com/2025/04/21/deep-learning-for-malware-analysis.html).
+The foundation of Athena's idea and research comes from this research paper by Kali Jackson: [Deep Learning for Malware Analysis](https://radicalkjax.com/2025/04/21/deep-learning-for-malware-analysis.html).
 
 ## 📋 Navigation
 
-| **Table of Contents** | **Documentation** |
-| --- | --- |
-| • [Overview](#-overview)<br>• [Features](#-features)<br>• [Getting Started](#-getting-started)<br>&nbsp;&nbsp;◦ [Prerequisites](#prerequisites)<br>&nbsp;&nbsp;◦ [Installation](#installation)<br>&nbsp;&nbsp;◦ [Configuration](#configuration)<br>• [User Guide](#-user-guide)<br>• [Architecture](#️-architecture)<br>• [Documentation](#-documentation)<br>• [Screenshots](#-screenshots) | • [Getting Started Guide](./docs/GETTING_STARTED.md)<br>• [User Guide](./docs/USER_GUIDE.md)<br>• [Architecture Documentation](./docs/ARCHITECTURE.md)<br>• [API Integration](./docs/API_INTEGRATION.md)<br>• [Container Isolation](./docs/CONTAINER_ISOLATION.md)<br>• [Database Setup](./Athena/docs/DATABASE_SETUP.md)<br>• [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md)<br>• Component Documentation:<br>&nbsp;&nbsp;◦ [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md)<br>&nbsp;&nbsp;◦ [AnalysisOptionsPanel](./docs/components/ANALYSIS_OPTIONS_PANEL.md)<br>&nbsp;&nbsp;◦ [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md)<br>&nbsp;&nbsp;◦ [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md)<br>&nbsp;&nbsp;◦ [FileUploader](./docs/components/FILE_UPLOADER.md)<br>&nbsp;&nbsp;◦ [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md) |
+<table width="100%">
+<tr>
+<th width="45%" align="center">Table of Contents</th>
+<th width="10%"></th>
+<th width="45%" align="center">📚 Documentation</th>
+</tr>
+<tr valign="top">
+<td>
+
+• [Overview](#-overview)  
+• [Features](#-features)  
+• [Getting Started](#-getting-started)  
+&nbsp;&nbsp;◦ [Prerequisites](#prerequisites)  
+&nbsp;&nbsp;◦ [Installation](#installation)  
+&nbsp;&nbsp;◦ [Configuration](#configuration)  
+• [User Guide](#-user-guide)  
+• [Architecture](#️-architecture)  
+• [Documentation](#-documentation)  
+• [Screenshots](#-screenshots)
+
+</td>
+<td></td>
+<td>
+
+• [Getting Started Guide](./docs/GETTING_STARTED.md)  
+• [User Guide](./docs/USER_GUIDE.md)  
+• [Architecture Documentation](./docs/ARCHITECTURE.md)  
+• [API Integration](./docs/API_INTEGRATION.md)  
+• [Container Isolation](./docs/CONTAINER_ISOLATION.md)  
+• [Database Setup](./Athena/docs/DATABASE_SETUP.md)  
+• [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md)  
+
+**Component Documentation:**  
+&nbsp;&nbsp;◦ [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md)  
+&nbsp;&nbsp;◦ [AnalysisOptionsPanel](./docs/components/ANALYSIS_OPTIONS_PANEL.md)  
+&nbsp;&nbsp;◦ [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md)  
+&nbsp;&nbsp;◦ [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md)  
+&nbsp;&nbsp;◦ [FileUploader](./docs/components/FILE_UPLOADER.md)  
+&nbsp;&nbsp;◦ [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md)
+
+</td>
+</tr>
+</table>
 
 ## 🔍 Overview
 
