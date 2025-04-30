@@ -11,9 +11,9 @@ The foundation of Athena's idea and research comes from this research paper by K
 ## 📋 Navigation
 
 <div align="center">
-<table>
+<table width="90%">
 <tr>
-<td width="50%" valign="top">
+<td width="45%" valign="top">
 
 ### Table of Contents
 
@@ -29,7 +29,8 @@ The foundation of Athena's idea and research comes from this research paper by K
 • [Screenshots](#-screenshots)
 
 </td>
-<td width="50%" valign="top">
+<td width="5%"></td>
+<td width="45%" valign="top">
 
 ### 📚 Documentation
 
