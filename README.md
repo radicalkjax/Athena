@@ -10,59 +10,47 @@ The foundation of Athena's idea and research comes from this research paper by K
 
 ## 📋 Navigation
 
-<div style="display: flex; justify-content: center; margin: 20px 0;">
-  <div style="display: flex; width: 90%; max-width: 1200px; background-color: #f8f9fa; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    
-    <!-- Left Column: Table of Contents -->
-    <div style="flex: 1; padding: 20px; border-right: 1px solid #e1e4e8;">
-      <h3 style="margin-top: 0; color: #24292e; font-size: 1.3em; border-bottom: 2px solid #0366d6; padding-bottom: 8px; margin-bottom: 16px;">
-        Table of Contents
-      </h3>
-      <ul style="list-style-type: none; padding-left: 0; margin-top: 0;">
-        <li style="margin-bottom: 8px;">📄 <a href="#-overview" style="text-decoration: none; color: #0366d6;">Overview</a></li>
-        <li style="margin-bottom: 8px;">✨ <a href="#-features" style="text-decoration: none; color: #0366d6;">Features</a></li>
-        <li style="margin-bottom: 8px;">🚀 <a href="#-getting-started" style="text-decoration: none; color: #0366d6;">Getting Started</a>
-          <ul style="list-style-type: none; padding-left: 20px; margin-top: 8px;">
-            <li style="margin-bottom: 6px;">◦ <a href="#prerequisites" style="text-decoration: none; color: #0366d6;">Prerequisites</a></li>
-            <li style="margin-bottom: 6px;">◦ <a href="#installation" style="text-decoration: none; color: #0366d6;">Installation</a></li>
-            <li style="margin-bottom: 6px;">◦ <a href="#configuration" style="text-decoration: none; color: #0366d6;">Configuration</a></li>
-          </ul>
-        </li>
-        <li style="margin-bottom: 8px;">📖 <a href="#-user-guide" style="text-decoration: none; color: #0366d6;">User Guide</a></li>
-        <li style="margin-bottom: 8px;">🏗️ <a href="#️-architecture" style="text-decoration: none; color: #0366d6;">Architecture</a></li>
-        <li style="margin-bottom: 8px;">📚 <a href="#-documentation" style="text-decoration: none; color: #0366d6;">Documentation</a></li>
-        <li style="margin-bottom: 8px;">📱 <a href="#-screenshots" style="text-decoration: none; color: #0366d6;">Screenshots</a></li>
-      </ul>
-    </div>
-    
-    <!-- Right Column: Documentation -->
-    <div style="flex: 1; padding: 20px;">
-      <h3 style="margin-top: 0; color: #24292e; font-size: 1.3em; border-bottom: 2px solid #0366d6; padding-bottom: 8px; margin-bottom: 16px;">
-        📚 Documentation
-      </h3>
-      <ul style="list-style-type: none; padding-left: 0; margin-top: 0;">
-        <li style="margin-bottom: 8px;">📘 <a href="./docs/GETTING_STARTED.md" style="text-decoration: none; color: #0366d6;">Getting Started Guide</a></li>
-        <li style="margin-bottom: 8px;">📗 <a href="./docs/USER_GUIDE.md" style="text-decoration: none; color: #0366d6;">User Guide</a></li>
-        <li style="margin-bottom: 8px;">📐 <a href="./docs/ARCHITECTURE.md" style="text-decoration: none; color: #0366d6;">Architecture Documentation</a></li>
-        <li style="margin-bottom: 8px;">🔌 <a href="./docs/API_INTEGRATION.md" style="text-decoration: none; color: #0366d6;">API Integration</a></li>
-        <li style="margin-bottom: 8px;">🔒 <a href="./docs/CONTAINER_ISOLATION.md" style="text-decoration: none; color: #0366d6;">Container Isolation</a></li>
-        <li style="margin-bottom: 8px;">💾 <a href="./Athena/docs/DATABASE_SETUP.md" style="text-decoration: none; color: #0366d6;">Database Setup</a></li>
-        <li style="margin-bottom: 8px;">📊 <a href="./Athena/docs/CONTAINER_MONITORING.md" style="text-decoration: none; color: #0366d6;">Container Monitoring</a></li>
-        <li style="margin-bottom: 8px; margin-top: 16px;">
-          <strong style="display: block; margin-bottom: 8px; color: #24292e;">Component Documentation:</strong>
-          <ul style="list-style-type: none; padding-left: 20px;">
-            <li style="margin-bottom: 6px;">◦ <a href="./docs/components/AI_MODEL_SELECTOR.md" style="text-decoration: none; color: #0366d6;">AIModelSelector</a></li>
-            <li style="margin-bottom: 6px;">◦ <a href="./docs/components/ANALYSIS_OPTIONS_PANEL.md" style="text-decoration: none; color: #0366d6;">AnalysisOptionsPanel</a></li>
-            <li style="margin-bottom: 6px;">◦ <a href="./docs/components/ANALYSIS_RESULTS.md" style="text-decoration: none; color: #0366d6;">AnalysisResults</a></li>
-            <li style="margin-bottom: 6px;">◦ <a href="./docs/components/CONTAINER_CONFIG_SELECTOR.md" style="text-decoration: none; color: #0366d6;">ContainerConfigSelector</a></li>
-            <li style="margin-bottom: 6px;">◦ <a href="./docs/components/FILE_UPLOADER.md" style="text-decoration: none; color: #0366d6;">FileUploader</a></li>
-            <li style="margin-bottom: 6px;">◦ <a href="./Athena/docs/components/CONTAINER_MONITORING.md" style="text-decoration: none; color: #0366d6;">ContainerMonitoring</a></li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### Table of Contents
+
+- [📄 Overview](#-overview)
+- [✨ Features](#-features)
+- [🚀 Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [📖 User Guide](#-user-guide)
+- [🏗️ Architecture](#️-architecture)
+- [📚 Documentation](#-documentation)
+- [📱 Screenshots](#-screenshots)
+
+</td>
+<td width="50%" valign="top">
+
+### 📚 Documentation
+
+- [📘 Getting Started Guide](./docs/GETTING_STARTED.md)
+- [📗 User Guide](./docs/USER_GUIDE.md)
+- [📐 Architecture Documentation](./docs/ARCHITECTURE.md)
+- [🔌 API Integration](./docs/API_INTEGRATION.md)
+- [🔒 Container Isolation](./docs/CONTAINER_ISOLATION.md)
+- [💾 Database Setup](./Athena/docs/DATABASE_SETUP.md)
+- [📊 Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md)
+
+**Component Documentation:**
+- [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md)
+- [AnalysisOptionsPanel](./docs/components/ANALYSIS_OPTIONS_PANEL.md)
+- [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md)
+- [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md)
+- [FileUploader](./docs/components/FILE_UPLOADER.md)
+- [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md)
+
+</td>
+</tr>
+</table>
 
 ## 🔍 Overview
 
