@@ -32,6 +32,7 @@ The foundation of Athena's idea and research comes from this research paper by K
 
 ### 📚 Documentation
 
+- [🚀 Quick Start Guide](./docs/QUICKSTART.md)
 - [📘 Getting Started Guide](./docs/GETTING_STARTED.md)
 - [📗 User Guide](./docs/USER_GUIDE.md)
 - [📐 Architecture Documentation](./docs/ARCHITECTURE.md)
@@ -112,20 +113,34 @@ Before you begin, ensure you have the following installed:
    cd athena
    ```
 
-2. Use the setup script (recommended):
+2. **One-command setup and run** (recommended):
    ```bash
-   chmod +x scripts/setup.sh
-   ./scripts/setup.sh
+   ./scripts/run.sh
    ```
    
-   Or manually install dependencies:
+   This unified script will automatically:
+   - Detect if setup is needed (first time or missing dependencies)
+   - Check for required dependencies (Node.js v16+, npm, Git)
+   - Install all project dependencies
+   - Install critical web polyfills (buffer, process) for browser compatibility
+   - Set up environment files (.env from template)
+   - Verify project configuration
+   - Build and launch the web application
+   
+   **That's it!** The script handles everything automatically.
+
+3. **Optional: Manual setup** (if you prefer manual control):
    ```bash
+   ./scripts/run.sh setup  # Force setup only
    npm install
+   cd Athena
+   npm install
+   npm install buffer process --save
    ```
 
-3. Set up environment variables:
-   - Create a `.env` file in the Athena directory
-   - Add your API keys (see [Configuration](#configuration) for details)
+4. **Environment variables** (optional):
+   - The script creates a `.env` file automatically from the template
+   - Edit `Athena/.env` to add your API keys (see [Configuration](#configuration))
    - Or use the API key validation script:
      ```bash
      node scripts/check-api-keys.js
@@ -170,36 +185,43 @@ PGADMIN_PORT=5050
 
 ### Starting the Application
 
-You can use the run script to start the application in different modes:
+**Simplest approach** - Just run one command:
 ```bash
-# Run in web mode (default)
 ./scripts/run.sh
-
-# Run in iOS mode (requires macOS)
-./scripts/run.sh ios
-
-# Run in Android mode
-./scripts/run.sh android
-
-# Run using Expo
-./scripts/run.sh expo
 ```
 
-Or you can use the standard commands:
+This unified script will:
+- 🔍 **Auto-detect** if setup is needed (first time or missing dependencies)
+- 🔧 **Auto-setup** all dependencies and configuration if needed
+- 🔄 **Check for updates** if already set up
+- 🚀 **Build and launch** the web application automatically
 
-For web development (recommended approach):
+**Advanced options** - You can also specify different platforms:
 ```bash
+# Web version (default) - Recommended
+./scripts/run.sh web
+
+# iOS version (requires macOS + Xcode)
+./scripts/run.sh ios
+
+# Android version (requires Android SDK)
+./scripts/run.sh android
+
+# Expo version (currently not working)
+./scripts/run.sh expo
+
+# Force setup only (without running)
+./scripts/run.sh setup
+```
+
+**Manual commands** (if you prefer manual control):
+```bash
+cd Athena
+npm run build:web
 npx serve dist
 ```
 
-This command serves the built app from the dist directory using a static file server.
-
-For mobile development (Note: Currently not working):
-```bash
-npx expo start
-```
-
-> **Note:** The Expo launch method is currently not working. Please use the web version with `npx serve dist` instead.
+> **Note:** The Expo launch method is currently not working. Please use the web version with `./scripts/run.sh` instead.
 
 When working, this would start the Expo development server, allowing you to run the app on:
 - iOS simulator

@@ -8,6 +8,7 @@ This document provides a detailed overview of Athena's architecture, explaining 
 
 - [Overview](#overview)
 - [System Architecture](#system-architecture)
+- [Deployment Architecture](#deployment-architecture)
 - [Component Structure](#component-structure)
 - [Data Flow](#data-flow)
 - [State Management](#state-management)
@@ -18,6 +19,8 @@ This document provides a detailed overview of Athena's architecture, explaining 
 ## Overview
 
 Athena is built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms. The application follows a modular architecture with clear separation of concerns, making it maintainable and extensible.
+
+The deployment architecture includes an intelligent setup and launch system that automatically handles dependencies, configuration, and platform-specific requirements through a unified script interface.
 
 ## System Architecture
 
@@ -38,6 +41,200 @@ flowchart TD
 - **External APIs**: Integration with AI model APIs (OpenAI, Claude, DeepSeek)
 - **Local Storage**: Persistent storage for files, analysis results, and settings
 - **Container Execution**: Isolated environment for running malware analysis
+
+## Deployment Architecture
+
+Athena features an intelligent deployment architecture that provides a seamless setup and launch experience through a unified script system. This architecture automatically handles dependencies, configuration, and platform-specific requirements.
+
+```mermaid
+flowchart TD
+    A[User Executes ./scripts/run.sh] --> B[Setup Detection]
+    B --> C{First Time Setup?}
+    
+    C -->|Yes| D[Auto Setup Process]
+    C -->|No| E[Update Check]
+    
+    D --> D1[System Requirements Check]
+    D --> D2[Install Dependencies]
+    D --> D3[Configure Web Polyfills]
+    D --> D4[Create Environment Files]
+    D --> D5[Verify Configuration]
+    
+    E --> E1[Check Dependencies]
+    E --> E2[Update if Needed]
+    
+    D5 --> F[Build Application]
+    E2 --> F
+    
+    F --> G[Launch Platform]
+    G --> G1[Web Server]
+    G --> G2[iOS Simulator]
+    G --> G3[Android Emulator]
+    G --> G4[Expo Development]
+```
+
+### Unified Script Architecture
+
+The deployment system is built around a single, intelligent script (`scripts/run.sh`) that handles all aspects of setup and deployment:
+
+```mermaid
+flowchart LR
+    A[run.sh] --> B[Setup Functions]
+    A --> C[Platform Functions]
+    A --> D[Utility Functions]
+    
+    B --> B1[check_system_requirements]
+    B --> B2[install_dependencies]
+    B --> B3[setup_web_polyfills]
+    B --> B4[create_env_files]
+    
+    C --> C1[run_web]
+    C --> C2[run_ios]
+    C --> C3[run_android]
+    C --> C4[run_expo]
+    
+    D --> D1[show_help]
+    D --> D2[print_status]
+    D --> D3[handle_errors]
+```
+
+### Setup Detection Logic
+
+The script uses intelligent detection to determine what setup steps are needed:
+
+```mermaid
+flowchart TD
+    A[Setup Detection] --> B{node_modules exists?}
+    B -->|No| C[Full Setup Required]
+    B -->|Yes| D{Web polyfills exist?}
+    
+    D -->|No| E[Install Polyfills]
+    D -->|Yes| F{.env file exists?}
+    
+    F -->|No| G[Create Environment]
+    F -->|Yes| H{Dependencies outdated?}
+    
+    H -->|Yes| I[Update Dependencies]
+    H -->|No| J[Ready to Launch]
+    
+    C --> K[Complete Setup Process]
+    E --> L[Partial Setup Process]
+    G --> M[Environment Setup]
+    I --> N[Update Process]
+    
+    K --> J
+    L --> J
+    M --> J
+    N --> J
+```
+
+### Browser Compatibility Architecture
+
+A critical component of the deployment architecture is the browser compatibility layer that resolves Node.js-specific dependencies:
+
+```mermaid
+flowchart TD
+    A[Browser Compatibility] --> B[Node.js Polyfills]
+    A --> C[Webpack Configuration]
+    A --> D[Metro Configuration]
+    
+    B --> B1[Buffer Polyfill]
+    B --> B2[Process Polyfill]
+    B --> B3[Path Polyfill]
+    
+    C --> C1[Resolve Fallbacks]
+    C --> C2[Plugin Configuration]
+    C --> C3[Build Optimization]
+    
+    D --> D1[Transformer Configuration]
+    D --> D2[Resolver Configuration]
+    D --> D3[Platform Extensions]
+```
+
+The system automatically installs and configures critical polyfills:
+- **Buffer**: Provides Node.js Buffer functionality in browsers
+- **Process**: Provides Node.js process object in browsers
+- **Path**: Handles file path operations across platforms
+
+### Platform-Specific Launch Architecture
+
+The deployment system supports multiple platforms with platform-specific optimizations:
+
+```mermaid
+flowchart TD
+    A[Platform Selection] --> B[Web Platform]
+    A --> C[iOS Platform]
+    A --> D[Android Platform]
+    A --> E[Expo Platform]
+    
+    B --> B1[Webpack Build]
+    B --> B2[Static File Server]
+    B --> B3[Browser Launch]
+    
+    C --> C1[iOS Simulator Check]
+    C --> C2[Xcode Requirements]
+    C --> C3[Metro Bundler]
+    
+    D --> D1[Android SDK Check]
+    D --> D2[Emulator Setup]
+    D --> D3[Metro Bundler]
+    
+    E --> E1[Expo CLI Check]
+    E --> E2[Development Server]
+    E --> E3[QR Code Generation]
+```
+
+### Error Handling and Recovery
+
+The deployment architecture includes comprehensive error handling and recovery mechanisms:
+
+```mermaid
+flowchart TD
+    A[Error Detection] --> B{Error Type}
+    
+    B -->|Missing Dependencies| C[Auto Install]
+    B -->|Permission Issues| D[Suggest Solutions]
+    B -->|Platform Issues| E[Platform Guidance]
+    B -->|Configuration Issues| F[Auto Fix Config]
+    
+    C --> G[Retry Operation]
+    D --> H[Manual Intervention]
+    E --> I[Alternative Platform]
+    F --> G
+    
+    G --> J{Success?}
+    J -->|Yes| K[Continue Process]
+    J -->|No| L[Escalate Error]
+    
+    H --> M[User Action Required]
+    I --> N[Platform Switch]
+    L --> O[Detailed Error Report]
+```
+
+### Environment Management
+
+The deployment system automatically manages environment configuration:
+
+```mermaid
+flowchart TD
+    A[Environment Management] --> B[Template Processing]
+    A --> C[Variable Validation]
+    A --> D[Security Checks]
+    
+    B --> B1[Copy .env.example]
+    B --> B2[Generate Placeholders]
+    B --> B3[Set Defaults]
+    
+    C --> C1[Check Required Variables]
+    C --> C2[Validate API Keys]
+    C --> C3[Test Connections]
+    
+    D --> D1[Exclude from Git]
+    D --> D2[Secure Storage]
+    D --> D3[Access Control]
+```
+
+This deployment architecture ensures that users can get Athena running with minimal effort while maintaining flexibility for advanced users who need more control over the setup process.
 
 ## Component Structure
 

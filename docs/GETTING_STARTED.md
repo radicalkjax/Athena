@@ -39,23 +39,52 @@ git clone https://github.com/yourusername/athena.git
 cd athena
 ```
 
-### Step 2: Install Dependencies
+### Step 2: One-Command Setup and Launch
+
+**Simplest approach** - Just run one command:
 
 ```bash
+./scripts/run.sh
+```
+
+This unified script will automatically:
+- 🔍 **Auto-detect** if setup is needed (first time or missing dependencies)
+- 🔧 **Auto-setup** all dependencies and configuration if needed
+- 🔄 **Check for updates** if already set up
+- 🚀 **Build and launch** the web application automatically
+
+**That's it!** The script handles everything automatically, including:
+- Installing all necessary dependencies for Athena
+- Installing critical web polyfills for browser compatibility
+- Creating environment files from templates
+- Verifying project configuration
+- Building and serving the application
+
+### Alternative: Manual Setup
+
+If you prefer manual control over the setup process:
+
+```bash
+# Force setup only (without running)
+./scripts/run.sh setup
+
+# Or install dependencies manually
 npm install
+cd Athena
+npm install
+npm install buffer process --save
 ```
 
-This will install all the necessary dependencies for Athena, including React Native, Expo, and other required packages.
+### Step 3: Configure API Keys (Optional)
 
-### Step 3: Create Environment File
-
-Create a `.env` file in the Athena directory to store your API keys:
+The setup script automatically creates a `.env` file from the template. You can edit it to add your API keys:
 
 ```bash
-touch Athena/.env
+# Edit the environment file
+nano Athena/.env
 ```
 
-Open the `.env` file in your favorite text editor and add your API keys:
+Add your API keys:
 
 ```
 # API Keys for AI Models
@@ -69,13 +98,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 # DEEPSEEK_API_BASE_URL=https://api.deepseek.com/v1
 ```
 
-You can also use the provided `.env.example` file as a template:
-
-```bash
-cp Athena/.env.example Athena/.env
-```
-
-Then edit the `.env` file to add your API keys.
+You can also configure API keys later through the Settings screen in the application.
 
 ## Configuration
 
@@ -206,26 +229,38 @@ Once the analysis is complete, you'll see the results in the "Analysis Results" 
 
 Athena comes with several helper scripts to make it easier to set up and run the application. These scripts are located in the `scripts` directory.
 
-### Setup Script
+### Unified Run Script
 
-The setup script helps with the initial setup of Athena. It checks for required dependencies, installs npm packages, and creates a `.env` file if one doesn't exist.
+The main run script handles both setup and launching of Athena. It intelligently detects what needs to be done and handles it automatically.
 
 ```bash
-# Make the script executable
-chmod +x scripts/setup.sh
+# Run Athena (auto-setup + launch)
+./scripts/run.sh
 
-# Run the setup script
-./scripts/setup.sh
+# Run different platforms
+./scripts/run.sh web      # Web version (default)
+./scripts/run.sh ios      # iOS (requires macOS + Xcode)
+./scripts/run.sh android  # Android (requires Android SDK)
+./scripts/run.sh expo     # Expo (currently not working)
+
+# Force setup only (without running)
+./scripts/run.sh setup
+
+# Show help
+./scripts/run.sh help
 ```
+
+The script will automatically:
+- 🔍 Detect if setup is needed
+- 🔧 Install all dependencies
+- 🔄 Check for updates
+- 🚀 Build and launch the application
 
 ### API Key Validation Script
 
 The API key validation script checks if your API keys for OpenAI, Claude, and DeepSeek are valid. It makes test requests to each API and provides a summary of the results.
 
 ```bash
-# Make the script executable
-chmod +x scripts/check-api-keys.js
-
 # Run the API key validation script
 node scripts/check-api-keys.js
 ```
@@ -235,30 +270,6 @@ This script will:
 2. Validate each API key by making a test request
 3. Allow you to update invalid or missing API keys
 4. Provide a summary of which AI models you can use
-
-### Run Script
-
-The run script helps you run Athena in different modes (web, iOS, Android, or Expo).
-
-```bash
-# Make the script executable
-chmod +x scripts/run.sh
-
-# Run Athena in web mode (default)
-./scripts/run.sh
-
-# Run Athena in iOS mode (requires macOS)
-./scripts/run.sh ios
-
-# Run Athena in Android mode
-./scripts/run.sh android
-
-# Run Athena using Expo
-./scripts/run.sh expo
-
-# Show help
-./scripts/run.sh help
-```
 
 ## Database Setup
 
