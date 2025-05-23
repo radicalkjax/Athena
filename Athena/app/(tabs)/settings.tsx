@@ -213,7 +213,7 @@ export default function SettingsScreen() {
       headerImage={
         <View style={styles.logoContainer}>
           <Image
-            source={require('./../../assets/images/real-athena-logo.png')}
+            source={require('./../../assets/images/logo.png')}
             style={[styles.reactLogo, styles.roundedImage]}
             resizeMode="contain"
           />

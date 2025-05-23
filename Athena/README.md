@@ -1,7 +1,7 @@
 # Athena - AI-Powered Malware Analysis Assistant
 
 <div align="center">
-  <img src="./assets/images/real-athena-logo.png" alt="Athena Logo" width="200" />
+  <img src="./assets/images/logo.png" alt="Athena Logo" width="200" />
 </div>
 
 > **IMPORTANT DISCLAIMER:** The containerization and analysis components described in this documentation are still being designed and developed. Their current implementation and documentation are not reflective of what the final design could be. This documentation represents a conceptual overview and may change significantly as development progresses.
