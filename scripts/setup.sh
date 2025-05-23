@@ -66,7 +66,7 @@ fi
 
 # Install dependencies
 echo -e "\n${BLUE}Installing dependencies...${NC}"
-npm install
+npm install --legacy-peer-deps
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Dependencies installed successfully${NC}"
 else
