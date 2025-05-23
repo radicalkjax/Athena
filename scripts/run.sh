@@ -50,7 +50,18 @@ show_help() {
 # Function to run the web version
 run_web() {
     echo -e "${BLUE}Starting Athena web version...${NC}"
-    cd Athena && npx serve dist
+    echo -e "${YELLOW}Building the web application...${NC}"
+    cd Athena && npm run build:web
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Build completed successfully${NC}"
+        echo -e "${BLUE}Starting web server...${NC}"
+        npx serve dist
+    else
+        echo -e "${RED}✗ Build failed${NC}"
+        echo -e "${YELLOW}Please check the error messages above${NC}"
+        exit 1
+    fi
 }
 
 # Function to run the iOS version
