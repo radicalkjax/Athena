@@ -1,0 +1,133 @@
+{
+    "name": "notes",
+    "remoteUser": "ubuntu",
+    "containerUser": "ubuntu",
+    "updateRemoteUserUID": true,
+    "initializeCommand": "echo 'Initializing Athena development environment...'",
+    "postCreateCommand": "sudo mkdir -p /home/ubuntu/.cache /home/ubuntu/.config /home/ubuntu/go/pkg /home/ubuntu/.azure /home/ubuntu/.cargo && sudo mkdir -p /home/ubuntu/.cache/starship && sudo chmod -R 777 /home/ubuntu/.cache && sudo chmod -R 755 /home/ubuntu/.config /home/ubuntu/go/pkg /home/ubuntu/.azure /home/ubuntu/.cargo && sudo chown -R ubuntu:ubuntu /home/ubuntu/.cache /home/ubuntu/.config /home/ubuntu/go/pkg /home/ubuntu/.azure /home/ubuntu/.cargo",
+    "shutdownAction": "stopContainer",
+    "overrideCommand": false,
+    "privileged": true,
+    "init": true,
+    "hostRequirements": {
+        "cpus": 4,
+        "memory": "4gb",
+        "storage": "16gb",
+        "gpu": false
+    },
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".",
+        "args": {
+            "DOCKER_BUILDKIT": "0"
+        }
+    },
+    "securityOpt": [
+        "seccomp=unconfined"
+    ],
+    "runArgs": [
+        "--privileged",
+        "--network=host"
+    ],
+    "forwardPorts": [
+        2222,
+        7681
+    ],
+    "portsAttributes": {
+        "2222": {
+            "label": "SSH Access",
+            "onAutoForward": "silent",
+            "requireLocalPort": false,
+            "elevateIfNeeded": true
+        },
+        "7681": {
+            "label": "TTYD Web Terminal",
+            "protocol": "http",
+            "onAutoForward": "openBrowser",
+            "requireLocalPort": false,
+            "elevateIfNeeded": false
+        }
+    },
+    "otherPortsAttributes": {
+        "onAutoForward": "silent",
+        "elevateIfNeeded": false,
+        "label": "Application Port",
+        "requireLocalPort": false
+    },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "mounts": [
+        "source=dind-var-lib-docker,target=/var/lib/docker,type=volume",
+        "source=athena-cache,target=/home/ubuntu/.cache,type=volume",
+        {
+            "source": "athena-config",
+            "target": "/home/ubuntu/.config",
+            "type": "volume"
+        },
+        {
+            "source": "athena-azure",
+            "target": "/home/ubuntu/.azure",
+            "type": "volume"
+        }
+    ],
+    "postStartCommand": "sudo mkdir -p ~/.cache/starship ~/.aws ~/.cache ~/.cargo ~/.azure ~/go/pkg && sudo chown -R ubuntu:ubuntu ~/.cache/starship ~/.cache ~/.cargo ~/.azure ~/go/pkg && sudo chmod -R 755 ~/.cache",
+    "postAttachCommand": "echo 'Welcome to the Athena development environment!' && echo 'Container ID: ${devcontainerId}' && ([ -f .envrc ] && direnv allow || true) && hostname && uptime",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "esbenp.prettier-vscode",
+                "bierner.markdown-mermaid",
+                "ms-vscode-remote.remote-containers"
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "/bin/bash",
+                        "icon": "terminal-bash"
+                    }
+                },
+                "terminal.integrated.fontSize": 14,
+                "editor.fontSize": 14,
+                "editor.formatOnSave": true,
+                "editor.formatOnPaste": false,
+                "editor.rulers": [80, 120],
+                "editor.minimap.enabled": true,
+                "editor.bracketPairColorization.enabled": true,
+                "editor.guides.bracketPairs": true,
+                "editor.suggestSelection": "first",
+                "editor.tabSize": 2,
+                "editor.detectIndentation": true,
+                "files.trimTrailingWhitespace": true,
+                "files.insertFinalNewline": true,
+                "files.autoSave": "afterDelay",
+                "files.autoSaveDelay": 1000,
+                "explorer.confirmDragAndDrop": false,
+                "explorer.confirmDelete": true,
+                "workbench.startupEditor": "none",
+                "workbench.colorTheme": "Default Dark+",
+                "workbench.iconTheme": "vs-seti",
+                "telemetry.telemetryLevel": "off",
+                "git.autofetch": true,
+                "git.confirmSync": false,
+                "go.toolsManagement.autoUpdate": true,
+                "go.useLanguageServer": true,
+                "yaml.schemas": {
+                    "kubernetes": "*.yaml"
+                },
+                "docker.showStartPage": false
+            }
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+            "version": "latest",
+            "moby": true,
+            "dockerDashComposeVersion": "v2"
+        }
+    },
+    "containerEnv": {
+        "SHELL": "/bin/bash"
+    }
+}
