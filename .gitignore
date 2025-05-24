@@ -50,6 +50,7 @@ ios/
 .env.production
 .env.test
 .env*.local
+.envrc
 # Keep example env file
 !.env.example
 
