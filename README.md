@@ -40,6 +40,8 @@ The foundation of Athena's idea and research comes from this research paper by K
 - [🔒 Container Isolation](./docs/CONTAINER_ISOLATION.md)
 - [💾 Database Setup](./Athena/docs/DATABASE_SETUP.md)
 - [📊 Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md)
+- [🎨 Font Configuration](./docs/FONT_CONFIGURATION.md)
+- [🔧 Troubleshooting Guide](./docs/TROUBLESHOOTING.md)
 
 **Component Documentation:**
 - [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md)
@@ -284,6 +286,8 @@ Athena comes with comprehensive documentation to help you understand and use the
 - [Container Isolation](./docs/CONTAINER_ISOLATION.md) - Information about the container isolation feature
 - [Database Setup](./Athena/docs/DATABASE_SETUP.md) - Instructions for setting up and using the PostgreSQL database
 - [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md) - Details about the container monitoring system
+- [Font Configuration](./docs/FONT_CONFIGURATION.md) - Guide for font setup and troubleshooting font-related issues
+- [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) - Solutions to common issues and problems
 
 ### Component Documentation
 

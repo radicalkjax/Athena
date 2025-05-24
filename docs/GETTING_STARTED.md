@@ -193,6 +193,16 @@ Once the analysis is complete, you'll see the results in the "Analysis Results" 
 
 ## Troubleshooting
 
+### Font-Related Issues
+
+**Problem**: Application displays incorrectly or shows font-related errors like ".regular property access error".
+
+**Solution**:
+1. Check the [Font Configuration Guide](./FONT_CONFIGURATION.md) for detailed font setup instructions
+2. Verify that font assets are properly loaded in the web version
+3. Clear your browser cache and reload the application
+4. If using the mobile version, restart the Expo development server
+
 ### API Key Issues
 
 **Problem**: The AI models are not showing up in the selector.
@@ -224,6 +234,10 @@ Once the analysis is complete, you'll see the results in the "Analysis Results" 
 3. Try a different AI model
 4. If using container analysis, try disabling it
 5. Check the console for error messages (if you're familiar with developer tools)
+
+### General Issues
+
+For comprehensive troubleshooting guidance covering common issues, error messages, and solutions, see the [Troubleshooting Guide](./TROUBLESHOOTING.md).
 
 ## Helper Scripts
 
@@ -362,4 +376,6 @@ Now that you've set up Athena and performed your first analysis, here are some n
    - [Container Isolation](./CONTAINER_ISOLATION.md)
    - [Database Setup](../Athena/docs/DATABASE_SETUP.md)
    - [Container Monitoring](../Athena/docs/CONTAINER_MONITORING.md)
+   - [Font Configuration](./FONT_CONFIGURATION.md) - Guide for font setup and troubleshooting font-related issues
+   - [Troubleshooting Guide](./TROUBLESHOOTING.md) - Solutions to common issues and problems
    - [Component Documentation](./components/)

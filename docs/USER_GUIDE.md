@@ -425,6 +425,16 @@ For more detailed information about the container monitoring system, see the [Co
 
 ## Troubleshooting
 
+### Font-Related Issues
+
+**Problem**: Application displays incorrectly or shows font-related errors like ".regular property access error".
+
+**Solution**:
+1. Check the [Font Configuration Guide](./FONT_CONFIGURATION.md) for detailed font setup instructions
+2. Verify that font assets are properly loaded in the web version
+3. Clear your browser cache and reload the application
+4. If using the mobile version, restart the Expo development server
+
 ### API Key Issues
 
 **Problem**: The AI models are not showing up in the selector.
@@ -471,6 +481,10 @@ For more detailed information about the container monitoring system, see the [Co
    ```
 5. Check the console for error messages
 
+### General Issues
+
+For comprehensive troubleshooting guidance covering common issues, error messages, and solutions, see the [Troubleshooting Guide](./TROUBLESHOOTING.md).
+
 ## FAQ
 
 **Q: Which AI model should I use?**
@@ -516,3 +530,7 @@ A: The database is required for container monitoring and persistent storage of a
 **Q: How can I view monitoring data for a container?**
 
 A: After running an analysis with container isolation enabled, click the "Monitor" button in the analysis results to access the monitoring dashboard.
+
+**Q: What should I do if I encounter font-related errors?**
+
+A: Font-related issues are usually related to missing font assets or configuration problems. Check the [Font Configuration Guide](./FONT_CONFIGURATION.md) for detailed setup instructions and troubleshooting steps.
