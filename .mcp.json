@@ -1,0 +1,40 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/memory"]
+    },
+    "sequentialthinking": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/sequentialthinking"]
+    },
+    "git": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/git"]
+    },
+    "fetch": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/fetch"]
+    },
+    "openapi-schema": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/openapi-schema"]
+    },
+    "playwright": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/playwright"]
+    },
+    "github-official": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i", 
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "mcp/github-mcp-server"
+      ],
+      "env": {}
+    }
+  }
+}
