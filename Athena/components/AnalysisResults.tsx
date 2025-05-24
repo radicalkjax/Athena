@@ -5,9 +5,9 @@ import { ThemedView } from './ThemedView';
 import { IconSymbol } from './ui/IconSymbol';
 import { AnalysisResult, Vulnerability } from '@/types';
 import { useAppStore } from '@/store';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks';
 import { Colors } from '@/constants/Colors';
-import { formatDate } from '@/utils/helpers';
+import { formatTimestamp } from '@/utils/helpers';
 
 interface AnalysisResultsProps {
   result: AnalysisResult | null;
@@ -55,7 +55,7 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({ result, isAnal
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>Analysis Results</ThemedText>
-        <ThemedText style={styles.timestamp}>{formatDate(result.timestamp)}</ThemedText>
+        <ThemedText style={styles.timestamp}>{formatTimestamp(result.timestamp)}</ThemedText>
       </View>
       
       <View style={styles.tabContainer}>
@@ -289,7 +289,6 @@ const styles = StyleSheet.create({
     maxHeight: 400,
   },
   codeText: {
-    fontFamily: 'Roboto',
     fontSize: 14,
   },
   reportContainer: {

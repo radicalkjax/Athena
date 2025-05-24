@@ -1,6 +1,6 @@
 import { Text, type TextProps, StyleSheet } from 'react-native';
 
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '@/hooks';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -33,38 +33,29 @@ export function ThemedText({
   );
 }
 
-// Use Roboto fonts for all platforms
-const fontFamilies = {
-  regular: 'Roboto',
-  medium: 'Roboto-Medium',
-  bold: 'Roboto-Bold',
-  light: 'Roboto-Light',
-};
-
 const styles = StyleSheet.create({
   default: {
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: fontFamilies.regular,
   },
   defaultSemiBold: {
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: fontFamilies.medium,
+    fontWeight: '600',
   },
   title: {
     fontSize: 32,
-    fontFamily: fontFamilies.bold,
     lineHeight: 32,
+    fontWeight: 'bold',
   },
   subtitle: {
     fontSize: 20,
-    fontFamily: fontFamilies.bold,
+    fontWeight: 'bold',
   },
   link: {
     lineHeight: 30,
     fontSize: 16,
-    fontFamily: fontFamilies.medium,
+    fontWeight: '500',
     color: '#0a7ea4',
   },
 });

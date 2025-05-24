@@ -1,33 +1,14 @@
-/* Load Roboto fonts */
-@font-face {
-  font-family: 'Roboto';
-  src: url('./fonts/Roboto/Roboto-Regular.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
+/* Import Roboto font from Google Fonts for web compatibility */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
-@font-face {
-  font-family: 'Roboto-Medium';
-  src: url('./fonts/Roboto/Roboto-Medium.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Roboto-Bold';
-  src: url('./fonts/Roboto/Roboto-Bold.ttf') format('truetype');
-  font-weight: bold;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Roboto-Light';
-  src: url('./fonts/Roboto/Roboto-Light.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-}
-
-/* Apply Roboto font to all elements */
+/* Apply Roboto font to all elements with fallbacks */
 body, html {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure all elements inherit the font */
+* {
+  font-family: inherit;
 }

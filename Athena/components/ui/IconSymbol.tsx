@@ -1,9 +1,11 @@
 // This file is a fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight } from 'expo-symbols';
 import React from 'react';
 import { OpaqueColorValue, StyleProp, ViewStyle } from 'react-native';
+
+// Define SymbolWeight type for web compatibility
+type SymbolWeight = 'ultraLight' | 'thin' | 'light' | 'regular' | 'medium' | 'semibold' | 'bold' | 'heavy' | 'black';
 
 
 // Add your SFSymbol to MaterialIcons mappings here.
@@ -36,7 +38,15 @@ const MAPPING: Record<string, string> = {
   'play.fill': 'play_arrow',
   'trash': 'delete',
   'checkmark': 'check',
-  'gear': 'settings'
+  'gear': 'settings',
+  // Additional icons used in the app
+  'arrow.up.doc': 'upload_file',
+  'exclamationmark.triangle': 'warning',
+  'checkmark.circle.fill': 'check_circle',
+  'checkmark.shield': 'verified_user',
+  'chevron.up': 'keyboard_arrow_up',
+  'chevron.down': 'keyboard_arrow_down',
+  'doc': 'insert_drive_file'
 };
 
 export type IconSymbolName = keyof typeof MAPPING;

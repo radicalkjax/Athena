@@ -5,13 +5,17 @@ const webpack = require('webpack');
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv);
   
-  // Add a rule for font files
+  // Add a rule for font files with better error handling
   config.module.rules.push({
     test: /\.(woff|woff2|eot|ttf|otf)$/,
-    loader: 'file-loader',
-    options: {
-      name: '[name].[ext]',
-      outputPath: 'fonts/',
+    use: {
+      loader: 'file-loader',
+      options: {
+        name: '[name].[hash:8].[ext]',
+        outputPath: 'fonts/',
+        publicPath: '/fonts/',
+        esModule: false,
+      },
     },
   });
   

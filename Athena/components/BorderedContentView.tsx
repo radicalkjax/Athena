@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { ThemedView } from './ThemedView';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks';
 
 interface BorderedContentViewProps {
   children: ReactNode;

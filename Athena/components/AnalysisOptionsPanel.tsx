@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Switch } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '@/hooks';
 import ContainerConfigSelector from './ContainerConfigSelector';
 import { ContainerConfig } from '@/types';
 import { getResourcePreset } from '../services/container';

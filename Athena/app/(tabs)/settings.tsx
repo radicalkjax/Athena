@@ -4,7 +4,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks';
 import { Colors } from '@/constants/Colors';
 import { useAppStore } from '@/store';
 // Import services for API key management
@@ -555,7 +555,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
-    fontFamily: 'Roboto-Bold',
   },
   description: {
     fontSize: 16,

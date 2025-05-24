@@ -262,6 +262,123 @@ run_setup() {
     echo -e "\n${GREEN}✓ Setup complete!${NC}"
 }
 
+# Function to check and fix missing components
+fix_missing_components() {
+    echo -e "${BLUE}Checking for missing components...${NC}"
+    
+    # Check for TabBarBackground component
+    if [ ! -f "Athena/components/ui/TabBarBackground.tsx" ]; then
+        echo -e "${YELLOW}⚠ Creating missing TabBarBackground component...${NC}"
+        mkdir -p Athena/components/ui
+        cat > Athena/components/ui/TabBarBackground.tsx << 'EOF'
+import { BlurView } from 'expo-blur';
+import { StyleSheet } from 'react-native';
+
+export default function TabBarBackground() {
+  return (
+    <BlurView
+      tint="systemMaterial"
+      intensity={100}
+      style={StyleSheet.absoluteFill}
+    />
+  );
+}
+EOF
+        echo -e "${GREEN}✓ Created TabBarBackground component${NC}"
+    fi
+    
+    # Check for required app icons
+    if [ ! -f "Athena/assets/images/icon.png" ]; then
+        echo -e "${YELLOW}⚠ Creating missing app icon...${NC}"
+        if [ -f "Athena/assets/images/logo.png" ]; then
+            cp Athena/assets/images/logo.png Athena/assets/images/icon.png
+            echo -e "${GREEN}✓ Created app icon from logo${NC}"
+        else
+            echo -e "${RED}✗ No logo.png found to create app icon${NC}"
+        fi
+    fi
+    
+    # Check for adaptive icon
+    if [ ! -f "Athena/assets/images/adaptive-icon.png" ]; then
+        echo -e "${YELLOW}⚠ Creating missing adaptive icon...${NC}"
+        if [ -f "Athena/assets/images/logo.png" ]; then
+            cp Athena/assets/images/logo.png Athena/assets/images/adaptive-icon.png
+            echo -e "${GREEN}✓ Created adaptive icon from logo${NC}"
+        else
+            echo -e "${RED}✗ No logo.png found to create adaptive icon${NC}"
+        fi
+    fi
+    
+    # Check for splash icon
+    if [ ! -f "Athena/assets/images/splash-icon.png" ]; then
+        echo -e "${YELLOW}⚠ Creating missing splash icon...${NC}"
+        if [ -f "Athena/assets/images/logo.png" ]; then
+            cp Athena/assets/images/logo.png Athena/assets/images/splash-icon.png
+            echo -e "${GREEN}✓ Created splash icon from logo${NC}"
+        else
+            echo -e "${RED}✗ No logo.png found to create splash icon${NC}"
+        fi
+    fi
+    
+    # Check for favicon
+    if [ ! -f "Athena/assets/images/favicon.png" ]; then
+        echo -e "${YELLOW}⚠ Creating missing favicon...${NC}"
+        if [ -f "Athena/assets/images/logo.png" ]; then
+            cp Athena/assets/images/logo.png Athena/assets/images/favicon.png
+            echo -e "${GREEN}✓ Created favicon from logo${NC}"
+        else
+            echo -e "${RED}✗ No logo.png found to create favicon${NC}"
+        fi
+    fi
+    
+    # Check for hooks index file
+    if [ ! -f "Athena/hooks/index.ts" ]; then
+        echo -e "${YELLOW}⚠ Creating missing hooks index file...${NC}"
+        mkdir -p Athena/hooks
+        cat > Athena/hooks/index.ts << 'EOF'
+import { useColorScheme as useNativeColorScheme } from 'react-native';
+
+export function useColorScheme() {
+  return useNativeColorScheme() ?? 'light';
+}
+
+const Colors = {
+  light: {
+    text: '#11181C',
+    background: '#fff',
+    tint: '#0a7ea4',
+    icon: '#687076',
+    tabIconDefault: '#687076',
+    tabIconSelected: '#0a7ea4',
+  },
+  dark: {
+    text: '#ECEDEE',
+    background: '#151718',
+    tint: '#fff',
+    icon: '#9BA1A6',
+    tabIconDefault: '#9BA1A6',
+    tabIconSelected: '#fff',
+  },
+};
+
+export function useThemeColor(
+  props: { light?: string; dark?: string },
+  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+) {
+  const theme = useColorScheme() ?? 'light';
+  const colorFromProps = props[theme];
+
+  if (colorFromProps) {
+    return colorFromProps;
+  } else {
+    return Colors[theme][colorName];
+  }
+}
+EOF
+        echo -e "${GREEN}✓ Created hooks index file${NC}"
+    fi
+}
+
 # Function to run the web version
 run_web() {
     echo -e "${BLUE}Starting Athena web version...${NC}"
@@ -288,6 +405,9 @@ run_web() {
         fi
     fi
     
+    # Fix missing components before building
+    fix_missing_components
+    
     echo -e "${YELLOW}Building the web application...${NC}"
     npm run build:web
     
@@ -295,20 +415,71 @@ run_web() {
         echo -e "${GREEN}✓ Build completed successfully${NC}"
         echo -e "${BLUE}Starting web server...${NC}"
         
+        # Check what directory was actually created by expo export
+        if [ -d "dist" ]; then
+            SERVE_DIR="dist"
+        elif [ -d "web-build" ]; then
+            SERVE_DIR="web-build"
+        elif [ -d "build" ]; then
+            SERVE_DIR="build"
+        else
+            echo -e "${RED}✗ Could not find build output directory${NC}"
+            echo -e "${YELLOW}Looking for build output...${NC}"
+            ls -la | grep -E "(dist|build|web-build)"
+            exit 1
+        fi
+        
+        echo -e "${GREEN}✓ Found build output in: ${SERVE_DIR}${NC}"
+        
         # Try to use serve, fallback to npx serve if global install failed
         if command -v serve &> /dev/null; then
-            serve dist
+            serve $SERVE_DIR
         else
-            npx serve dist
+            npx serve $SERVE_DIR
         fi
     else
         echo -e "${RED}✗ Build failed${NC}"
-        echo -e "${YELLOW}Common issues and solutions:${NC}"
-        echo -e "1. Run ${BLUE}./scripts/run.sh setup${NC} to force setup"
-        echo -e "2. Check that Node.js version is 16 or later: ${BLUE}node -v${NC}"
-        echo -e "3. Clear cache and reinstall: ${BLUE}rm -rf node_modules package-lock.json && npm install${NC}"
-        echo -e "4. Check for any missing environment variables in ${BLUE}.env${NC}"
-        exit 1
+        echo -e "${YELLOW}Attempting to fix common issues and retry...${NC}"
+        
+        # Try to fix missing components and retry once
+        fix_missing_components
+        
+        echo -e "${YELLOW}Retrying build...${NC}"
+        npm run build:web
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓ Build completed successfully on retry${NC}"
+            echo -e "${BLUE}Starting web server...${NC}"
+            
+            # Check what directory was actually created by expo export
+            if [ -d "dist" ]; then
+                SERVE_DIR="dist"
+            elif [ -d "web-build" ]; then
+                SERVE_DIR="web-build"
+            elif [ -d "build" ]; then
+                SERVE_DIR="build"
+            else
+                echo -e "${RED}✗ Could not find build output directory${NC}"
+                exit 1
+            fi
+            
+            # Try to use serve, fallback to npx serve if global install failed
+            if command -v serve &> /dev/null; then
+                serve $SERVE_DIR
+            else
+                npx serve $SERVE_DIR
+            fi
+        else
+            echo -e "${RED}✗ Build failed again${NC}"
+            echo -e "${YELLOW}Common issues and solutions:${NC}"
+            echo -e "1. Run ${BLUE}./scripts/run.sh setup${NC} to force setup"
+            echo -e "2. Check that Node.js version is 16 or later: ${BLUE}node -v${NC}"
+            echo -e "3. Clear cache and reinstall: ${BLUE}rm -rf node_modules package-lock.json && npm install${NC}"
+            echo -e "4. Check for any missing environment variables in ${BLUE}.env${NC}"
+            echo -e "5. Check for missing components in ${BLUE}components/ui/${NC}"
+            echo -e "6. Try using expo start --web instead: ${BLUE}cd Athena && npx expo start --web${NC}"
+            exit 1
+        fi
     fi
 }
 

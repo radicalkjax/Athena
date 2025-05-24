@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { Text, View, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -12,7 +12,7 @@ import AnalysisOptionsPanel, { AnalysisOptions } from '@/components/AnalysisOpti
 import { AIModel, MalwareFile, AnalysisResult, ContainerConfig } from '@/types';
 import { useAppStore } from '@/store';
 import * as analysisService from '@/services/analysisService';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks';
 import { Colors } from '@/constants/Colors';
 import { AiOutlineCodepenCircle } from "react-icons/ai";
 
@@ -208,7 +208,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
-    fontFamily: 'Roboto-Bold',
   },
   description: {
     fontSize: 16,

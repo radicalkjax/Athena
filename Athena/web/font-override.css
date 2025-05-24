@@ -1,41 +1,24 @@
-/* Import Roboto font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+/* Simplified font override for React Native Web compatibility */
+/* Use fallback fonts to prevent loading errors */
 
-/* Force Roboto font on all elements */
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video, input, textarea, button {
-  font-family: 'Roboto', sans-serif !important;
-}
-
-/* Additional override for React Native Web */
-* {
-  font-family: 'Roboto', sans-serif !important;
-}
-
-/* Override specific React Native Web classes */
+/* Override React Native Web font classes with fallbacks */
 .r-fontFamily-1qd0xha {
-  font-family: 'Roboto', sans-serif !important;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
 }
 
 /* Override for text components */
 div[dir="auto"] {
-  font-family: 'Roboto', sans-serif !important;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
 }
 
 /* Override for picker items */
 select, option {
-  font-family: 'Roboto', sans-serif !important;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
   color: #000000 !important;
   font-weight: bold !important;
+}
+
+/* Ensure React Native Web components use proper fonts */
+span, p, h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
 }

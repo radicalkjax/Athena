@@ -1,72 +1,108 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { StyleSheet } from 'react-native';
 
 // Import global CSS for web
 import '../assets/global.css';
+// Import polyfills for web compatibility
+import '../polyfills';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-// Force Roboto font for web
+// Simple font loading for web with error handling
 if (typeof document !== 'undefined') {
-  // Create a style element
-  const style = document.createElement('style');
-  style.textContent = `
-    * {
-      font-family: 'Roboto', sans-serif !important;
-    }
-    
-    .r-fontFamily-1qd0xha {
-      font-family: 'Roboto', sans-serif !important;
-    }
-    
-    div[dir="auto"] {
-      font-family: 'Roboto', sans-serif !important;
-    }
-  `;
+  // Load Google Fonts as fallback only if local fonts fail
+  const googleFontsLink = document.createElement('link');
+  googleFontsLink.rel = 'stylesheet';
+  googleFontsLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap';
+  googleFontsLink.onerror = () => {
+    console.warn('Failed to load Google Fonts, using system fonts as fallback');
+  };
   
-  // Append the style element to the head
-  document.head.appendChild(style);
-  
-  // Create a link element for Google Fonts
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap';
-  
-  // Append the link element to the head
-  document.head.appendChild(link);
+  // Only load Google Fonts if local fonts are not available
+  // Check if Roboto font is available, if not load from Google Fonts
+  if (document.fonts && document.fonts.check) {
+    try {
+      if (!document.fonts.check('1em Roboto')) {
+        document.head.appendChild(googleFontsLink);
+      }
+    } catch (error) {
+      console.warn('Font check failed, loading Google Fonts as fallback:', error);
+      document.head.appendChild(googleFontsLink);
+    }
+  } else {
+    // Fallback for browsers without font API support
+    document.head.appendChild(googleFontsLink);
+  }
 }
+
+// Create custom themes with proper font configuration
+const CustomDefaultTheme = {
+  ...DefaultTheme,
+  fonts: {
+    regular: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '400',
+    },
+    medium: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '500',
+    },
+    bold: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '700',
+    },
+    heavy: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '900',
+    },
+  },
+};
+
+const CustomDarkTheme = {
+  ...DarkTheme,
+  fonts: {
+    regular: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '400',
+    },
+    medium: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '500',
+    },
+    bold: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '700',
+    },
+    heavy: {
+      fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: '900',
+    },
+  },
+};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    'SpaceMono': require('../assets/fonts/SpaceMono-Regular.ttf'),
-    'Roboto': require('../assets/fonts/Roboto/Roboto-Regular.ttf'),
-    'Roboto-Light': require('../assets/fonts/Roboto/Roboto-Light.ttf'),
-    'Roboto-Medium': require('../assets/fonts/Roboto/Roboto-Medium.ttf'),
-    'Roboto-Bold': require('../assets/fonts/Roboto/Roboto-Bold.ttf'),
-  });
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+    // Hide splash screen after fonts are ready or timeout
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {
+        // Ignore splash screen errors
+      });
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === 'dark' ? CustomDarkTheme : CustomDefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
@@ -75,10 +111,3 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
-
-// Add global styles to override font family
-StyleSheet.create({
-  text: {
-    fontFamily: 'Roboto',
-  },
-});

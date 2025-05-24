@@ -9,7 +9,7 @@ import * as analysisService from '@/services/analysisService';
 import * as openaiService from '@/services/openai';
 import * as claudeService from '@/services/claude';
 import * as deepseekService from '@/services/deepseek';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks';
 import { Colors } from '@/constants/Colors';
 import { AiFillRobot, AiFillOpenAI, AiFillMeh, AiOutlineQq, AiOutlineWeibo, AiOutlineSync } from 'react-icons/ai';
 import { OPENAI_API_KEY, CLAUDE_API_KEY, DEEPSEEK_API_KEY } from '@env';

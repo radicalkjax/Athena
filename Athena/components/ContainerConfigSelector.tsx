@@ -20,7 +20,7 @@ import {
 } from '@/types';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '@/hooks';
 
 type ResourcePresetType = 'minimal' | 'standard' | 'performance' | 'intensive' | 'custom';
 

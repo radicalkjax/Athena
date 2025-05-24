@@ -6,7 +6,7 @@ import { IconSymbol } from './ui/IconSymbol';
 import { MalwareFile } from '@/types';
 import { useAppStore } from '@/store';
 import * as fileManagerService from '@/services/fileManager';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks';
 import { Colors } from '@/constants/Colors';
 import { formatFileSize, truncateString } from '@/utils/helpers';
 import { AiFillAliwangwang } from 'react-icons/ai';
