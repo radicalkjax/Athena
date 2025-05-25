@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, Alert, ScrollView, TextInput, Switch, Image } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Alert, ScrollView, Switch, Image } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -13,6 +14,8 @@ import * as claudeService from '@/services/claude';
 import * as deepseekService from '@/services/deepseek';
 // Import environment variables
 import { OPENAI_API_KEY, CLAUDE_API_KEY, DEEPSEEK_API_KEY } from '@env';
+// Import Button, Card, Input, Modal, and Toast from design system
+import { Button, Card, Input, Modal, Toast } from '@/design-system';
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -22,42 +25,48 @@ export default function SettingsScreen() {
   const [useLocalModels, setUseLocalModels] = useState(false);
   const [localModelPath, setLocalModelPath] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' | 'warning' }>({
+    visible: false,
+    message: '',
+    type: 'info'
+  });
+
   // Load saved API keys on component mount
   useEffect(() => {
     loadAPIKeys();
   }, []);
-  
+
   const loadAPIKeys = async () => {
     try {
       console.log('Loading API keys...');
-      
+
       // Check for environment variables first
       if (OPENAI_API_KEY) {
         console.log('Found OpenAI key in environment variables');
         setOpenAIKey(OPENAI_API_KEY);
       }
-      
+
       if (CLAUDE_API_KEY) {
         console.log('Found Claude key in environment variables');
         setClaudeKey(CLAUDE_API_KEY);
       }
-      
+
       if (DEEPSEEK_API_KEY) {
         console.log('Found DeepSeek key in environment variables');
         setDeepseekKey(DEEPSEEK_API_KEY);
       }
-      
+
       // Try to load using service functions next
       let hasOpenAIKey = false;
       let hasClaudeKey = false;
       let hasDeepSeekKey = false;
-      
+
       try {
         hasOpenAIKey = await openaiService.hasOpenAIApiKey();
         hasClaudeKey = await claudeService.hasClaudeApiKey();
         hasDeepSeekKey = await deepseekService.hasDeepSeekApiKey();
-        
+
         console.log('Service API key checks:');
         console.log('- OpenAI key exists:', hasOpenAIKey);
         console.log('- Claude key exists:', hasClaudeKey);
@@ -65,19 +74,19 @@ export default function SettingsScreen() {
       } catch (serviceError) {
         console.error('Error checking API keys with services:', serviceError);
       }
-      
+
       // Try to load from AsyncStorage via the service functions
       try {
         if (hasOpenAIKey && !openAIKey) {
           const key = await openaiService.initOpenAI();
           if (key) setOpenAIKey(key.apiKey || '');
         }
-        
+
         if (hasClaudeKey && !claudeKey) {
           const key = await claudeService.initClaude();
           if (key) setClaudeKey(key);
         }
-        
+
         if (hasDeepSeekKey && !deepseekKey) {
           const key = await deepseekService.initDeepSeek();
           if (key) setDeepseekKey(key);
@@ -85,11 +94,11 @@ export default function SettingsScreen() {
       } catch (error) {
         console.error('Error loading keys from services:', error);
       }
-      
+
       // Load local model settings
       let savedUseLocalModels = null;
       let savedLocalModelPath = null;
-      
+
       // Try AsyncStorage for local model settings
       try {
         // This would use AsyncStorage in a real implementation
@@ -101,7 +110,7 @@ export default function SettingsScreen() {
       } catch (e) {
         console.error('Error loading local model settings:', e);
       }
-      
+
       if (savedUseLocalModels) setUseLocalModels(savedUseLocalModels === 'true');
       if (savedLocalModelPath) setLocalModelPath(savedLocalModelPath);
     } catch (error) {
@@ -109,22 +118,22 @@ export default function SettingsScreen() {
       Alert.alert('Error', 'Failed to load saved API keys.');
     }
   };
-  
+
   const saveAPIKeys = async () => {
     try {
       setIsSaving(true);
-      
+
       console.log('Saving API keys...');
       console.log('OpenAI key length:', openAIKey ? openAIKey.length : 0);
       console.log('Claude key length:', claudeKey ? claudeKey.length : 0);
       console.log('DeepSeek key length:', deepseekKey ? deepseekKey.length : 0);
-      
+
       // Save API keys using service functions
       console.log('Saving OpenAI API key');
       await openaiService.saveOpenAIApiKey(openAIKey);
       await claudeService.saveClaudeApiKey(claudeKey);
       await deepseekService.saveDeepSeekApiKey(deepseekKey);
-      
+
       // Save local model settings
       // For now, we'll keep the localStorage fallback for web
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -136,8 +145,8 @@ export default function SettingsScreen() {
           console.error('Error saving local model settings:', e);
         }
       }
-      
-      Alert.alert('Success', 'API keys saved successfully.');
+
+      showToast('API keys saved successfully.', 'success');
     } catch (error) {
       console.error('Error saving API keys:', error);
       Alert.alert('Error', 'Failed to save API keys.');
@@ -145,7 +154,11 @@ export default function SettingsScreen() {
       setIsSaving(false);
     }
   };
-  
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    setToast({ visible: true, message, type });
+  };
+
   const clearAllAPIKeys = () => {
     Alert.alert(
       'Clear All API Keys',
@@ -169,7 +182,7 @@ export default function SettingsScreen() {
                 console.error('Error deleting API keys using service functions:', serviceError);
                 // Continue with other deletion methods
               }
-              
+
               // Clear local model settings
               if (typeof window !== 'undefined' && window.localStorage) {
                 try {
@@ -180,21 +193,21 @@ export default function SettingsScreen() {
                   console.error('Error clearing local model settings:', e);
                 }
               }
-              
+
               // Clear the text fields immediately
               setOpenAIKey('');
               setClaudeKey('');
               setDeepseekKey('');
               setUseLocalModels(false);
               setLocalModelPath('');
-              
+
               // Force a re-render to ensure the UI updates
               setTimeout(() => {
                 setOpenAIKey('');
                 setClaudeKey('');
                 setDeepseekKey('');
               }, 100);
-              
+
               Alert.alert('Success', 'All API keys have been cleared.');
             } catch (error) {
               console.error('Error clearing API keys:', error);
@@ -206,7 +219,7 @@ export default function SettingsScreen() {
       { cancelable: true }
     );
   };
-  
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#e47a9c', dark: '#d06c86' }}
@@ -222,29 +235,39 @@ export default function SettingsScreen() {
       title="Settings">
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title" style={styles.titleText}>API Settings</ThemedText>
+        <Button
+          variant="ghost"
+          size="small"
+          onPress={() => setShowHelpModal(true)}
+          style={{ marginLeft: 10 }}
+        >
+          Help
+        </Button>
       </ThemedView>
-      
+
       <ThemedText style={styles.description}>
         Configure your AI model API keys and settings. These keys are stored securely on your device.
       </ThemedText>
-      
+
       <ScrollView style={styles.contentContainer}>
-        <ThemedView style={styles.sectionContainer}>
+        <Card variant="filled" padding="large" margin="medium" style={{ backgroundColor: '#ffd1dd' }}>
           <ThemedText style={styles.sectionTitle}>OpenAI API</ThemedText>
           <ThemedView style={styles.inputContainer}>
             <View style={styles.inputLabelContainer}>
               <ThemedText style={styles.inputLabel}>API Key</ThemedText>
               <View style={styles.buttonGroup}>
                 <View style={styles.buttonGroup}>
-                  <TouchableOpacity 
+                  <Button
+                    variant="primary"
+                    size="small"
                     onPress={async () => {
                       try {
                         console.log('Save button pressed for OpenAI API key, length:', openAIKey.length);
-                        
+
                         // Save using service function
                         console.log('Saving OpenAI API key using service function...');
                         await openaiService.saveOpenAIApiKey(openAIKey);
-                        
+
                         // For web environments, use localStorage
                         if (typeof window !== 'undefined' && window.localStorage) {
                           try {
@@ -254,47 +277,51 @@ export default function SettingsScreen() {
                             console.error('Error saving to localStorage:', e);
                           }
                         }
-                        
+
                         // Check if the key is available using the service function
                         const hasKey = await openaiService.hasOpenAIApiKey();
                         console.log('openaiService.hasOpenAIApiKey() returns:', hasKey);
-                        
+
                         Alert.alert('Success', 'OpenAI API key saved successfully.');
                       } catch (error) {
                         console.error('Error saving OpenAI API key:', error);
                         Alert.alert('Error', `Failed to save OpenAI API key: ${(error as Error).message}`);
                       }
                     }}
-                    style={styles.saveFieldButton}
+                    style={{ marginRight: 5 }}
                   >
-                    <ThemedText style={styles.fieldButtonText}>Save</ThemedText>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
+                    Save
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="small"
                     onPress={() => {
                       setOpenAIKey('');
                       openaiService.deleteOpenAIApiKey();
                     }}
-                    style={styles.clearFieldButton}
+                    style={{ marginRight: 5 }}
                   >
-                    <ThemedText style={styles.fieldButtonText}>Clear</ThemedText>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
+                    Clear
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    size="small"
                     onPress={async () => {
                       try {
                         // Check if API key is available
                         const hasKey = await openaiService.hasOpenAIApiKey();
-                        
+
                         // Check localStorage
                         let localStorageKey = null;
                         if (typeof window !== 'undefined' && window.localStorage) {
                           localStorageKey = localStorage.getItem('athena_openai_api_key');
                         }
-                        
+
                         // Show results
                         Alert.alert(
                           'OpenAI API Key Check',
                           `Service check: ${hasKey ? 'Available' : 'Not available'}
-                          
+
 LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` : 'Not available'}`
                         );
                       } catch (error) {
@@ -302,47 +329,43 @@ LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` 
                         Alert.alert('Error', `Failed to check OpenAI API key: ${(error as Error).message}`);
                       }
                     }}
-                    style={styles.checkFieldButton}
                   >
-                    <ThemedText style={styles.fieldButtonText}>Check</ThemedText>
-                  </TouchableOpacity>
+                    Check
+                  </Button>
                 </View>
               </View>
             </View>
-            <TextInput
-              style={[
-                styles.input,
-                { color: Colors[colorScheme ?? 'light'].text }
-              ]}
+            <Input
               placeholder="Enter OpenAI API Key"
-              placeholderTextColor="#AAAAAA"
               value={openAIKey}
               onChangeText={setOpenAIKey}
               secureTextEntry={true}
               autoCapitalize="none"
               autoCorrect={false}
+              variant="default"
+              size="medium"
+              helperText="Used for GPT-4 and other OpenAI models"
             />
-            <ThemedText style={styles.inputHelp}>
-              Used for GPT-4 and other OpenAI models
-            </ThemedText>
           </ThemedView>
-        </ThemedView>
-        
-        <ThemedView style={styles.sectionContainer}>
+        </Card>
+
+        <Card variant="filled" padding="large" margin="medium" style={{ backgroundColor: '#ffd1dd' }}>
           <ThemedText style={styles.sectionTitle}>Claude API</ThemedText>
           <ThemedView style={styles.inputContainer}>
             <View style={styles.inputLabelContainer}>
               <ThemedText style={styles.inputLabel}>API Key</ThemedText>
               <View style={styles.buttonGroup}>
-                <TouchableOpacity 
+                <Button
+                  variant="primary"
+                  size="small"
                   onPress={async () => {
                     try {
                       console.log('Save button pressed for Claude API key, length:', claudeKey.length);
-                      
+
                       // Save using service function
                       console.log('Saving Claude API key using service function...');
                       await claudeService.saveClaudeApiKey(claudeKey);
-                      
+
                       // For web environments, use localStorage
                       if (typeof window !== 'undefined' && window.localStorage) {
                         try {
@@ -352,47 +375,51 @@ LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` 
                           console.error('Error saving to localStorage:', e);
                         }
                       }
-                      
+
                       // Check if the key is available using the service function
                       const hasKey = await claudeService.hasClaudeApiKey();
                       console.log('claudeService.hasClaudeApiKey() returns:', hasKey);
-                      
+
                       Alert.alert('Success', 'Claude API key saved successfully.');
                     } catch (error) {
                       console.error('Error saving Claude API key:', error);
                       Alert.alert('Error', `Failed to save Claude API key: ${(error as Error).message}`);
                     }
                   }}
-                  style={styles.saveFieldButton}
+                  style={{ marginRight: 5 }}
                 >
-                  <ThemedText style={styles.fieldButtonText}>Save</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
+                  Save
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="small"
                   onPress={() => {
                     setClaudeKey('');
                     claudeService.deleteClaudeApiKey();
                   }}
-                  style={styles.clearFieldButton}
+                  style={{ marginRight: 5 }}
                 >
-                  <ThemedText style={styles.fieldButtonText}>Clear</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
+                  Clear
+                </Button>
+                <Button
+                  variant="tertiary"
+                  size="small"
                   onPress={async () => {
                     try {
                       // Check if API key is available
                       const hasKey = await claudeService.hasClaudeApiKey();
-                      
+
                       // Check localStorage
                       let localStorageKey = null;
                       if (typeof window !== 'undefined' && window.localStorage) {
                         localStorageKey = localStorage.getItem('athena_claude_api_key');
                       }
-                      
+
                       // Show results
                       Alert.alert(
                         'Claude API Key Check',
                         `Service check: ${hasKey ? 'Available' : 'Not available'}
-                        
+
 LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` : 'Not available'}`
                       );
                     } catch (error) {
@@ -400,46 +427,42 @@ LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` 
                       Alert.alert('Error', `Failed to check Claude API key: ${(error as Error).message}`);
                     }
                   }}
-                  style={styles.checkFieldButton}
                 >
-                  <ThemedText style={styles.fieldButtonText}>Check</ThemedText>
-                </TouchableOpacity>
+                  Check
+                </Button>
               </View>
             </View>
-            <TextInput
-              style={[
-                styles.input,
-                { color: Colors[colorScheme ?? 'light'].text }
-              ]}
+            <Input
               placeholder="Enter Claude API Key"
-              placeholderTextColor="#AAAAAA"
               value={claudeKey}
               onChangeText={setClaudeKey}
               secureTextEntry={true}
               autoCapitalize="none"
               autoCorrect={false}
+              variant="default"
+              size="medium"
+              helperText="Used for Claude 3 Opus and other Anthropic models"
             />
-            <ThemedText style={styles.inputHelp}>
-              Used for Claude 3 Opus and other Anthropic models
-            </ThemedText>
           </ThemedView>
-        </ThemedView>
-        
-        <ThemedView style={styles.sectionContainer}>
+        </Card>
+
+        <Card variant="filled" padding="large" margin="medium" style={{ backgroundColor: '#ffd1dd' }}>
           <ThemedText style={styles.sectionTitle}>DeepSeek API</ThemedText>
           <ThemedView style={styles.inputContainer}>
             <View style={styles.inputLabelContainer}>
               <ThemedText style={styles.inputLabel}>API Key</ThemedText>
               <View style={styles.buttonGroup}>
-                <TouchableOpacity 
+                <Button
+                  variant="primary"
+                  size="small"
                   onPress={async () => {
                     try {
                       console.log('Save button pressed for DeepSeek API key, length:', deepseekKey.length);
-                      
+
                       // Save using service function
                       console.log('Saving DeepSeek API key using service function...');
                       await deepseekService.saveDeepSeekApiKey(deepseekKey);
-                      
+
                       // For web environments, use localStorage
                       if (typeof window !== 'undefined' && window.localStorage) {
                         try {
@@ -449,47 +472,51 @@ LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` 
                           console.error('Error saving to localStorage:', e);
                         }
                       }
-                      
+
                       // Check if the key is available using the service function
                       const hasKey = await deepseekService.hasDeepSeekApiKey();
                       console.log('deepseekService.hasDeepSeekApiKey() returns:', hasKey);
-                      
+
                       Alert.alert('Success', 'DeepSeek API key saved successfully.');
                     } catch (error) {
                       console.error('Error saving DeepSeek API key:', error);
                       Alert.alert('Error', `Failed to save DeepSeek API key: ${(error as Error).message}`);
                     }
                   }}
-                  style={styles.saveFieldButton}
+                  style={{ marginRight: 5 }}
                 >
-                  <ThemedText style={styles.fieldButtonText}>Save</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
+                  Save
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="small"
                   onPress={() => {
                     setDeepseekKey('');
                     deepseekService.deleteDeepSeekApiKey();
                   }}
-                  style={styles.clearFieldButton}
+                  style={{ marginRight: 5 }}
                 >
-                  <ThemedText style={styles.fieldButtonText}>Clear</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity 
+                  Clear
+                </Button>
+                <Button
+                  variant="tertiary"
+                  size="small"
                   onPress={async () => {
                     try {
                       // Check if API key is available
                       const hasKey = await deepseekService.hasDeepSeekApiKey();
-                      
+
                       // Check localStorage
                       let localStorageKey = null;
                       if (typeof window !== 'undefined' && window.localStorage) {
                         localStorageKey = localStorage.getItem('athena_deepseek_api_key');
                       }
-                      
+
                       // Show results
                       Alert.alert(
                         'DeepSeek API Key Check',
                         `Service check: ${hasKey ? 'Available' : 'Not available'}
-                        
+
 LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` : 'Not available'}`
                       );
                     } catch (error) {
@@ -497,32 +524,80 @@ LocalStorage: ${localStorageKey ? `Available (${localStorageKey.length} chars)` 
                       Alert.alert('Error', `Failed to check DeepSeek API key: ${(error as Error).message}`);
                     }
                   }}
-                  style={styles.checkFieldButton}
                 >
-                  <ThemedText style={styles.fieldButtonText}>Check</ThemedText>
-                </TouchableOpacity>
+                  Check
+                </Button>
               </View>
             </View>
-            <TextInput
-              style={[
-                styles.input,
-                { color: Colors[colorScheme ?? 'light'].text }
-              ]}
+            <Input
               placeholder="Enter DeepSeek API Key"
-              placeholderTextColor="#AAAAAA"
               value={deepseekKey}
               onChangeText={setDeepseekKey}
               secureTextEntry={true}
               autoCapitalize="none"
               autoCorrect={false}
+              variant="default"
+              size="medium"
+              helperText="Used for DeepSeek Coder and other DeepSeek models"
             />
-            <ThemedText style={styles.inputHelp}>
-              Used for DeepSeek Coder and other DeepSeek models
-            </ThemedText>
           </ThemedView>
-        </ThemedView>
-        
+        </Card>
+
       </ScrollView>
+      
+      <Modal
+        visible={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        title="API Keys Help"
+        size="medium"
+        style={{ backgroundColor: '#ffd1dd' }}
+        contentStyle={{ padding: 0 }}
+      >
+        <View style={{ backgroundColor: '#e47a9c', padding: 20 }}>
+          <ThemedText style={{ marginBottom: 10 }}>
+            To use AI models in Athena, you need to provide API keys for the services you want to use.
+          </ThemedText>
+          
+          <ThemedText style={{ marginBottom: 10, fontWeight: 'bold' }}>
+            OpenAI:
+          </ThemedText>
+          <ThemedText style={{ marginBottom: 10 }}>
+            Get your API key from https://platform.openai.com/api-keys
+          </ThemedText>
+          
+          <ThemedText style={{ marginBottom: 10, fontWeight: 'bold' }}>
+            Claude (Anthropic):
+          </ThemedText>
+          <ThemedText style={{ marginBottom: 10 }}>
+            Get your API key from https://console.anthropic.com/
+          </ThemedText>
+          
+          <ThemedText style={{ marginBottom: 10, fontWeight: 'bold' }}>
+            DeepSeek:
+          </ThemedText>
+          <ThemedText style={{ marginBottom: 10 }}>
+            Get your API key from https://platform.deepseek.com/
+          </ThemedText>
+        </View>
+        
+        <View style={{ backgroundColor: '#ffd1dd', padding: 20 }}>
+          <Button
+            variant="primary"
+            size="medium"
+            onPress={() => setShowHelpModal(false)}
+            fullWidth
+          >
+            Got it
+          </Button>
+        </View>
+      </Modal>
+      
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onDismiss={() => setToast({ ...toast, visible: false })}
+      />
     </ParallaxScrollView>
   );
 }

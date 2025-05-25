@@ -102,8 +102,13 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
         input.accept = '*/*';
         
         // Create a promise to handle the file selection
+        let handleFocus: (() => void) | null = null;
+        
         const filePromise = new Promise<MalwareFile | null>((resolve) => {
+          let fileSelected = false;
+          
           input.onchange = async (e) => {
+            fileSelected = true;
             const target = e.target as HTMLInputElement;
             const files = target.files;
             
@@ -157,8 +162,42 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
             }
           };
           
+          // Handle cancel - when input loses focus without a file being selected
+          input.addEventListener('cancel', () => {
+            console.log('File selection cancelled');
+            resolve(null);
+          });
+          
+          // Fallback for browsers that don't support cancel event
+          // Use a timeout to detect if no file was selected
+          setTimeout(() => {
+            if (!fileSelected) {
+              console.log('File selection timed out - likely cancelled');
+              resolve(null);
+            }
+          }, 1000);
+          
+          // Also handle focus events as a fallback
+          handleFocus = () => {
+            setTimeout(() => {
+              if (!fileSelected && document.activeElement !== input) {
+                console.log('File dialog closed without selection');
+                resolve(null);
+              }
+            }, 500);
+          };
+          
+          window.addEventListener('focus', handleFocus);
+          
           // Trigger the file dialog
           input.click();
+        });
+        
+        // Clean up the event listener when done
+        filePromise.finally(() => {
+          if (handleFocus) {
+            window.removeEventListener('focus', handleFocus);
+          }
         });
         
         // Wait for file selection
