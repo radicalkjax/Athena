@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Initial Bundle",
+    "path": "dist/static/js/index-*.js",
+    "limit": "5 MB",
+    "webpack": false
+  },
+  {
+    "name": "Total Bundle Size",
+    "path": "dist/**/*.js",
+    "limit": "10 MB",
+    "webpack": false
+  },
+  {
+    "name": "CSS Bundle",
+    "path": "dist/**/*.css",
+    "limit": "200 KB",
+    "webpack": false
+  }
+]

@@ -5,7 +5,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
-import Emoji from 'react-emojis';
+import Emoji from '@/components/Emoji';
 
 export default function AboutScreen() {
   return (

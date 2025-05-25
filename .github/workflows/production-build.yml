@@ -1,0 +1,103 @@
+name: Production Build Test
+
+on:
+  push:
+    branches: [ main, dev, claude-changes ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          Athena/package-lock.json
+    
+    - name: Install root dependencies
+      run: npm ci
+      
+    - name: Install Athena dependencies
+      working-directory: ./Athena
+      run: npm ci --legacy-peer-deps
+    
+    - name: Check for circular dependencies
+      working-directory: ./Athena
+      run: npx madge --circular --extensions ts,tsx ./
+      continue-on-error: true
+    
+    - name: Run linter
+      working-directory: ./Athena
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Build development version
+      working-directory: ./Athena
+      run: npm run build:web
+      env:
+        NODE_ENV: development
+    
+    - name: Build production version
+      working-directory: ./Athena
+      run: npm run build:web
+      env:
+        NODE_ENV: production
+    
+    - name: Analyze bundle size
+      working-directory: ./Athena
+      run: |
+        npx source-map-explorer dist/static/js/*.js --html bundle-analysis.html || true
+        
+    - name: Upload bundle analysis
+      uses: actions/upload-artifact@v4
+      with:
+        name: bundle-analysis-${{ matrix.node-version }}
+        path: |
+          Athena/bundle-analysis.html
+          Athena/dist
+        retention-days: 7
+    
+    - name: Check bundle size limits
+      working-directory: ./Athena
+      run: npx size-limit
+      continue-on-error: true
+    
+    - name: Test production build
+      working-directory: ./Athena
+      run: |
+        # Start the server in the background
+        npx serve dist -p 3000 &
+        SERVER_PID=$!
+        
+        # Wait for server to start
+        sleep 5
+        
+        # Test if the server is responding
+        curl -f http://localhost:3000 || exit 1
+        
+        # Kill the server
+        kill $SERVER_PID
+    
+    - name: Run tests
+      working-directory: ./Athena
+      run: npm test -- --coverage
+      continue-on-error: true
+    
+    - name: Upload test coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ matrix.node-version }}
+        path: Athena/coverage
+        retention-days: 7

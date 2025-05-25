@@ -18,7 +18,13 @@
     "db:test": "ts-node ./scripts/test-db.ts",
     "db:start": "docker-compose up -d",
     "db:stop": "docker-compose down",
-    "db:setup": "./scripts/setup-db.sh"
+    "db:setup": "./scripts/setup-db.sh",
+    "analyze:deps": "madge --circular ./",
+    "analyze:deps:graph": "madge --image dependency-graph.svg ./",
+    "analyze:bundle": "npm run build:web && source-map-explorer dist/static/js/*.js",
+    "build:debug": "expo export --platform web --webpack-config webpack.config.debug.js",
+    "test:production": "node ./scripts/test-production-build.js",
+    "test:production:simple": "npm run build:web && npm run serve"
   },
   "jest": {
     "preset": "jest-expo"
@@ -59,7 +65,6 @@
     "process": "^0.11.10",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-emojis": "^1.0.6",
     "react-google-fonts": "^1.2.1",
     "react-icons": "^5.5.0",
     "react-native": "0.76.9",
@@ -79,15 +84,20 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@size-limit/preset-app": "^11.2.0",
     "@types/jest": "^29.5.12",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
     "babel-plugin-module-resolver": "^5.0.0",
     "jest": "^29.2.1",
     "jest-expo": "~52.0.6",
+    "madge": "^8.0.0",
     "react-test-renderer": "18.3.1",
     "serve": "^14.2.4",
-    "typescript": "^5.3.3"
+    "size-limit": "^11.2.0",
+    "source-map-explorer": "^2.5.3",
+    "typescript": "^5.3.3",
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "private": true
 }
