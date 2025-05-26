@@ -5,6 +5,14 @@ const webpack = require('webpack');
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv);
   
+  // Import proxy configuration
+  const { getWebpackProxyConfig } = require('./config/proxy');
+  
+  // Add proxy configuration for development
+  if (config.devServer) {
+    config.devServer.proxy = getWebpackProxyConfig();
+  }
+  
   // Add a rule for font files with better error handling
   config.module.rules.push({
     test: /\.(woff|woff2|eot|ttf|otf)$/,
