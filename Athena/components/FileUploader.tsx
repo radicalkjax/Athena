@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { IconSymbol } from './ui/IconSymbol';
@@ -11,6 +11,7 @@ import { Colors } from '@/constants/Colors';
 import { formatFileSize, truncateString } from '@/utils/helpers';
 import { AiFillAliwangwang } from 'react-icons/ai';
 import { FaTrash } from 'react-icons/fa';
+import { Button, Card, Toast } from '@/design-system';
 
 interface FileUploaderProps {
   onFileSelect: (file: MalwareFile) => void;
@@ -19,7 +20,14 @@ interface FileUploaderProps {
 export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
   const colorScheme = useColorScheme();
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' | 'warning' }>({
+    visible: false,
+    message: '',
+    type: 'info'
+  });
   
   const { malwareFiles, selectedMalwareId, selectMalwareFile, addMalwareFile, removeMalwareFile } = useAppStore(state => ({
     malwareFiles: state.malwareFiles,
@@ -84,7 +92,6 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
   
   const handleFileUpload = async () => {
     try {
-      setLoading(true);
       setError(null);
       
       console.log('Starting file upload process...');
@@ -104,59 +111,16 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
         // Create a promise to handle the file selection
         let handleFocus: (() => void) | null = null;
         
-        const filePromise = new Promise<MalwareFile | null>((resolve) => {
+        const filePromise = new Promise<File | null>((resolve) => {
           let fileSelected = false;
           
-          input.onchange = async (e) => {
+          input.onchange = (e) => {
             fileSelected = true;
             const target = e.target as HTMLInputElement;
             const files = target.files;
             
             if (files && files.length > 0) {
-              const selectedFile = files[0];
-              console.log('Selected file:', selectedFile.name, 'Size:', selectedFile.size, 'Type:', selectedFile.type);
-              
-              // Read file content for small text files
-              let content = '';
-              if (
-                selectedFile.size < 1024 * 1024 && // Less than 1MB
-                (selectedFile.type.includes('text') || 
-                 selectedFile.type.includes('javascript') || 
-                 selectedFile.type.includes('json') || 
-                 selectedFile.type.includes('xml') || 
-                 selectedFile.type.includes('html') || 
-                 selectedFile.type.includes('css') ||
-                 selectedFile.name.endsWith('.js') ||
-                 selectedFile.name.endsWith('.py') ||
-                 selectedFile.name.endsWith('.php') ||
-                 selectedFile.name.endsWith('.java') ||
-                 selectedFile.name.endsWith('.c') ||
-                 selectedFile.name.endsWith('.cpp') ||
-                 selectedFile.name.endsWith('.cs') ||
-                 selectedFile.name.endsWith('.go') ||
-                 selectedFile.name.endsWith('.rb') ||
-                 selectedFile.name.endsWith('.pl') ||
-                 selectedFile.name.endsWith('.sh'))
-              ) {
-                const reader = new FileReader();
-                content = await new Promise<string>((resolve) => {
-                  reader.onload = () => resolve(reader.result as string);
-                  reader.readAsText(selectedFile);
-                });
-              }
-              
-              // Create a MalwareFile object
-              const fileId = Math.random().toString(36).substring(2, 15);
-              const malwareFile: MalwareFile = {
-                id: fileId,
-                name: selectedFile.name,
-                size: selectedFile.size,
-                type: selectedFile.type,
-                uri: URL.createObjectURL(selectedFile), // Create a blob URL
-                content,
-              };
-              
-              resolve(malwareFile);
+              resolve(files[0]);
             } else {
               resolve(null);
             }
@@ -169,13 +133,13 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
           });
           
           // Fallback for browsers that don't support cancel event
-          // Use a timeout to detect if no file was selected
+          // Use a longer timeout to ensure file processing completes
           setTimeout(() => {
             if (!fileSelected) {
               console.log('File selection timed out - likely cancelled');
               resolve(null);
             }
-          }, 1000);
+          }, 60000); // 60 seconds timeout
           
           // Also handle focus events as a fallback
           handleFocus = () => {
@@ -201,23 +165,49 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
         });
         
         // Wait for file selection
-        const file = await filePromise;
-        console.log('File selection result:', file ? 'File selected' : 'No file selected');
+        const selectedFile = await filePromise;
+        console.log('File selection result:', selectedFile ? 'File selected' : 'No file selected');
         
-        if (file) {
-          // Add file to store
-          addMalwareFile(file);
-          console.log('File added to store');
+        if (selectedFile) {
+          // Set loading state and process the file
+          setLoading(true);
+          setUploadProgress(0);
           
-          // Select the file
-          selectMalwareFile(file.id);
-          onFileSelect(file);
-          console.log('File selected for analysis');
+          console.log('Processing selected file:', selectedFile.name);
+          const malwareFile = await processFile(selectedFile);
           
-          // Show success message
-          Alert.alert('Success', `File "${file.name}" uploaded successfully.`);
+          if (malwareFile) {
+            // Add file to store
+            addMalwareFile(malwareFile);
+            console.log('File added to store');
+            
+            // Select the file
+            selectMalwareFile(malwareFile.id);
+            onFileSelect(malwareFile);
+            console.log('File selected for analysis');
+            
+            // Show success message
+            setUploadProgress(100);
+            setToast({
+              visible: true,
+              message: `File "${malwareFile.name}" uploaded successfully.`,
+              type: 'success'
+            });
+            
+            // Reset progress and loading state after a delay
+            setTimeout(() => {
+              setUploadProgress(0);
+              setLoading(false);
+            }, 1000);
+          } else {
+            console.log('Failed to process file');
+            setLoading(false);
+            setUploadProgress(0);
+          }
         } else {
           console.log('No file was selected or the picker was cancelled');
+          setUploadProgress(0);
+          setLoading(false);
         }
       } else {
         // Native implementation using Expo File System
@@ -233,6 +223,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
         console.log('Document picker result:', file ? 'File selected' : 'No file selected');
         
         if (file) {
+          setLoading(true);
+          setUploadProgress(0);
           console.log('Selected file:', file.name, 'Size:', file.size, 'Type:', file.type);
           
           // Add file to store
@@ -245,18 +237,35 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
           console.log('File selected for analysis');
           
           // Show success message
-          Alert.alert('Success', `File "${file.name}" uploaded successfully.`);
+          setUploadProgress(100);
+          setToast({
+            visible: true,
+            message: `File "${file.name}" uploaded successfully.`,
+            type: 'success'
+          });
+          
+          // Reset progress and loading state after a delay
+          setTimeout(() => {
+            setUploadProgress(0);
+            setLoading(false);
+          }, 1000);
         } else {
           console.log('No file was selected or the picker was cancelled');
+          setUploadProgress(0);
+          setLoading(false);
         }
       }
     } catch (error) {
       console.error('Error uploading file:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setError(`Failed to upload file: ${errorMessage}`);
-      Alert.alert('Error', `Failed to upload file: ${errorMessage}`);
-    } finally {
+      setToast({
+        visible: true,
+        message: `Failed to upload file: ${errorMessage}`,
+        type: 'error'
+      });
       setLoading(false);
+      setUploadProgress(0);
     }
   };
   
@@ -265,6 +274,162 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
     onFileSelect(file);
   };
   
+  const processFile = async (file: File): Promise<MalwareFile | null> => {
+    try {
+      console.log('processFile: Starting to process file:', file.name, 'Size:', file.size, 'Type:', file.type);
+      
+      // Simulate progress for file processing
+      setUploadProgress(20);
+      console.log('processFile: Progress set to 20%');
+      
+      // Read file content for small text files
+      let content = '';
+      const shouldReadContent = file.size < 1024 * 1024 && // Less than 1MB
+        (file.type.includes('text') || 
+         file.type.includes('javascript') || 
+         file.type.includes('json') || 
+         file.type.includes('xml') || 
+         file.type.includes('html') || 
+         file.type.includes('css') ||
+         file.name.endsWith('.js') ||
+         file.name.endsWith('.py') ||
+         file.name.endsWith('.php') ||
+         file.name.endsWith('.java') ||
+         file.name.endsWith('.c') ||
+         file.name.endsWith('.cpp') ||
+         file.name.endsWith('.cs') ||
+         file.name.endsWith('.go') ||
+         file.name.endsWith('.rb') ||
+         file.name.endsWith('.pl') ||
+         file.name.endsWith('.sh'));
+         
+      console.log('processFile: Should read content?', shouldReadContent);
+      
+      if (shouldReadContent) {
+        console.log('processFile: Reading file content...');
+        const reader = new FileReader();
+        
+        reader.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = 20 + (event.loaded / event.total) * 60;
+            console.log('processFile: File read progress:', progress);
+            setUploadProgress(progress);
+          }
+        };
+        
+        content = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            console.log('processFile: File read complete');
+            setUploadProgress(80);
+            resolve(reader.result as string);
+          };
+          reader.onerror = (error) => {
+            console.error('processFile: FileReader error:', error);
+            reject(error);
+          };
+          console.log('processFile: Starting FileReader.readAsText()');
+          reader.readAsText(file);
+        });
+        console.log('processFile: Content read, length:', content.length);
+      } else {
+        console.log('processFile: Skipping content read for non-text file');
+        setUploadProgress(80);
+      }
+      
+      // Create a MalwareFile object
+      const fileId = Math.random().toString(36).substring(2, 15);
+      console.log('processFile: Generated file ID:', fileId);
+      
+      const blobUrl = URL.createObjectURL(file);
+      console.log('processFile: Created blob URL:', blobUrl);
+      
+      const malwareFile: MalwareFile = {
+        id: fileId,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uri: blobUrl,
+        content,
+      };
+      
+      setUploadProgress(90);
+      console.log('processFile: Progress set to 90%, file object created');
+      console.log('processFile: Returning malware file object with ID:', malwareFile.id);
+      return malwareFile;
+    } catch (error) {
+      console.error('processFile: Error processing file:', error);
+      setUploadProgress(0);
+      throw error;
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const file = files[0]; // Only handle first file
+      
+      try {
+        setLoading(true);
+        setUploadProgress(0);
+        setError(null);
+        
+        const malwareFile = await processFile(file);
+        
+        if (malwareFile) {
+          // Add file to store
+          addMalwareFile(malwareFile);
+          
+          // Select the file
+          selectMalwareFile(malwareFile.id);
+          onFileSelect(malwareFile);
+          
+          // Show success message
+          setUploadProgress(100);
+          setToast({
+            visible: true,
+            message: `File "${malwareFile.name}" uploaded successfully.`,
+            type: 'success'
+          });
+          
+          // Reset progress after a delay
+          setTimeout(() => setUploadProgress(0), 1000);
+        }
+      } catch (error) {
+        console.error('Error handling dropped file:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setError(`Failed to upload file: ${errorMessage}`);
+        setToast({
+          visible: true,
+          message: `Failed to upload file: ${errorMessage}`,
+          type: 'error'
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const handleFileDelete = async (fileId: string) => {
     console.log('Delete button clicked for file ID:', fileId);
     
@@ -273,7 +438,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
       const fileToDelete = malwareFiles.find(f => f.id === fileId);
       if (!fileToDelete) {
         console.error('File not found in store:', fileId);
-        Alert.alert('Error', 'File not found.');
+        setToast({
+          visible: true,
+          message: 'File not found.',
+          type: 'error'
+        });
         return;
       }
       
@@ -313,47 +482,96 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
       }
       
       // Show success message
-      Alert.alert('Success', `File "${fileToDelete.name}" deleted successfully.`);
+      setToast({
+        visible: true,
+        message: `File "${fileToDelete.name}" deleted successfully.`,
+        type: 'success'
+      });
       
       // Force a re-render
       setLoading(true);
       setTimeout(() => setLoading(false), 100);
     } catch (error) {
       console.error('Error deleting file:', error);
-      Alert.alert('Error', `Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setToast({
+        visible: true,
+        message: `Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: 'error'
+      });
     }
   };
   
-  
-  if (loading) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-        <ThemedText style={styles.loadingText}>Loading files...</ThemedText>
-      </ThemedView>
-    );
-  }
-  
+  // Check if running on web for drag-drop support
+  const isWeb = typeof document !== 'undefined';
+
   return (
-    <ThemedView style={styles.container}>
+    <>
+      <View 
+        style={[
+          styles.container,
+          isWeb && isDragging && styles.containerDragging
+        ]}
+        {...(isWeb ? {
+          onDragEnter: handleDragEnter,
+          onDragLeave: handleDragLeave,
+          onDragOver: handleDragOver,
+          onDrop: handleDrop
+        } as any : {})}
+      >
       <View style={styles.header}>
         <View style={{ flex: 1 }}></View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.uploadButton]}
+          <Button
+            variant="primary"
+            size="small"
             onPress={handleFileUpload}
+            style={styles.uploadButton}
+            disabled={loading}
           >
-            <IconSymbol name="arrow.up.doc" size={16} color="#FFFFFF" />
-            <ThemedText style={styles.buttonText}>Upload</ThemedText>
-          </TouchableOpacity>
+            <View style={styles.uploadButtonContent}>
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <IconSymbol name="arrow.up.doc" size={16} color="#FFFFFF" />
+                  <ThemedText style={styles.buttonText}>Upload</ThemedText>
+                </>
+              )}
+            </View>
+          </Button>
         </View>
       </View>
       
+      {loading && uploadProgress > 0 && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${uploadProgress}%` }
+              ]} 
+            />
+          </View>
+          <ThemedText style={styles.progressText}>{Math.round(uploadProgress)}%</ThemedText>
+        </View>
+      )}
+      
       {error && (
-        <ThemedView style={styles.errorContainer}>
-          <IconSymbol name="exclamationmark.triangle" size={16} color="#FF6B6B" />
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        </ThemedView>
+        <Card variant="outlined" style={styles.errorContainer}>
+          <View style={styles.errorContent}>
+            <IconSymbol name="exclamationmark.triangle" size={16} color="#FF6B6B" />
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          </View>
+        </Card>
+      )}
+      
+      {isWeb && isDragging && (
+        <View style={styles.dragOverlay}>
+          <View style={styles.dragOverlayContent}>
+            <IconSymbol name="arrow.down.circle" size={48} color="#4A90E2" />
+            <ThemedText style={styles.dragOverlayText}>Drop file here to upload</ThemedText>
+          </View>
+        </View>
       )}
       
       <ThemedView style={styles.fileListContainer}>
@@ -366,39 +584,44 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
           </ThemedView>
         ) : (
           malwareFiles.map(file => (
-            <TouchableOpacity
+            <Card
               key={file.id}
+              variant={selectedMalwareId === file.id ? "filled" : "outlined"}
               style={[
                 styles.fileItem,
                 selectedMalwareId === file.id && styles.selectedFileItem,
               ]}
-              onPress={() => handleFileSelect(file)}
             >
-              <View style={styles.fileIconContainer}>
-                <IconSymbol
-                  name={file.type.includes('text') ? 'doc.text' : 'doc'}
-                  size={24}
-                  color={selectedMalwareId === file.id ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
-                />
-              </View>
-              <View style={styles.fileInfo}>
-                <ThemedText
-                  style={[
-                    styles.fileName,
-                    selectedMalwareId === file.id && styles.selectedFileText,
-                  ]}
-                >
-                  {truncateString(file.name, 20)}
-                </ThemedText>
-                <ThemedText
-                  style={[
-                    styles.fileSize,
-                    selectedMalwareId === file.id && styles.selectedFileText,
-                  ]}
-                >
-                  {formatFileSize(file.size)}
-                </ThemedText>
-              </View>
+              <TouchableOpacity
+                onPress={() => handleFileSelect(file)}
+                style={styles.fileItemContent}
+              >
+                <View style={styles.fileIconContainer}>
+                  <IconSymbol
+                    name={file.type.includes('text') ? 'doc.text' : 'doc'}
+                    size={24}
+                    color={selectedMalwareId === file.id ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
+                  />
+                </View>
+                <View style={styles.fileInfo}>
+                  <ThemedText
+                    style={[
+                      styles.fileName,
+                      selectedMalwareId === file.id && styles.selectedFileText,
+                    ]}
+                  >
+                    {truncateString(file.name, 20)}
+                  </ThemedText>
+                  <ThemedText
+                    style={[
+                      styles.fileSize,
+                      selectedMalwareId === file.id && styles.selectedFileText,
+                    ]}
+                  >
+                    {formatFileSize(file.size)}
+                  </ThemedText>
+                </View>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => handleFileDelete(file.id)}
@@ -408,11 +631,19 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
                   color={selectedMalwareId === file.id ? '#FFFFFF' : '#FF6B6B'}
                 />
               </TouchableOpacity>
-            </TouchableOpacity>
+            </Card>
           ))
         )}
       </ThemedView>
-    </ThemedView>
+    </View>
+    
+    <Toast
+      visible={toast.visible}
+      message={toast.message}
+      type={toast.type}
+      onDismiss={() => setToast({ ...toast, visible: false })}
+    />
+    </>
   );
 };
 
@@ -421,6 +652,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     borderRadius: 8,
     padding: 10,
+    backgroundColor: '#ffd1dd',
   },
   header: {
     flexDirection: 'row',
@@ -449,24 +681,28 @@ const styles = StyleSheet.create({
   uploadButton: {
     backgroundColor: '#4A90E2',
   },
+  uploadButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   buttonText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    marginLeft: 4,
   },
   fileListContainer: {
     maxHeight: 300,
   },
   fileItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#F0F0F0',
   },
   selectedFileItem: {
-    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  fileItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   fileIconContainer: {
     width: 40,
@@ -505,12 +741,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorContainer: {
+    marginBottom: 10,
+    borderColor: '#FF6B6B',
+  },
+  errorContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#FFF0F0',
-    borderRadius: 4,
-    marginBottom: 10,
   },
   errorText: {
     marginLeft: 8,
@@ -527,5 +763,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#AAAAAA',
+  },
+  progressContainer: {
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  progressBar: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4A90E2',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  containerDragging: {
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+    borderStyle: 'dashed',
+  },
+  dragOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  dragOverlayContent: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  dragOverlayText: {
+    marginTop: 12,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4A90E2',
   },
 });

@@ -6,6 +6,7 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Collapsible } from './Collapsible';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { Card } from '@/design-system';
 
 interface ContainerMonitoringProps {
   containerId: string;
@@ -45,32 +46,32 @@ const ContainerMonitoring: React.FC<ContainerMonitoringProps> = ({
   
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <Card variant="filled" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={textColor} />
         <ThemedText style={styles.loadingText}>Loading monitoring data...</ThemedText>
-      </View>
+      </Card>
     );
   }
   
   if (error) {
     return (
-      <View style={styles.errorContainer}>
+      <Card variant="filled" style={styles.errorContainer}>
         <ThemedText style={[styles.errorText, { color: 'orange' }]}>{error}</ThemedText>
         <ThemedText style={styles.infoText}>
           Container monitoring will be available when running with a backend database connection.
         </ThemedText>
-      </View>
+      </Card>
     );
   }
   
   return (
     <ScrollView style={[styles.container, { backgroundColor }]}>
-      <ThemedView style={[styles.section, { borderColor }]}>
+      <Card variant="outlined" style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Container Monitoring</ThemedText>
         <ThemedText style={styles.infoText}>
           This component will display real-time container monitoring data when connected to a backend database.
         </ThemedText>
-      </ThemedView>
+      </Card>
     </ScrollView>
   );
 };
@@ -106,9 +107,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 20,
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
   },
   sectionTitle: {
     fontSize: 18,

@@ -9,6 +9,50 @@ import * as containerDbService from './container-db';
 import * as fileManagerService from './fileManager';
 import * as metasploitService from './metasploit';
 
+// Type definitions
+interface DeobfuscationResult {
+  deobfuscatedCode: string;
+  analysisReport: string;
+}
+
+interface VulnerabilityAnalysisResult {
+  vulnerabilities: Vulnerability[];
+  analysisReport: string;
+}
+
+interface NetworkActivity {
+  protocol: string;
+  destination: string;
+  port: number;
+}
+
+interface FileActivity {
+  operation: string;
+  path: string;
+}
+
+interface ContainerAnalysisResults {
+  logs: string;
+  networkActivity: NetworkActivity[];
+  fileActivity: FileActivity[];
+}
+
+// Utility function for promise-based delays
+const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+// Error handling utilities
+class AnalysisError extends Error {
+  constructor(message: string, public readonly cause?: Error) {
+    super(message);
+    this.name = 'AnalysisError';
+  }
+}
+
+const handleError = (error: unknown, context: string): never => {
+  const err = error instanceof Error ? error : new Error(String(error));
+  throw new AnalysisError(`${context}: ${err.message}`, err);
+};
+
 /**
  * Deobfuscate code using the selected AI model
  * @param code The obfuscated code to analyze
@@ -18,7 +62,7 @@ import * as metasploitService from './metasploit';
 export const deobfuscateCode = async (
   code: string,
   model: AIModel
-): Promise<{ deobfuscatedCode: string; analysisReport: string }> => {
+): Promise<DeobfuscationResult> => {
   try {
     switch (model.type) {
       case 'openai':
@@ -34,7 +78,7 @@ export const deobfuscateCode = async (
     }
   } catch (error) {
     console.error('Deobfuscation error:', error);
-    throw new Error(`Failed to deobfuscate code: ${(error as Error).message}`);
+    handleError(error, 'Failed to deobfuscate code');
   }
 };
 
@@ -47,9 +91,9 @@ export const deobfuscateCode = async (
 export const analyzeVulnerabilities = async (
   code: string,
   model: AIModel
-): Promise<{ vulnerabilities: Vulnerability[]; analysisReport: string }> => {
+): Promise<VulnerabilityAnalysisResult> => {
   try {
-    let result;
+    let result: VulnerabilityAnalysisResult;
     
     switch (model.type) {
       case 'openai':
@@ -81,7 +125,7 @@ export const analyzeVulnerabilities = async (
     return result;
   } catch (error) {
     console.error('Vulnerability analysis error:', error);
-    throw new Error(`Failed to analyze vulnerabilities: ${(error as Error).message}`);
+    handleError(error, 'Failed to analyze vulnerabilities');
   }
 };
 
@@ -124,7 +168,7 @@ export const runAnalysis = async (
         // Run analysis in container
         try {
           // Create container
-          const fileBase64 = await fileManagerService.readFileBase64(malwareFile.uri);
+          const fileBase64 = await fileManagerService.readFileAsBase64(malwareFile.uri);
           const container = await containerDbService.createContainer(
             malwareFile.id,
             fileBase64,
@@ -145,7 +189,7 @@ export const runAnalysis = async (
           // Wait for container to be ready
           let status = container.status;
           while (status === 'creating') {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await delay(1000);
             status = await containerDbService.getContainerStatus(container.id);
             
             // Update container status in store
@@ -157,7 +201,7 @@ export const runAnalysis = async (
           }
           
           // Run malware analysis
-          const analysisResults = await containerDbService.runMalwareAnalysis(container.id);
+          const analysisResults = await containerDbService.runMalwareAnalysis(container.id) as ContainerAnalysisResults;
           
           // Get file content from container if available
           try {
@@ -189,8 +233,9 @@ export const runAnalysis = async (
             analysisReport += `- Total Processes: ${monitoringSummary.totalProcesses}\n`;
             analysisReport += `- Suspicious Activity Count: ${monitoringSummary.suspiciousActivityCount}\n`;
           } catch (monitoringError) {
-            console.error('Error getting monitoring summary:', monitoringError);
-            analysisReport += `\n\n## Container Monitoring\n\nUnable to retrieve monitoring data: ${(monitoringError as Error).message}\n\n`;
+            const error = monitoringError instanceof Error ? monitoringError : new Error(String(monitoringError));
+            console.error('Error getting monitoring summary:', error);
+            analysisReport += `\n\n## Container Monitoring\n\nUnable to retrieve monitoring data: ${error.message}\n\n`;
           }
           
           // Get suspicious activities
@@ -239,7 +284,7 @@ export const runAnalysis = async (
           // Add network activity to analysis report
           if (analysisResults.networkActivity.length > 0) {
             analysisReport += `\n\n## Network Activity\n\n`;
-            analysisResults.networkActivity.forEach((activity: { protocol: string; destination: string; port: number }) => {
+            analysisResults.networkActivity.forEach((activity) => {
               analysisReport += `- ${activity.protocol} ${activity.destination} (${activity.port})\n`;
             });
           }
@@ -247,7 +292,7 @@ export const runAnalysis = async (
           // Add file activity to analysis report
           if (analysisResults.fileActivity.length > 0) {
             analysisReport += `\n\n## File Activity\n\n`;
-            analysisResults.fileActivity.forEach((activity: { operation: string; path: string }) => {
+            analysisResults.fileActivity.forEach((activity) => {
               analysisReport += `- ${activity.operation} ${activity.path}\n`;
             });
           }
@@ -313,11 +358,8 @@ export const runAnalysis = async (
       vulnerabilities = vulnerabilityResult.vulnerabilities;
       analysisReport += `\n\n## Vulnerability Analysis\n\n${vulnerabilityResult.analysisReport}`;
       
-      // Save analysis result to file
-      await fileManagerService.saveAnalysisResult(
-        resultId,
-        `# Analysis Result\n\n## Deobfuscated Code\n\n\`\`\`\n${deobfuscatedCode}\n\`\`\`\n\n## Analysis Report\n\n${analysisReport}`
-      );
+      // TODO: Implement saveAnalysisResult in fileManager service if needed
+      // Currently, analysis results are stored in the app state
     } catch (analysisError) {
       console.error('Analysis error:', analysisError);
       error = (analysisError as Error).message;
@@ -347,7 +389,7 @@ export const runAnalysis = async (
     useAppStore.getState().setIsAnalyzing(false);
     
     console.error('Analysis service error:', error);
-    throw new Error(`Analysis failed: ${(error as Error).message}`);
+    handleError(error, 'Analysis failed');
   }
 };
 

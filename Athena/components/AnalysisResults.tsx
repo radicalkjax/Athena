@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { IconSymbol } from './ui/IconSymbol';
 import { AnalysisResult, Vulnerability } from '@/types';
-import { useAppStore } from '@/store';
 import { useColorScheme } from '@/hooks';
 import { Colors } from '@/constants/Colors';
 import { formatTimestamp } from '@/utils/helpers';
+import { Button, Card } from '@/design-system';
 
 interface AnalysisResultsProps {
   result: AnalysisResult | null;
@@ -43,11 +43,11 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({ result, isAnal
   
   if (result.error) {
     return (
-      <ThemedView style={styles.errorContainer}>
+      <Card variant="outlined" style={styles.errorContainer}>
         <IconSymbol name="exclamationmark.triangle" size={32} color="#FF6B6B" />
         <ThemedText style={styles.errorTitle}>Analysis Failed</ThemedText>
         <ThemedText style={styles.errorText}>{result.error}</ThemedText>
-      </ThemedView>
+      </Card>
     );
   }
   
@@ -59,53 +59,65 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({ result, isAnal
       </View>
       
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'code' && styles.activeTab]}
+        <Button
+          variant={activeTab === 'code' ? 'primary' : 'secondary'}
+          size="small"
           onPress={() => setActiveTab('code')}
+          style={styles.tabButton}
         >
-          <IconSymbol
-            name="doc.text"
-            size={16}
-            color={activeTab === 'code' ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
-          />
-          <ThemedText
-            style={[styles.tabText, activeTab === 'code' && styles.activeTabText]}
-          >
-            Deobfuscated Code
-          </ThemedText>
-        </TouchableOpacity>
+          <View style={styles.tabContent}>
+            <IconSymbol
+              name="doc.text"
+              size={16}
+              color={activeTab === 'code' ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
+            />
+            <ThemedText
+              style={[styles.tabText, activeTab === 'code' && styles.activeTabText]}
+            >
+              Deobfuscated Code
+            </ThemedText>
+          </View>
+        </Button>
         
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'report' && styles.activeTab]}
+        <Button
+          variant={activeTab === 'report' ? 'primary' : 'secondary'}
+          size="small"
           onPress={() => setActiveTab('report')}
+          style={styles.tabButton}
         >
-          <IconSymbol
-            name="doc.text.magnifyingglass"
-            size={16}
-            color={activeTab === 'report' ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
-          />
-          <ThemedText
-            style={[styles.tabText, activeTab === 'report' && styles.activeTabText]}
-          >
-            Analysis Report
-          </ThemedText>
-        </TouchableOpacity>
+          <View style={styles.tabContent}>
+            <IconSymbol
+              name="doc.text.magnifyingglass"
+              size={16}
+              color={activeTab === 'report' ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
+            />
+            <ThemedText
+              style={[styles.tabText, activeTab === 'report' && styles.activeTabText]}
+            >
+              Analysis Report
+            </ThemedText>
+          </View>
+        </Button>
         
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'vulnerabilities' && styles.activeTab]}
+        <Button
+          variant={activeTab === 'vulnerabilities' ? 'primary' : 'secondary'}
+          size="small"
           onPress={() => setActiveTab('vulnerabilities')}
+          style={styles.tabButton}
         >
-          <IconSymbol
-            name="exclamationmark.shield"
-            size={16}
-            color={activeTab === 'vulnerabilities' ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
-          />
-          <ThemedText
-            style={[styles.tabText, activeTab === 'vulnerabilities' && styles.activeTabText]}
-          >
-            Vulnerabilities {result.vulnerabilities?.length ? `(${result.vulnerabilities.length})` : ''}
-          </ThemedText>
-        </TouchableOpacity>
+          <View style={styles.tabContent}>
+            <IconSymbol
+              name="exclamationmark.shield"
+              size={16}
+              color={activeTab === 'vulnerabilities' ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
+            />
+            <ThemedText
+              style={[styles.tabText, activeTab === 'vulnerabilities' && styles.activeTabText]}
+            >
+              Vulnerabilities {result.vulnerabilities?.length ? `(${result.vulnerabilities.length})` : ''}
+            </ThemedText>
+          </View>
+        </Button>
       </View>
       
       <ThemedView style={styles.contentContainer}>
@@ -183,7 +195,7 @@ const VulnerabilityItem: React.FC<VulnerabilityItemProps> = ({ vulnerability }) 
   };
   
   return (
-    <ThemedView style={styles.vulnerabilityItem}>
+    <Card variant="outlined" style={styles.vulnerabilityItem}>
       <TouchableOpacity
         style={styles.vulnerabilityHeader}
         onPress={() => setExpanded(!expanded)}
@@ -232,7 +244,7 @@ const VulnerabilityItem: React.FC<VulnerabilityItemProps> = ({ vulnerability }) 
           )}
         </View>
       )}
-    </ThemedView>
+    </Card>
   );
 };
 
@@ -259,21 +271,18 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 10,
+    gap: 8,
   },
-  tab: {
+  tabButton: {
+    flex: 0,
+    marginRight: 0,
+  },
+  tabContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    marginRight: 8,
-    backgroundColor: '#F0F0F0',
-  },
-  activeTab: {
-    backgroundColor: '#4A90E2',
+    gap: 4,
   },
   tabText: {
-    marginLeft: 4,
     fontWeight: 'bold',
   },
   activeTabText: {
@@ -305,9 +314,6 @@ const styles = StyleSheet.create({
   },
   vulnerabilityItem: {
     marginBottom: 10,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
   },
   vulnerabilityHeader: {
     flexDirection: 'row',
@@ -393,9 +399,8 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF0F0',
-    borderRadius: 8,
     minHeight: 300,
+    borderColor: '#FF6B6B',
   },
   errorTitle: {
     marginTop: 10,

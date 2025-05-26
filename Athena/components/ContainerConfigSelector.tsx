@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Collapsible } from './Collapsible';
 import { Picker } from '@react-native-picker/picker';
 import Slider from '@react-native-community/slider';
-import { 
-  getAvailableWindowsVersions, 
-  getAvailableLinuxVersions, 
+import {
+  getAvailableWindowsVersions,
+  getAvailableLinuxVersions,
   getAvailableMacOSVersions,
   getAvailableLinuxDistributions,
   getResourcePreset,
-  createResourceLimits,
   checkSystemRequirements
 } from '../services/container';
-import { 
-  ArchitectureType, 
-  OSType, 
+import {
+  ArchitectureType,
+  OSType,
   ContainerResourceLimits,
   ContainerConfig
 } from '@/types';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useThemeColor } from '@/hooks';
+import { Card, Toast } from '@/design-system';
 
 type ResourcePresetType = 'minimal' | 'standard' | 'performance' | 'intensive' | 'custom';
 
@@ -29,7 +29,7 @@ interface ContainerConfigSelectorProps {
   initialConfig?: Partial<ContainerConfig>;
 }
 
-const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({ 
+const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
   onConfigChange,
   initialConfig
 }) => {
@@ -37,6 +37,17 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'border');
   const accentColor = useThemeColor({}, 'tint');
+
+  // Toast state
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  }>({
+    visible: false,
+    message: '',
+    type: 'info'
+  });
 
   // OS selection state
   const [selectedOS, setSelectedOS] = useState<OSType>(initialConfig?.os || 'windows');
@@ -82,7 +93,7 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
       setAvailableDistributions(distributions);
     }
   }, [selectedOS]);
-  
+
   // Update resources when OS changes if using minimal preset
   useEffect(() => {
     if (resourcePreset === 'minimal') {
@@ -96,35 +107,35 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
       try {
         const systemCheck = await checkSystemRequirements(resources);
         setSystemRequirements(systemCheck);
-        
+
         if (!systemCheck.meetsRequirements) {
           // System doesn't meet the requirements
           const details = systemCheck.details;
           let warningMessage = 'Warning: Your system may not meet the requirements for this container configuration:';
-          
+
           if (!details.cpu.meets) {
             warningMessage += `\n- CPU: ${details.cpu.available} cores available, ${details.cpu.required} cores required`;
           }
-          
+
           if (!details.memory.meets) {
             warningMessage += `\n- Memory: ${details.memory.available} MB available, ${details.memory.required} MB required`;
           }
-          
+
           if (!details.diskSpace.meets) {
             warningMessage += `\n- Disk Space: ${details.diskSpace.available} MB available, ${details.diskSpace.required} MB required`;
           }
-          
-          Alert.alert(
-            'System Requirements Warning',
-            warningMessage,
-            [{ text: 'OK', style: 'default' }]
-          );
+
+          setToast({
+            visible: true,
+            message: warningMessage,
+            type: 'warning'
+          });
         }
       } catch (error) {
         console.error('Error checking system requirements:', error);
       }
     };
-    
+
     checkResources();
   }, [resources]);
 
@@ -136,18 +147,18 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
       version: selectedVersion,
       resources: resources
     };
-    
+
     if (selectedOS === 'linux') {
       config.distribution = linuxDistribution;
     }
-    
+
     onConfigChange(config);
   }, [selectedOS, selectedArchitecture, selectedVersion, linuxDistribution, resources]);
 
   // Update available versions based on selected OS and architecture
   const updateAvailableVersions = () => {
     let versions: string[] = [];
-    
+
     switch (selectedOS) {
       case 'windows':
         versions = getAvailableWindowsVersions(selectedArchitecture);
@@ -170,14 +181,14 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
         }
         break;
     }
-    
+
     setAvailableVersions(versions);
   };
 
   // Handle resource preset change
   const handleResourcePresetChange = (preset: ResourcePresetType) => {
     setResourcePreset(preset);
-    
+
     if (preset !== 'custom') {
       setResources(getResourcePreset(preset, selectedOS));
     }
@@ -190,10 +201,11 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <Collapsible 
-          title="Operating System" 
+    <>
+      <ThemedView style={styles.container}>
+        <ScrollView style={styles.scrollView}>
+        <Collapsible
+          title="Operating System"
           value={selectedOS.charAt(0).toUpperCase() + selectedOS.slice(1)}
         >
           <View style={[styles.pickerContainer, { borderColor }]}>
@@ -209,11 +221,11 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
             </Picker>
           </View>
         </Collapsible>
-        
-        <Collapsible 
-          title="Architecture" 
-          value={selectedArchitecture === 'x64' ? 'x64 (64-bit)' : 
-                 selectedArchitecture === 'x86' ? 'x86 (32-bit)' : 
+
+        <Collapsible
+          title="Architecture"
+          value={selectedArchitecture === 'x64' ? 'x64 (64-bit)' :
+                 selectedArchitecture === 'x86' ? 'x86 (32-bit)' :
                  selectedArchitecture === 'arm64' ? 'ARM64' : 'ARM'}
         >
           <View style={[styles.pickerContainer, { borderColor }]}>
@@ -230,10 +242,10 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
             </Picker>
           </View>
         </Collapsible>
-        
+
         {selectedOS === 'linux' && (
-          <Collapsible 
-            title="Linux Distribution" 
+          <Collapsible
+            title="Linux Distribution"
             value={linuxDistribution.charAt(0).toUpperCase() + linuxDistribution.slice(1)}
           >
             <View style={[styles.pickerContainer, { borderColor }]}>
@@ -257,10 +269,10 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
             </View>
           </Collapsible>
         )}
-        
-        <Collapsible 
+
+        <Collapsible
           title={
-            selectedOS === 'windows' ? 'Windows Version' : 
+            selectedOS === 'windows' ? 'Windows Version' :
             selectedOS === 'linux' ? 'Linux Version' : 'macOS Version'
           }
           value={
@@ -291,7 +303,7 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
             >
               {availableVersions.map((version) => {
                 let label = version;
-                
+
                 // Format the version label
                 if (selectedOS === 'windows') {
                   label = version.replace('windows-', 'Windows ');
@@ -309,15 +321,15 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
                   };
                   label = `macOS ${versionNumber} (${versionNames[versionNumber] || ''})`;
                 }
-                
+
                 return <Picker.Item key={version} label={label} value={version} color="#000000" />;
               })}
             </Picker>
           </View>
         </Collapsible>
-        
-        <Collapsible 
-          title="Resource Configuration" 
+
+        <Collapsible
+          title="Resource Configuration"
           value={resourcePreset.charAt(0).toUpperCase() + resourcePreset.slice(1)}
         >
           <View style={[styles.pickerContainer, { borderColor }]}>
@@ -334,9 +346,9 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
               <Picker.Item label="Custom" value="custom" color="#000000" />
             </Picker>
           </View>
-          
+
           {resourcePreset === 'custom' && (
-            <View style={styles.resourcesSection}>
+            <Card variant="filled" style={styles.resourcesSection}>
               <ThemedText style={styles.resourceTitle}>CPU Cores: {resources.cpu}</ThemedText>
               <Slider
                 style={styles.slider}
@@ -349,7 +361,7 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
                 maximumTrackTintColor="#FFFFFF"
                 thumbTintColor="#4a90e2"
               />
-              
+
               <ThemedText style={styles.resourceTitle}>Memory: {resources.memory} MB</ThemedText>
               <Slider
                 style={styles.slider}
@@ -362,7 +374,7 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
                 maximumTrackTintColor="#FFFFFF"
                 thumbTintColor="#4a90e2"
               />
-              
+
               <ThemedText style={styles.resourceTitle}>Disk Space: {resources.diskSpace} MB</ThemedText>
               <Slider
                 style={styles.slider}
@@ -375,7 +387,7 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
                 maximumTrackTintColor="#FFFFFF"
                 thumbTintColor="#4a90e2"
               />
-              
+
               <ThemedText style={styles.resourceTitle}>Network Speed: {resources.networkSpeed} Mbps</ThemedText>
               <Slider
                 style={styles.slider}
@@ -388,7 +400,7 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
                 maximumTrackTintColor="#FFFFFF"
                 thumbTintColor="#4a90e2"
               />
-              
+
               <ThemedText style={styles.resourceTitle}>I/O Operations: {resources.ioOperations} IOPS</ThemedText>
               <Slider
                 style={styles.slider}
@@ -401,13 +413,13 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
                 maximumTrackTintColor="#FFFFFF"
                 thumbTintColor="#4a90e2"
               />
-            </View>
+            </Card>
           )}
         </Collapsible>
-        
+
         <View style={styles.summarySection}>
           <ThemedText style={styles.sectionTitle}>Container Configuration Summary</ThemedText>
-          <ThemedView style={[styles.summaryBox, { borderColor }]}>
+          <Card variant="outlined" style={styles.summaryBox}>
             <ThemedText style={styles.summaryText}>OS: <ThemedText style={styles.summaryValue}>{selectedOS.charAt(0).toUpperCase() + selectedOS.slice(1)}</ThemedText></ThemedText>
             <ThemedText style={styles.summaryText}>Architecture: <ThemedText style={styles.summaryValue}>{selectedArchitecture}</ThemedText></ThemedText>
             <ThemedText style={styles.summaryText}>Version: <ThemedText style={styles.summaryValue}>{selectedVersion}</ThemedText></ThemedText>
@@ -418,20 +430,27 @@ const ContainerConfigSelector: React.FC<ContainerConfigSelectorProps> = ({
             <ThemedText style={styles.summaryText}>Disk Space: <ThemedText style={styles.summaryValue}>{resources.diskSpace} MB</ThemedText>{systemRequirements && !systemRequirements.details.diskSpace.meets && <ThemedText style={styles.warningText}> ⚠️</ThemedText>}</ThemedText>
             <ThemedText style={styles.summaryText}>Network Speed: <ThemedText style={styles.summaryValue}>{resources.networkSpeed} Mbps</ThemedText></ThemedText>
             <ThemedText style={styles.summaryText}>I/O Operations: <ThemedText style={styles.summaryValue}>{resources.ioOperations} IOPS</ThemedText></ThemedText>
-            
+
             {systemRequirements && (
               <View style={[styles.systemRequirementsBox, { backgroundColor: systemRequirements.meetsRequirements ? '#e6ffe6' : '#ffe6e6' }]}>
                 <ThemedText style={[styles.systemRequirementsText, { color: systemRequirements.meetsRequirements ? '#006600' : '#cc0000' }]}>
-                  {systemRequirements.meetsRequirements 
-                    ? '✓ Your system meets the requirements for this container configuration.' 
+                  {systemRequirements.meetsRequirements
+                    ? '✓ Your system meets the requirements for this container configuration.'
                     : '⚠️ Your system does not meet all requirements for this container configuration.'}
                 </ThemedText>
               </View>
             )}
-          </ThemedView>
+          </Card>
         </View>
       </ScrollView>
     </ThemedView>
+    <Toast
+      visible={toast.visible}
+      message={toast.message}
+      type={toast.type}
+      onDismiss={() => setToast({ ...toast, visible: false })}
+    />
+    </>
   );
 };
 
@@ -458,8 +477,9 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   pickerContainer: {
+    marginTop: 8,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 5,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
   },
@@ -472,9 +492,7 @@ const styles = StyleSheet.create({
   resourcesSection: {
     marginTop: 8,
     marginBottom: 16,
-    padding: 10,
     backgroundColor: '#ffecf1',
-    borderRadius: 8,
   },
   resourceTitle: {
     fontSize: 14,
@@ -492,9 +510,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   summaryBox: {
-    padding: 16,
-    borderWidth: 1,
-    borderRadius: 8,
     backgroundColor: '#FFFFFF',
   },
   summaryText: {

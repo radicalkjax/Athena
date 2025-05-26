@@ -27,6 +27,7 @@ import {
   Animated,
   ViewStyle,
   TextStyle,
+  Platform,
 } from 'react-native';
 import { colors } from '../tokens/colors';
 import { spacing } from '../tokens/spacing';
@@ -51,13 +52,14 @@ export const Toast: React.FC<ToastProps> = ({
   visible,
 }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
+  const useNativeDriver = Platform.OS !== 'web';
 
   useEffect(() => {
     if (visible) {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver,
       }).start();
 
       if (duration > 0) {
@@ -65,7 +67,7 @@ export const Toast: React.FC<ToastProps> = ({
           Animated.timing(fadeAnim, {
             toValue: 0,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver,
           }).start(() => {
             onDismiss?.();
           });
@@ -77,26 +79,26 @@ export const Toast: React.FC<ToastProps> = ({
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver,
       }).start();
     }
-  }, [visible, duration, fadeAnim, onDismiss]);
+  }, [visible, duration, fadeAnim, onDismiss, useNativeDriver]);
 
-  if (!visible && fadeAnim._value === 0) {
+  if (!visible) {
     return null;
   }
 
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return colors.status.success;
+        return colors.semantic.success.main;
       case 'error':
-        return colors.status.error;
+        return colors.semantic.error.main;
       case 'warning':
-        return colors.status.warning;
+        return colors.semantic.warning.main;
       case 'info':
       default:
-        return colors.primary.main;
+        return colors.semantic.info.main;
     }
   };
 
@@ -130,18 +132,21 @@ export const Toast: React.FC<ToastProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: 'absolute' as const,
     left: spacing.lg,
     right: spacing.lg,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: 8,
-    alignSelf: 'center',
-    ...shadows.elevated,
+    alignSelf: 'center' as const,
+    ...(Platform.OS === 'web' 
+      ? { boxShadow: shadows.lg as string }
+      : typeof shadows.lg === 'object' ? shadows.lg : {}
+    ),
   } as ViewStyle,
   message: {
     ...textStyles.body1,
-    color: colors.text.onDark,
+    color: colors.neutral[0], // White text
     textAlign: 'center',
   } as TextStyle,
 });

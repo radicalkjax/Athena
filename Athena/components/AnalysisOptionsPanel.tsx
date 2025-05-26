@@ -6,6 +6,7 @@ import { useThemeColor } from '@/hooks';
 import ContainerConfigSelector from './ContainerConfigSelector';
 import { ContainerConfig } from '@/types';
 import { getResourcePreset } from '../services/container';
+import { Card, colors } from '@/design-system';
 
 interface AnalysisOptionsPanelProps {
   onOptionsChange: (options: AnalysisOptions) => void;
@@ -60,7 +61,7 @@ const AnalysisOptionsPanel: React.FC<AnalysisOptionsPanelProps> = ({
   
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.containerSection}>
+      <Card variant="filled" style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Container Configuration</ThemedText>
         <ThemedText style={styles.optionDescription}>
           Malware is always analyzed in an isolated container environment for enhanced security.
@@ -69,10 +70,10 @@ const AnalysisOptionsPanel: React.FC<AnalysisOptionsPanelProps> = ({
           onConfigChange={handleContainerConfigChange}
           initialConfig={options.containerConfig}
         />
-      </View>
+      </Card>
       
       
-      <View style={styles.section}>
+      <Card variant="filled" style={styles.section}>
         <View style={styles.optionRow}>
           <ThemedText style={styles.optionTitle}>Deep Analysis</ThemedText>
           <Switch
@@ -86,9 +87,9 @@ const AnalysisOptionsPanel: React.FC<AnalysisOptionsPanelProps> = ({
         <ThemedText style={styles.optionDescription}>
           Perform more thorough analysis with detailed behavior monitoring. Takes longer but provides more comprehensive results.
         </ThemedText>
-      </View>
+      </Card>
       
-      <View style={styles.section}>
+      <Card variant="filled" style={styles.section}>
         <View style={styles.optionRow}>
           <ThemedText style={styles.optionTitle}>Save Results</ThemedText>
           <Switch
@@ -102,7 +103,7 @@ const AnalysisOptionsPanel: React.FC<AnalysisOptionsPanelProps> = ({
         <ThemedText style={styles.optionDescription}>
           Save analysis results to the database for future reference.
         </ThemedText>
-      </View>
+      </Card>
     </ThemedView>
   );
 };
@@ -115,15 +116,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#ffd1dd',
-    borderRadius: 8,
-  },
-  containerSection: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#ffd1dd',
-    borderRadius: 8,
   },
   sectionTitle: {
     fontSize: 18,

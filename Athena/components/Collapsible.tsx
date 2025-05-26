@@ -1,5 +1,5 @@
 import { PropsWithChildren, useState } from 'react';
-import { StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -25,9 +25,12 @@ export function Collapsible({ children, title, value }: PropsWithChildren & { ti
         </ThemedText>
       </TouchableOpacity>
       {isOpen && (
-        <ThemedView style={styles.contentWrapper}>
-          <ThemedView style={styles.content}>{children}</ThemedView>
-        </ThemedView>
+        <>
+          <View style={{ height: 14 }} />
+          <ThemedView style={styles.contentWrapper}>
+            <ThemedView style={styles.content}>{children}</ThemedView>
+          </ThemedView>
+        </>
       )}
     </ThemedView>
   );
@@ -43,6 +46,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingVertical: 8,
+    marginBottom: 15,
   },
   contentWrapper: {
     backgroundColor: '#ffd1dd',
