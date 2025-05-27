@@ -20,7 +20,8 @@ class OpenAIService extends BaseAIService {
       defaultBaseUrl: 'https://api.openai.com/v1',
       envKeyName: 'OPENAI_API_KEY'
     };
-    super(provider, OPENAI_API_KEY);
+    // Pass undefined instead of empty string
+    super(provider, OPENAI_API_KEY && OPENAI_API_KEY.trim() ? OPENAI_API_KEY : undefined);
   }
 
   protected getClient(apiKey: string, baseUrl: string): AxiosInstance {

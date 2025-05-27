@@ -21,7 +21,8 @@ class ClaudeService extends BaseAIService {
       envKeyName: 'CLAUDE_API_KEY',
       envBaseUrlName: 'CLAUDE_API_BASE_URL'
     };
-    super(provider, CLAUDE_API_KEY);
+    // Pass undefined instead of empty string
+    super(provider, CLAUDE_API_KEY && CLAUDE_API_KEY.trim() ? CLAUDE_API_KEY : undefined);
   }
 
   protected getClient(apiKey: string, baseUrl: string): AxiosInstance {

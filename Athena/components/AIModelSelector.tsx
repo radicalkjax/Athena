@@ -12,7 +12,7 @@ import * as deepseekService from '@/services/deepseek';
 import { useColorScheme } from '@/hooks';
 import { Colors } from '@/constants/Colors';
 import { AiFillRobot, AiFillOpenAI, AiFillMeh, AiOutlineQq, AiOutlineWeibo, AiOutlineSync } from 'react-icons/ai';
-import { OPENAI_API_KEY, CLAUDE_API_KEY, DEEPSEEK_API_KEY } from '@env';
+import { env } from '@/shared/config/environment';
 
 interface AIModelSelectorProps {
   onModelSelect: (model: AIModel) => void;
@@ -39,28 +39,28 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({ onModelSelect 
       setLoading(true);
       setError(null);
       
-      // Check for API keys using environment variables and service functions
+      // Check for API keys using environment config and service functions
       let hasOpenAIKey = false;
       let hasClaudeKey = false;
       let hasDeepSeekKey = false;
       
-      // First check environment variables
-      if (OPENAI_API_KEY) {
-        console.log('Found OpenAI key in environment variables');
+      // First check environment configuration
+      if (env.api.openai.enabled) {
+        console.log('OpenAI enabled in environment config');
         hasOpenAIKey = true;
       }
       
-      if (CLAUDE_API_KEY) {
-        console.log('Found Claude key in environment variables');
+      if (env.api.claude.enabled) {
+        console.log('Claude enabled in environment config');
         hasClaudeKey = true;
       }
       
-      if (DEEPSEEK_API_KEY) {
-        console.log('Found DeepSeek key in environment variables');
+      if (env.api.deepseek.enabled) {
+        console.log('DeepSeek enabled in environment config');
         hasDeepSeekKey = true;
       }
       
-      // If not found in environment variables, check using service functions
+      // If not found in environment config, check using service functions
       if (!hasOpenAIKey) {
         try {
           hasOpenAIKey = await openaiService.hasOpenAIApiKey();

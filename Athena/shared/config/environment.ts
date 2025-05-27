@@ -101,17 +101,17 @@ class EnvironmentConfig {
       openai: {
         key: extra.openaiApiKey,
         baseUrl: extra.openaiApiBaseUrl || 'https://api.openai.com/v1',
-        enabled: !!extra.openaiApiKey,
+        enabled: !!(extra.openaiApiKey && typeof extra.openaiApiKey === 'string' && extra.openaiApiKey.trim()),
       },
       claude: {
         key: extra.claudeApiKey,
         baseUrl: extra.claudeApiBaseUrl || 'https://api.anthropic.com/v1',
-        enabled: !!extra.claudeApiKey,
+        enabled: !!(extra.claudeApiKey && typeof extra.claudeApiKey === 'string' && extra.claudeApiKey.trim()),
       },
       deepseek: {
         key: extra.deepseekApiKey,
         baseUrl: extra.deepseekApiBaseUrl || 'https://api.deepseek.com/v1',
-        enabled: !!extra.deepseekApiKey,
+        enabled: !!(extra.deepseekApiKey && typeof extra.deepseekApiKey === 'string' && extra.deepseekApiKey.trim()),
       },
     };
   }

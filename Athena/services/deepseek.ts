@@ -21,7 +21,8 @@ class DeepSeekService extends BaseAIService {
       envKeyName: 'DEEPSEEK_API_KEY',
       envBaseUrlName: 'DEEPSEEK_API_BASE_URL'
     };
-    super(provider, DEEPSEEK_API_KEY);
+    // Pass undefined instead of empty string
+    super(provider, DEEPSEEK_API_KEY && DEEPSEEK_API_KEY.trim() ? DEEPSEEK_API_KEY : undefined);
   }
 
   protected getClient(apiKey: string, baseUrl: string): AxiosInstance {

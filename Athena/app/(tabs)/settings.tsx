@@ -12,8 +12,8 @@ import { useAppStore } from '@/store';
 import * as openaiService from '@/services/openai';
 import * as claudeService from '@/services/claude';
 import * as deepseekService from '@/services/deepseek';
-// Import environment variables
-import { OPENAI_API_KEY, CLAUDE_API_KEY, DEEPSEEK_API_KEY } from '@env';
+// Import environment config
+import { env } from '@/shared/config/environment';
 // Import Button, Card, Input, Modal, and Toast from design system
 import { Button, Card, Input, Modal, Toast } from '@/design-system';
 
@@ -41,20 +41,25 @@ export default function SettingsScreen() {
     try {
       console.log('Loading API keys...');
 
-      // Check for environment variables first
-      if (OPENAI_API_KEY) {
-        console.log('Found OpenAI key in environment variables');
-        setOpenAIKey(OPENAI_API_KEY);
-      }
+      // Check for environment configuration first
+      try {
+        if (env.api.openai.enabled && env.api.openai.key) {
+          console.log('Found OpenAI key in environment config');
+          setOpenAIKey(env.api.openai.key);
+        }
 
-      if (CLAUDE_API_KEY) {
-        console.log('Found Claude key in environment variables');
-        setClaudeKey(CLAUDE_API_KEY);
-      }
+        if (env.api.claude.enabled && env.api.claude.key) {
+          console.log('Found Claude key in environment config');
+          setClaudeKey(env.api.claude.key);
+        }
 
-      if (DEEPSEEK_API_KEY) {
-        console.log('Found DeepSeek key in environment variables');
-        setDeepseekKey(DEEPSEEK_API_KEY);
+        if (env.api.deepseek.enabled && env.api.deepseek.key) {
+          console.log('Found DeepSeek key in environment config');
+          setDeepseekKey(env.api.deepseek.key);
+        }
+      } catch (envError) {
+        console.error('Error checking environment config:', envError);
+        // Continue with service-based loading
       }
 
       // Try to load using service functions next

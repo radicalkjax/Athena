@@ -24,7 +24,8 @@ export abstract class BaseAIService {
 
   constructor(provider: AIProvider, envApiKey?: string) {
     this.provider = provider;
-    this.envApiKey = envApiKey;
+    // Only store envApiKey if it's not an empty string
+    this.envApiKey = envApiKey && envApiKey.trim() ? envApiKey : undefined;
   }
 
   /**
@@ -55,30 +56,33 @@ export abstract class BaseAIService {
       let key = apiKey || this.cachedApiKey;
       let url = baseUrl || this.cachedBaseUrl || this.provider.defaultBaseUrl;
       
-      if (!key) {
+      if (!key || !key.trim()) {
         // Try to get from environment variable
-        if (this.envApiKey) {
+        if (this.envApiKey && this.envApiKey.trim()) {
           key = this.envApiKey;
         } else {
           // Try expo constants as fallback
-          const envKey = Constants.manifest?.extra?.[`${this.provider.name}ApiKey`];
-          if (envKey) {
+          const envKey = Constants.expoConfig?.extra?.[`${this.provider.name}ApiKey`];
+          if (envKey && typeof envKey === 'string' && envKey.trim()) {
             key = envKey;
           }
         }
       }
       
-      if (!key) {
+      if (!key || !key.trim()) {
         // Try to get from AsyncStorage
         try {
-          key = await AsyncStorage.getItem(`${this.provider.storageKeyPrefix}_api_key`);
-          console.log(`Checking AsyncStorage for ${this.provider.name} key:`, !!key);
+          const storedKey = await AsyncStorage.getItem(`${this.provider.storageKeyPrefix}_api_key`);
+          if (storedKey && storedKey.trim()) {
+            key = storedKey;
+          }
+          console.log(`Checking AsyncStorage for ${this.provider.name} key:`, !!(storedKey && storedKey.trim()));
         } catch (error) {
           console.error('Error accessing AsyncStorage:', error);
         }
       }
       
-      if (!key) {
+      if (!key || !key.trim()) {
         throw new Error(`${this.provider.name} API key not found. Please set your API key in the settings or .env file.`);
       }
       
@@ -139,19 +143,19 @@ export abstract class BaseAIService {
    */
   async hasApiKey(): Promise<boolean> {
     // Check memory cache first
-    if (this.cachedApiKey) {
+    if (this.cachedApiKey && this.cachedApiKey.trim()) {
       return true;
     }
     
-    // Check environment variable
-    if (this.envApiKey) {
+    // Check environment variable - must be non-empty string
+    if (this.envApiKey && this.envApiKey.trim()) {
       this.cachedApiKey = this.envApiKey; // Cache it for future use
       return true;
     }
     
-    // Check expo constants as fallback
-    const envKey = Constants.manifest?.extra?.[`${this.provider.name}ApiKey`];
-    if (envKey) {
+    // Check expo constants as fallback - must be non-empty string
+    const envKey = Constants.expoConfig?.extra?.[`${this.provider.name}ApiKey`];
+    if (envKey && typeof envKey === 'string' && envKey.trim()) {
       this.cachedApiKey = envKey; // Cache it for future use
       return true;
     }
@@ -159,12 +163,12 @@ export abstract class BaseAIService {
     // Check AsyncStorage
     try {
       const key = await AsyncStorage.getItem(`${this.provider.storageKeyPrefix}_api_key`);
-      if (key) {
+      if (key && key.trim()) {
         this.cachedApiKey = key; // Cache it for future use
         
         // Also cache the base URL if it exists
         const baseUrl = await AsyncStorage.getItem(`${this.provider.storageKeyPrefix}_base_url`);
-        if (baseUrl) {
+        if (baseUrl && baseUrl.trim()) {
           this.cachedBaseUrl = baseUrl;
         }
         
