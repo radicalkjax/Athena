@@ -2,6 +2,31 @@
 
 Get Athena running in under 2 minutes!
 
+## Quick Start Overview
+
+```mermaid
+flowchart TB
+    Start([Start<br/>━━━━━━━━<br/>User wants to<br/>run Athena]) --> Clone[Clone Repository<br/>━━━━━━━━<br/>• git clone<br/>• cd athena]
+    
+    Clone --> RunScript[Execute run.sh<br/>━━━━━━━━<br/>• ./scripts/run.sh<br/>• Auto-detects setup]
+    
+    RunScript --> FirstTime{First Time<br/>Setup?}
+    
+    FirstTime -->|Yes| AutoSetup[Automated Setup<br/>━━━━━━━━<br/>• Check requirements<br/>• Install dependencies<br/>• Configure environment]
+    
+    FirstTime -->|No| Build[Build Application<br/>━━━━━━━━<br/>• Webpack build<br/>• Asset compilation]
+    
+    AutoSetup --> Build
+    
+    Build --> Launch[Launch Server<br/>━━━━━━━━<br/>• Start web server<br/>• Open browser<br/>• Port 3000]
+    
+    Launch --> Ready([Ready!<br/>━━━━━━━━<br/>Athena running at<br/>http://localhost:3000])
+    
+    style Start fill:#e1e5ff
+    style Ready fill:#e1f5e1
+    style AutoSetup fill:#fff4e1
+```
+
 ## Prerequisites
 
 - **Node.js v16+** - [Download here](https://nodejs.org/)
@@ -14,11 +39,16 @@ Get Athena running in under 2 minutes!
 git clone https://github.com/yourusername/athena.git
 cd athena
 
-# Run Athena (auto-setup + launch)
-./scripts/run.sh
+# Launch Athena Interactive CLI
+/scripts/athena
 ```
 
 **That's it!** 🎉
+
+The interactive CLI will present you with a beautiful menu where you can:
+- 🚀 Start Athena Web (Option 1) - Most common choice
+- 🔑 Check API Keys (Option 2) - Setup your AI providers
+- 📦 Update Everything (Option 3) - Keep Athena current
 
 The script will automatically:
 - ✅ Check your system requirements
@@ -30,7 +60,69 @@ The script will automatically:
 
 ## What happens on first run?
 
-When you run `./scripts/run.sh` for the first time, you'll see:
+### Automated Setup Process
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Script as athena CLI
+    participant System
+    participant Setup
+    participant Build
+    participant Server
+    
+    User->>Script: /scripts/athena
+    Script->>System: Check first-time setup
+    
+    alt First Time Setup
+        Script->>Setup: Initialize setup process
+        
+        Setup->>System: Check Node.js version
+        System-->>Setup: v18.17.0 ✓
+        
+        Setup->>System: Check npm
+        System-->>Setup: 9.6.7 ✓
+        
+        Setup->>System: Check Git
+        System-->>Setup: 2.39.2 ✓
+        
+        Setup->>System: Install root dependencies
+        System-->>Setup: Success ✓
+        
+        Setup->>System: Install Athena dependencies
+        System-->>Setup: Success ✓
+        
+        Setup->>System: Configure web polyfills
+        System-->>Setup: Success ✓
+        
+        Setup->>System: Install serve globally
+        System-->>Setup: Success ✓
+        
+        Setup->>System: Create .env from template
+        System-->>Setup: Success ✓
+        
+        Setup->>System: Verify configurations
+        System-->>Setup: All checks passed ✓
+        
+        Setup-->>Script: Setup complete
+    end
+    
+    Script->>Build: Start build process
+    Build->>System: Webpack build
+    System-->>Build: Build successful ✓
+    
+    Build-->>Script: Build complete
+    
+    Script->>Server: Start web server
+    Server->>System: Launch on port 3000
+    Server-->>User: Ready at http://localhost:3000
+    
+    style User fill:#e1e5ff
+    style Script fill:#fff4e1
+    style Server fill:#e1f5e1
+```
+
+When you run `/scripts/athena` and select "Start Athena Web" for the first time, you'll see:
 
 ```
 🔧 First time setup detected, running setup process...
@@ -58,6 +150,29 @@ Starting web server...
 
 ## Next Steps
 
+### Post-Setup Workflow
+
+```mermaid
+flowchart LR
+    Ready[Athena Ready<br/>━━━━━━━━<br/>http://localhost:3000] --> Config{Configure<br/>API Keys?}
+    
+    Config -->|Optional| Keys[Add API Keys<br/>━━━━━━━━<br/>• Edit .env file<br/>• Add OpenAI key<br/>• Add Claude key<br/>• Add DeepSeek key]
+    
+    Config -->|Skip| Upload[Upload Files<br/>━━━━━━━━<br/>• Select malware<br/>• Drag & drop<br/>• Batch upload]
+    
+    Keys --> Upload
+    
+    Upload --> Analysis[Configure Analysis<br/>━━━━━━━━<br/>• Select AI models<br/>• Set options<br/>• Container config]
+    
+    Analysis --> Run[Run Analysis<br/>━━━━━━━━<br/>• Real-time monitoring<br/>• Progress tracking<br/>• Resource usage]
+    
+    Run --> Results[View Results<br/>━━━━━━━━<br/>• Analysis report<br/>• Risk assessment<br/>• Recommendations]
+    
+    style Ready fill:#e1f5e1
+    style Keys fill:#fff4e1
+    style Results fill:#e1e5ff
+```
+
 1. **Add API Keys** (optional):
    - Edit `Athena/.env` to add your AI model API keys
    - Get keys from: [OpenAI](https://platform.openai.com/account/api-keys), [Claude](https://console.anthropic.com/account/keys), [DeepSeek](https://platform.deepseek.com/)
@@ -70,17 +185,52 @@ Starting web server...
 
 ## Advanced Usage
 
+### Interactive CLI Options
+
+```mermaid
+flowchart TD
+    Command[/scripts/athena] --> Menu{Interactive<br/>Menu}
+    
+    Menu -->|Option 1| Web[🚀 Start Athena Web<br/>━━━━━━━━<br/>• Browser-based<br/>• Port 3000<br/>• Auto-setup]
+    
+    Menu -->|Option 2| Keys[🔑 Check API Keys<br/>━━━━━━━━<br/>• Validate keys<br/>• Setup providers<br/>• Environment check]
+    
+    Menu -->|Option 3| Update[📦 Update Everything<br/>━━━━━━━━<br/>• Pull latest<br/>• Update deps<br/>• Clean rebuild]
+    
+    Menu -->|Option 4| iOS[📱 Start iOS<br/>━━━━━━━━<br/>• Requires macOS<br/>• Xcode needed<br/>• Simulator/device]
+    
+    Menu -->|Option 5| Android[🤖 Start Android<br/>━━━━━━━━<br/>• Android SDK<br/>• Emulator/device<br/>• Java required]
+    
+    Menu -->|Option 7| Setup[🔧 Run Setup<br/>━━━━━━━━<br/>• Install deps<br/>• Configure env<br/>• Initialize DB]
+    
+    Menu -->|Option 11| Tests[🧪 Run All Tests<br/>━━━━━━━━<br/>• Unit tests<br/>• Integration tests<br/>• Component tests]
+    
+    style Web fill:#e1f5e1
+    style Keys fill:#fff4e1
+    style Update fill:#e1e5ff
+    style iOS fill:#e1e5ff
+    style Android fill:#fff4e1
+    style Setup fill:#ffe4e1
+    style Tests fill:#e1f5e1
+```
+
+**Most Common Workflow:**
 ```bash
-# Force setup only (without running)
-./scripts/run.sh setup
+# Start the interactive CLI
+/scripts/athena
 
-# Run different platforms
-./scripts/run.sh web      # Web version (default)
-./scripts/run.sh ios      # iOS (requires macOS + Xcode)
-./scripts/run.sh android  # Android (requires Android SDK)
+# Then select:
+# 1 - Start Athena Web (first time will auto-setup)
+# 2 - Check API Keys (add OpenAI, Claude, DeepSeek keys)
+# q - Quit when done
+```
 
-# Get help
-./scripts/run.sh help
+**Direct Commands (if you prefer):**
+```bash
+# Still works for automation/scripts
+./scripts/run.sh web      # Web version
+./scripts/run.sh setup    # Setup only
+./scripts/run.sh help     # Help info
 ```
 
 ## Troubleshooting

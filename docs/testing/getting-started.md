@@ -31,19 +31,82 @@ npm run test:coverage
 
 ## Test Structure
 
+```mermaid
+graph TB
+    subgraph "__tests__"
+        subgraph "unit"
+            API[api/<br/>━━━━━━━━<br/>• errorHandler.test.ts<br/>• gateway.test.ts<br/>• hooks.simple.test.tsx]
+            SERVICES[services/<br/>━━━━━━━━<br/>• AI services<br/>• Core services<br/>• Utilities]
+            COMPONENTS[components/<br/>━━━━━━━━<br/>• UI components<br/>• Containers<br/>• Screens]
+            DS[design-system/<br/>━━━━━━━━<br/>• Buttons<br/>• Cards<br/>• Inputs]
+        end
+        
+        subgraph "integration"
+            WORKFLOWS[User Workflows<br/>━━━━━━━━<br/>• File upload flow<br/>• Analysis flow<br/>• Container setup]
+        end
+        
+        subgraph "support"
+            FIXTURES[fixtures/<br/>━━━━━━━━<br/>• Mock data<br/>• API responses<br/>• Test files]
+            UTILS[utils/<br/>━━━━━━━━<br/>• Test helpers<br/>• Render utils<br/>• Mock factories]
+        end
+    end
+    
+    style API fill:#e1e5ff
+    style SERVICES fill:#e1e5ff
+    style COMPONENTS fill:#e1e5ff
+    style DS fill:#e1e5ff
+    style WORKFLOWS fill:#fff4e1
+    style FIXTURES fill:#e1f5e1
+    style UTILS fill:#e1f5e1
 ```
-Athena/__tests__/
-├── unit/
-│   ├── api/            # API layer tests
-│   ├── services/       # Service tests
-│   │   ├── ai/         # AI service tests
-│   │   └── ...
-│   ├── components/     # Component tests
-│   └── design-system/  # Design system tests
-├── integration/        # Integration tests (future)
-├── e2e/               # End-to-end tests (future)
-├── fixtures/          # Test data
-└── utils/            # Test helpers
+
+## Test Workflow
+
+```mermaid
+flowchart LR
+    subgraph "Development"
+        WRITE[Write Code]
+        TEST[Write Test]
+        RUN[Run Test]
+    end
+    
+    subgraph "Validation"
+        PASS{Test Passes?}
+        COV{Coverage OK?}
+        CI{CI Passes?}
+    end
+    
+    subgraph "Completion"
+        COMMIT[Commit Code]
+        PR[Create PR]
+        MERGE[Merge]
+    end
+    
+    WRITE --> TEST
+    TEST --> RUN
+    RUN --> PASS
+    
+    PASS -->|No| TEST
+    PASS -->|Yes| COV
+    
+    COV -->|No| TEST
+    COV -->|Yes| COMMIT
+    
+    COMMIT --> CI
+    CI -->|No| TEST
+    CI -->|Yes| PR
+    
+    PR --> MERGE
+    
+    style WRITE fill:#e1e5ff
+    style TEST fill:#e1e5ff
+    style RUN fill:#e1e5ff
+    style PASS fill:#fff4e1
+    style COV fill:#fff4e1
+    style CI fill:#fff4e1
+    style COMMIT fill:#e1f5e1
+    style PR fill:#e1f5e1
+    style MERGE fill:#e1f5e1
 ```
 
 ## Writing Your First Test
@@ -69,10 +132,37 @@ describe('myFunction', () => {
 
 ## Common Test Patterns
 
-- **Async Testing**: Use `async/await` with `waitFor`
-- **Component Testing**: Use `render` from React Testing Library
-- **Mocking**: Mock at module level before imports
-- **Store Testing**: Mock `useAppStore` for component tests
+```mermaid
+graph TB
+    subgraph "Testing Patterns"
+        ASYNC[Async Testing<br/>━━━━━━━━<br/>• async/await<br/>• waitFor<br/>• act wrapper]
+        COMP[Component Testing<br/>━━━━━━━━<br/>• render()<br/>• fireEvent<br/>• screen queries]
+        MOCK[Mocking<br/>━━━━━━━━<br/>• Module level<br/>• Before imports<br/>• Reset in afterEach]
+        STORE[Store Testing<br/>━━━━━━━━<br/>• Mock useAppStore<br/>• Test actions<br/>• Test selectors]
+    end
+    
+    subgraph "Best Practices"
+        AAA[Arrange-Act-Assert<br/>━━━━━━━━<br/>• Setup test data<br/>• Execute action<br/>• Verify result]
+        ISO[Test Isolation<br/>━━━━━━━━<br/>• Independent tests<br/>• Clean state<br/>• No side effects]
+        DESC[Descriptive Names<br/>━━━━━━━━<br/>• Clear intent<br/>• Expected behavior<br/>• Edge cases]
+    end
+    
+    ASYNC --> AAA
+    COMP --> AAA
+    MOCK --> ISO
+    STORE --> ISO
+    
+    AAA --> DESC
+    ISO --> DESC
+    
+    style ASYNC fill:#e1e5ff
+    style COMP fill:#e1e5ff
+    style MOCK fill:#fff4e1
+    style STORE fill:#fff4e1
+    style AAA fill:#e1f5e1
+    style ISO fill:#e1f5e1
+    style DESC fill:#e1f5e1
+```
 
 ## Next Steps
 

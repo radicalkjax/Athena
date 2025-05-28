@@ -1,90 +1,620 @@
 # FileUploader Component
 
-The FileUploader component allows users to upload and manage files for malware analysis.
+The FileUploader component provides a comprehensive file management interface for malware analysis, featuring drag-and-drop support, file validation, progress tracking, and seamless integration with the file manager service.
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Architecture](#architecture)
+- [Upload State Machine](#upload-state-machine)
+- [File Validation Flow](#file-validation-flow)
+- [Drag and Drop Interaction](#drag-and-drop-interaction)
 - [Component Structure](#component-structure)
-- [Props](#props)
-- [State](#state)
-- [Key Functions](#key-functions)
+- [File Manager Integration](#file-manager-integration)
+- [Progress Tracking](#progress-tracking)
 - [Platform-Specific Implementations](#platform-specific-implementations)
-- [Rendering Logic](#rendering-logic)
+- [Rendering States](#rendering-states)
 - [Styling](#styling)
 - [Usage Example](#usage-example)
+- [Related Documentation](#related-documentation)
 
 ## Overview
 
 The FileUploader component is responsible for:
 
-1. Allowing users to upload files for analysis
-2. Displaying a list of uploaded files
+1. Allowing users to upload files for analysis via click or drag-and-drop
+2. Displaying a list of uploaded files with metadata
 3. Managing file selection for analysis
 4. Providing file deletion functionality
 5. Handling platform-specific file operations (web vs. native)
+6. Validating file types and sizes
+7. Tracking upload progress
+8. Managing file storage and retrieval
 
 ```mermaid
 graph TD
-    A[FileUploader] --> B[Load Existing Files]
-    A --> C[Handle File Upload]
-    A --> D[Handle File Selection]
-    A --> E[Handle File Deletion]
+    subgraph "FileUploader Component"
+        A[FileUploader<br/>━━━━━━━━<br/>• File Management<br/>• Upload Interface<br/>• Selection Logic]
+    end
     
-    C --> F{Platform Check}
-    F -->|Web| G[Web File Upload]
-    F -->|Native| H[Native File Upload]
+    subgraph "User Interactions"
+        B[Click Upload<br/>━━━━━━━━<br/>• File Dialog<br/>• Selection]
+        C[Drag & Drop<br/>━━━━━━━━<br/>• Drag Enter<br/>• Drop Files]
+        D[File Actions<br/>━━━━━━━━<br/>• Select<br/>• Delete]
+    end
     
-    G --> I[Add File to Store]
-    H --> I
+    subgraph "File Processing"
+        E[Validation<br/>━━━━━━━━<br/>• Type Check<br/>• Size Check<br/>• Security Scan]
+        F[Storage<br/>━━━━━━━━<br/>• Web: Blob URL<br/>• Native: FileSystem]
+    end
     
-    I --> J[Select File for Analysis]
+    subgraph "State Management"
+        G[Zustand Store<br/>━━━━━━━━<br/>• File List<br/>• Selection<br/>• CRUD Actions]
+    end
+    
+    B --> A
+    C --> A
+    D --> A
+    A --> E
+    E --> F
+    F --> G
+    
+    style A fill:#e1e5ff
+    style B fill:#e1f5e1
+    style C fill:#e1f5e1
+    style D fill:#fff4e1
+    style E fill:#ffe4e1
+    style F fill:#e1e5ff
+    style G fill:#e1f5e1
+```
+
+## Architecture
+
+### Component Architecture
+
+```mermaid
+graph LR
+    subgraph "Component Layer"
+        A[FileUploader<br/>━━━━━━━━<br/>• React Component<br/>• UI Rendering<br/>• Event Handling]
+    end
+    
+    subgraph "State Layer"
+        B[Local State<br/>━━━━━━━━<br/>• loading: boolean<br/>• uploadProgress: number<br/>• error: string<br/>• isDragging: boolean]
+        C[Store State<br/>━━━━━━━━<br/>• malwareFiles: File[]<br/>• selectedMalwareId<br/>• CRUD Actions]
+    end
+    
+    subgraph "Service Layer"
+        D[File Manager<br/>━━━━━━━━<br/>• initFileSystem()<br/>• pickFile()<br/>• deleteFile()<br/>• listMalwareFiles()]
+    end
+    
+    subgraph "Platform Layer"
+        E[Web APIs<br/>━━━━━━━━<br/>• File API<br/>• Blob URLs<br/>• FileReader]
+        F[Native APIs<br/>━━━━━━━━<br/>• DocumentPicker<br/>• FileSystem<br/>• Expo APIs]
+    end
+    
+    A --> B
+    A --> C
+    A --> D
+    D --> E
+    D --> F
+    
+    style A fill:#e1e5ff
+    style B fill:#fff4e1
+    style C fill:#e1f5e1
+    style D fill:#e1e5ff
+    style E fill:#ffe4e1
+    style F fill:#ffe4e1
+```
+
+## Upload State Machine
+
+### File Upload Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle: Component Mounted
+    
+    Idle --> DragEnter: Drag Enter
+    Idle --> FileDialog: Click Upload
+    
+    DragEnter --> DragOver: Drag Over
+    DragOver --> DragLeave: Drag Leave
+    DragLeave --> Idle
+    DragOver --> Drop: Drop Files
+    
+    FileDialog --> FileSelected: File Selected
+    FileDialog --> Idle: Cancel
+    
+    Drop --> Validating: Process Files
+    FileSelected --> Validating: Process File
+    
+    Validating --> TypeCheck: Validate
+    TypeCheck --> SizeCheck: Valid Type
+    TypeCheck --> ValidationError: Invalid Type
+    
+    SizeCheck --> SecurityScan: Valid Size
+    SizeCheck --> ValidationError: Too Large
+    
+    SecurityScan --> Uploading: Safe
+    SecurityScan --> ValidationError: Suspicious
+    
+    ValidationError --> ShowError: Display Error
+    ShowError --> Idle: Dismiss
+    
+    Uploading --> Progress: Upload Start
+    Progress --> Progress: Update %
+    Progress --> Processing: Upload Complete
+    
+    Processing --> StoreFile: Create Entry
+    StoreFile --> SelectFile: Auto Select
+    SelectFile --> Success: Complete
+    
+    Success --> ShowSuccess: Display Toast
+    ShowSuccess --> Idle: Dismiss
+    
+    state Error {
+        [*] --> UploadError
+        UploadError --> Retry: User Retry
+        UploadError --> Cancel: User Cancel
+        Retry --> Validating
+        Cancel --> Idle
+    }
+    
+    Uploading --> Error: Upload Failed
+    Processing --> Error: Process Failed
+```
+
+## File Validation Flow
+
+### Validation Pipeline
+
+```mermaid
+flowchart TD
+    Start[File Input]
+    
+    subgraph "Type Validation"
+        CheckExt{Check<br/>Extension}
+        CheckMime{Check<br/>MIME Type}
+        
+        AllowedTypes[Allowed Types<br/>━━━━━━━━<br/>• .exe, .dll, .sys<br/>• .js, .py, .sh<br/>• .zip, .rar, .7z<br/>• .pdf, .doc, .xls]
+        
+        BlockedTypes[Blocked Types<br/>━━━━━━━━<br/>• Media files<br/>• System files<br/>• Temp files]
+    end
+    
+    subgraph "Size Validation"
+        CheckSize{Size<br/>Check}
+        
+        SizeLimits[Size Limits<br/>━━━━━━━━<br/>• Max: 100MB<br/>• Min: 1 byte<br/>• Warn: >50MB]
+    end
+    
+    subgraph "Security Validation"
+        QuickScan{Quick<br/>Scan}
+        
+        SecurityChecks[Security Checks<br/>━━━━━━━━<br/>• Known signatures<br/>• Archive bombs<br/>• Path traversal<br/>• Hidden files]
+    end
+    
+    subgraph "Content Analysis"
+        ReadHeader{Read<br/>Header}
+        
+        ContentChecks[Content Checks<br/>━━━━━━━━<br/>• Magic bytes<br/>• File structure<br/>• Encoding check]
+    end
+    
+    Accept[✓ Accept File]
+    Reject[✗ Reject File]
+    
+    Start --> CheckExt
+    CheckExt -->|Valid| CheckMime
+    CheckExt -->|Invalid| Reject
+    
+    CheckMime -->|Valid| CheckSize
+    CheckMime -->|Invalid| Reject
+    
+    CheckSize -->|Valid| QuickScan
+    CheckSize -->|Too Large| Reject
+    
+    QuickScan -->|Safe| ReadHeader
+    QuickScan -->|Suspicious| Reject
+    
+    ReadHeader -->|Valid| Accept
+    ReadHeader -->|Invalid| Reject
+    
+    style Start fill:#e1e5ff
+    style Accept fill:#e1f5e1
+    style Reject fill:#ffe4e1
+    style AllowedTypes fill:#e1f5e1
+    style BlockedTypes fill:#ffe4e1
+    style SizeLimits fill:#fff4e1
+    style SecurityChecks fill:#ffe4e1
+    style ContentChecks fill:#e1e5ff
+```
+
+## Drag and Drop Interaction
+
+### Drag and Drop Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant DOM as DOM Events
+    participant Component as FileUploader
+    participant State as Component State
+    participant Validation as File Validation
+    participant Store as Zustand Store
+    
+    User->>DOM: Drag files over component
+    DOM->>Component: onDragEnter event
+    Component->>State: setIsDragging(true)
+    State->>Component: Update UI (highlight)
+    
+    User->>DOM: Continue dragging
+    DOM->>Component: onDragOver event
+    Component->>DOM: preventDefault()
+    Note over Component: Prevent default browser behavior
+    
+    alt User drops files
+        User->>DOM: Drop files
+        DOM->>Component: onDrop event
+        Component->>DOM: preventDefault()
+        Component->>State: setIsDragging(false)
+        Component->>Component: Extract files from event
+        
+        loop For each file
+            Component->>Validation: Validate file
+            alt File valid
+                Validation-->>Component: Valid
+                Component->>Component: Create MalwareFile object
+                Component->>Store: addMalwareFile(file)
+                Component->>State: Update progress
+            else File invalid
+                Validation-->>Component: Invalid (reason)
+                Component->>State: setError(reason)
+            end
+        end
+        
+        Component->>Store: selectMalwareFile(firstFile)
+        Component->>User: Show success toast
+        
+    else User cancels
+        User->>DOM: Drag leave area
+        DOM->>Component: onDragLeave event
+        Component->>State: setIsDragging(false)
+        State->>Component: Update UI (normal)
+    end
+```
+
+### Visual Drag States
+
+```mermaid
+graph TD
+    subgraph "Normal State"
+        A[Upload Area<br/>━━━━━━━━<br/>📁 Drop files here<br/>or click to browse]
+    end
+    
+    subgraph "Drag Enter State"
+        B[Upload Area<br/>━━━━━━━━<br/>✨ Drop files here<br/>Border: Animated<br/>Background: Highlight]
+    end
+    
+    subgraph "Drag Over State"
+        C[Upload Area<br/>━━━━━━━━<br/>📥 Release to upload<br/>Border: Pulsing<br/>Scale: 1.02]
+    end
+    
+    subgraph "Processing State"
+        D[Upload Area<br/>━━━━━━━━<br/>⏳ Processing files...<br/>Progress: 45%<br/>Disabled: true]
+    end
+    
+    A -->|Drag Enter| B
+    B -->|Drag Over| C
+    C -->|Drop| D
+    B -->|Drag Leave| A
+    D -->|Complete| A
+    
+    style A fill:#e1e5ff
+    style B fill:#fff4e1
+    style C fill:#e1f5e1
+    style D fill:#ffe4e1
+```
+
+## File Manager Integration
+
+### Service Integration Flow
+
+```mermaid
+graph TB
+    subgraph "FileUploader Component"
+        A[Component<br/>━━━━━━━━<br/>• UI Logic<br/>• Event Handlers<br/>• State Management]
+    end
+    
+    subgraph "File Manager Service"
+        B[Service Interface<br/>━━━━━━━━<br/>• initFileSystem()<br/>• pickFile()<br/>• deleteFile()<br/>• listMalwareFiles()]
+        
+        subgraph "Platform Implementations"
+            C[Web Implementation<br/>━━━━━━━━<br/>• File API<br/>• Blob URLs<br/>• IndexedDB]
+            D[Native Implementation<br/>━━━━━━━━<br/>• Expo FileSystem<br/>• DocumentPicker<br/>• Local Storage]
+        end
+    end
+    
+    subgraph "Storage Layer"
+        E[Web Storage<br/>━━━━━━━━<br/>• Blob URLs<br/>• Memory Cache<br/>• IndexedDB]
+        F[Native Storage<br/>━━━━━━━━<br/>• Document Dir<br/>• File System<br/>• SQLite]
+    end
+    
+    subgraph "State Management"
+        G[Zustand Store<br/>━━━━━━━━<br/>• File Registry<br/>• Selection State<br/>• Persistence]
+    end
+    
+    A --> B
+    B --> C
+    B --> D
+    C --> E
+    D --> F
+    E --> G
+    F --> G
+    
+    style A fill:#e1e5ff
+    style B fill:#e1f5e1
+    style C fill:#fff4e1
+    style D fill:#fff4e1
+    style E fill:#ffe4e1
+    style F fill:#ffe4e1
+    style G fill:#e1f5e1
+```
+
+## Progress Tracking
+
+### Upload Progress Flow
+
+```mermaid
+sequenceDiagram
+    participant UI as User Interface
+    participant Component as FileUploader
+    participant Progress as Progress State
+    participant Service as File Service
+    participant Store as Zustand Store
+    
+    UI->>Component: Select file
+    Component->>Progress: setUploadProgress(0)
+    Component->>UI: Show progress bar
+    
+    Component->>Service: Start upload
+    
+    loop Upload chunks
+        Service->>Service: Process chunk
+        Service->>Progress: Update progress
+        Progress->>Component: onProgress(percentage)
+        Component->>Progress: setUploadProgress(percentage)
+        Component->>UI: Update progress bar
+        
+        Note over UI: Progress: 0% → 25% → 50% → 75% → 100%
+    end
+    
+    Service->>Component: Upload complete
+    Component->>Progress: setUploadProgress(100)
+    Component->>Store: addMalwareFile(file)
+    Component->>UI: Show success
+    
+    Component->>Progress: Reset after delay
+    Progress->>Component: setUploadProgress(0)
+    Component->>UI: Hide progress bar
+```
+
+### Progress UI States
+
+```mermaid
+graph LR
+    subgraph "Initial State"
+        A[Upload Button<br/>━━━━━━━━<br/>📤 Upload File<br/>Enabled: true]
+    end
+    
+    subgraph "Uploading State"
+        B[Progress Bar<br/>━━━━━━━━<br/>▓▓▓▓░░░░ 45%<br/>Cancel Button]
+    end
+    
+    subgraph "Processing State"
+        C[Processing<br/>━━━━━━━━<br/>⚙️ Processing...<br/>Indeterminate]
+    end
+    
+    subgraph "Complete State"
+        D[Success<br/>━━━━━━━━<br/>✅ Upload Complete<br/>File Added]
+    end
+    
+    A -->|Start| B
+    B -->|100%| C
+    C -->|Done| D
+    D -->|Reset| A
+    
+    style A fill:#e1e5ff
+    style B fill:#fff4e1
+    style C fill:#fff4e1
+    style D fill:#e1f5e1
 ```
 
 ## Component Structure
 
-The FileUploader component is structured as follows:
+### Component Hierarchy
 
-```jsx
-export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
-  // State hooks
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Store hooks
-  const { malwareFiles, selectedMalwareId, selectMalwareFile, addMalwareFile, removeMalwareFile } = useAppStore(...);
-  
-  // Effects
-  useEffect(() => {
-    loadMalwareFiles();
-  }, []);
-  
-  // Functions
-  const loadMalwareFiles = async () => {...};
-  const handleFileUpload = async () => {...};
-  const handleFileSelect = (file: MalwareFile) => {...};
-  const handleFileDelete = async (fileId: string) => {...};
-  
-  // Render logic
-  if (loading) {
-    return <LoadingView />;
-  }
-  
-  return (
-    <ThemedView style={styles.container}>
-      <Header />
-      {error && <ErrorView />}
-      <FileList />
-    </ThemedView>
-  );
-};
+```mermaid
+graph TD
+    subgraph "FileUploader Root"
+        A[FileUploader Component]
+        
+        subgraph "State Management"
+            B[Local State<br/>━━━━━━━━<br/>• loading<br/>• uploadProgress<br/>• error<br/>• isDragging<br/>• toast]
+            C[Store State<br/>━━━━━━━━<br/>• malwareFiles<br/>• selectedMalwareId<br/>• CRUD actions]
+        end
+        
+        subgraph "UI Components"
+            D[Header<br/>━━━━━━━━<br/>• Upload Button<br/>• Title]
+            E[Drop Zone<br/>━━━━━━━━<br/>• Drag Area<br/>• Instructions]
+            F[File List<br/>━━━━━━━━<br/>• File Items<br/>• Actions]
+            G[Toast<br/>━━━━━━━━<br/>• Success/Error<br/>• Messages]
+        end
+        
+        subgraph "File Item"
+            H[File Icon<br/>━━━━━━━━<br/>• Type Based<br/>• Dynamic]
+            I[File Info<br/>━━━━━━━━<br/>• Name<br/>• Size<br/>• Type]
+            J[Actions<br/>━━━━━━━━<br/>• Select<br/>• Delete]
+        end
+    end
+    
+    A --> B
+    A --> C
+    A --> D
+    A --> E
+    A --> F
+    A --> G
+    F --> H
+    F --> I
+    F --> J
+    
+    style A fill:#e1e5ff
+    style B fill:#fff4e1
+    style C fill:#e1f5e1
+    style D fill:#e1e5ff
+    style E fill:#e1e5ff
+    style F fill:#e1e5ff
+    style G fill:#fff4e1
+    style H fill:#e1f5e1
+    style I fill:#e1f5e1
+    style J fill:#ffe4e1
+```
+
+## Platform-Specific Implementations
+
+### Platform Detection and Routing
+
+```mermaid
+flowchart TD
+    Start[File Operation Request]
+    
+    Check{Platform<br/>Check}
+    
+    subgraph "Web Platform"
+        WebAPI[Web File API<br/>━━━━━━━━<br/>• HTML5 File API<br/>• FileReader API<br/>• Blob URLs]
+        
+        WebPick[File Input<br/>━━━━━━━━<br/>• <input type="file"><br/>• Click trigger<br/>• onChange handler]
+        
+        WebStore[Web Storage<br/>━━━━━━━━<br/>• Blob URLs<br/>• URL.createObjectURL<br/>• Memory storage]
+        
+        WebRead[File Reading<br/>━━━━━━━━<br/>• FileReader<br/>• readAsText()<br/>• readAsDataURL()]
+    end
+    
+    subgraph "Native Platform"
+        NativeAPI[Native APIs<br/>━━━━━━━━<br/>• Expo FileSystem<br/>• DocumentPicker<br/>• Platform Storage]
+        
+        NativePick[Document Picker<br/>━━━━━━━━<br/>• System picker<br/>• Type filters<br/>• Multi-select]
+        
+        NativeStore[File System<br/>━━━━━━━━<br/>• documentDirectory<br/>• copyAsync()<br/>• Persistent storage]
+        
+        NativeRead[File Access<br/>━━━━━━━━<br/>• readAsStringAsync<br/>• getInfoAsync<br/>• Direct access]
+    end
+    
+    Start --> Check
+    Check -->|typeof document !== 'undefined'| WebAPI
+    Check -->|React Native| NativeAPI
+    
+    WebAPI --> WebPick
+    WebAPI --> WebStore
+    WebAPI --> WebRead
+    
+    NativeAPI --> NativePick
+    NativeAPI --> NativeStore
+    NativeAPI --> NativeRead
+    
+    style Start fill:#e1e5ff
+    style WebAPI fill:#fff4e1
+    style NativeAPI fill:#fff4e1
+    style WebStore fill:#e1f5e1
+    style NativeStore fill:#e1f5e1
+```
+
+## Rendering States
+
+### Visual Component States
+
+```mermaid
+graph TD
+    subgraph "Loading State"
+        A[LoadingView<br/>━━━━━━━━<br/>🔄 ActivityIndicator<br/>📝 "Loading files..."]
+    end
+    
+    subgraph "Empty State"
+        B[EmptyView<br/>━━━━━━━━<br/>📁 No files icon<br/>📝 "No files yet"<br/>🔗 Upload prompt]
+    end
+    
+    subgraph "File List State"
+        C[Header<br/>━━━━━━━━<br/>📤 Upload Button]
+        
+        D[File Item 1<br/>━━━━━━━━<br/>📄 file.exe<br/>2.3 MB<br/>✓ Selected]
+        
+        E[File Item 2<br/>━━━━━━━━<br/>📄 malware.dll<br/>1.2 MB<br/>○ Not Selected]
+        
+        F[Drop Zone<br/>━━━━━━━━<br/>⚡ Drag files here<br/>or click to browse]
+    end
+    
+    subgraph "Error State"
+        G[ErrorView<br/>━━━━━━━━<br/>⚠️ Error Icon<br/>📝 Error Message<br/>🔁 Dismiss]
+    end
+    
+    C --> D
+    C --> E
+    C --> F
+    
+    style A fill:#fff4e1
+    style B fill:#e1e5ff
+    style C fill:#e1e5ff
+    style D fill:#e1f5e1
+    style E fill:#e1e5ff
+    style F fill:#fff4e1
+    style G fill:#ffe4e1
+```
+
+### Mock UI Representation
+
+```mermaid
+graph TD
+    subgraph "FileUploader UI"
+        Header["<div style='background:#f9f9f9;padding:10px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between'>
+            <span style='flex:1'></span>
+            <button style='background:#4A90E2;color:white;padding:6px 12px;border-radius:4px'>📤 Upload</button>
+        </div>"]
+        
+        DropZone["<div style='border:2px dashed #ccc;padding:20px;margin:10px;border-radius:8px;text-align:center;background:#f0f8ff'>
+            📁 Drop files here or click to browse<br/>
+            <small>Supports: .exe, .dll, .js, .py, .zip, etc.</small>
+        </div>"]
+        
+        File1["<div style='background:#4A90E2;padding:12px;margin:8px;border-radius:8px;display:flex;color:white'>
+            <span style='margin-right:10px'>📄</span>
+            <div style='flex:1'>
+                <strong>suspicious.exe</strong><br/>
+                <small>2.3 MB</small>
+            </div>
+            <span style='cursor:pointer'>🗑️</span>
+        </div>"]
+        
+        File2["<div style='background:#F0F0F0;padding:12px;margin:8px;border-radius:8px;display:flex'>
+            <span style='margin-right:10px'>📄</span>
+            <div style='flex:1'>
+                <strong>malware.dll</strong><br/>
+                <small>1.2 MB</small>
+            </div>
+            <span style='cursor:pointer;color:#FF6B6B'>🗑️</span>
+        </div>"]
+        
+        Container["<div style='background:#f9f9f9;border-radius:8px;border:1px solid #ddd'>"]
+    end
+    
+    Container --> Header
+    Container --> DropZone
+    Container --> File1
+    Container --> File2
 ```
 
 ## Props
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `onFileSelect` | `(file: MalwareFile) => void` | Callback function that is called when a file is selected |
+| `onFileSelect` | `(file: MalwareFile) => void` | Callback function that is called when a file is selected for analysis |
 
 ## State
 
@@ -569,9 +1099,12 @@ import { MalwareFile } from '@/types';
 
 export default function HomeScreen() {
   const [selectedFile, setSelectedFile] = useState<MalwareFile | null>(null);
+  const [analysisReady, setAnalysisReady] = useState(false);
   
   const handleFileSelect = (file: MalwareFile) => {
     setSelectedFile(file);
+    setAnalysisReady(true);
+    console.log('File selected for analysis:', file.name);
   };
   
   return (
@@ -579,8 +1112,24 @@ export default function HomeScreen() {
       <FileUploader onFileSelect={handleFileSelect} />
       
       {selectedFile && (
-        <Text>Selected File: {selectedFile.name}</Text>
+        <View style={styles.fileInfo}>
+          <Text>Selected File: {selectedFile.name}</Text>
+          <Text>Size: {formatFileSize(selectedFile.size)}</Text>
+          <Text>Type: {selectedFile.type}</Text>
+          {analysisReady && (
+            <Button onPress={startAnalysis}>Start Analysis</Button>
+          )}
+        </View>
       )}
     </View>
   );
 }
+```
+
+## Related Documentation
+
+- [Architecture Overview](../ARCHITECTURE.md) - System-wide architecture and design patterns
+- [API Integration](../API_INTEGRATION.md) - API layer and service integration details
+- [Getting Started](../GETTING_STARTED.md) - Setup and configuration guide
+- [User Guide](../USER_GUIDE.md) - End-user documentation
+- [Container Isolation](../CONTAINER_ISOLATION.md) - Security and isolation features

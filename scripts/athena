@@ -1,0 +1,283 @@
+#!/bin/bash
+# Athena CLI - Enhanced Unified Launcher
+# A beautiful, comprehensive startup script with transgender pride colors
+
+# Set text colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+WHITE='\033[1;37m'
+NC='\033[0m' # No Color
+
+# Visual elements
+BOLD='\033[1m'
+DIM='\033[2m'
+UNDERLINE='\033[4m'
+
+# Transgender flag colors
+TRANS_BLUE='\033[38;2;91;206;250m'    # Light Blue
+TRANS_PINK='\033[38;2;245;169;184m'   # Pink
+TRANS_WHITE='\033[38;2;255;255;255m'  # White
+
+# Unicode characters
+CHECK_MARK='✓'
+CROSS_MARK='✗'
+WARNING_SIGN='⚠'
+GEAR='⚙'
+ROCKET='🚀'
+PACKAGE='📦'
+TOOL='🔧'
+SPARKLES='✨'
+KEY='🔑'
+SHIELD='🛡️'
+HEART='♥'
+
+# Print enhanced banner
+print_banner() {
+    clear
+    echo
+    echo -e "${TRANS_BLUE}  █████╗ ████████╗██╗  ██╗███████╗███╗   ██╗ █████╗ ${NC}"
+    echo -e "${TRANS_PINK} ██╔══██╗╚══██╔══╝██║  ██║██╔════╝████╗  ██║██╔══██╗${NC}"
+    echo -e "${TRANS_WHITE} ███████║   ██║   ███████║█████╗  ██╔██╗ ██║███████║${NC}"
+    echo -e "${TRANS_PINK} ██╔══██║   ██║   ██╔══██║██╔══╝  ██║╚██╗██║██╔══██║${NC}"
+    echo -e "${TRANS_BLUE} ██║  ██║   ██║   ██║  ██║███████╗██║ ╚████║██║  ██║${NC}"
+    echo -e "${TRANS_WHITE} ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝${NC}"
+    echo
+    echo -e "${TRANS_PINK}${BOLD}AI-Powered Malware Analysis Assistant${NC}"
+    echo -e "${TRANS_BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${TRANS_WHITE}🏳️‍⚧️ Made with love ${TRANS_PINK}♥${TRANS_WHITE} Open source for all 🏳️‍⚧️${NC}"
+    echo -e "${TRANS_BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo
+}
+
+# Interactive menu
+show_menu() {
+    echo -e "${TRANS_BLUE}${BOLD}Main Menu${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo
+    echo -e "${TRANS_WHITE}${BOLD}Quick Start:${NC}"
+    echo -e "  ${GREEN}1${NC}) ${ROCKET} Start Athena Web"
+    echo -e "  ${GREEN}2${NC}) ${KEY} Check API Keys"
+    echo -e "  ${GREEN}3${NC}) ${PACKAGE} Update Everything"
+    echo
+    echo -e "${TRANS_WHITE}${BOLD}Development:${NC}"
+    echo -e "  ${GREEN}4${NC}) 📱 Start iOS Version"
+    echo -e "  ${GREEN}5${NC}) 🤖 Start Android Version"
+    echo -e "  ${GREEN}6${NC}) 📲 Start Expo Development"
+    echo
+    echo -e "${TRANS_WHITE}${BOLD}Maintenance:${NC}"
+    echo -e "  ${GREEN}7${NC}) ${TOOL} Run Setup"
+    echo -e "  ${GREEN}8${NC}) 🧹 Clean Build Files"
+    echo -e "  ${GREEN}9${NC}) ${SHIELD} Security Audit"
+    echo -e "  ${GREEN}10${NC}) 🗄️  Database Setup"
+    echo
+    echo -e "${TRANS_WHITE}${BOLD}Testing:${NC}"
+    echo -e "  ${GREEN}11${NC}) 🧪 Run All Tests"
+    echo -e "  ${GREEN}12${NC}) 📊 Run Load Tests"
+    echo
+    echo -e "${DIM}Type 'h' for help, 'q' to quit${NC}"
+    echo
+}
+
+# Quick system check
+quick_check() {
+    echo -e "${TRANS_WHITE}${GEAR} Quick System Check...${NC}"
+
+    # Check Node.js
+    if command -v node &> /dev/null; then
+        NODE_VERSION=$(node -v)
+        echo -e "  ${GREEN}${CHECK_MARK}${NC} Node.js ${DIM}${NODE_VERSION}${NC}"
+    else
+        echo -e "  ${RED}${CROSS_MARK}${NC} Node.js not found"
+    fi
+
+    # Check npm
+    if command -v npm &> /dev/null; then
+        NPM_VERSION=$(npm -v)
+        echo -e "  ${GREEN}${CHECK_MARK}${NC} npm ${DIM}${NPM_VERSION}${NC}"
+    else
+        echo -e "  ${RED}${CROSS_MARK}${NC} npm not found"
+    fi
+
+    # Check if in correct directory
+    if [ -d "Athena" ]; then
+        echo -e "  ${GREEN}${CHECK_MARK}${NC} Athena directory found"
+    else
+        echo -e "  ${RED}${CROSS_MARK}${NC} Not in Athena root directory"
+        return 1
+    fi
+
+    # Check for .env file
+    if [ -f "Athena/.env" ]; then
+        echo -e "  ${GREEN}${CHECK_MARK}${NC} Environment configured"
+    else
+        echo -e "  ${YELLOW}${WARNING_SIGN}${NC} No .env file (run API key check)"
+    fi
+
+    echo
+    return 0
+}
+
+# Run security audit
+run_security_audit() {
+    echo -e "${TRANS_BLUE}${SHIELD} ${BOLD}Security Audit${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo
+
+    cd Athena
+    echo -e "${TRANS_WHITE}Running npm audit...${NC}"
+    npm audit
+
+    echo
+    echo -e "${TRANS_WHITE}Checking for exposed secrets...${NC}"
+    if command -v git &> /dev/null; then
+        # Check for common secret patterns
+        git grep -i -E "(api[_-]?key|secret|password|token)" --cached | grep -v -E "(\.md|\.txt|\.example|test)" | head -10
+        if [ $? -eq 0 ]; then
+            echo -e "${YELLOW}${WARNING_SIGN} Potential secrets found in code${NC}"
+        else
+            echo -e "${GREEN}${CHECK_MARK} No obvious secrets in code${NC}"
+        fi
+    fi
+
+    cd ..
+    echo
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
+# Run all tests
+run_all_tests() {
+    echo -e "${TRANS_BLUE}🧪 ${BOLD}Running Test Suite${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo
+
+    cd Athena
+
+    echo -e "${TRANS_WHITE}1. Unit Tests${NC}"
+    npm run test:unit
+
+    echo -e "\n${TRANS_WHITE}2. Integration Tests${NC}"
+    npm run test:integration
+
+    echo -e "\n${TRANS_WHITE}3. Component Tests${NC}"
+    npm run test:components
+
+    cd ..
+    echo
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
+# Main execution loop
+main() {
+    print_banner
+
+    if ! quick_check; then
+        echo -e "${RED}Please run this script from the Athena repository root${NC}"
+        exit 1
+    fi
+
+    while true; do
+        show_menu
+
+        echo -e -n "${TRANS_BLUE}Select an option: ${NC}"
+        read choice
+
+        case $choice in
+            1)
+                echo -e "\n${ROCKET} Starting Athena Web..."
+                ./scripts/run.sh web
+                ;;
+            2)
+                echo -e "\n${KEY} Checking API Keys..."
+                node scripts/check-api-keys.js
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            3)
+                echo -e "\n${PACKAGE} Updating Everything..."
+                ./scripts/run.sh update
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            4)
+                echo -e "\n📱 Starting iOS Version..."
+                ./scripts/run.sh ios
+                ;;
+            5)
+                echo -e "\n🤖 Starting Android Version..."
+                ./scripts/run.sh android
+                ;;
+            6)
+                echo -e "\n📲 Starting Expo Development..."
+                ./scripts/run.sh expo
+                ;;
+            7)
+                echo -e "\n${TOOL} Running Setup..."
+                ./scripts/run.sh setup
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            8)
+                echo -e "\n🧹 Cleaning Build Files..."
+                ./scripts/run.sh clean
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            9)
+                run_security_audit
+                ;;
+            10)
+                echo -e "\n🗄️  Setting up Database..."
+                cd Athena && ./scripts/setup-db.sh
+                cd ..
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            11)
+                run_all_tests
+                ;;
+            12)
+                echo -e "\n📊 Running Load Tests..."
+                cd Athena/load-tests && ./run-tests.sh
+                cd ../..
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            h|H)
+                ./scripts/run.sh help
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            q|Q)
+                echo -e "\n${TRANS_WHITE}${SPARKLES} Thanks for using Athena! ${SPARKLES}${NC}"
+                echo -e "${TRANS_PINK}Stay safe and analyze with pride! 🏳️‍⚧️${NC}\n"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Invalid option. Please try again.${NC}"
+                sleep 1
+                ;;
+        esac
+
+        clear
+        print_banner
+    done
+}
+
+# Check if we're in the right directory
+if [ ! -d "Athena" ]; then
+    echo -e "${RED}${CROSS_MARK} Athena directory not found${NC}"
+    echo -e "${YELLOW}Please run from repository root${NC}"
+    exit 1
+fi
+
+# Handle Ctrl+C gracefully
+trap 'echo -e "\n\n${YELLOW}${WARNING_SIGN} Operation cancelled${NC}"; exit 0' INT
+
+# Run main function
+main

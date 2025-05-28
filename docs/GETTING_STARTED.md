@@ -1,7 +1,5 @@
 # Getting Started with Athena
 
-> **Note:** This guide reflects the modernized Athena platform after 9 phases of enterprise-grade improvements.
-
 ## Table of Contents
 
 - [Overview](#overview)
@@ -25,6 +23,56 @@ Athena is an enterprise-grade malware analysis platform that leverages multiple 
 - **Container Isolation** for secure execution
 - **Comprehensive Monitoring** with APM integration
 - **Feature Flags** for runtime configuration
+
+### Complete Setup Flow
+
+```mermaid
+flowchart TB
+    Start([Start]) --> CheckNode{Node.js Installed?}
+    
+    CheckNode -->|No| InstallNode[Install Node.js v18+]
+    CheckNode -->|Yes| CheckGit{Git Installed?}
+    
+    InstallNode --> CheckGit
+    
+    CheckGit -->|No| InstallGit[Install Git]
+    CheckGit -->|Yes| Clone[Clone Repository]
+    
+    InstallGit --> Clone
+    
+    Clone --> RunScript[Run /scripts/athena]
+    
+    RunScript --> CheckFirstTime{First Time Setup?}
+    
+    CheckFirstTime -->|Yes| InstallDeps[Install Dependencies]
+    CheckFirstTime -->|No| CheckEnv{.env Exists?}
+    
+    InstallDeps --> CreateEnv[Create .env File]
+    CreateEnv --> ConfigureKeys[Configure API Keys]
+    
+    CheckEnv -->|No| CreateEnv
+    CheckEnv -->|Yes| ValidateKeys{API Keys Valid?}
+    
+    ConfigureKeys --> ValidateKeys
+    
+    ValidateKeys -->|No| UpdateKeys[Update API Keys]
+    ValidateKeys -->|Yes| CheckOptional{Configure Optional Services?}
+    
+    UpdateKeys --> ValidateKeys
+    
+    CheckOptional -->|Yes| ConfigureOptional[Configure Redis/DB/APM]
+    CheckOptional -->|No| BuildApp[Build Application]
+    
+    ConfigureOptional --> BuildApp
+    
+    BuildApp --> LaunchApp[Launch Athena]
+    LaunchApp --> Ready([Ready to Use!])
+    
+    style Start fill:#e1f5e1
+    style Ready fill:#e1f5e1
+    style ConfigureKeys fill:#ffe4e1
+    style ValidateKeys fill:#fff4e1
+```
 
 ## Prerequisites
 
@@ -75,16 +123,16 @@ Obtain API keys from:
 git clone https://github.com/yourusername/athena.git
 cd athena
 
-# One-command setup and launch
-./scripts/run.sh
+# Launch interactive CLI
+/scripts/athena
 ```
 
-The intelligent setup script automatically:
-- 🔍 Detects if first-time setup is needed
-- 📦 Installs all dependencies
-- 🔧 Configures environment files
-- 🚀 Builds and launches the application
-- ✅ Verifies the setup
+The interactive CLI provides a beautiful menu to:
+- 🚀 Start Athena Web (with auto-setup on first run)
+- 🔑 Check and validate API keys
+- 📦 Update everything to latest versions
+- 🔧 Run setup, tests, and maintenance tasks
+- 📱 Launch iOS/Android versions
 
 ### 2. Configure API Keys
 
@@ -104,16 +152,93 @@ FEATURE_ENABLESTREAMINGANALYSIS=true
 
 ### 3. Launch Application
 
+**Interactive CLI (Recommended):**
 ```bash
-# Web version (default)
-./scripts/run.sh web
+/scripts/athena
+# Then select option 1 for web, 4 for iOS, 5 for Android
+```
 
-# Alternative platforms
-./scripts/run.sh ios      # iOS simulator
+**Direct Commands:**
+```bash
+./scripts/run.sh web      # Web version (default)
+./scripts/run.sh ios      # iOS simulator  
 ./scripts/run.sh android  # Android emulator
 ```
 
 ## Configuration
+
+### Configuration Dependencies
+
+```mermaid
+graph TB
+    subgraph "Core Requirements"
+        APIKeys[API Keys<br/>At least one required]
+        NodeEnv[NODE_ENV<br/>development/production]
+    end
+    
+    subgraph "AI Provider Config"
+        Claude[CLAUDE_API_KEY]
+        OpenAI[OPENAI_API_KEY]
+        DeepSeek[DEEPSEEK_API_KEY]
+        Priority[AI_PROVIDER_PRIORITY]
+    end
+    
+    subgraph "Optional Services"
+        subgraph "Redis Cache"
+            RedisEnabled[REDIS_ENABLED]
+            RedisHost[REDIS_HOST]
+            RedisPort[REDIS_PORT]
+            RedisPassword[REDIS_PASSWORD]
+        end
+        
+        subgraph "Database"
+            DBEnabled[DB_ENABLED]
+            DBHost[DATABASE_URL]
+            DBPool[DB_POOL_SIZE]
+        end
+        
+        subgraph "APM"
+            APMEnabled[APM_ENABLED]
+            APMProvider[APM_PROVIDER]
+            APMEndpoint[APM_ENDPOINT]
+        end
+    end
+    
+    subgraph "Feature Flags"
+        CircuitBreaker[FEATURE_ENABLECIRCUITBREAKER]
+        Bulkhead[FEATURE_ENABLEBULKHEAD]
+        Streaming[FEATURE_ENABLESTREAMINGANALYSIS]
+        BatchProcessing[FEATURE_ENABLEBATCHPROCESSING]
+    end
+    
+    APIKeys --> Claude
+    APIKeys --> OpenAI
+    APIKeys --> DeepSeek
+    
+    Claude --> Priority
+    OpenAI --> Priority
+    DeepSeek --> Priority
+    
+    RedisEnabled -->|true| RedisHost
+    RedisEnabled -->|true| RedisPort
+    RedisHost --> RedisPassword
+    
+    DBEnabled -->|true| DBHost
+    DBEnabled -->|true| DBPool
+    
+    APMEnabled -->|true| APMProvider
+    APMProvider --> APMEndpoint
+    
+    NodeEnv --> CircuitBreaker
+    NodeEnv --> Bulkhead
+    NodeEnv --> Streaming
+    NodeEnv --> BatchProcessing
+    
+    style APIKeys fill:#ffe4e1
+    style Claude fill:#e1f5e1
+    style OpenAI fill:#e1f5e1
+    style DeepSeek fill:#e1f5e1
+```
 
 ### Environment Configuration
 
@@ -198,6 +323,78 @@ docker exec athena-redis redis-cli ping
 ```
 
 ## Running Your First Analysis
+
+### Complete Analysis Walkthrough
+
+```mermaid
+stateDiagram-v2
+    [*] --> HomePage: Launch Athena
+    
+    HomePage --> FileSelection: Click Upload
+    
+    state FileSelection {
+        [*] --> BrowseFiles
+        BrowseFiles --> ValidateFile: Select File
+        ValidateFile --> FileReady: Valid
+        ValidateFile --> BrowseFiles: Invalid
+        FileReady --> [*]
+    }
+    
+    FileSelection --> ModelSelection: File Uploaded
+    
+    state ModelSelection {
+        [*] --> SelectProvider
+        SelectProvider --> SelectModel: Choose Provider
+        SelectModel --> ConfigureOptions: Choose Model
+        ConfigureOptions --> [*]: Set Options
+    }
+    
+    ModelSelection --> AnalysisConfig: Model Selected
+    
+    state AnalysisConfig {
+        [*] --> BasicOptions
+        BasicOptions --> AdvancedOptions: Show Advanced
+        AdvancedOptions --> ContainerConfig: Enable Container
+        ContainerConfig --> StreamConfig: Configure Resources
+        StreamConfig --> [*]: Enable Streaming
+    }
+    
+    AnalysisConfig --> RunAnalysis: Start Analysis
+    
+    state RunAnalysis {
+        [*] --> CheckCache
+        CheckCache --> CacheHit: Found
+        CheckCache --> CacheMiss: Not Found
+        
+        CacheHit --> DisplayCached
+        
+        CacheMiss --> ExecuteAnalysis
+        ExecuteAnalysis --> Streaming: If Enabled
+        ExecuteAnalysis --> BatchResult: If Disabled
+        
+        Streaming --> UpdateUI: Chunks
+        UpdateUI --> Streaming: More Data
+        UpdateUI --> Complete: Done
+        
+        BatchResult --> Complete
+        Complete --> StoreCache
+        StoreCache --> [*]
+    }
+    
+    RunAnalysis --> ViewResults: Analysis Complete
+    
+    state ViewResults {
+        [*] --> DeobfuscatedTab
+        DeobfuscatedTab --> VulnerabilitiesTab: Switch Tab
+        VulnerabilitiesTab --> ReportTab: Switch Tab
+        ReportTab --> DeobfuscatedTab: Switch Tab
+        
+        DeobfuscatedTab --> Export: Download
+        VulnerabilitiesTab --> Export: Download
+        ReportTab --> Export: Download
+    }
+    
+    ViewResults --> [*]: Done
 
 ### Step-by-Step Analysis Flow
 
@@ -348,6 +545,74 @@ graph LR
 ### Feature Flags
 
 Runtime configuration without redeployment:
+
+```mermaid
+graph TB
+    subgraph "Feature Flag System"
+        Manager[Feature Flag Manager]
+        
+        subgraph "Configuration Sources"
+            Env[Environment Variables]
+            Remote[Remote Config]
+            Local[Local Overrides]
+        end
+        
+        subgraph "Feature Categories"
+            Performance[Performance Features]
+            Resilience[Resilience Features]
+            Experimental[Experimental Features]
+            UI[UI Features]
+        end
+    end
+    
+    subgraph "Performance Features"
+        Streaming[enableStreamingAnalysis]
+        BatchProc[enableBatchProcessing]
+        RedisCache[enableRedisCache]
+        ConnPool[enableConnectionPooling]
+    end
+    
+    subgraph "Resilience Features"
+        CircuitBreaker[enableCircuitBreaker]
+        Bulkhead[enableBulkhead]
+        RetryLogic[enableRetryLogic]
+        Failover[enableAutoFailover]
+    end
+    
+    subgraph "Experimental Features"
+        NewUI[enableNewUI]
+        AdvAnalysis[enableAdvancedAnalysis]
+        MLModels[enableMLModels]
+    end
+    
+    Env --> Manager
+    Remote --> Manager
+    Local --> Manager
+    
+    Manager --> Performance
+    Manager --> Resilience
+    Manager --> Experimental
+    Manager --> UI
+    
+    Performance --> Streaming
+    Performance --> BatchProc
+    Performance --> RedisCache
+    Performance --> ConnPool
+    
+    Resilience --> CircuitBreaker
+    Resilience --> Bulkhead
+    Resilience --> RetryLogic
+    Resilience --> Failover
+    
+    Experimental --> NewUI
+    Experimental --> AdvAnalysis
+    Experimental --> MLModels
+    
+    style Manager fill:#e1e5ff
+    style Env fill:#ffe4e1
+    style Remote fill:#e1f5e1
+    style Local fill:#fff4e1
+```
 
 ```typescript
 // Check feature status
@@ -544,10 +809,14 @@ Set up production monitoring:
 ### Essential Commands
 
 ```bash
-# Setup and run
-./scripts/run.sh
+# Interactive CLI (recommended)
+/scripts/athena
 
-# Development
+# Direct commands
+./scripts/run.sh web    # Start web version
+./scripts/run.sh setup  # Setup only
+
+# Development (from Athena/ directory)
 npm run dev
 npm test
 npm run lint

@@ -68,7 +68,7 @@ async function testProductionBuild() {
     process.exit(1);
   }
 
-  // 3. Check bundle sizes
+  // 3. Check bundle sizes (replaces size-limit functionality)
   const distPath = path.join(__dirname, '..', 'dist');
   if (fs.existsSync(distPath)) {
     const getDirectorySize = (dir) => {
@@ -86,22 +86,81 @@ async function testProductionBuild() {
       return size;
     };
 
+    const getFilesByPattern = (dir, pattern) => {
+      const matches = [];
+      const walkDir = (currentPath) => {
+        if (!fs.existsSync(currentPath)) return;
+        const files = fs.readdirSync(currentPath, { withFileTypes: true });
+        for (const file of files) {
+          const filePath = path.join(currentPath, file.name);
+          if (file.isDirectory()) {
+            walkDir(filePath);
+          } else if (file.name.match(pattern)) {
+            matches.push(filePath);
+          }
+        }
+      };
+      walkDir(dir);
+      return matches;
+    };
+
+    // Check individual bundle sizes (based on .size-limit.json config)
+    log(`\n📊 Checking bundle sizes...`, 'blue');
+    
+    // Initial Bundle Check
+    const initialBundleFiles = getFilesByPattern(path.join(distPath, 'static', 'js'), /^index-.*\.js$/);
+    let initialBundleSize = 0;
+    initialBundleFiles.forEach(file => {
+      initialBundleSize += fs.statSync(file).size;
+    });
+    const initialBundleMB = (initialBundleSize / 1024 / 1024).toFixed(2);
+    
+    if (initialBundleSize > 5 * 1024 * 1024) {
+      results.warnings.push(`Initial bundle (${initialBundleMB} MB) exceeds 5 MB limit`);
+    } else {
+      results.passed.push(`Initial bundle size OK (${initialBundleMB} MB / 5 MB limit)`);
+    }
+    
+    // Total JS Bundle Check
+    const jsFiles = getFilesByPattern(distPath, /\.js$/);
+    let totalJsSize = 0;
+    jsFiles.forEach(file => {
+      totalJsSize += fs.statSync(file).size;
+    });
+    const totalJsMB = (totalJsSize / 1024 / 1024).toFixed(2);
+    
+    if (totalJsSize > 10 * 1024 * 1024) {
+      results.warnings.push(`Total JS bundle (${totalJsMB} MB) exceeds 10 MB limit`);
+    } else {
+      results.passed.push(`Total JS bundle size OK (${totalJsMB} MB / 10 MB limit)`);
+    }
+    
+    // CSS Bundle Check
+    const cssFiles = getFilesByPattern(distPath, /\.css$/);
+    let totalCssSize = 0;
+    cssFiles.forEach(file => {
+      totalCssSize += fs.statSync(file).size;
+    });
+    const totalCssKB = (totalCssSize / 1024).toFixed(2);
+    
+    if (totalCssSize > 200 * 1024) {
+      results.warnings.push(`CSS bundle (${totalCssKB} KB) exceeds 200 KB limit`);
+    } else {
+      results.passed.push(`CSS bundle size OK (${totalCssKB} KB / 200 KB limit)`);
+    }
+
+    // Overall build size
     const totalSize = getDirectorySize(distPath);
     const sizeMB = (totalSize / 1024 / 1024).toFixed(2);
-    
-    log(`\n📊 Total build size: ${sizeMB} MB`, 'blue');
-    
-    if (totalSize > 10 * 1024 * 1024) {
-      results.warnings.push(`Build size (${sizeMB} MB) exceeds recommended 10 MB`);
-    } else {
-      results.passed.push(`Build size is reasonable (${sizeMB} MB)`);
-    }
+    log(`📦 Total build size: ${sizeMB} MB`, 'blue');
   }
 
   // 4. Check for common issues
-  const jsFiles = fs.readdirSync(path.join(distPath, 'static', 'js')).filter(f => f.endsWith('.js'));
+  const jsFilesForCheck = fs.existsSync(path.join(distPath, 'static', 'js')) 
+    ? fs.readdirSync(path.join(distPath, 'static', 'js')).filter(f => f.endsWith('.js'))
+    : [];
   
-  for (const file of jsFiles) {
+  for (const file of jsFilesForCheck) {
     const content = fs.readFileSync(path.join(distPath, 'static', 'js', file), 'utf8');
     
     // Check for console.log statements
@@ -148,16 +207,7 @@ async function testProductionBuild() {
     // Server might have already stopped
   }
 
-  // 6. Run size-limit check
-  const sizeLimit = runCommand(
-    'npx size-limit',
-    'Checking bundle size limits'
-  );
-  if (sizeLimit.success) {
-    results.passed.push('Bundle sizes within limits');
-  } else {
-    results.warnings.push('Bundle size limits exceeded');
-  }
+  // Bundle size checks are now integrated above
 
   printResults(results);
 }

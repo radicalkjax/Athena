@@ -2,7 +2,7 @@
 
 ## Overview
 
-Athena now supports distributed caching through Redis, providing enhanced performance and scalability for multi-instance deployments. The Redis integration seamlessly extends the existing cache system with automatic fallback to local storage.
+Athena supports distributed caching through Redis, providing enhanced performance and scalability for multi-instance deployments. The Redis integration seamlessly extends the existing cache system with automatic fallback to local storage.
 
 ## Features
 
@@ -46,21 +46,90 @@ docker-compose up -d
 
 ### Cache Storage Hierarchy
 
+```mermaid
+flowchart TD
+    Service[AI Service Call<br/>━━━━━━━━<br/>• Analysis request<br/>• Provider: Claude/OpenAI<br/>• File hash: abc123] --> CM[Cache Manager<br/>━━━━━━━━<br/>• Check cache<br/>• Route to storage<br/>• Handle fallback]
+    
+    CM --> CheckRedis{Redis<br/>Available?}
+    
+    CheckRedis -->|Yes| Redis[Redis Storage<br/>━━━━━━━━<br/>• Primary cache<br/>• Distributed<br/>• Persistent]
+    
+    CheckRedis -->|No| Local[Local Fallback<br/>━━━━━━━━<br/>• Memory cache<br/>• IndexedDB<br/>• Instance-specific]
+    
+    Redis --> Found{Cache<br/>Hit?}
+    Local --> Found
+    
+    Found -->|Yes| Return[Return Cached<br/>Result]
+    Found -->|No| Execute[Execute AI<br/>Service Call]
+    
+    Execute --> Store[Store Result]
+    Store --> StoreRedis{Redis<br/>Connected?}
+    
+    StoreRedis -->|Yes| BothStorage[Store in Both<br/>━━━━━━━━<br/>• Redis (primary)<br/>• Local (backup)]
+    StoreRedis -->|No| LocalOnly[Store Local<br/>Only]
+    
+    BothStorage --> Return
+    LocalOnly --> Return
+    
+    style Service fill:#e1e5ff
+    style Redis fill:#e1f5e1
+    style Local fill:#fff4e1
+    style Return fill:#e1f5e1
+    style Execute fill:#ffe4e1
 ```
-┌─────────────────────┐
-│   AI Service Call   │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│   Cache Manager     │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐     ┌──────────────────┐
-│  Redis Storage      │────▶│  Local Fallback  │
-│  (Primary)          │     │  (Memory/IDB)    │
-└─────────────────────┘     └──────────────────┘
+
+### Redis Integration Flow
+
+```mermaid
+sequenceDiagram
+    participant App as Athena App
+    participant CM as Cache Manager
+    participant Redis as Redis Storage
+    participant Local as Local Storage
+    participant AI as AI Service
+    
+    App->>CM: Request analysis result
+    CM->>Redis: Check Redis cache
+    
+    alt Redis Connected
+        alt Cache Hit
+            Redis-->>CM: Return cached result
+            CM-->>App: Return result
+        else Cache Miss
+            Redis-->>CM: Not found
+            CM->>Local: Check local cache
+            
+            alt Local Cache Hit
+                Local-->>CM: Return cached result
+                CM->>Redis: Sync to Redis
+                CM-->>App: Return result
+            else Local Cache Miss
+                Local-->>CM: Not found
+                CM->>AI: Execute AI analysis
+                AI-->>CM: Analysis result
+                
+                par Store in Redis
+                    CM->>Redis: Store result
+                and Store in Local
+                    CM->>Local: Store result
+                end
+                
+                CM-->>App: Return result
+            end
+        end
+    else Redis Disconnected
+        CM->>Local: Check local cache only
+        Local-->>CM: Result or miss
+        
+        alt Cache Miss
+            CM->>AI: Execute AI analysis
+            AI-->>CM: Analysis result
+            CM->>Local: Store locally
+            CM-->>App: Return result
+        else Cache Hit
+            CM-->>App: Return cached result
+        end
+    end
 ```
 
 ### Implementation Details
@@ -124,6 +193,49 @@ console.log({
 ```
 
 ## Performance Benefits
+
+### Distributed Cache Benefits
+
+```mermaid
+graph TB
+    subgraph "Without Redis Cache"
+        U1[User 1] --> I1[Athena Instance 1]
+        U2[User 2] --> I2[Athena Instance 2]
+        U3[User 3] --> I3[Athena Instance 3]
+        
+        I1 --> AI1[AI API Call 1<br/>━━━━━━━━<br/>Same file analyzed<br/>3 times = 3 API calls]
+        I2 --> AI2[AI API Call 2]
+        I3 --> AI3[AI API Call 3]
+        
+        I1 --> LC1[Local Cache 1]
+        I2 --> LC2[Local Cache 2]
+        I3 --> LC3[Local Cache 3]
+    end
+    
+    subgraph "With Redis Cache"
+        U4[User 1] --> I4[Athena Instance 1]
+        U5[User 2] --> I5[Athena Instance 2]
+        U6[User 3] --> I6[Athena Instance 3]
+        
+        I4 & I5 & I6 --> RC[Redis Cache<br/>━━━━━━━━<br/>Shared storage]
+        
+        I4 --> AI4[AI API Call<br/>━━━━━━━━<br/>First request only<br/>1 API call total]
+        
+        RC --> I5
+        RC --> I6
+        
+        Note1[Cache Hit ✓] -.-> I5
+        Note2[Cache Hit ✓] -.-> I6
+    end
+    
+    style AI1 fill:#ffe4e1
+    style AI2 fill:#ffe4e1
+    style AI3 fill:#ffe4e1
+    style AI4 fill:#e1f5e1
+    style RC fill:#e1e5ff
+    style Note1 fill:#e1f5e1
+    style Note2 fill:#e1f5e1
+```
 
 1. **Cross-Instance Sharing**: Multiple Athena instances share analysis results
 2. **Reduced AI API Calls**: Cached results available to all instances

@@ -133,6 +133,9 @@ temp/
 *.sqlite
 *.sqlite3
 
+# prompts
+/docs/prompts/*
+
 # Docker
 .dockerignore
 docker-compose.override.yml

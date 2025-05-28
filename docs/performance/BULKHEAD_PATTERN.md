@@ -6,6 +6,114 @@ The Athena platform implements the Bulkhead pattern to provide fault isolation b
 
 ## Architecture
 
+### System Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Requests"
+        C1[Client 1]
+        C2[Client 2]
+        C3[Client 3]
+        C4[Client N]
+    end
+    
+    subgraph "Bulkhead Manager"
+        BM[BulkheadManager<br/>━━━━━━━━<br/>• Route requests<br/>• Apply limits<br/>• Monitor health]
+    end
+    
+    subgraph "Service Bulkheads"
+        subgraph "AI Services"
+            B1[Claude Bulkhead<br/>━━━━━━━━<br/>Max: 20<br/>Queue: 100]
+            B2[OpenAI Bulkhead<br/>━━━━━━━━<br/>Max: 20<br/>Queue: 100]
+        end
+        
+        subgraph "Container Ops"
+            B3[Create Bulkhead<br/>━━━━━━━━<br/>Max: 5<br/>Queue: 20]
+            B4[Monitor Bulkhead<br/>━━━━━━━━<br/>Max: 10<br/>Queue: 50]
+        end
+        
+        subgraph "Database"
+            B5[Read Bulkhead<br/>━━━━━━━━<br/>Max: 30<br/>Queue: 100]
+            B6[Write Bulkhead<br/>━━━━━━━━<br/>Max: 15<br/>Queue: 50]
+        end
+    end
+    
+    subgraph "Global Semaphores"
+        S1[CPU Intensive<br/>━━━━━━━━<br/>Permits: 5]
+        S2[Memory Intensive<br/>━━━━━━━━<br/>Permits: 3]
+        S3[Network I/O<br/>━━━━━━━━<br/>Permits: 50]
+        S4[AI Total<br/>━━━━━━━━<br/>Permits: 30]
+    end
+    
+    subgraph "Services"
+        SVC1[Claude Service]
+        SVC2[OpenAI Service]
+        SVC3[Container Service]
+        SVC4[Database Service]
+    end
+    
+    C1 & C2 & C3 & C4 --> BM
+    BM --> B1 & B2 & B3 & B4 & B5 & B6
+    BM -.->|Acquires| S1 & S2 & S3 & S4
+    B1 --> SVC1
+    B2 --> SVC2
+    B3 & B4 --> SVC3
+    B5 & B6 --> SVC4
+    
+    style BM fill:#e1e5ff
+    style B1 fill:#e1f5e1
+    style B2 fill:#e1f5e1
+    style B3 fill:#fff4e1
+    style B4 fill:#fff4e1
+    style B5 fill:#e1e5ff
+    style B6 fill:#e1e5ff
+```
+
+### Bulkhead Execution Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant BulkheadManager
+    participant Semaphore
+    participant Bulkhead
+    participant Queue
+    participant Service
+    participant APM
+    
+    Client->>BulkheadManager: execute(serviceId, task)
+    BulkheadManager->>Semaphore: Acquire permits
+    
+    alt Permits Available
+        Semaphore-->>BulkheadManager: Permits acquired
+        BulkheadManager->>Bulkhead: Submit task
+        
+        alt Capacity Available
+            Bulkhead->>Service: Execute immediately
+            Service-->>Bulkhead: Result
+            Bulkhead-->>BulkheadManager: Success
+        else Queue Space Available
+            Bulkhead->>Queue: Add to queue
+            Queue-->>Bulkhead: Queued
+            Note over Queue: Wait for capacity
+            Queue->>Service: Execute when ready
+            Service-->>Queue: Result
+            Queue-->>Bulkhead: Success
+        else Queue Full
+            Bulkhead-->>BulkheadManager: Rejected
+            BulkheadManager->>APM: Record rejection
+        end
+        
+        BulkheadManager->>Semaphore: Release permits
+        BulkheadManager->>APM: Record metrics
+        BulkheadManager-->>Client: Result/Error
+    else No Permits
+        Semaphore-->>BulkheadManager: Timeout
+        BulkheadManager->>APM: Record timeout
+        BulkheadManager-->>Client: Error
+    end
+```
+
 ### Components
 
 1. **Bulkhead**: Thread pool isolation with queuing
@@ -120,6 +228,41 @@ const result = await bulkheadManager.execute(
 
 ## Integration with Circuit Breakers
 
+### Circuit Breaker + Bulkhead Integration
+
+```mermaid
+flowchart TD
+    Request[Incoming Request<br/>━━━━━━━━<br/>AI Analysis Task] --> CB{Circuit<br/>Breaker<br/>Open?}
+    
+    CB -->|Closed/Half-Open| BH{Bulkhead<br/>Capacity?}
+    CB -->|Open| Fallback[Return Fallback<br/>━━━━━━━━<br/>• Cached result<br/>• Default response<br/>• Error message]
+    
+    BH -->|Available| Semaphore{Global<br/>Semaphore<br/>Available?}
+    BH -->|Full| Queue{Queue<br/>Space?}
+    
+    Queue -->|Yes| Queued[Add to Queue<br/>━━━━━━━━<br/>Wait for capacity]
+    Queue -->|No| Rejected[Reject Request<br/>━━━━━━━━<br/>Queue full error]
+    
+    Semaphore -->|Yes| Execute[Execute Task<br/>━━━━━━━━<br/>• Monitor execution<br/>• Track metrics<br/>• Handle errors]
+    Semaphore -->|No| SemaphoreTimeout[Semaphore Timeout<br/>━━━━━━━━<br/>Global limit reached]
+    
+    Execute --> Success{Success?}
+    Queued --> Execute
+    
+    Success -->|Yes| ReturnResult[Return Result<br/>━━━━━━━━<br/>Update metrics]
+    Success -->|No| HandleError[Handle Error<br/>━━━━━━━━<br/>• Update CB state<br/>• Release resources<br/>• Log error]
+    
+    HandleError --> CBUpdate[Update Circuit<br/>Breaker State]
+    ReturnResult --> CBUpdate
+    
+    style Request fill:#e1e5ff
+    style Fallback fill:#ffe4e1
+    style Rejected fill:#ffe4e1
+    style SemaphoreTimeout fill:#ffe4e1
+    style ReturnResult fill:#e1f5e1
+    style Execute fill:#fff4e1
+```
+
 The bulkhead pattern works in conjunction with circuit breakers:
 
 ```typescript
@@ -138,6 +281,45 @@ const result = await circuitBreakerFactory.execute('ai.claude.analyze', async ()
 4. Task executes with full protection
 
 ## Monitoring and Metrics
+
+### Bulkhead Health Dashboard
+
+```mermaid
+graph TB
+    subgraph "Bulkhead Health Overview"
+        subgraph "AI Services Health"
+            AI1[Claude<br/>━━━━━━━━<br/>Active: 15/20<br/>Queue: 45/100<br/>Health: 🟢]
+            AI2[OpenAI<br/>━━━━━━━━<br/>Active: 18/20<br/>Queue: 78/100<br/>Health: 🟡]
+            AI3[DeepSeek<br/>━━━━━━━━<br/>Active: 8/10<br/>Queue: 12/50<br/>Health: 🟢]
+        end
+        
+        subgraph "Container Services Health"
+            C1[Create<br/>━━━━━━━━<br/>Active: 5/5<br/>Queue: 18/20<br/>Health: 🔴]
+            C2[Monitor<br/>━━━━━━━━<br/>Active: 7/10<br/>Queue: 0/50<br/>Health: 🟢]
+        end
+        
+        subgraph "Database Health"
+            DB1[Read<br/>━━━━━━━━<br/>Active: 22/30<br/>Queue: 15/100<br/>Health: 🟢]
+            DB2[Write<br/>━━━━━━━━<br/>Active: 12/15<br/>Queue: 8/50<br/>Health: 🟡]
+        end
+        
+        subgraph "Global Semaphores"
+            GS[Status<br/>━━━━━━━━<br/>CPU: 4/5 used<br/>Memory: 2/3 used<br/>Network: 35/50 used<br/>AI Total: 28/30 used]
+        end
+    end
+    
+    subgraph "Metrics"
+        M1[Total Active: 97]
+        M2[Total Queued: 176]
+        M3[Rejected (1h): 23]
+        M4[Avg Wait: 2.3s]
+    end
+    
+    style AI2 fill:#fff4e1
+    style C1 fill:#ffe4e1
+    style DB2 fill:#fff4e1
+    style GS fill:#e1e5ff
+```
 
 ### Available Metrics
 

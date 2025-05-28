@@ -1,28 +1,103 @@
 # Analysis Options Panel
 
-The Analysis Options Panel is a UI component that allows users to configure various options for malware analysis. This component provides a comprehensive interface for setting up analysis parameters, including container isolation, AI model selection, and analysis depth.
+The Analysis Options Panel is a UI component that allows users to configure various options for malware analysis. This component provides a streamlined interface for setting up analysis parameters, with mandatory container isolation for enhanced security.
+
+## Component Architecture
+
+```mermaid
+graph TB
+    subgraph "Analysis Options Panel"
+        AOP[AnalysisOptionsPanel<br/>━━━━━━━━<br/>• State Management<br/>• Option Updates<br/>• Change Callbacks]
+        
+        subgraph "Container Section"
+            CC[ContainerConfigSelector<br/>━━━━━━━━<br/>• OS Selection<br/>• Architecture<br/>• Resources]
+        end
+        
+        subgraph "Analysis Options"
+            DA[Deep Analysis<br/>━━━━━━━━<br/>• Toggle Switch<br/>• Behavior Monitoring]
+            SR[Save Results<br/>━━━━━━━━<br/>• Toggle Switch<br/>• Database Storage]
+        end
+    end
+    
+    subgraph "External Integration"
+        CS[Container Service<br/>━━━━━━━━<br/>• Resource Presets<br/>• Configuration]
+        DB[Database<br/>━━━━━━━━<br/>• Results Storage<br/>• History Tracking]
+        AS[Analysis Service<br/>━━━━━━━━<br/>• Deep Analysis<br/>• Processing]
+    end
+    
+    AOP --> CC
+    AOP --> DA
+    AOP --> SR
+    
+    CC -.-> CS
+    SR -.-> DB
+    DA -.-> AS
+    
+    style AOP fill:#e1e5ff
+    style CC fill:#e1f5e1
+    style DA fill:#fff4e1
+    style SR fill:#e1f5e1
+    style CS fill:#e1e5ff
+    style DB fill:#e1e5ff
+    style AS fill:#e1e5ff
+```
+
+## State Management Flow
+
+```mermaid
+stateDiagram-v2
+    [*] --> Initialized: Component Mount
+    
+    state Initialized {
+        [*] --> LoadDefaults
+        LoadDefaults --> MergeInitialOptions: Has Initial Options
+        LoadDefaults --> UseDefaults: No Initial Options
+        MergeInitialOptions --> Ready
+        UseDefaults --> Ready
+    }
+    
+    Ready --> ContainerConfigUpdate: Config Change
+    Ready --> DeepAnalysisToggle: Toggle Deep Analysis
+    Ready --> SaveResultsToggle: Toggle Save Results
+    
+    ContainerConfigUpdate --> UpdateState
+    DeepAnalysisToggle --> UpdateState
+    SaveResultsToggle --> UpdateState
+    
+    UpdateState --> CallbackTrigger: Notify Parent
+    CallbackTrigger --> Ready: Continue
+    
+    note right of UpdateState
+        Updates local state and
+        triggers onOptionsChange
+    end note
+    
+    note right of Ready
+        Component ready for
+        user interaction
+    end note
+```
 
 ## Features
 
-- Container isolation toggle
-- Container configuration selection (when container isolation is enabled)
-- AI model selection (OpenAI, Claude, DeepSeek, Local)
-- Deep analysis toggle for more thorough analysis
-- Save results toggle to store analysis results for future reference
+- **Mandatory Container Isolation**: Always enabled for enhanced security
+- **Container Configuration**: Full control over OS, architecture, and resources
+- **Deep Analysis Toggle**: Enable thorough behavior monitoring
+- **Save Results Toggle**: Store analysis results for future reference
 
 ## Usage
 
 ### Basic Usage
 
 ```tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { View } from 'react-native';
 import AnalysisOptionsPanel, { AnalysisOptions } from '@/components/AnalysisOptionsPanel';
 
 const MyComponent = () => {
   const handleOptionsChange = (options: AnalysisOptions) => {
     console.log('Analysis options updated:', options);
-    // Do something with the updated options
+    // Container config, deep analysis, and save results settings
   };
 
   return (
@@ -36,15 +111,14 @@ const MyComponent = () => {
 ### With Initial Options
 
 ```tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { View } from 'react-native';
 import AnalysisOptionsPanel, { AnalysisOptions } from '@/components/AnalysisOptionsPanel';
 import { getResourcePreset } from '@/services/container';
 
 const MyComponent = () => {
   // Define initial options
-  const initialOptions: AnalysisOptions = {
-    useContainerIsolation: true,
+  const initialOptions: Partial<AnalysisOptions> = {
     containerConfig: {
       os: 'linux',
       architecture: 'x64',
@@ -52,14 +126,13 @@ const MyComponent = () => {
       distribution: 'ubuntu',
       resources: getResourcePreset('performance')
     },
-    aiModel: 'claude',
     deepAnalysis: true,
-    saveResults: true
+    saveResults: false
   };
 
   const handleOptionsChange = (options: AnalysisOptions) => {
     console.log('Analysis options updated:', options);
-    // Do something with the updated options
+    // Handle the updated configuration
   };
 
   return (
@@ -86,13 +159,13 @@ The `AnalysisOptions` interface defines the structure of the analysis options:
 
 ```typescript
 interface AnalysisOptions {
-  useContainerIsolation: boolean;
   containerConfig: ContainerConfig;
-  aiModel: AIModelType;
   deepAnalysis: boolean;
   saveResults: boolean;
 }
 ```
+
+Note: Container isolation is always enabled in the modernized architecture, and AI model selection is now handled by the AI Manager service.
 
 ### Default Options
 
@@ -100,31 +173,56 @@ If no initial options are provided, the component uses the following default opt
 
 ```typescript
 const DEFAULT_OPTIONS: AnalysisOptions = {
-  useContainerIsolation: true,
   containerConfig: {
     os: 'windows',
     architecture: 'x64',
     version: 'windows-10',
     resources: getResourcePreset('standard')
   },
-  aiModel: 'openai',
   deepAnalysis: false,
   saveResults: true
 };
 ```
 
+## Data Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant Parent as Parent Component
+    participant AOP as AnalysisOptionsPanel
+    participant CC as ContainerConfigSelector
+    participant CS as Container Service
+    participant Callback as onOptionsChange
+
+    Parent->>AOP: Mount with initialOptions
+    AOP->>AOP: Merge with DEFAULT_OPTIONS
+    AOP->>CC: Pass containerConfig
+    
+    alt User changes container config
+        CC->>CS: Get resource presets
+        CS-->>CC: Return presets
+        CC->>AOP: handleContainerConfigChange
+        AOP->>AOP: Update state
+        AOP->>Callback: Trigger with new options
+        Callback->>Parent: Notify of changes
+    end
+    
+    alt User toggles deep analysis
+        AOP->>AOP: handleOptionChange('deepAnalysis')
+        AOP->>Callback: Trigger with new options
+        Callback->>Parent: Notify of changes
+    end
+    
+    alt User toggles save results
+        AOP->>AOP: handleOptionChange('saveResults')
+        AOP->>Callback: Trigger with new options
+        Callback->>Parent: Notify of changes
+    end
+```
+
 ## Container Configuration
 
-When container isolation is enabled, the component displays a `ContainerConfigSelector` component that allows users to configure the container settings. See the [ContainerConfigSelector](./CONTAINER_CONFIG_SELECTOR.md) documentation for more details.
-
-## AI Model Selection
-
-The component provides buttons for selecting the AI model to use for analysis:
-
-- **OpenAI**: Uses OpenAI's models (e.g., GPT-4)
-- **Claude**: Uses Anthropic's Claude models
-- **DeepSeek**: Uses DeepSeek's models
-- **Local**: Uses locally installed models
+The component always displays a `ContainerConfigSelector` component that allows users to configure the container settings. Container isolation is mandatory for security. See the [ContainerConfigSelector](./CONTAINER_CONFIG_SELECTOR.md) documentation for more details.
 
 ## Deep Analysis
 
@@ -147,22 +245,20 @@ import AnalysisOptionsPanel, { AnalysisOptions } from '../components/AnalysisOpt
 import { getResourcePreset } from '../services/container';
 
 const AnalysisOptionsExample = () => {
-  // Initial options
-  const initialOptions: AnalysisOptions = {
-    useContainerIsolation: true,
+  // Initial options with partial configuration
+  const initialOptions: Partial<AnalysisOptions> = {
     containerConfig: {
       os: 'windows',
       architecture: 'x64',
       version: 'windows-10',
       resources: getResourcePreset('standard')
     },
-    aiModel: 'openai',
     deepAnalysis: false,
     saveResults: true
   };
   
   // State to store the current options
-  const [options, setOptions] = useState<AnalysisOptions>(initialOptions);
+  const [options, setOptions] = useState<AnalysisOptions | null>(null);
   
   // Handle options changes
   const handleOptionsChange = (newOptions: AnalysisOptions) => {
@@ -172,15 +268,16 @@ const AnalysisOptionsExample = () => {
   
   // Handle analysis start
   const handleStartAnalysis = () => {
+    if (!options) return;
+    
     Alert.alert(
       'Analysis Configuration',
       `Starting analysis with the following configuration:
       
-Container Isolation: ${options.useContainerIsolation ? 'Enabled' : 'Disabled'}
+Container Environment: Always Isolated
 OS: ${options.containerConfig.os}
 Architecture: ${options.containerConfig.architecture}
 Version: ${options.containerConfig.version}
-AI Model: ${options.aiModel}
 Deep Analysis: ${options.deepAnalysis ? 'Enabled' : 'Disabled'}
 Save Results: ${options.saveResults ? 'Yes' : 'No'}
 CPU Cores: ${options.containerConfig.resources?.cpu || 'Default'}
@@ -201,8 +298,9 @@ I/O Operations: ${options.containerConfig.resources?.ioOperations || 'Default'} 
         <ThemedText style={styles.title}>Analysis Options</ThemedText>
         
         <ThemedText style={styles.description}>
-          Configure the analysis options below. You can enable container isolation for enhanced security,
-          select the container configuration, choose the AI model to use, and set additional analysis options.
+          Configure the analysis options below. Container isolation is always 
+          enabled for enhanced security. Select the container configuration 
+          and set additional analysis options.
         </ThemedText>
         
         <AnalysisOptionsPanel
@@ -223,11 +321,80 @@ I/O Operations: ${options.containerConfig.resources?.ioOperations || 'Default'} 
 };
 ```
 
+## Mock UI Representation
+
+```mermaid
+graph TB
+    subgraph "Analysis Options Panel UI"
+        Header["<b>Container Configuration</b><br/>Malware is always analyzed in an isolated container<br/>environment for enhanced security"]
+        
+        ContainerSection["🖥️ Container Config Selector<br/>━━━━━━━━━━━━━━━━━━━━<br/>OS: Windows 10 x64<br/>Resources: Standard Preset<br/>[Configure →]"]
+        
+        DeepAnalysis["<b>Deep Analysis</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Toggle: OFF]<br/>━━━━━━━━━━━━━━━━━━━━━━━━━━━<br/>Perform more thorough analysis with<br/>detailed behavior monitoring"]
+        
+        SaveResults["<b>Save Results</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Toggle: ON]<br/>━━━━━━━━━━━━━━━━━━━━━━━━━━━<br/>Save analysis results to the database<br/>for future reference"]
+    end
+    
+    Header --> ContainerSection
+    ContainerSection --> DeepAnalysis
+    DeepAnalysis --> SaveResults
+    
+    style Header fill:#e1e5ff
+    style ContainerSection fill:#e1f5e1
+    style DeepAnalysis fill:#fff4e1
+    style SaveResults fill:#e1f5e1
+```
+
+## Option Update Flow
+
+```mermaid
+flowchart LR
+    subgraph "User Actions"
+        UC[Container Change]
+        UD[Toggle Deep Analysis]
+        US[Toggle Save Results]
+    end
+    
+    subgraph "Component State"
+        State[Options State<br/>━━━━━━━━<br/>• containerConfig<br/>• deepAnalysis<br/>• saveResults]
+    end
+    
+    subgraph "Parent Integration"
+        CB[onOptionsChange<br/>Callback]
+        PC[Parent Component<br/>━━━━━━━━<br/>• Start Analysis<br/>• Update Config]
+    end
+    
+    UC --> State
+    UD --> State
+    US --> State
+    
+    State --> CB
+    CB --> PC
+    
+    style UC fill:#e1e5ff
+    style UD fill:#e1e5ff
+    style US fill:#e1e5ff
+    style State fill:#fff4e1
+    style CB fill:#e1f5e1
+    style PC fill:#e1f5e1
+```
+
 ## Integration with Other Components
 
 The Analysis Options Panel is designed to be used in conjunction with other components in the analysis workflow:
 
-1. **AIModelSelector**: The Analysis Options Panel includes AI model selection, but you can also use the standalone AIModelSelector component for more advanced model selection.
-2. **ContainerConfigSelector**: When container isolation is enabled, the Analysis Options Panel displays a ContainerConfigSelector component for configuring the container.
-3. **FileUploader**: Use the FileUploader component to upload files for analysis before configuring the analysis options.
-4. **AnalysisResults**: After analysis is complete, use the AnalysisResults component to display the results.
+1. **ContainerConfigSelector**: Embedded component for configuring container settings
+2. **FileUploader**: Use before Analysis Options to upload files for analysis
+3. **AnalysisResults**: Use after analysis to display results
+4. **Container Service**: Provides resource presets and configuration validation
+5. **Analysis Service**: Consumes the options for processing
+
+## Modernization Benefits
+
+The Phase 9 modernization brings several improvements:
+
+- **Simplified State Management**: Removed complex AI model selection logic
+- **Enhanced Security**: Container isolation is now mandatory
+- **Better Performance**: Optimized re-renders with proper state updates
+- **Type Safety**: Full TypeScript support with strict interfaces
+- **Consistent Design**: Uses the modernized design system components

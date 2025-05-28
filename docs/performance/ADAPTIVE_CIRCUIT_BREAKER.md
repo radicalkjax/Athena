@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Athena platform now includes an enhanced circuit breaker implementation with adaptive thresholds, advanced backoff strategies, and per-endpoint configuration. This provides sophisticated resilience patterns for handling failures in AI services and external dependencies.
+The Athena platform features an enhanced circuit breaker implementation with adaptive thresholds, advanced backoff strategies, and per-endpoint configuration. This provides sophisticated resilience patterns for handling failures in AI services and external dependencies.
 
 ## Key Features
 
@@ -23,6 +23,89 @@ The Athena platform now includes an enhanced circuit breaker implementation with
 - Centralized management through factory pattern
 
 ## Architecture
+
+```mermaid
+graph TB
+    subgraph "Circuit Breaker System"
+        CB[AdaptiveCircuitBreaker<br/>━━━━━━━━<br/>• State Management<br/>• Failure Tracking<br/>• Adaptive Logic]
+        
+        subgraph "States"
+            CLOSED[CLOSED<br/>━━━━━━━━<br/>• Normal Operation<br/>• Track Failures<br/>• Monitor Response Time]
+            OPEN[OPEN<br/>━━━━━━━━<br/>• Block Requests<br/>• Fast Fail<br/>• Wait for Reset]
+            HALF[HALF_OPEN<br/>━━━━━━━━<br/>• Test Requests<br/>• Limited Traffic<br/>• Evaluate Health]
+        end
+        
+        subgraph "Features"
+            ADAPT[Adaptive Thresholds<br/>━━━━━━━━<br/>• Response Time<br/>• Volume Based<br/>• Dynamic Adjust]
+            BACKOFF[Backoff Strategies<br/>━━━━━━━━<br/>• Exponential<br/>• Linear<br/>• Fibonacci]
+            METRICS[Metrics Collection<br/>━━━━━━━━<br/>• Success Rate<br/>• Response Time<br/>• State Changes]
+        end
+    end
+    
+    subgraph "Management Layer"
+        FACTORY[CircuitBreakerFactory<br/>━━━━━━━━<br/>• Per-Endpoint Config<br/>• Instance Management<br/>• Centralized Control]
+        APM[APM Integration<br/>━━━━━━━━<br/>• Observability<br/>• Alerting<br/>• Dashboards]
+    end
+    
+    CB --> CLOSED
+    CB --> OPEN
+    CB --> HALF
+    
+    CLOSED --> OPEN
+    OPEN --> HALF
+    HALF --> CLOSED
+    HALF --> OPEN
+    
+    CB --> ADAPT
+    CB --> BACKOFF
+    CB --> METRICS
+    
+    FACTORY --> CB
+    METRICS --> APM
+    
+    style CB fill:#e1e5ff
+    style CLOSED fill:#e1f5e1
+    style OPEN fill:#ffe4e1
+    style HALF fill:#fff4e1
+    style ADAPT fill:#e1e5ff
+    style BACKOFF fill:#e1e5ff
+    style METRICS fill:#e1e5ff
+    style FACTORY fill:#e1f5e1
+    style APM fill:#e1f5e1
+```
+
+## State Transitions
+
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED: Initial State
+    
+    CLOSED --> OPEN: Failure Threshold Exceeded OR Response Time Degraded
+    CLOSED --> CLOSED: Success OR Acceptable Response Time
+    
+    OPEN --> HALF_OPEN: Reset Timeout Elapsed
+    OPEN --> OPEN: Request Rejected (Fast Fail)
+    
+    HALF_OPEN --> CLOSED: Success Threshold Met
+    HALF_OPEN --> OPEN: Any Failure OR Slow Response
+    
+    note right of CLOSED
+        Normal operation
+        Tracks failures and response times
+    end note
+    
+    note right of OPEN
+        Blocks all requests
+        Returns immediate error
+        Waits for reset timeout
+    end note
+    
+    note right of HALF_OPEN
+        Allows limited test traffic
+        Evaluates service health
+        Quick decision on state
+    end note
+```
 
 ### Components
 
@@ -121,19 +204,78 @@ const stats = breaker.getStats();
 // }
 ```
 
+## Request Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Factory as CircuitBreakerFactory
+    participant CB as CircuitBreaker
+    participant Service as AI Service
+    participant APM as APM System
+    
+    Client->>Factory: execute('ai.claude.analyze', fn)
+    Factory->>CB: Get or create breaker
+    
+    alt Circuit is CLOSED
+        CB->>CB: Check current state
+        CB->>Service: Execute request
+        Service-->>CB: Response
+        CB->>CB: Update metrics
+        CB->>APM: Track response time
+        CB-->>Client: Return result
+    else Circuit is OPEN
+        CB->>CB: Check state
+        CB->>APM: Track rejection
+        CB-->>Client: Throw CircuitOpenError
+    else Circuit is HALF_OPEN
+        CB->>CB: Check test request
+        CB->>Service: Execute test request
+        alt Success
+            Service-->>CB: Success response
+            CB->>CB: Transition to CLOSED
+            CB-->>Client: Return result
+        else Failure
+            Service-->>CB: Error
+            CB->>CB: Transition to OPEN
+            CB-->>Client: Throw error
+        end
+    end
+```
+
 ## Monitoring
 
-### Health Summary
+### Health Dashboard
 
-```typescript
-const health = circuitBreakerFactory.getHealthSummary();
-// {
-//   total: 6,
-//   open: 1,
-//   halfOpen: 0,
-//   closed: 5,
-//   unhealthy: ['ai.claude.analyze']
-// }
+```mermaid
+graph TB
+    subgraph "Circuit Breaker Health"
+        SUMMARY[Health Summary<br/>━━━━━━━━<br/>• Total Breakers: 6<br/>• Healthy: 5<br/>• Unhealthy: 1]
+        
+        subgraph "Per-Endpoint Status"
+            E1[ai.claude.analyze<br/>━━━━━━━━<br/>State: OPEN ⚠️<br/>Error Rate: 15%<br/>Avg Response: 3500ms]
+            E2[ai.openai.analyze<br/>━━━━━━━━<br/>State: CLOSED ✓<br/>Error Rate: 2%<br/>Avg Response: 1200ms]
+            E3[ai.deepseek.analyze<br/>━━━━━━━━<br/>State: CLOSED ✓<br/>Error Rate: 3%<br/>Avg Response: 2800ms]
+        end
+        
+        subgraph "Metrics"
+            METRICS[Real-time Metrics<br/>━━━━━━━━<br/>• Request Count<br/>• Success Rate<br/>• Response Times<br/>• State Changes]
+        end
+    end
+    
+    SUMMARY --> E1
+    SUMMARY --> E2
+    SUMMARY --> E3
+    
+    E1 --> METRICS
+    E2 --> METRICS
+    E3 --> METRICS
+    
+    style SUMMARY fill:#e1e5ff
+    style E1 fill:#ffe4e1
+    style E2 fill:#e1f5e1
+    style E3 fill:#e1f5e1
+    style METRICS fill:#e1e5ff
 ```
 
 ### APM Integration
@@ -146,10 +288,8 @@ Circuit breaker events are automatically tracked:
 ### Metrics Dashboard
 
 ```typescript
+const health = circuitBreakerFactory.getHealthSummary();
 const allStats = circuitBreakerFactory.getAllStats();
-Object.entries(allStats).forEach(([endpoint, stats]) => {
-  console.log(`${endpoint}: ${stats.state} - ${stats.metrics.errorRate}% errors`);
-});
 ```
 
 ## Failure Scenarios
@@ -168,6 +308,34 @@ Object.entries(allStats).forEach(([endpoint, stats]) => {
 1. **Open State**: All requests fail fast
 2. **Half-Open State**: Limited test requests
 3. **Closed State**: Normal operation resumes
+
+## Backoff Strategies
+
+```mermaid
+graph LR
+    subgraph "Backoff Types"
+        EXP[Exponential<br/>━━━━━━━━<br/>1s → 2s → 4s → 8s<br/>Multiplier: 2.0]
+        LIN[Linear<br/>━━━━━━━━<br/>1s → 2s → 3s → 4s<br/>Increment: 1s]
+        FIB[Fibonacci<br/>━━━━━━━━<br/>1s → 1s → 2s → 3s → 5s<br/>Natural growth]
+    end
+    
+    subgraph "Enhancements"
+        JITTER[Jitter<br/>━━━━━━━━<br/>±20% random<br/>Prevents thundering herd]
+        MAX[Max Backoff<br/>━━━━━━━━<br/>Cap at 5 minutes<br/>Prevents infinite wait]
+    end
+    
+    EXP --> JITTER
+    LIN --> JITTER
+    FIB --> JITTER
+    
+    JITTER --> MAX
+    
+    style EXP fill:#e1e5ff
+    style LIN fill:#e1e5ff
+    style FIB fill:#e1e5ff
+    style JITTER fill:#fff4e1
+    style MAX fill:#e1f5e1
+```
 
 ## Best Practices
 

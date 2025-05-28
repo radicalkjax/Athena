@@ -1,7 +1,5 @@
 # API Integration Architecture
 
-> **Note:** This documentation reflects the modernized API integration after 9 phases of improvements, including resilience patterns, streaming support, and enterprise-grade features.
-
 ## Table of Contents
 
 - [Overview](#overview)
@@ -28,6 +26,82 @@ Athena's API integration architecture provides a robust, scalable foundation for
 - **Resilience Patterns** for fault tolerance
 - **Distributed Caching** with Redis
 - **Real-time Monitoring** with APM integration
+
+### High-Level API Flow
+
+```mermaid
+graph TB
+    subgraph "Client Applications"
+        Web[Web App]
+        Mobile[Mobile App]
+        CLI[CLI Tools]
+        SDK[SDK/Library]
+    end
+    
+    subgraph "API Gateway Layer"
+        LB[Load Balancer]
+        Gateway[API Gateway]
+        
+        subgraph "Gateway Components"
+            Auth[Authentication]
+            RateLimit[Rate Limiter]
+            Validator[Request Validator]
+            Router[Request Router]
+            Cache[Cache Manager]
+        end
+    end
+    
+    subgraph "Service Mesh"
+        Discovery[Service Discovery]
+        Config[Config Service]
+        Health[Health Monitor]
+    end
+    
+    subgraph "Business Services"
+        Analysis[Analysis Service]
+        AI[AI Manager]
+        Container[Container Service]
+        Batch[Batch Processor]
+        Stream[Stream Manager]
+    end
+    
+    subgraph "Infrastructure Services"
+        Queue[Message Queue]
+        Redis[(Redis Cache)]
+        DB[(PostgreSQL)]
+        Files[File Storage]
+    end
+    
+    Web --> LB
+    Mobile --> LB
+    CLI --> LB
+    SDK --> LB
+    
+    LB --> Gateway
+    Gateway --> Auth
+    Auth --> RateLimit
+    RateLimit --> Validator
+    Validator --> Router
+    Router --> Cache
+    
+    Router --> Discovery
+    Discovery --> Analysis
+    Discovery --> AI
+    Discovery --> Container
+    Discovery --> Batch
+    Discovery --> Stream
+    
+    Analysis --> Queue
+    Analysis --> Redis
+    Analysis --> DB
+    AI --> Redis
+    Container --> DB
+    Batch --> Queue
+    Stream --> Redis
+    
+    Config --> Gateway
+    Health --> Gateway
+```
 
 ## API Gateway Architecture
 
@@ -131,6 +205,8 @@ class APIGateway {
 
 The AI integration layer implements a sophisticated manager pattern with automatic failover, load balancing, and provider health monitoring:
 
+### Provider Failover Sequence
+
 ```mermaid
 sequenceDiagram
     participant Client
@@ -170,6 +246,75 @@ sequenceDiagram
             CircuitBreaker-->>AIManager: skip provider
         end
     end
+```
+
+### AI Provider Architecture
+
+```mermaid
+graph TB
+    subgraph "AI Manager Layer"
+        Manager[AI Service Manager]
+        Selector[Provider Selector]
+        LoadBalancer[Load Balancer]
+        HealthCheck[Health Monitor]
+    end
+    
+    subgraph "Provider Pool"
+        subgraph "Primary Providers"
+            Claude[Claude<br/>Priority: 1<br/>Capacity: High]
+            OpenAI[OpenAI<br/>Priority: 2<br/>Capacity: High]
+        end
+        
+        subgraph "Secondary Providers"
+            DeepSeek[DeepSeek<br/>Priority: 3<br/>Capacity: Medium]
+            Local[Local Models<br/>Priority: 4<br/>Capacity: Low]
+        end
+    end
+    
+    subgraph "Resilience Controls"
+        CB1[Circuit Breaker<br/>Claude]
+        CB2[Circuit Breaker<br/>OpenAI]
+        CB3[Circuit Breaker<br/>DeepSeek]
+        CB4[Circuit Breaker<br/>Local]
+        
+        BH1[Bulkhead<br/>20 workers]
+        BH2[Bulkhead<br/>20 workers]
+        BH3[Bulkhead<br/>10 workers]
+        BH4[Bulkhead<br/>5 workers]
+    end
+    
+    subgraph "Monitoring"
+        Metrics[Metrics Collector]
+        Alerts[Alert Manager]
+        Dashboard[Dashboard]
+    end
+    
+    Manager --> Selector
+    Selector --> LoadBalancer
+    LoadBalancer --> HealthCheck
+    
+    HealthCheck --> CB1
+    HealthCheck --> CB2
+    HealthCheck --> CB3
+    HealthCheck --> CB4
+    
+    CB1 --> BH1
+    CB2 --> BH2
+    CB3 --> BH3
+    CB4 --> BH4
+    
+    BH1 --> Claude
+    BH2 --> OpenAI
+    BH3 --> DeepSeek
+    BH4 --> Local
+    
+    Claude --> Metrics
+    OpenAI --> Metrics
+    DeepSeek --> Metrics
+    Local --> Metrics
+    
+    Metrics --> Alerts
+    Metrics --> Dashboard
 ```
 
 ### Provider Configuration
@@ -321,6 +466,8 @@ graph TB
 
 Support for real-time streaming responses via WebSocket and Server-Sent Events:
 
+### Streaming Protocol Flow
+
 ```mermaid
 sequenceDiagram
     participant Client
@@ -358,6 +505,118 @@ sequenceDiagram
             StreamManager-->>Client: updateUI(partial)
         end
     end
+```
+
+### Streaming Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        UI[UI Components]
+        StreamHook[useStreamingAnalysis Hook]
+        EventHandler[Event Handler]
+    end
+    
+    subgraph "Stream Management"
+        Manager[Stream Manager]
+        
+        subgraph "Protocol Handlers"
+            WSHandler[WebSocket Handler]
+            SSEHandler[SSE Handler]
+            PollingHandler[Polling Handler]
+        end
+        
+        subgraph "Stream Processing"
+            Parser[Chunk Parser]
+            Buffer[Stream Buffer]
+            Aggregator[Result Aggregator]
+        end
+    end
+    
+    subgraph "Connection Management"
+        ConnectionPool[Connection Pool]
+        Reconnect[Reconnect Logic]
+        Heartbeat[Heartbeat Monitor]
+    end
+    
+    subgraph "Stream Features"
+        Backpressure[Backpressure Control]
+        Compression[Compression]
+        Encryption[Encryption]
+    end
+    
+    subgraph "Providers"
+        Claude[Claude Stream]
+        OpenAI[OpenAI Stream]
+        DeepSeek[DeepSeek API]
+    end
+    
+    UI --> StreamHook
+    StreamHook --> EventHandler
+    EventHandler --> Manager
+    
+    Manager --> WSHandler
+    Manager --> SSEHandler
+    Manager --> PollingHandler
+    
+    WSHandler --> Parser
+    SSEHandler --> Parser
+    PollingHandler --> Parser
+    
+    Parser --> Buffer
+    Buffer --> Aggregator
+    
+    WSHandler --> ConnectionPool
+    SSEHandler --> ConnectionPool
+    
+    ConnectionPool --> Reconnect
+    ConnectionPool --> Heartbeat
+    
+    ConnectionPool --> Backpressure
+    ConnectionPool --> Compression
+    ConnectionPool --> Encryption
+    
+    ConnectionPool --> Claude
+    ConnectionPool --> OpenAI
+    PollingHandler --> DeepSeek
+```
+
+### Stream State Management
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle: Initial State
+    
+    Idle --> Connecting: requestStream()
+    Connecting --> Connected: Connection Success
+    Connecting --> Error: Connection Failed
+    
+    Connected --> Streaming: Start Stream
+    Streaming --> Buffering: High Load
+    Buffering --> Streaming: Load Normal
+    
+    Streaming --> Paused: Pause Request
+    Paused --> Streaming: Resume Request
+    
+    Streaming --> Completed: Stream End
+    Streaming --> Error: Stream Error
+    
+    Error --> Reconnecting: Auto Retry
+    Reconnecting --> Connected: Reconnect Success
+    Reconnecting --> Failed: Max Retries
+    
+    Completed --> Idle: Reset
+    Failed --> Idle: Reset
+    
+    note right of Buffering
+        Implements backpressure
+        when client can't keep up
+    end note
+    
+    note right of Reconnecting
+        Exponential backoff:
+        1s, 2s, 4s, 8s, 16s
+    end note
 ```
 
 ### Streaming Implementation
@@ -402,6 +661,8 @@ class StreamingAnalysis {
 
 Multi-tier caching with automatic fallback and synchronization:
 
+### Cache Hierarchy
+
 ```mermaid
 graph TB
     subgraph "Cache Hierarchy"
@@ -430,6 +691,119 @@ graph TB
     L3 --> Sync
     Sync --> L2
     Sync --> L1
+```
+
+### Cache Integration Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API[API Gateway]
+    participant CacheManager
+    participant Memory[Memory Cache]
+    participant IndexedDB
+    participant Redis
+    participant Provider[AI Provider]
+    participant Monitor[Cache Monitor]
+    
+    Client->>API: Request Analysis
+    API->>CacheManager: get(key)
+    
+    CacheManager->>Memory: check(key)
+    alt Memory Hit
+        Memory-->>CacheManager: cached result
+        CacheManager->>Monitor: recordHit(L1)
+        CacheManager-->>API: result
+        API-->>Client: response
+    else Memory Miss
+        CacheManager->>IndexedDB: check(key)
+        alt IndexedDB Hit
+            IndexedDB-->>CacheManager: cached result
+            CacheManager->>Memory: populate(key)
+            CacheManager->>Monitor: recordHit(L2)
+            CacheManager-->>API: result
+            API-->>Client: response
+        else IndexedDB Miss
+            CacheManager->>Redis: check(key)
+            alt Redis Hit
+                Redis-->>CacheManager: cached result
+                CacheManager->>IndexedDB: populate(key)
+                CacheManager->>Memory: populate(key)
+                CacheManager->>Monitor: recordHit(L3)
+                CacheManager-->>API: result
+                API-->>Client: response
+            else Cache Miss
+                CacheManager->>Provider: request()
+                Provider-->>CacheManager: fresh result
+                
+                par Async Cache Population
+                    CacheManager->>Redis: set(key, result, ttl)
+                and
+                    CacheManager->>IndexedDB: set(key, result, ttl)
+                and
+                    CacheManager->>Memory: set(key, result, ttl)
+                and
+                    CacheManager->>Monitor: recordMiss()
+                end
+                
+                CacheManager-->>API: result
+                API-->>Client: response
+            end
+        end
+    end
+```
+
+### Cache Invalidation Strategy
+
+```mermaid
+graph TB
+    subgraph "Invalidation Triggers"
+        Manual[Manual Invalidation]
+        TTL[TTL Expiry]
+        Event[Event-Based]
+        Size[Size Limit]
+    end
+    
+    subgraph "Invalidation Patterns"
+        Single[Single Key]
+        Pattern[Pattern Match]
+        Tag[Tag-Based]
+        All[Clear All]
+    end
+    
+    subgraph "Invalidation Process"
+        Coordinator[Invalidation Coordinator]
+        
+        subgraph "Cache Layers"
+            MemInv[Memory Invalidate]
+            IDBInv[IndexedDB Invalidate]
+            RedisInv[Redis Invalidate]
+        end
+        
+        Broadcast[Event Broadcast]
+    end
+    
+    Manual --> Single
+    TTL --> Single
+    Event --> Pattern
+    Size --> Tag
+    
+    Single --> Coordinator
+    Pattern --> Coordinator
+    Tag --> Coordinator
+    All --> Coordinator
+    
+    Coordinator --> MemInv
+    Coordinator --> IDBInv
+    Coordinator --> RedisInv
+    
+    Coordinator --> Broadcast
+    
+    note right of Broadcast
+        Notifies other instances
+        for distributed cache
+        consistency
+    end note
 ```
 
 ### Cache Key Strategy
@@ -496,6 +870,142 @@ graph LR
     
     Validator --> Service
     Validator --> Rotator
+```
+
+### Complete Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway[API Gateway]
+    participant Auth[Auth Middleware]
+    participant KeyStore[Key Store]
+    participant Validator[Key Validator]
+    participant RateLimit[Rate Limiter]
+    participant Provider[AI Provider]
+    participant Audit[Audit Logger]
+    
+    Client->>Gateway: Request + API Key
+    Gateway->>Auth: authenticate(request)
+    
+    Auth->>Auth: Extract API Key
+    alt No API Key
+        Auth-->>Gateway: 401 Unauthorized
+        Gateway-->>Client: Missing API Key
+    else Has API Key
+        Auth->>KeyStore: getKeyInfo(key)
+        
+        alt Key Not Found
+            Auth->>Audit: logFailedAuth(key)
+            Auth-->>Gateway: 401 Unauthorized
+            Gateway-->>Client: Invalid API Key
+        else Key Found
+            KeyStore-->>Auth: keyInfo + permissions
+            
+            Auth->>Validator: validateKey(key, provider)
+            alt Invalid Format
+                Auth->>Audit: logInvalidFormat(key)
+                Auth-->>Gateway: 401 Unauthorized
+                Gateway-->>Client: Invalid Key Format
+            else Valid Format
+                Auth->>RateLimit: checkLimit(key)
+                
+                alt Rate Limit Exceeded
+                    RateLimit-->>Auth: limitExceeded
+                    Auth->>Audit: logRateLimitExceeded(key)
+                    Auth-->>Gateway: 429 Too Many Requests
+                    Gateway-->>Client: Rate Limit Exceeded
+                else Within Limit
+                    Auth->>Provider: validateWithProvider(key)
+                    
+                    alt Provider Validation Failed
+                        Provider-->>Auth: invalid
+                        Auth->>Audit: logProviderValidationFailed(key)
+                        Auth-->>Gateway: 401 Unauthorized
+                        Gateway-->>Client: Provider Validation Failed
+                    else Provider Validation Success
+                        Provider-->>Auth: valid + quotas
+                        Auth->>Audit: logSuccessfulAuth(key)
+                        Auth-->>Gateway: AuthContext
+                        Gateway->>Gateway: Proceed with request
+                    end
+                end
+            end
+        end
+    end
+```
+
+### Security Architecture
+
+```mermaid
+graph TB
+    subgraph "Security Layers"
+        subgraph "Transport Security"
+            TLS[TLS 1.3]
+            HSTS[HSTS Headers]
+            CSP[Content Security Policy]
+        end
+        
+        subgraph "Authentication"
+            APIKeys[API Key Auth]
+            JWT[JWT Tokens]
+            OAuth[OAuth 2.0]
+        end
+        
+        subgraph "Authorization"
+            RBAC[Role-Based Access]
+            Permissions[Permission System]
+            Scopes[API Scopes]
+        end
+        
+        subgraph "Data Protection"
+            Encryption[At-Rest Encryption]
+            Transit[In-Transit Encryption]
+            Masking[Data Masking]
+        end
+    end
+    
+    subgraph "Security Controls"
+        subgraph "Input Validation"
+            Schema[Schema Validation]
+            Sanitize[Input Sanitization]
+            Size[Size Limits]
+        end
+        
+        subgraph "Rate Limiting"
+            PerKey[Per-Key Limits]
+            PerIP[Per-IP Limits]
+            Global[Global Limits]
+        end
+        
+        subgraph "Monitoring"
+            IDS[Intrusion Detection]
+            Anomaly[Anomaly Detection]
+            Alerts[Security Alerts]
+        end
+    end
+    
+    subgraph "Compliance"
+        GDPR[GDPR Compliance]
+        SOC2[SOC2 Controls]
+        PCI[PCI Standards]
+    end
+    
+    TLS --> APIKeys
+    APIKeys --> RBAC
+    RBAC --> Schema
+    Schema --> PerKey
+    PerKey --> IDS
+    
+    Encryption --> Transit
+    Transit --> Masking
+    
+    IDS --> Alerts
+    Anomaly --> Alerts
+    
+    Alerts --> GDPR
+    Alerts --> SOC2
+    Alerts --> PCI
 ```
 
 ### Request Authentication
@@ -904,6 +1414,99 @@ this.validateApiKey(apiKey);
 
 // ❌ Bad
 // Assume valid input
+```
+
+## Complete API Request Lifecycle
+
+This diagram shows how all components work together to process an API request:
+
+```mermaid
+graph TB
+    subgraph "Request Initiation"
+        Client[Client Application]
+        Request[API Request]
+    end
+    
+    subgraph "API Gateway"
+        CORS[CORS Check]
+        Auth[Authentication]
+        RateLimit[Rate Limiting]
+        Validate[Validation]
+    end
+    
+    subgraph "Request Processing"
+        Cache[Cache Check]
+        Router[Request Router]
+        
+        subgraph "Service Selection"
+            Analysis[Analysis Service]
+            AI[AI Manager]
+            Container[Container Service]
+        end
+    end
+    
+    subgraph "AI Processing"
+        CircuitBreaker[Circuit Breaker]
+        Bulkhead[Bulkhead]
+        Provider[AI Provider]
+        Failover[Failover Logic]
+    end
+    
+    subgraph "Response Path"
+        Transform[Response Transform]
+        CacheWrite[Cache Write]
+        Compress[Compression]
+    end
+    
+    subgraph "Monitoring"
+        APM[APM Tracking]
+        Metrics[Metrics]
+        Logs[Logging]
+    end
+    
+    Client --> Request
+    Request --> CORS
+    CORS -->|Pass| Auth
+    CORS -->|Fail| Client
+    
+    Auth -->|Pass| RateLimit
+    Auth -->|Fail| Client
+    
+    RateLimit -->|Pass| Validate
+    RateLimit -->|Fail| Client
+    
+    Validate -->|Pass| Cache
+    Validate -->|Fail| Client
+    
+    Cache -->|Hit| Transform
+    Cache -->|Miss| Router
+    
+    Router --> Analysis
+    Router --> AI
+    Router --> Container
+    
+    AI --> CircuitBreaker
+    CircuitBreaker --> Bulkhead
+    Bulkhead --> Provider
+    
+    Provider -->|Success| Transform
+    Provider -->|Fail| Failover
+    Failover --> Provider
+    
+    Analysis --> Transform
+    Container --> Transform
+    
+    Transform --> CacheWrite
+    CacheWrite --> Compress
+    Compress --> Client
+    
+    Request -.-> APM
+    Auth -.-> APM
+    Provider -.-> APM
+    Transform -.-> APM
+    
+    APM --> Metrics
+    APM --> Logs
 ```
 
 ## Conclusion

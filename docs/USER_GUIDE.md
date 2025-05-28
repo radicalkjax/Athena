@@ -1,11 +1,17 @@
 # Athena User Guide
 
-> **IMPORTANT DISCLAIMER:** The containerization and analysis components described in this documentation are still being designed and developed. Their current implementation and documentation are not reflective of what the final design could be. This documentation represents a conceptual overview and may change significantly as development progresses.
+This comprehensive guide provides detailed instructions for using Athena, the AI-powered malware analysis platform. It's designed for all users, from security analysts to researchers, covering both basic and advanced features including multi-AI provider support, distributed caching, streaming analysis, and comprehensive monitoring.
 
-This guide provides detailed instructions for using Athena, the AI-powered malware analysis assistant. It's designed for users who may not be familiar with React Native applications or technical development environments.
+## 🧭 Navigation
+- **📖 [Documentation Hub](./README.md)** ← Main navigation
+- **🚀 [Quick Start](./QUICKSTART.md)** ← Get running in 2 minutes
+- **🏗️ [Architecture](./ARCHITECTURE.md)** ← System design  
+- **🐛 [Troubleshooting](./TROUBLESHOOTING.md)** ← Fix issues
 
 ## Table of Contents
 
+- [Overview](#overview)
+- [User Journey](#user-journey)
 - [Installation](#installation)
   - [Web Version](#web-version)
   - [Mobile Version](#mobile-version)
@@ -17,10 +23,10 @@ This guide provides detailed instructions for using Athena, the AI-powered malwa
   - [Selecting an AI Model](#selecting-an-ai-model)
   - [Running Analysis](#running-analysis)
   - [Viewing Results](#viewing-results)
-- [Container Isolation](#container-isolation)
-  - [Enabling Container Isolation](#enabling-container-isolation)
-  - [Container Configuration](#container-configuration)
-  - [Resource Presets](#resource-presets)
+- [Advanced Features](#advanced-features)
+  - [Container Isolation](#container-isolation)
+  - [Streaming Analysis](#streaming-analysis)
+  - [Batch Processing](#batch-processing)
 - [Container Monitoring](#container-monitoring)
   - [Monitoring Dashboard](#monitoring-dashboard)
   - [Resource Usage](#resource-usage)
@@ -28,8 +34,112 @@ This guide provides detailed instructions for using Athena, the AI-powered malwa
   - [File Activity](#file-activity)
   - [Process Activity](#process-activity)
   - [Suspicious Activity Detection](#suspicious-activity-detection)
+- [Performance Features](#performance-features)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
+
+## Overview
+
+Athena is an enterprise-grade malware analysis platform that combines the power of multiple AI providers with advanced security features. Key capabilities include:
+
+- **Multi-AI Analysis**: Leverage Claude, OpenAI, and DeepSeek for comprehensive analysis
+- **Real-time Streaming**: Get immediate feedback as analysis progresses
+- **Container Isolation**: Safely execute malware in isolated environments
+- **Advanced Caching**: Fast response times with multi-tier caching
+- **Enterprise Monitoring**: Track performance and security metrics in real-time
+
+## User Journey
+
+### Complete User Workflow
+
+```mermaid
+journey
+    title Athena User Journey
+    section Getting Started
+      Visit Platform: 5: User
+      Check Requirements: 3: User
+      Install Application: 4: User
+      Configure API Keys: 3: User
+      Launch Athena: 5: User
+    section First Analysis
+      Upload Malware Sample: 5: User
+      Select AI Provider: 4: User
+      Configure Options: 3: User
+      Run Analysis: 5: User
+      View Results: 5: User
+    section Advanced Usage
+      Enable Container Isolation: 4: User
+      Configure Resources: 3: User
+      Enable Streaming: 5: User
+      Monitor Execution: 4: User
+      Export Results: 5: User
+    section Optimization
+      Review Performance: 4: User
+      Adjust Settings: 3: User
+      Enable Caching: 5: User
+      Configure Failover: 4: User
+```
+
+### Feature Interaction Flow
+
+```mermaid
+graph TB
+    subgraph "User Interface"
+        Home[Home Screen]
+        Settings[Settings]
+        About[About]
+    end
+    
+    subgraph "Core Features"
+        Upload[File Upload]
+        AISelect[AI Selection]
+        Options[Analysis Options]
+        Analyze[Run Analysis]
+        Results[View Results]
+    end
+    
+    subgraph "Advanced Features"
+        Container[Container Config]
+        Stream[Streaming Mode]
+        Batch[Batch Processing]
+        Monitor[Performance Monitor]
+    end
+    
+    subgraph "Results Management"
+        Deobfuscated[Deobfuscated Code]
+        Vulnerabilities[Vulnerability List]
+        Report[Analysis Report]
+        Export[Export Results]
+    end
+    
+    Home --> Upload
+    Upload --> AISelect
+    AISelect --> Options
+    Options --> Container
+    Options --> Stream
+    Options --> Batch
+    
+    Options --> Analyze
+    Container --> Analyze
+    Stream --> Analyze
+    Batch --> Analyze
+    
+    Analyze --> Results
+    Results --> Deobfuscated
+    Results --> Vulnerabilities
+    Results --> Report
+    
+    Deobfuscated --> Export
+    Vulnerabilities --> Export
+    Report --> Export
+    
+    Settings --> AISelect
+    Settings --> Monitor
+    
+    style Home fill:#e1f5e1
+    style Analyze fill:#ffe4e1
+    style Results fill:#e1e5ff
+```
 
 ## Installation
 
@@ -128,7 +238,7 @@ Athena uses PostgreSQL for persistent storage of container configurations, monit
      ```
    - This will create test container configurations and instances to verify the setup
 
-For more detailed instructions, see the [Database Setup Documentation](../Athena/docs/DATABASE_SETUP.md).
+For more detailed database setup instructions, see the [Getting Started Guide](./GETTING_STARTED.md#database-setup).
 
 ## Setting Up API Keys
 
@@ -182,120 +292,451 @@ You can add API keys in two ways:
 
 ## Using Athena
 
-### Home Screen
+### Home Screen Layout
 
-The Home screen is the main interface for analyzing malware files. It consists of several sections:
+The Home screen is the main interface for analyzing malware files. Here's the visual layout:
 
 ```mermaid
-graph TD
-    A[Home Screen] --> B[AI Model Selector]
-    A --> C[File Uploader]
-    A --> D[Analysis Options]
-    A --> E[Analyze Button]
-    A --> F[Results Display]
+graph TB
+    subgraph "Home Screen Layout"
+        subgraph "Header"
+            Title[Athena - Malware Analysis]
+            Version[v2.0 - Phase 9]
+        end
+        
+        subgraph "Main Content Area"
+            subgraph "Left Panel"
+                AISelector[AI Model Selector<br/>━━━━━━━━━━<br/>☑ Claude 3 Opus<br/>☐ GPT-4 Turbo<br/>☐ DeepSeek Coder]
+                
+                FileUploader[File Uploader<br/>━━━━━━━━━━<br/>📁 Drop files here<br/>or click to browse<br/>━━━━━━━━━━<br/>✓ malware.exe<br/>✓ suspicious.js]
+            end
+            
+            subgraph "Center Panel"
+                AnalysisOptions[Analysis Options<br/>━━━━━━━━━━<br/>☑ Enable Streaming<br/>☑ Use Container<br/>☐ Batch Mode<br/>☐ Deep Analysis]
+                
+                ActionButtons[<br/>🔍 Analyze<br/>⏸️ Pause<br/>🛑 Stop<br/>]
+                
+                Progress[Progress Bar<br/>━━━━━━━━━━<br/>████████░░ 80%<br/>Analyzing behaviors...]
+            end
+            
+            subgraph "Right Panel"
+                Performance[Performance Monitor<br/>━━━━━━━━━━<br/>Response Time: 2.3s<br/>Cache Hit: 85%<br/>Circuit: ✅ Closed<br/>Queue: 3 pending]
+            end
+        end
+        
+        subgraph "Results Area"
+            Tabs[📄 Deobfuscated | 🔍 Analysis | ⚠️ Vulnerabilities]
+            ResultsView[Results Display Area]
+        end
+    end
+    
+    style AISelector fill:#e1f5e1
+    style ActionButtons fill:#ffe4e1
+    style Performance fill:#e1e5ff
 ```
 
-### Uploading Files
+### File Upload Workflow
 
-To upload a file for analysis:
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant Validator
+    participant Storage
+    participant Preview
+    
+    User->>UI: Click Upload / Drag File
+    UI->>Validator: Validate File
+    
+    alt Valid File Type
+        Validator-->>UI: ✓ Valid
+        UI->>Storage: Store File
+        Storage-->>UI: File ID
+        UI->>Preview: Generate Preview
+        Preview-->>UI: File Info
+        UI-->>User: Show File Card
+        
+        Note over User,UI: File Card Shows:<br/>- Name: malware.exe<br/>- Size: 2.4 MB<br/>- Type: PE32 executable<br/>- Hash: SHA256...
+    else Invalid File
+        Validator-->>UI: ❌ Invalid
+        UI-->>User: Show Error<br/>"Unsupported file type"
+    end
+```
 
-1. On the Home screen, find the "Uploaded Files" section
-2. Click the "Upload" button
-3. A file picker dialog will open
-4. Select the file you want to analyze
-5. The file will appear in the list of uploaded files
-6. Click on the file to select it for analysis
+### AI Model Selection Interface
 
-### Selecting an AI Model
+```mermaid
+graph LR
+    subgraph "AI Provider Selection"
+        subgraph "Primary Providers"
+            Claude[Claude 3<br/>━━━━━━━━<br/>✓ Best accuracy<br/>✓ Complex analysis<br/>✓ Streaming support<br/>⚡ 200k context]
+            
+            OpenAI[GPT-4<br/>━━━━━━━━<br/>✓ General purpose<br/>✓ Fast response<br/>✓ Function calling<br/>⚡ 128k context]
+        end
+        
+        subgraph "Secondary Providers"
+            DeepSeek[DeepSeek<br/>━━━━━━━━<br/>✓ Code specialist<br/>✓ Cost effective<br/>✗ No streaming<br/>⚡ 32k context]
+            
+            Local[Local Models<br/>━━━━━━━━<br/>✓ Privacy focused<br/>✓ No API limits<br/>✗ Limited context<br/>⚡ 4k context]
+        end
+        
+        subgraph "Provider Status"
+            Status[Status Indicators<br/>━━━━━━━━<br/>🟢 Available<br/>🟡 High Load<br/>🔴 Circuit Open<br/>⚫ No API Key]
+        end
+    end
+    
+    Claude --> Status
+    OpenAI --> Status
+    DeepSeek --> Status
+    Local --> Status
+    
+    style Claude fill:#e1f5e1
+    style OpenAI fill:#e1f5e1
+    style DeepSeek fill:#fff4e1
+    style Local fill:#f0f0f0
+```
 
-To select an AI model for analysis:
+### Analysis Execution Flow
 
-1. On the Home screen, find the "Select AI Model" section
-2. You'll see a list of available AI models (if you've set up the API keys)
-3. Click on a model to select it
-4. The selected model will be highlighted
+```mermaid
+stateDiagram-v2
+    [*] --> Ready: Page Loaded
+    
+    Ready --> Configuring: Select File & Model
+    
+    state Configuring {
+        [*] --> FileSelected
+        FileSelected --> ModelSelected
+        ModelSelected --> OptionsSet
+        OptionsSet --> [*]
+    }
+    
+    Configuring --> PreAnalysis: Click Analyze
+    
+    state PreAnalysis {
+        [*] --> ValidateInputs
+        ValidateInputs --> CheckCache
+        CheckCache --> CacheHit: Found
+        CheckCache --> CacheMiss: Not Found
+        CacheHit --> [*]: Use Cached
+        CacheMiss --> [*]: Proceed
+    }
+    
+    PreAnalysis --> Analyzing: Start Analysis
+    
+    state Analyzing {
+        [*] --> Initialize
+        Initialize --> Streaming: If Enabled
+        Initialize --> Batch: If Disabled
+        
+        state Streaming {
+            [*] --> Connect
+            Connect --> Receive
+            Receive --> Update
+            Update --> Receive: More
+            Update --> [*]: Complete
+        }
+        
+        state Batch {
+            [*] --> Process
+            Process --> Wait
+            Wait --> [*]: Complete
+        }
+    }
+    
+    Analyzing --> PostAnalysis: Complete
+    
+    state PostAnalysis {
+        [*] --> SaveCache
+        SaveCache --> FormatResults
+        FormatResults --> [*]
+    }
+    
+    PostAnalysis --> ViewingResults: Display
+    
+    state ViewingResults {
+        [*] --> DeobfuscatedView
+        DeobfuscatedView --> AnalysisView: Tab
+        AnalysisView --> VulnerabilitiesView: Tab
+        VulnerabilitiesView --> DeobfuscatedView: Tab
+        
+        DeobfuscatedView --> Export
+        AnalysisView --> Export
+        VulnerabilitiesView --> Export
+    }
+    
+    ViewingResults --> Ready: New Analysis
 
-### Running Analysis
+### Results Visualization
 
-To run an analysis:
+```mermaid
+graph TB
+    subgraph "Results Interface"
+        subgraph "Tab Navigation"
+            Tab1[📄 Deobfuscated Code]
+            Tab2[🔍 Analysis Report] 
+            Tab3[⚠️ Vulnerabilities]
+        end
+        
+        subgraph "Deobfuscated Code View"
+            Original[Original Code<br/>━━━━━━━━<br/>Obfuscated<br/>Minified<br/>Encoded]
+            
+            Arrow1[➡️]
+            
+            Clean[Clean Code<br/>━━━━━━━━<br/>✓ Readable<br/>✓ Formatted<br/>✓ Commented<br/>✓ Syntax Highlighted]
+        end
+        
+        subgraph "Analysis Report View"
+            Summary[Executive Summary<br/>━━━━━━━━<br/>Type: Ransomware<br/>Risk: Critical<br/>Confidence: 94%]
+            
+            Behaviors[Behaviors Detected<br/>━━━━━━━━<br/>• File encryption<br/>• Network comms<br/>• Registry changes<br/>• Process injection]
+            
+            Technical[Technical Details<br/>━━━━━━━━<br/>• API calls used<br/>• Encryption methods<br/>• C2 servers<br/>• Persistence]
+        end
+        
+        subgraph "Vulnerabilities View"
+            Critical[🔴 Critical (2)<br/>━━━━━━━━<br/>CVE-2024-1234<br/>RCE via buffer overflow<br/>━━━━━━━━<br/>CVE-2024-5678<br/>Privilege escalation]
+            
+            High[🟠 High (3)<br/>━━━━━━━━<br/>SQL Injection<br/>XSS in admin panel<br/>Weak encryption]
+            
+            Medium[🟡 Medium (5)<br/>━━━━━━━━<br/>Information disclosure<br/>Session fixation<br/>...]
+        end
+    end
+    
+    Tab1 --> Original
+    Original --> Arrow1
+    Arrow1 --> Clean
+    
+    Tab2 --> Summary
+    Summary --> Behaviors
+    Behaviors --> Technical
+    
+    Tab3 --> Critical
+    Critical --> High
+    High --> Medium
+    
+    style Tab1 fill:#e1f5e1
+    style Tab2 fill:#e1e5ff
+    style Tab3 fill:#ffe4e1
+```
 
-1. Make sure you've selected both a file and an AI model
-2. (Optional) Configure analysis options:
-   - Use Container: Toggle this option to run the analysis in an isolated container
-3. Click the "Analyze" button
-4. The analysis will begin, and you'll see a loading indicator
-5. Wait for the analysis to complete (this may take some time depending on the file size and complexity)
+## Advanced Features
 
-### Viewing Results
+### Container Isolation Architecture
 
-Once the analysis is complete, you'll see the results in the "Analysis Results" section. The results are organized into three tabs:
+```mermaid
+graph TB
+    subgraph "Container Isolation System"
+        subgraph "Container Types"
+            Windows[Windows Container<br/>━━━━━━━━<br/>• Windows 7-11<br/>• x86/x64<br/>• Full Win API]
+            
+            Linux[Linux Container<br/>━━━━━━━━<br/>• Ubuntu/Debian<br/>• x86/x64/ARM<br/>• Full syscalls]
+            
+            macOS[macOS Container<br/>━━━━━━━━<br/>• Big Sur-Sonoma<br/>• x64/ARM64<br/>• Full macOS API]
+        end
+        
+        subgraph "Security Layers"
+            Network[Network Isolation<br/>━━━━━━━━<br/>• Firewall rules<br/>• Traffic monitoring<br/>• DNS filtering]
+            
+            FileSystem[FS Isolation<br/>━━━━━━━━<br/>• Read-only root<br/>• Temp writes only<br/>• No host access]
+            
+            Process[Process Isolation<br/>━━━━━━━━<br/>• PID namespace<br/>• Resource limits<br/>• Syscall filtering]
+        end
+        
+        subgraph "Resource Management"
+            CPU[CPU Limits<br/>━━━━━━━━<br/>• 1-8 cores<br/>• CPU shares<br/>• Throttling]
+            
+            Memory[Memory Limits<br/>━━━━━━━━<br/>• 512MB-16GB<br/>• Swap control<br/>• OOM handling]
+            
+            IO[I/O Limits<br/>━━━━━━━━<br/>• Disk quotas<br/>• IOPS limits<br/>• Bandwidth]
+        end
+    end
+    
+    Windows --> Network
+    Linux --> Network
+    macOS --> Network
+    
+    Network --> FileSystem
+    FileSystem --> Process
+    
+    Process --> CPU
+    Process --> Memory
+    Process --> IO
+    
+    style Windows fill:#e1f5e1
+    style Linux fill:#fff4e1
+    style macOS fill:#e1e5ff
+```
 
-1. **Deobfuscated Code**: Shows the cleaned, readable version of the malware code
-   - This tab displays the deobfuscated version of the original code
-   - The code is formatted and commented for better readability
+### Container Configuration Workflow
 
-2. **Analysis Report**: Provides a detailed report of the analysis findings
-   - This tab contains a comprehensive report of the analysis
-   - It includes information about the malware's purpose, behavior, and potential impact
-   - If container analysis was used, it also includes information about the malware's behavior in the container
+```mermaid
+stateDiagram-v2
+    [*] --> Disabled: Default State
+    
+    Disabled --> Configuring: Enable Container
+    
+    state Configuring {
+        [*] --> SelectOS
+        SelectOS --> SelectArch: Choose OS
+        SelectArch --> SelectVersion: Choose Architecture
+        SelectVersion --> ConfigResources: Choose Version
+        
+        state ConfigResources {
+            [*] --> Preset
+            Preset --> Custom: Customize
+            Custom --> [*]: Apply
+            Preset --> [*]: Use Preset
+        }
+        
+        ConfigResources --> [*]: Configuration Complete
+    }
+    
+    Configuring --> Ready: Save Config
+    
+    Ready --> Starting: Start Analysis
+    
+    state Starting {
+        [*] --> CreateContainer
+        CreateContainer --> ApplySecurity
+        ApplySecurity --> MountFiles
+        MountFiles --> StartMonitoring
+        StartMonitoring --> [*]
+    }
+    
+    Starting --> Running: Container Ready
+    
+    state Running {
+        [*] --> Executing
+        Executing --> Monitoring
+        Monitoring --> Executing: Continue
+        
+        state Monitoring {
+            [*] --> CPU_Monitor
+            CPU_Monitor --> Memory_Monitor
+            Memory_Monitor --> Network_Monitor
+            Network_Monitor --> File_Monitor
+            File_Monitor --> Process_Monitor
+            Process_Monitor --> [*]
+        }
+    }
+    
+    Running --> Stopping: Analysis Complete
+    
+    state Stopping {
+        [*] --> CollectResults
+        CollectResults --> SaveLogs
+        SaveLogs --> Cleanup
+        Cleanup --> [*]
+    }
+    
+    Stopping --> Disabled: Container Destroyed
 
-3. **Vulnerabilities**: Lists detected vulnerabilities with severity ratings and details
-   - This tab shows a list of vulnerabilities found in the code
-   - Each vulnerability includes:
-     - Name and description
-     - Severity rating (low, medium, high, critical)
-     - CVE ID (if available)
-     - Metasploit module (if available)
+### Streaming Analysis
 
-## Container Isolation
+Real-time streaming provides immediate feedback during analysis:
 
-The container isolation feature allows you to run malware analysis in an isolated environment, preventing potentially harmful code from affecting your system.
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant StreamManager
+    participant AIProvider
+    participant Cache
+    
+    User->>UI: Enable Streaming
+    UI->>StreamManager: Initialize Stream
+    
+    StreamManager->>AIProvider: Establish Connection
+    AIProvider-->>StreamManager: Connection Ready
+    
+    User->>UI: Start Analysis
+    UI->>StreamManager: Begin Stream
+    
+    loop Streaming Chunks
+        StreamManager->>AIProvider: Request Next Chunk
+        AIProvider-->>StreamManager: Analysis Chunk
+        
+        par Update UI
+            StreamManager->>UI: Render Chunk
+            UI-->>User: Show Progress
+        and Update Cache
+            StreamManager->>Cache: Store Partial
+        end
+        
+        alt User Pauses
+            User->>UI: Pause Stream
+            UI->>StreamManager: Pause
+            StreamManager->>AIProvider: Hold
+        else User Resumes
+            User->>UI: Resume Stream
+            UI->>StreamManager: Resume
+            StreamManager->>AIProvider: Continue
+        end
+    end
+    
+    AIProvider-->>StreamManager: Stream Complete
+    StreamManager->>Cache: Store Final
+    StreamManager->>UI: Analysis Complete
+    UI-->>User: Show Results
+```
 
-### Enabling Container Isolation
+### Batch Processing
 
-1. In the Analysis Options panel, toggle the "Use Container" switch to enable container isolation
-2. Configure the container settings:
-   - **OS**: Select the operating system for the container (Windows, Linux, or macOS)
-   - **Architecture**: Select the CPU architecture (x86, x64, ARM, ARM64)
-   - **Version**: Select the OS version
-   - **Resources**: Select a resource preset or configure custom resource limits
+Process multiple files efficiently:
 
-### Container Configuration
-
-The container configuration options allow you to customize the container environment to match the target environment of the malware you're analyzing.
-
-#### OS Selection
-
-- **Windows**: For analyzing Windows-specific malware
-- **Linux**: For analyzing Linux-specific malware
-- **macOS**: For analyzing macOS-specific malware
-
-#### Architecture Selection
-
-- **x86 (32-bit)**: For analyzing 32-bit malware
-- **x64 (64-bit)**: For analyzing 64-bit malware
-- **ARM**: For analyzing ARM-based malware
-- **ARM64**: For analyzing ARM64-based malware
-
-#### Version Selection
-
-- **Windows**: Windows 7, 8, 10, 11
-- **Linux**: Various distributions and versions (Ubuntu, Debian, CentOS, etc.)
-- **macOS**: macOS 11 (Big Sur), 12 (Monterey), 13 (Ventura), 14 (Sonoma)
-
-#### Resource Configuration
-
-- **CPU**: Number of CPU cores allocated to the container
-- **Memory**: Amount of RAM allocated to the container
-- **Disk Space**: Amount of disk space allocated to the container
-- **Network Speed**: Network bandwidth allocated to the container
-- **I/O Operations**: Maximum I/O operations per second allowed for the container
-
-### Resource Presets
-
-The container isolation feature provides OS-specific resource presets for common use cases:
-
-#### Windows Resource Presets
+```mermaid
+graph TB
+    subgraph "Batch Processing System"
+        subgraph "Input Queue"
+            File1[malware1.exe]
+            File2[malware2.dll]
+            File3[malware3.js]
+            FileN[... more files]
+        end
+        
+        subgraph "Batch Controller"
+            Queue[Queue Manager<br/>━━━━━━━━<br/>• Priority sorting<br/>• Deduplication<br/>• Size optimization]
+            
+            Scheduler[Scheduler<br/>━━━━━━━━<br/>• Parallel slots: 5<br/>• Rate limiting<br/>• Load balancing]
+        end
+        
+        subgraph "Processing Pipeline"
+            Worker1[Worker 1<br/>Processing...]
+            Worker2[Worker 2<br/>Processing...]
+            Worker3[Worker 3<br/>Available]
+            WorkerN[Worker N<br/>Processing...]
+        end
+        
+        subgraph "Results Aggregation"
+            Collector[Result Collector]
+            Report[Batch Report<br/>━━━━━━━━<br/>✓ 15/20 complete<br/>⚠️ 2 warnings<br/>❌ 1 failed<br/>⏳ 2 pending]
+        end
+    end
+    
+    File1 --> Queue
+    File2 --> Queue
+    File3 --> Queue
+    FileN --> Queue
+    
+    Queue --> Scheduler
+    
+    Scheduler --> Worker1
+    Scheduler --> Worker2
+    Scheduler --> Worker3
+    Scheduler --> WorkerN
+    
+    Worker1 --> Collector
+    Worker2 --> Collector
+    Worker3 --> Collector
+    WorkerN --> Collector
+    
+    Collector --> Report
+    
+    style Queue fill:#e1f5e1
+    style Scheduler fill:#fff4e1
+    style Report fill:#e1e5ff
+```
 
 | Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
 |--------|-----------|------------|-----------------|---------------------|----------------------|----------|
@@ -324,86 +765,351 @@ The container isolation feature provides OS-specific resource presets for common
 
 ## Container Monitoring
 
-The container monitoring system tracks various aspects of container activity during malware analysis, providing valuable insights into the behavior of the analyzed malware.
+### Monitoring Architecture
 
 ```mermaid
-graph TD
-    A[Container Monitoring] --> B[Resource Usage]
-    A --> C[Network Activity]
-    A --> D[File Activity]
-    A --> E[Process Activity]
-    A --> F[Suspicious Activity Detection]
+graph TB
+    subgraph "Container Monitoring System"
+        subgraph "Data Collection"
+            Agent[Monitoring Agent<br/>━━━━━━━━<br/>• Syscall hooks<br/>• Event capture<br/>• Real-time stream]
+            
+            Collectors[Collectors<br/>━━━━━━━━<br/>• CPU/Memory<br/>• Network traffic<br/>• File operations<br/>• Process events]
+        end
+        
+        subgraph "Processing Pipeline"
+            Aggregator[Event Aggregator<br/>━━━━━━━━<br/>• Deduplication<br/>• Correlation<br/>• Enrichment]
+            
+            Analyzer[Behavior Analyzer<br/>━━━━━━━━<br/>• Pattern detection<br/>• Anomaly scoring<br/>• Threat classification]
+        end
+        
+        subgraph "Storage & Display"
+            TimeSeries[(Time Series DB<br/>━━━━━━━━<br/>• Metrics data<br/>• 1s resolution<br/>• 24h retention)]
+            
+            EventStore[(Event Store<br/>━━━━━━━━<br/>• Raw events<br/>• Full detail<br/>• Searchable)]
+            
+            Dashboard[Live Dashboard<br/>━━━━━━━━<br/>• Real-time charts<br/>• Alert indicators<br/>• Export reports]
+        end
+    end
     
-    B --> B1[CPU Usage]
-    B --> B2[Memory Usage]
-    B --> B3[Disk Usage]
-    B --> B4[Network Traffic]
+    Agent --> Collectors
+    Collectors --> Aggregator
+    Aggregator --> Analyzer
     
-    C --> C1[Connections]
-    C --> C2[Protocols]
-    C --> C3[Data Transfer]
+    Analyzer --> TimeSeries
+    Analyzer --> EventStore
     
-    D --> D1[File Operations]
-    D --> D2[File Types]
-    D --> D3[File Permissions]
+    TimeSeries --> Dashboard
+    EventStore --> Dashboard
     
-    E --> E1[Process Creation]
-    E --> E2[Process Termination]
-    E --> E3[Process Resource Usage]
+    style Agent fill:#e1f5e1
+    style Analyzer fill:#ffe4e1
+    style Dashboard fill:#e1e5ff
 ```
 
-### Monitoring Dashboard
+### Monitoring Dashboard Interface
 
-The monitoring dashboard provides a comprehensive view of container activity:
+```mermaid
+graph TB
+    subgraph "Container Monitoring Dashboard"
+        subgraph "Header Controls"
+            Status[🟢 Container: Running | Instance: malware-001]
+            Controls[⏸️ Pause | 🔄 Refresh | 📊 Export | ⚙️ Settings]
+        end
+        
+        subgraph "Main Dashboard"
+            subgraph "Resource Gauges"
+                CPU[CPU Usage<br/>━━━━━━━━<br/>████████░░<br/>82% / 4 cores]
+                
+                Memory[Memory<br/>━━━━━━━━<br/>██████░░░░<br/>6.2GB / 8GB]
+                
+                Disk[Disk I/O<br/>━━━━━━━━<br/>███░░░░░░░<br/>342 MB/s]
+                
+                Network[Network<br/>━━━━━━━━<br/>█████░░░░░<br/>12.5 Mbps]
+            end
+            
+            subgraph "Activity Timeline"
+                Timeline[Event Timeline<br/>━━━━━━━━━━━━━━━━━━━━━━<br/>10:42:31 - Process spawn: cmd.exe<br/>10:42:33 - Network: 192.168.1.100:443<br/>10:42:35 - File write: C:\\temp\\payload.exe<br/>10:42:37 - Registry: HKLM\\Software\\Run]
+            end
+            
+            subgraph "Alert Panel"
+                Alerts[🔴 Critical Alerts (3)<br/>━━━━━━━━━━━━━━<br/>• Suspicious network beacon<br/>• Privilege escalation attempt<br/>• Known malware signature<br/><br/>🟠 Warnings (5)<br/>━━━━━━━━━━━━━━<br/>• Unusual registry access<br/>• High CPU usage spike<br/>• Multiple process spawns]
+            end
+        end
+        
+        subgraph "Detail Tabs"
+            Tabs[📊 Resources | 🌐 Network | 📁 Files | 🔄 Processes | ⚠️ Threats]
+        end
+    end
+    
+    Status --> Controls
+    Controls --> CPU
+    
+    CPU --> Memory
+    Memory --> Disk
+    Disk --> Network
+    
+    Network --> Timeline
+    Timeline --> Alerts
+    
+    Alerts --> Tabs
+```
 
-1. Access the monitoring dashboard by clicking the "Monitor" button in the analysis results
-2. The dashboard displays real-time monitoring data for the selected container
-3. Use the refresh button to update the data manually, or enable auto-refresh for real-time updates
-4. Use the tabs to navigate between different monitoring views
+### Resource Usage Monitoring
 
-### Resource Usage
+```mermaid
+graph LR
+    subgraph "Resource Monitoring"
+        subgraph "CPU Monitoring"
+            CPUGraph[CPU Usage Graph<br/>━━━━━━━━━━<br/>100%┤ ╭─╮<br/> 75%┤╭╯ ╰╮<br/> 50%┤╯   ╰─╮<br/> 25%┤     ╰─<br/>  0%└────────<br/>    Time →]
+            
+            CPUDetails[Details<br/>━━━━━━━<br/>• Current: 82%<br/>• Average: 45%<br/>• Peak: 95%<br/>• Processes: 12]
+        end
+        
+        subgraph "Memory Monitoring"
+            MemGraph[Memory Usage<br/>━━━━━━━━━━<br/>8GB┤   ╭────<br/>6GB┤ ╭─╯<br/>4GB┤─╯<br/>2GB┤<br/>0GB└────────<br/>   Time →]
+            
+            MemDetails[Details<br/>━━━━━━━<br/>• Used: 6.2GB<br/>• Free: 1.8GB<br/>• Swap: 0.5GB<br/>• Leaks: None]
+        end
+        
+        subgraph "Disk Monitoring"
+            DiskGraph[Disk I/O<br/>━━━━━━━━━━<br/>500┤  ╭╮<br/>400┤ ╱╰╮╱╲<br/>300┤╱  ╰╯ ╲<br/>200┤      ╲<br/>100└────────<br/>   MB/s →]
+            
+            DiskDetails[Details<br/>━━━━━━━<br/>• Read: 242 MB/s<br/>• Write: 100 MB/s<br/>• Queue: 5<br/>• Latency: 2ms]
+        end
+    end
+    
+    CPUGraph --> CPUDetails
+    MemGraph --> MemDetails
+    DiskGraph --> DiskDetails
+```
 
-The resource usage view displays information about the container's resource consumption:
+### Network Activity Visualization
 
-- **CPU Usage**: Percentage of CPU usage over time
-- **Memory Usage**: Memory consumption in MB over time
-- **Disk Usage**: Disk space usage in MB over time
-- **Network Traffic**: Inbound and outbound network traffic in bytes over time
+```mermaid
+sequenceDiagram
+    participant Container
+    participant Monitor
+    participant Firewall
+    participant External
+    
+    Container->>Monitor: TCP SYN to 192.168.1.100:443
+    Monitor->>Monitor: Log connection attempt
+    Monitor->>Firewall: Check rules
+    
+    alt Allowed
+        Firewall-->>Container: Allow
+        Container->>External: Establish connection
+        
+        loop Data Transfer
+            Container->>External: Send data (encrypted)
+            Monitor->>Monitor: Capture packets
+            Monitor->>Monitor: Analyze protocol
+            External-->>Container: Response
+            Monitor->>Monitor: Log transfer size
+        end
+        
+        Container->>External: Close connection
+        Monitor->>Monitor: Log session summary
+    else Blocked
+        Firewall-->>Container: Block
+        Monitor->>Monitor: Alert: Blocked connection
+        Monitor->>Monitor: Log threat indicator
+    end
+    
+    Note over Monitor: Connection Summary:<br/>Protocol: HTTPS<br/>Duration: 45s<br/>Data sent: 2.4MB<br/>Data recv: 156KB<br/>Status: Suspicious
 
-### Network Activity
+### File Activity Tracking
 
-The network activity view displays information about network connections made by the container:
+```mermaid
+graph TB
+    subgraph "File Operations Monitor"
+        subgraph "Operation Types"
+            Create[📄 Create<br/>━━━━━━<br/>Count: 23<br/>• .exe: 3<br/>• .dll: 5<br/>• .tmp: 15]
+            
+            Modify[✏️ Modify<br/>━━━━━━<br/>Count: 45<br/>• Registry: 12<br/>• Config: 8<br/>• System: 25]
+            
+            Delete[🗑️ Delete<br/>━━━━━━<br/>Count: 18<br/>• Logs: 10<br/>• Temp: 6<br/>• Shadow: 2]
+            
+            Execute[▶️ Execute<br/>━━━━━━<br/>Count: 7<br/>• cmd.exe<br/>• powershell<br/>• payload.exe]
+        end
+        
+        subgraph "Suspicious Files"
+            Alert[⚠️ Suspicious Activity<br/>━━━━━━━━━━━━<br/>• Hidden file creation<br/>• System file modification<br/>• Executable in %TEMP%<br/>• Known malware path]
+        end
+        
+        subgraph "File Timeline"
+            Timeline[Recent Operations<br/>━━━━━━━━━━━━━━━━━━<br/>10:42:35 CREATE C:\\temp\\payload.exe<br/>10:42:36 MODIFY C:\\Windows\\System32\\hosts<br/>10:42:37 DELETE C:\\Users\\Admin\\*.log<br/>10:42:38 EXECUTE C:\\temp\\payload.exe]
+        end
+    end
+    
+    Create --> Alert
+    Modify --> Alert
+    Delete --> Alert
+    Execute --> Alert
+    
+    Alert --> Timeline
+    
+    style Alert fill:#ffe4e1
+    style Execute fill:#ff6b6b
+```
 
-- **Connection List**: List of all network connections made by the container
-- **Connection Details**: For each connection:
-  - Protocol (TCP, UDP, ICMP, HTTP, HTTPS, DNS)
-  - Source and destination IP addresses and ports
-  - Connection direction (inbound/outbound)
-  - Data size and duration
-  - Process responsible for the connection
-  - Connection status (established, closed, blocked, attempted)
+### Process Activity Monitoring
 
-### File Activity
+```mermaid
+graph TB
+    subgraph "Process Tree Monitor"
+        subgraph "Process Hierarchy"
+            Explorer[explorer.exe<br/>PID: 1234]
+            
+            Malware[malware.exe<br/>PID: 5678<br/>🔴 Suspicious]
+            
+            CMD1[cmd.exe<br/>PID: 5679]
+            CMD2[cmd.exe<br/>PID: 5680]
+            
+            PowerShell[powershell.exe<br/>PID: 5681<br/>🟠 Elevated]
+            
+            Payload[payload.exe<br/>PID: 5682<br/>🔴 Malicious]
+        end
+        
+        subgraph "Process Details"
+            Details[Selected: malware.exe<br/>━━━━━━━━━━━━━<br/>• CPU: 45%<br/>• Memory: 256MB<br/>• Threads: 8<br/>• Handles: 142<br/>• Started: 10:42:31<br/>• User: SYSTEM<br/>• Integrity: High]
+        end
+        
+        subgraph "Process Actions"
+            Actions[Detected Behaviors<br/>━━━━━━━━━━━━<br/>✓ Process injection<br/>✓ Token manipulation<br/>✓ Memory scanning<br/>✓ API hooking<br/>✓ Persistence setup]
+        end
+    end
+    
+    Explorer --> Malware
+    Malware --> CMD1
+    Malware --> CMD2
+    Malware --> PowerShell
+    PowerShell --> Payload
+    
+    Malware --> Details
+    Details --> Actions
+    
+    style Malware fill:#ffe4e1
+    style Payload fill:#ff6b6b
+    style PowerShell fill:#fff4e1
+```
 
-The file activity view displays information about file operations performed by the container:
+### Suspicious Activity Detection
 
-- **Operation List**: List of all file operations performed by the container
-- **Operation Details**: For each operation:
-  - Operation type (create, read, write, delete, modify, execute, rename, move)
-  - File path and type
-  - File size and permissions
-  - Process responsible for the operation
-  - File hash and content (for suspicious files)
+```mermaid
+stateDiagram-v2
+    [*] --> Monitoring: Start Monitoring
+    
+    state Monitoring {
+        [*] --> Collecting
+        Collecting --> Analyzing: Events
+        
+        state Analyzing {
+            [*] --> BehaviorCheck
+            BehaviorCheck --> ScoreCalc: Match Found
+            ScoreCalc --> Threshold: Calculate Score
+            
+            Threshold --> Low: Score < 30
+            Threshold --> Medium: Score 30-70
+            Threshold --> High: Score > 70
+            
+            Low --> [*]: Log
+            Medium --> [*]: Warning
+            High --> [*]: Alert
+        }
+        
+        Analyzing --> Collecting: Continue
+    }
+    
+    Monitoring --> AlertGenerated: Suspicious Activity
+    
+    state AlertGenerated {
+        [*] --> Notify
+        Notify --> LogEvent
+        LogEvent --> UpdateDashboard
+        UpdateDashboard --> [*]
+    }
+    
+    AlertGenerated --> Monitoring: Resume
+## Performance Features
 
-### Process Activity
+### Performance Optimization Architecture
 
-The process activity view displays information about processes running in the container:
+```mermaid
+graph TB
+    subgraph "Performance Features"
+        subgraph "Caching System"
+            L1[L1 Cache<br/>━━━━━━━<br/>Memory<br/>5 min TTL<br/>100MB]
+            
+            L2[L2 Cache<br/>━━━━━━━<br/>IndexedDB<br/>1 hour TTL<br/>1GB]
+            
+            L3[L3 Cache<br/>━━━━━━━<br/>Redis<br/>24 hour TTL<br/>10GB]
+        end
+        
+        subgraph "Circuit Breakers"
+            CB1[Claude CB<br/>━━━━━━━<br/>🟢 Closed<br/>Failures: 0/5<br/>Success: 98%]
+            
+            CB2[OpenAI CB<br/>━━━━━━━<br/>🟡 Half-Open<br/>Testing...<br/>Success: 85%]
+            
+            CB3[DeepSeek CB<br/>━━━━━━━<br/>🔴 Open<br/>Reset in: 45s<br/>Success: 0%]
+        end
+        
+        subgraph "Resource Pools"
+            ConnPool[Connection Pool<br/>━━━━━━━━━<br/>Active: 12/50<br/>Idle: 38<br/>Queue: 0]
+            
+            WorkerPool[Worker Pool<br/>━━━━━━━━━<br/>Busy: 3/10<br/>Available: 7<br/>Queue: 2]
+        end
+    end
+    
+    L1 --> L2
+    L2 --> L3
+    
+    CB1 --> ConnPool
+    CB2 --> ConnPool
+    CB3 --> ConnPool
+    
+    ConnPool --> WorkerPool
+    
+    style L1 fill:#e1f5e1
+    style CB1 fill:#e1f5e1
+    style CB2 fill:#fff4e1
+    style CB3 fill:#ffe4e1
+```
 
-- **Process List**: List of all processes that have run in the container
-- **Process Details**: For each process:
-  - Process ID and parent process ID
-  - Process name and command line
-  - User running the process
+### Real-time Performance Dashboard
+
+```mermaid
+graph LR
+    subgraph "Performance Metrics"
+        subgraph "Response Times"
+            P50[P50 Latency<br/>━━━━━━━<br/>1.2s ✅]
+            P95[P95 Latency<br/>━━━━━━━<br/>2.8s ✅]
+            P99[P99 Latency<br/>━━━━━━━<br/>4.5s ⚠️]
+        end
+        
+        subgraph "Throughput"
+            RPS[Requests/sec<br/>━━━━━━━<br/>████████░░<br/>42 RPS]
+            
+            Queue[Queue Depth<br/>━━━━━━━<br/>██░░░░░░░░<br/>3 pending]
+        end
+        
+        subgraph "Success Rates"
+            Overall[Overall<br/>━━━━━━━<br/>98.5% ✅]
+            
+            Cache[Cache Hit<br/>━━━━━━━<br/>85% ✅]
+            
+            Error[Error Rate<br/>━━━━━━━<br/>1.5% ✅]
+        end
+    end
+    
+    P50 --> P95
+    P95 --> P99
+    
+    RPS --> Queue
+    
+    Overall --> Cache
+    Cache --> Error
+```
   - Start and end times
   - CPU and memory usage
   - Process status (running, stopped, terminated, zombie)
@@ -421,7 +1127,7 @@ The suspicious activity detection feature automatically identifies potentially m
   - Severity level (low, medium, high, critical)
   - Recommendations for further investigation
 
-For more detailed information about the container monitoring system, see the [Container Monitoring Documentation](../Athena/docs/CONTAINER_MONITORING.md).
+For more detailed information about the container monitoring system, see the [Container Monitoring Documentation](./components/CONTAINER_MONITORING.md).
 
 ## Troubleshooting
 

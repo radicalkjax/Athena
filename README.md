@@ -65,6 +65,11 @@ The application is designed with security in mind, providing isolated container 
 
 ## ✨ Features
 
+- **🎨 Beautiful Interactive CLI**: New `/scripts/athena` command provides a gorgeous menu-driven interface with:
+  - Visual ASCII art banner with trans colors
+  - One-click access to all Athena features  
+  - Automated setup and configuration
+  - System health checks and maintenance tools
 - **Multiple AI Models**: Connect to different AI models including:
   - OpenAI GPT-4
   - Claude 3 Opus
@@ -115,18 +120,18 @@ Before you begin, ensure you have the following installed:
    cd athena
    ```
 
-2. **One-command setup and run** (recommended):
+2. **Launch Interactive CLI** (recommended):
    ```bash
-   ./scripts/run.sh
+   /scripts/athena
    ```
    
-   This unified script will automatically:
-   - Detect if setup is needed (first time or missing dependencies)
-   - Check for required dependencies (Node.js v16+, npm, Git)
-   - Install all project dependencies
-   - Install critical web polyfills (buffer, process) for browser compatibility
-   - Set up environment files (.env from template)
-   - Verify project configuration
+   The beautiful interactive CLI will:
+   - Show you a visual menu with all options
+   - Auto-detect and run setup on first use
+   - Guide you through API key configuration
+   - Provide easy access to all Athena features
+   
+   **Quick Start: Select Option 1 (🚀 Start Athena Web)**
    - Build and launch the web application
    
    **That's it!** The script handles everything automatically.
@@ -279,15 +284,21 @@ For more detailed architecture information, see the [Architecture Documentation]
 
 Athena comes with comprehensive documentation to help you understand and use the application effectively:
 
-- [Getting Started](./docs/GETTING_STARTED.md) - Step-by-step guide to set up and start using Athena
-- [User Guide](./docs/USER_GUIDE.md) - Detailed instructions for using Athena
-- [Architecture Documentation](./docs/ARCHITECTURE.md) - Overview of Athena's architecture and components
-- [API Integration](./docs/API_INTEGRATION.md) - Details about AI model API integration
-- [Container Isolation](./docs/CONTAINER_ISOLATION.md) - Information about the container isolation feature
-- [Database Setup](./Athena/docs/DATABASE_SETUP.md) - Instructions for setting up and using the PostgreSQL database
-- [Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md) - Details about the container monitoring system
-- [Font Configuration](./docs/FONT_CONFIGURATION.md) - Guide for font setup and troubleshooting font-related issues
-- [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) - Solutions to common issues and problems
+### 🗺️ **[📖 Documentation Hub](./docs/README.md)** ← **Start Here!**
+*Complete navigation guide with visual maps, role-based workflows, and quick access to all documentation.*
+
+### 🚀 Quick Access
+- **[⚡ QUICKSTART](./docs/QUICKSTART.md)** - Get running in 2 minutes with the new interactive CLI
+- **[🔧 Getting Started](./docs/GETTING_STARTED.md)** - Complete setup and configuration guide  
+- **[👤 User Guide](./docs/USER_GUIDE.md)** - How to use all features effectively
+- **[🐛 Troubleshooting](./docs/TROUBLESHOOTING.md)** - Visual decision trees for common issues
+
+### 🏗️ Technical Documentation
+- **[📐 Architecture](./docs/ARCHITECTURE.md)** - System design and component overview
+- **[🔌 API Integration](./docs/API_INTEGRATION.md)** - AI provider integration patterns
+- **[🛡️ Container Isolation](./docs/CONTAINER_ISOLATION.md)** - Security and sandboxing
+- **[⚡ Performance](./docs/performance/)** - Optimization, caching, and monitoring
+- **[🧪 Testing](./docs/testing/)** - Test strategies and execution
 
 ### Component Documentation
 

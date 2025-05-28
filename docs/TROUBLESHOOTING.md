@@ -2,7 +2,71 @@
 
 This document provides solutions to common issues encountered when developing or running the Athena application.
 
+## Troubleshooting Overview
+
+```mermaid
+flowchart TD
+    Start([Issue Encountered<br/>━━━━━━━━<br/>Application not<br/>working as expected]) --> Category{Issue<br/>Category?}
+    
+    Category -->|Display| Font[Font/Display<br/>Issues]
+    Category -->|Server| Dev[Development<br/>Server Issues]
+    Category -->|API| API[API Integration<br/>Issues]
+    Category -->|Database| DB[Database<br/>Issues]
+    Category -->|Build| Build[Build/Deploy<br/>Issues]
+    Category -->|Performance| Perf[Performance<br/>Issues]
+    Category -->|Platform| Platform[Platform-Specific<br/>Issues]
+    
+    Font --> FontTree[Check Font<br/>Configuration]
+    Dev --> DevTree[Check Server<br/>& Ports]
+    API --> APITree[Check API<br/>Keys & Services]
+    DB --> DBTree[Check Database<br/>Connection]
+    Build --> BuildTree[Check Build<br/>Process]
+    Perf --> PerfTree[Profile<br/>Application]
+    Platform --> PlatformTree[Check Platform<br/>Compatibility]
+    
+    style Start fill:#ffe4e1
+    style FontTree fill:#e1e5ff
+    style DevTree fill:#e1e5ff
+    style APITree fill:#e1e5ff
+    style DBTree fill:#e1e5ff
+    style BuildTree fill:#e1e5ff
+    style PerfTree fill:#e1e5ff
+    style PlatformTree fill:#e1e5ff
+```
+
 ## Font-Related Issues
+
+### Font Troubleshooting Decision Tree
+
+```mermaid
+flowchart TD
+    FontIssue[Font Issue<br/>━━━━━━━━<br/>Font not displaying<br/>or error] --> FontType{What type<br/>of error?}
+    
+    FontType -->|Property Error| PropError[.regular/.bold<br/>property error]
+    FontType -->|Not Loading| NotLoad[Fonts not<br/>loading]
+    FontType -->|Wrong Font| WrongFont[Fallback fonts<br/>being used]
+    
+    PropError --> CheckTheme{Theme config<br/>correct?}
+    CheckTheme -->|No| FixTheme[Fix theme in<br/>_layout.tsx<br/>━━━━━━━━<br/>Add font properties]
+    CheckTheme -->|Yes| RestartDev[Restart dev<br/>server]
+    
+    NotLoad --> CheckFiles{Font files<br/>exist?}
+    CheckFiles -->|No| AddFonts[Add font files to<br/>assets/fonts/Roboto/]
+    CheckFiles -->|Yes| CheckCSS{CSS config<br/>correct?}
+    CheckCSS -->|No| FixCSS[Fix web/<br/>font-override.css]
+    CheckCSS -->|Yes| ClearCache[Clear browser<br/>cache & rebuild]
+    
+    WrongFont --> CheckPath{Font paths<br/>correct?}
+    CheckPath -->|No| FixPaths[Update font<br/>paths in CSS]
+    CheckPath -->|Yes| ClearCache
+    
+    style FontIssue fill:#ffe4e1
+    style FixTheme fill:#e1f5e1
+    style AddFonts fill:#e1f5e1
+    style FixCSS fill:#e1f5e1
+    style FixPaths fill:#e1f5e1
+    style ClearCache fill:#fff4e1
+```
 
 ### ".regular property access error"
 
@@ -38,6 +102,40 @@ This document provides solutions to common issues encountered when developing or
 
 ## Development Server Issues
 
+### Server Issue Resolution Flow
+
+```mermaid
+flowchart TD
+    ServerIssue[Server Issue<br/>━━━━━━━━<br/>Can't start<br/>dev server] --> IssueType{What's the<br/>error?}
+    
+    IssueType -->|Port in use| PortIssue[Port 3000<br/>already in use]
+    IssueType -->|Metro error| MetroIssue[Metro bundler<br/>cache issue]
+    IssueType -->|Build error| BuildIssue[Build/compile<br/>error]
+    
+    PortIssue --> KillProcess{Kill existing<br/>process?}
+    KillProcess -->|Yes| KillCmd[pkill -f<br/>"expo start"]
+    KillProcess -->|No| AutoPort[Script auto-finds<br/>available port]
+    
+    KillCmd --> Restart[Restart<br/>server]
+    AutoPort --> Restart
+    
+    MetroIssue --> ClearCache[Clear Metro cache<br/>━━━━━━━━<br/>npx expo start --clear]
+    ClearCache --> StillIssue{Still having<br/>issues?}
+    StillIssue -->|Yes| DeepClean[Deep clean<br/>━━━━━━━━<br/>rm -rf node_modules<br/>npm install]
+    StillIssue -->|No| Resolved[Issue<br/>Resolved ✓]
+    
+    BuildIssue --> CheckCode[Check for<br/>code errors<br/>━━━━━━━━<br/>npx tsc --noEmit]
+    
+    DeepClean --> Resolved
+    CheckCode --> FixErrors[Fix code<br/>errors]
+    FixErrors --> Restart
+    
+    style ServerIssue fill:#ffe4e1
+    style Resolved fill:#e1f5e1
+    style ClearCache fill:#fff4e1
+    style DeepClean fill:#fff4e1
+```
+
 ### Port Already in Use
 
 **Error**: `Port 3000 is already in use`
@@ -60,6 +158,41 @@ This document provides solutions to common issues encountered when developing or
 3. Clear browser cache and hard refresh
 
 ## API Integration Issues
+
+### API Issue Diagnosis Flow
+
+```mermaid
+flowchart TD
+    APIIssue[API Issue<br/>━━━━━━━━<br/>AI models not<br/>working] --> CheckKeys{API keys<br/>configured?}
+    
+    CheckKeys -->|No| NoKeys[No keys found<br/>━━━━━━━━<br/>"No AI models<br/>available"]
+    CheckKeys -->|Yes| ValidKeys{Keys valid?}
+    
+    NoKeys --> AddKeys[Add keys to .env<br/>━━━━━━━━<br/>• OpenAI<br/>• Claude<br/>• DeepSeek]
+    
+    ValidKeys -->|No| InvalidKeys[Invalid keys<br/>━━━━━━━━<br/>401/403 errors]
+    ValidKeys -->|Yes| ConnIssue{Connection<br/>working?}
+    
+    InvalidKeys --> CheckFormat[Check key format<br/>& permissions]
+    
+    ConnIssue -->|No| NetworkIssue[Network/Timeout<br/>errors]
+    ConnIssue -->|Yes| ServiceIssue[Service-specific<br/>issue]
+    
+    NetworkIssue --> CheckNet[Check:<br/>━━━━━━━━<br/>• Internet connection<br/>• Proxy settings<br/>• Service status]
+    
+    ServiceIssue --> CheckLogs[Check console<br/>for specific errors]
+    
+    AddKeys --> RestartServer[Restart dev<br/>server]
+    CheckFormat --> RestartServer
+    CheckNet --> RestartServer
+    CheckLogs --> DebugService[Debug specific<br/>service]
+    
+    style APIIssue fill:#ffe4e1
+    style AddKeys fill:#e1f5e1
+    style CheckFormat fill:#fff4e1
+    style CheckNet fill:#fff4e1
+    style RestartServer fill:#e1e5ff
+```
 
 ### Missing API Keys
 
@@ -198,6 +331,40 @@ This document provides solutions to common issues encountered when developing or
 2. Use responsive design principles
 3. Check native module compatibility
 4. Test on physical devices
+
+## Error Categorization & Priority
+
+### Error Severity Classification
+
+```mermaid
+flowchart TD
+    Error[Error Encountered<br/>━━━━━━━━<br/>Need to determine<br/>severity] --> Impact{What's the<br/>impact?}
+    
+    Impact -->|Can't start| Critical[Critical<br/>━━━━━━━━<br/>Application won't<br/>start/build]
+    Impact -->|Feature broken| High[High Priority<br/>━━━━━━━━<br/>Core feature<br/>not working]
+    Impact -->|Degraded| Medium[Medium Priority<br/>━━━━━━━━<br/>Performance issues<br/>or warnings]
+    Impact -->|Cosmetic| Low[Low Priority<br/>━━━━━━━━<br/>Visual issues<br/>or polish]
+    
+    Critical --> CriticalEx[Examples:<br/>• Build failures<br/>• Missing dependencies<br/>• Database errors<br/>• Port conflicts]
+    
+    High --> HighEx[Examples:<br/>• API not working<br/>• File upload broken<br/>• Analysis failing<br/>• Auth issues]
+    
+    Medium --> MediumEx[Examples:<br/>• Slow loading<br/>• Memory usage<br/>• Console warnings<br/>• Cache issues]
+    
+    Low --> LowEx[Examples:<br/>• Font rendering<br/>• Spacing issues<br/>• Color problems<br/>• Minor UI bugs]
+    
+    CriticalEx --> FixFirst[Fix immediately<br/>━━━━━━━━<br/>Blocks all work]
+    HighEx --> FixSecond[Fix ASAP<br/>━━━━━━━━<br/>Blocks features]
+    MediumEx --> FixThird[Fix soon<br/>━━━━━━━━<br/>Affects quality]
+    LowEx --> FixLater[Fix later<br/>━━━━━━━━<br/>Polish phase]
+    
+    style Critical fill:#ffe4e1
+    style High fill:#fff4e1
+    style Medium fill:#e1e5ff
+    style Low fill:#e1f5e1
+    style FixFirst fill:#ffe4e1
+    style FixSecond fill:#fff4e1
+```
 
 ## Getting Help
 
