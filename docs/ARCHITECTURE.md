@@ -40,6 +40,23 @@ Athena is an enterprise-grade malware analysis platform built with React Native 
 The modernized architecture implements a layered approach with clear separation of concerns:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Client Layer"
         UI[React Native UI]
@@ -112,6 +129,23 @@ graph TB
 The application follows hexagonal architecture principles with clear ports and adapters:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Core Domain"
         Analysis[Analysis Logic]
@@ -151,6 +185,23 @@ graph LR
 The system uses events for loose coupling between components:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Event Bus"
         EventEmitter[Event Emitter]
@@ -185,6 +236,23 @@ graph TB
 ### Component Hierarchy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     App[App Root]
     
@@ -213,6 +281,23 @@ graph TD
 ### Design System Components
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Design System"
         Base[Base Components]
@@ -242,6 +327,23 @@ graph LR
 The services layer implements a clean, modular architecture:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Core Services"
         AnalysisService[Analysis Service]
@@ -288,6 +390,33 @@ graph TB
 ### AI Service Manager Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+%%{init: {
+  'sequence': {
+    'actorMargin': 50,
+    'boxMargin': 10,
+    'boxTextMargin': 5,
+    'noteMargin': 10,
+    'messageMargin': 35,
+    'mirrorActors': true
+  }
+}}%%
 sequenceDiagram
     participant Client
     participant AIManager
@@ -327,6 +456,23 @@ sequenceDiagram
 ### Zustand Store Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Root Store"
         Store[Zustand Store]
@@ -362,6 +508,36 @@ graph TB
 ### State Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+%%{init: {
+  'state': {
+    'dividerMargin': 10,
+    'sizeUnit': 5,
+    'padding': 8,
+    'textHeight': 10,
+    'titleShift': -15,
+    'noteMargin': 10,
+    'forkWidth': 70,
+    'forkHeight': 7,
+    'miniPadding': 2
+  }
+}}%%
 stateDiagram-v2
     [*] --> Idle
     
@@ -407,6 +583,23 @@ stateDiagram-v2
 ### Caching Strategy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Multi-Tier Cache"
         L1[Memory Cache]
@@ -438,6 +631,23 @@ graph TB
 ### Batch Processing
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Batch Queue"
         Queue[Priority Queue]
@@ -477,6 +687,23 @@ graph LR
 ### Resource Pooling
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Resource Pool"
         Pool[Connection Pool]
@@ -517,6 +744,36 @@ graph TB
 ### Circuit Breaker Pattern
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+%%{init: {
+  'state': {
+    'dividerMargin': 10,
+    'sizeUnit': 5,
+    'padding': 8,
+    'textHeight': 10,
+    'titleShift': -15,
+    'noteMargin': 10,
+    'forkWidth': 70,
+    'forkHeight': 7,
+    'miniPadding': 2
+  }
+}}%%
 stateDiagram-v2
     [*] --> Closed
     
@@ -547,6 +804,23 @@ stateDiagram-v2
 ### Bulkhead Pattern
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Service Isolation"
         subgraph "AI Service Bulkhead"
@@ -579,6 +853,23 @@ graph TB
 ### Adaptive Circuit Breaker
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Metrics Collection"
         ResponseTime[Response Time]
@@ -615,6 +906,23 @@ graph TB
 ### Multi-Layer Security
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Security Layers"
         API[API Security]
@@ -654,6 +962,23 @@ graph TB
 ### API Key Management
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Key Sources"
         Env[Environment Variables]
@@ -688,6 +1013,33 @@ graph LR
 ### Analysis Request Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+%%{init: {
+  'sequence': {
+    'actorMargin': 50,
+    'boxMargin': 10,
+    'boxTextMargin': 5,
+    'noteMargin': 10,
+    'messageMargin': 35,
+    'mirrorActors': true
+  }
+}}%%
 sequenceDiagram
     participant User
     participant UI
@@ -735,6 +1087,33 @@ sequenceDiagram
 ### Streaming Analysis Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+%%{init: {
+  'sequence': {
+    'actorMargin': 50,
+    'boxMargin': 10,
+    'boxTextMargin': 5,
+    'noteMargin': 10,
+    'messageMargin': 35,
+    'mirrorActors': true
+  }
+}}%%
 sequenceDiagram
     participant Client
     participant StreamManager
@@ -767,6 +1146,23 @@ sequenceDiagram
 ### Container Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Production Deployment"
         LB[Load Balancer]
@@ -813,6 +1209,23 @@ graph TB
 ### CI/CD Pipeline
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Development"
         Code[Code Push]
@@ -852,6 +1265,23 @@ graph LR
 ### Feature Flags Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Configuration Sources"
         Env[Environment Variables]
@@ -888,6 +1318,23 @@ graph TB
 ### Environment Configuration
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Environments"
         Dev[Development]
@@ -921,6 +1368,23 @@ graph LR
 ### Key Performance Indicators
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Application Metrics"
         ResponseTime[Response Time < 3s P95]

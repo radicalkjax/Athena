@@ -53,6 +53,23 @@ Athena is an enterprise-grade malware analysis platform that combines the power 
 ### Complete User Workflow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 journey
     title Athena User Journey
     section Getting Started
@@ -83,6 +100,23 @@ journey
 ### Feature Interaction Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "User Interface"
         Home[Home Screen]
@@ -136,9 +170,9 @@ graph TB
     Settings --> AISelect
     Settings --> Monitor
     
-    style Home fill:#e1f5e1
-    style Analyze fill:#ffe4e1
-    style Results fill:#e1e5ff
+    style Home fill:#E8A6BA
+    style Analyze fill:#F6BD6B
+    style Results fill:#D58C61
 ```
 
 ## Installation
@@ -297,6 +331,23 @@ You can add API keys in two ways:
 The Home screen is the main interface for analyzing malware files. Here's the visual layout:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Home Screen Layout"
         subgraph "Header"
@@ -330,14 +381,38 @@ graph TB
         end
     end
     
-    style AISelector fill:#e1f5e1
-    style ActionButtons fill:#ffe4e1
-    style Performance fill:#e1e5ff
+    style AISelector fill:#E8A6BA
+    style ActionButtons fill:#F6BD6B
+    style Performance fill:#D58C61
 ```
 
 ### File Upload Workflow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif',
+    'sequenceNumberColor': '#3E231A',
+    'actorTextColor': '#3E231A',
+    'actorLineColor': '#B65E71',
+    'signalColor': '#B65E71',
+    'signalTextColor': '#3E231A',
+    'activationBkgColor': '#F6BD6B',
+    'activationBorderColor': '#C86681'
+  }
+}}%%
 sequenceDiagram
     participant User
     participant UI
@@ -366,6 +441,23 @@ sequenceDiagram
 ### AI Model Selection Interface
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "AI Provider Selection"
         subgraph "Primary Providers"
@@ -390,15 +482,38 @@ graph LR
     DeepSeek --> Status
     Local --> Status
     
-    style Claude fill:#e1f5e1
-    style OpenAI fill:#e1f5e1
-    style DeepSeek fill:#fff4e1
-    style Local fill:#f0f0f0
+    style Claude fill:#E8A6BA
+    style OpenAI fill:#E8A6BA
+    style DeepSeek fill:#F6BD6B
+    style Local fill:#D58C61
 ```
 
 ### Analysis Execution Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif',
+    'stateBkg': '#E8A6BA',
+    'stateBorder': '#C86681',
+    'compositeBorder': '#C86681',
+    'compositeBackground': '#FFFFFF',
+    'altBackground': '#F6BD6B',
+    'compositeTitleBackground': '#E8A6BA'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Ready: Page Loaded
     

@@ -255,6 +255,23 @@ When working, this would start the Expo development server, allowing you to run 
 Athena follows a modular architecture with clear separation of concerns. The application is built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms.
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8A6BA',
+    'primaryTextColor': '#3E231A',
+    'primaryBorderColor': '#C86681',
+    'lineColor': '#B65E71',
+    'secondaryColor': '#F6BD6B',
+    'tertiaryColor': '#D58C61',
+    'background': '#FFFFFF',
+    'mainBkg': '#E8A6BA',
+    'secondBkg': '#F6BD6B',
+    'tertiaryBkg': '#D58C61',
+    'textColor': '#3E231A',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     A[User Interface] --> B[State Management]
     B --> C[Services Layer]
