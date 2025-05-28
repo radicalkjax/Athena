@@ -159,9 +159,9 @@ sequenceDiagram
     Server->>System: Launch on port 3000
     Server-->>User: Ready at http://localhost:3000
     
-    style User fill:#e1e5ff
-    style Script fill:#fff4e1
-    style Server fill:#e1f5e1
+    style User fill:#6d105a,color:#fff
+    style Script fill:#f9d0c4,color:#333
+    style Server fill:#e8f4d4,color:#333
 ```
 
 When you run `/scripts/athena` and select "Start Athena Web" for the first time, you'll see:
@@ -210,9 +210,9 @@ flowchart LR
     
     Run --> Results[View Results<br/>━━━━━━━━<br/>• Analysis report<br/>• Risk assessment<br/>• Recommendations]
     
-    style Ready fill:#e1f5e1
-    style Keys fill:#fff4e1
-    style Results fill:#e1e5ff
+    style Ready fill:#e8f4d4,color:#333
+    style Keys fill:#f9d0c4,color:#333
+    style Results fill:#6d105a,color:#fff
 ```
 
 1. **Add API Keys** (optional):
@@ -247,13 +247,13 @@ flowchart TD
     
     Menu -->|Option 11| Tests[🧪 Run All Tests<br/>━━━━━━━━<br/>• Unit tests<br/>• Integration tests<br/>• Component tests]
     
-    style Web fill:#e1f5e1
-    style Keys fill:#fff4e1
-    style Update fill:#e1e5ff
-    style iOS fill:#e1e5ff
-    style Android fill:#fff4e1
-    style Setup fill:#ffe4e1
-    style Tests fill:#e1f5e1
+    style Web fill:#e8f4d4,color:#333
+    style Keys fill:#f9d0c4,color:#333
+    style Update fill:#6d105a,color:#fff
+    style iOS fill:#6d105a,color:#fff
+    style Android fill:#f9d0c4,color:#333
+    style Setup fill:#f9d0c4,color:#333
+    style Tests fill:#e8f4d4,color:#333
 ```
 
 **Most Common Workflow:**

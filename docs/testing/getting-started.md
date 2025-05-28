@@ -72,13 +72,13 @@ graph TB
         end
     end
     
-    style API fill:#e1e5ff
-    style SERVICES fill:#e1e5ff
-    style COMPONENTS fill:#e1e5ff
-    style DS fill:#e1e5ff
-    style WORKFLOWS fill:#fff4e1
-    style FIXTURES fill:#e1f5e1
-    style UTILS fill:#e1f5e1
+    style API fill:#6d105a,color:#fff
+    style SERVICES fill:#6d105a,color:#fff
+    style COMPONENTS fill:#6d105a,color:#fff
+    style DS fill:#6d105a,color:#fff
+    style WORKFLOWS fill:#f9d0c4,color:#333
+    style FIXTURES fill:#e8f4d4,color:#333
+    style UTILS fill:#e8f4d4,color:#333
 ```
 
 ## Test Workflow
@@ -119,15 +119,15 @@ flowchart LR
     
     PR --> MERGE
     
-    style WRITE fill:#e1e5ff
-    style TEST fill:#e1e5ff
-    style RUN fill:#e1e5ff
-    style PASS fill:#fff4e1
-    style COV fill:#fff4e1
-    style CI fill:#fff4e1
-    style COMMIT fill:#e1f5e1
-    style PR fill:#e1f5e1
-    style MERGE fill:#e1f5e1
+    style WRITE fill:#6d105a,color:#fff
+    style TEST fill:#6d105a,color:#fff
+    style RUN fill:#6d105a,color:#fff
+    style PASS fill:#f9d0c4,color:#333
+    style COV fill:#f9d0c4,color:#333
+    style CI fill:#f9d0c4,color:#333
+    style COMMIT fill:#e8f4d4,color:#333
+    style PR fill:#e8f4d4,color:#333
+    style MERGE fill:#e8f4d4,color:#333
 ```
 
 ## Writing Your First Test
@@ -197,13 +197,13 @@ graph TB
     AAA --> DESC
     ISO --> DESC
     
-    style ASYNC fill:#e1e5ff
-    style COMP fill:#e1e5ff
-    style MOCK fill:#fff4e1
-    style STORE fill:#fff4e1
-    style AAA fill:#e1f5e1
-    style ISO fill:#e1f5e1
-    style DESC fill:#e1f5e1
+    style ASYNC fill:#6d105a,color:#fff
+    style COMP fill:#6d105a,color:#fff
+    style MOCK fill:#f9d0c4,color:#333
+    style STORE fill:#f9d0c4,color:#333
+    style AAA fill:#e8f4d4,color:#333
+    style ISO fill:#e8f4d4,color:#333
+    style DESC fill:#e8f4d4,color:#333
 ```
 
 ## Next Steps

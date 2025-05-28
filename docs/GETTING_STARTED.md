@@ -308,10 +308,10 @@ graph TB
     NodeEnv --> Streaming
     NodeEnv --> BatchProcessing
     
-    style APIKeys fill:#ffe4e1
-    style Claude fill:#e1f5e1
-    style OpenAI fill:#e1f5e1
-    style DeepSeek fill:#e1f5e1
+    style APIKeys fill:#f9d0c4,color:#333
+    style Claude fill:#e8f4d4,color:#333
+    style OpenAI fill:#e8f4d4,color:#333
+    style DeepSeek fill:#e8f4d4,color:#333
 ```
 
 ### Environment Configuration
@@ -829,10 +829,10 @@ graph TB
     Experimental --> AdvAnalysis
     Experimental --> MLModels
     
-    style Manager fill:#e1e5ff
-    style Env fill:#ffe4e1
-    style Remote fill:#e1f5e1
-    style Local fill:#fff4e1
+    style Manager fill:#6d105a,color:#fff
+    style Env fill:#f9d0c4,color:#333
+    style Remote fill:#e8f4d4,color:#333
+    style Local fill:#f9d0c4,color:#333
 ```
 
 ```typescript

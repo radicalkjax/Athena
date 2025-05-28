@@ -217,10 +217,10 @@ flowchart TD
 - **🎨 UI Mockups**: Visual component representations
 
 ### 🏷️ Color Coding
-- 🟢 **Green (`fill:#e1f5e1`)**: Success, completion, ready states
-- 🔵 **Blue (`fill:#e1e5ff`)**: Information, neutral processes  
-- 🟡 **Yellow (`fill:#fff4e1`)**: Warnings, attention needed
-- 🔴 **Red (`fill:#ffe4e1`)**: Errors, critical issues
+- 🟣 **Purple (`fill:#6d105a`)**: Primary elements, main processes
+- 🟢 **Green (`fill:#e8f4d4`)**: Secondary elements, success states
+- 🟠 **Peach (`fill:#f9d0c4`)**: Tertiary elements, warnings
+- ⚫ **Dark Gray (`#333333`)**: Text and borders on light backgrounds
 
 ### 📝 Document Types
 - **📖 Guides**: Step-by-step instructions
