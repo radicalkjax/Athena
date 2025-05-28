@@ -5,6 +5,8 @@ import { generateId } from '@/utils/helpers';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as FileSystem from 'expo-file-system';
+import { bulkheadManager } from './pool/bulkheadManager';
+import { circuitBreakerFactory } from './ai/circuitBreakerFactory';
 
 // Storage keys
 const CONTAINER_API_KEY_STORAGE = 'athena_container_api_key';
@@ -796,10 +798,15 @@ export const createContainer = async (
       containerConfig: finalConfig,
     });
     
-    const response = await safeApiCall(
-      () => client.post('/api/v1/containers', requestData),
-      'Container creation error'
-    );
+    // Use circuit breaker and bulkhead for container creation
+    const response = await circuitBreakerFactory.execute('container.create', async () => {
+      return await bulkheadManager.execute('container.create', async () => {
+        return await safeApiCall(
+          () => client.post('/api/v1/containers', requestData),
+          'Container creation error'
+        );
+      }, { semaphores: ['container.total'] });
+    });
     
     if (!response || !response.container) {
       throw new Error('Failed to create container: Invalid response from container service');

@@ -24,7 +24,13 @@
     "analyze:bundle": "npm run build:web && source-map-explorer dist/static/js/*.js",
     "build:debug": "expo export --platform web --webpack-config webpack.config.debug.js",
     "test:production": "node ./scripts/test-production-build.js",
-    "test:production:simple": "npm run build:web && npm run serve"
+    "test:production:simple": "npm run build:web && npm run serve",
+    "load-test": "cd load-tests && ./run-tests.sh",
+    "load-test:analysis": "k6 run load-tests/analysis.js",
+    "load-test:streaming": "k6 run load-tests/streaming-analysis.js",
+    "load-test:failover": "k6 run load-tests/ai-failover.js",
+    "load-test:smoke": "k6 run --stage '1m:10,1m:20,1m:10,1m:5,1m:0' load-tests/analysis.js",
+    "load-test:stress": "k6 run --stage '5m:50,10m:200,10m:500,5m:100' load-tests/analysis.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
@@ -33,6 +39,7 @@
     "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
+    "@types/ioredis": "^4.28.10",
     "axios": "^1.6.7",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
@@ -54,6 +61,7 @@
     "expo-symbols": "~0.2.2",
     "expo-system-ui": "~4.0.9",
     "expo-web-browser": "~14.0.2",
+    "ioredis": "^5.6.1",
     "openai": "^4.28.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",

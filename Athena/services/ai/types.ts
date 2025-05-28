@@ -46,3 +46,32 @@ export interface AIClientConfig {
   baseUrl?: string;
   modelId?: string;
 }
+
+// Phase 7: Streaming support types
+export interface StreamingAnalysis {
+  onProgress: (progress: number) => void;
+  onChunk: (data: AnalysisChunk) => void;
+  onComplete: (result: DeobfuscationResult | VulnerabilityAnalysisResult) => void;
+  onError: (error: Error) => void;
+  signal?: AbortSignal;
+}
+
+export interface AnalysisChunk {
+  type: 'progress' | 'partial' | 'complete';
+  data: any;
+  timestamp: number;
+}
+
+export interface ProviderHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  lastCheck: number;
+  failureCount: number;
+  successRate: number;
+  averageResponseTime: number;
+}
+
+export interface AIProviderInfo extends AIProvider {
+  available: boolean;
+  priority: number;
+  health: ProviderHealth;
+}

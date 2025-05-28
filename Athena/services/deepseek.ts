@@ -53,7 +53,7 @@ class DeepSeekService extends BaseAIService {
 }
 
 // Create singleton instance
-const deepSeekService = new DeepSeekService();
+export const deepSeekService = new DeepSeekService();
 
 // Export functions for backward compatibility
 export const initDeepSeek = (apiKey?: string, baseUrl?: string) =>

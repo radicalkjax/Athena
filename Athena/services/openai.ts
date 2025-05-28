@@ -53,7 +53,7 @@ class OpenAIService extends BaseAIService {
 }
 
 // Create singleton instance
-const openAIService = new OpenAIService();
+export const openAIService = new OpenAIService();
 
 // Export functions for backward compatibility
 export const initOpenAI = (apiKey?: string, baseUrl?: string) =>

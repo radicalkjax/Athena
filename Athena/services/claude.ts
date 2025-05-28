@@ -53,7 +53,7 @@ class ClaudeService extends BaseAIService {
 }
 
 // Create singleton instance
-const claudeService = new ClaudeService();
+export const claudeService = new ClaudeService();
 
 // Export functions for backward compatibility
 export const initClaude = (apiKey?: string, baseUrl?: string) => 

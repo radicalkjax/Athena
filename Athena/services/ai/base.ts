@@ -12,9 +12,12 @@ import {
   AIMessage,
   DeobfuscationResult,
   VulnerabilityAnalysisResult,
-  Vulnerability
+  Vulnerability,
+  StreamingAnalysis
 } from './types';
 import { SYSTEM_PROMPTS } from './prompts';
+import { streamingManager } from '../streaming/manager';
+import { StreamingConnection } from '../streaming/types';
 
 export abstract class BaseAIService {
   protected cachedApiKey: string | null = null;
@@ -46,6 +49,20 @@ export abstract class BaseAIService {
    * Extract content from API response - must be implemented by subclasses
    */
   protected abstract extractContent(response: any): string;
+
+  /**
+   * Make streaming API request - can be overridden by subclasses
+   */
+  protected async makeStreamingRequest(
+    client: AxiosInstance,
+    messages: AIMessage[],
+    model: string,
+    streaming: StreamingAnalysis
+  ): Promise<any> {
+    // Default implementation falls back to regular request
+    // Subclasses should override this for true streaming support
+    return this.makeRequest(client, messages, model);
+  }
 
   /**
    * Initialize AI client
@@ -139,6 +156,13 @@ export abstract class BaseAIService {
   }
 
   /**
+   * Check if API key is stored and valid
+   */
+  async hasValidApiKey(): Promise<boolean> {
+    return this.hasApiKey();
+  }
+
+  /**
    * Check if API key is stored
    */
   async hasApiKey(): Promise<boolean> {
@@ -202,6 +226,43 @@ export abstract class BaseAIService {
       console.log(`Deleted ${this.provider.name} API configuration from memory cache`);
     } catch (error) {
       console.error(`Error deleting ${this.provider.name} API configuration:`, error);
+    }
+  }
+
+  /**
+   * Check if provider supports enhanced streaming (WebSocket/SSE)
+   */
+  supportsEnhancedStreaming(): boolean {
+    const capabilities = streamingManager.getCapabilities(this.provider.name);
+    return capabilities.protocols.includes('websocket') || capabilities.protocols.includes('sse');
+  }
+
+  /**
+   * Create enhanced streaming connection if supported
+   */
+  protected async createStreamingConnection(): Promise<StreamingConnection | null> {
+    if (!this.supportsEnhancedStreaming()) {
+      return null;
+    }
+
+    try {
+      const baseUrl = this.cachedBaseUrl || this.provider.defaultBaseUrl;
+      const capabilities = streamingManager.getCapabilities(this.provider.name);
+      
+      // Configure based on preferred protocol
+      if (capabilities.preferredProtocol === 'sse') {
+        const config = {
+          url: `${baseUrl}/stream`,
+          withCredentials: true
+        };
+        return await streamingManager.connect(this.provider.name, config);
+      }
+      
+      // Default to polling
+      return null;
+    } catch (error) {
+      console.error('Failed to create streaming connection:', error);
+      return null;
     }
   }
 
@@ -290,6 +351,150 @@ export abstract class BaseAIService {
       }
     } catch (error) {
       console.error(`${this.provider.name} vulnerability analysis error:`, error);
+      throw new Error(`Failed to analyze vulnerabilities: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Deobfuscate code with streaming support
+   */
+  async deobfuscateCodeStreaming(
+    code: string,
+    streaming: StreamingAnalysis,
+    modelId?: string
+  ): Promise<DeobfuscationResult> {
+    try {
+      const client = await this.init();
+      
+      // Sanitize input for security
+      const sanitizedCode = sanitizeString(code);
+      
+      const messages: AIMessage[] = [
+        { role: 'system', content: SYSTEM_PROMPTS.deobfuscation },
+        { role: 'user', content: `Analyze and deobfuscate this code:\n\n${sanitizedCode}` }
+      ];
+      
+      // Report initial progress
+      streaming.onProgress(10);
+      streaming.onChunk({
+        type: 'progress',
+        data: { stage: 'initialized', message: 'Starting deobfuscation analysis' },
+        timestamp: Date.now()
+      });
+      
+      const response = await this.makeStreamingRequest(
+        client,
+        messages,
+        modelId || this.provider.defaultModel,
+        streaming
+      );
+      
+      const content = this.extractContent(response);
+      
+      // Report parsing progress
+      streaming.onProgress(90);
+      streaming.onChunk({
+        type: 'progress',
+        data: { stage: 'parsing', message: 'Parsing deobfuscation results' },
+        timestamp: Date.now()
+      });
+      
+      // Extract deobfuscated code and analysis from the response
+      const deobfuscatedCodeMatch = content.match(/DEOBFUSCATED CODE:([\s\S]*?)(?=ANALYSIS:|$)/i);
+      const analysisMatch = content.match(/ANALYSIS:([\s\S]*)/i);
+      
+      const result = {
+        deobfuscatedCode: deobfuscatedCodeMatch ? deobfuscatedCodeMatch[1].trim() : '',
+        analysisReport: analysisMatch ? analysisMatch[1].trim() : content,
+      };
+      
+      // Report completion
+      streaming.onProgress(100);
+      streaming.onComplete(result);
+      
+      return result;
+    } catch (error) {
+      streaming.onError(error as Error);
+      console.error(`${this.provider.name} streaming deobfuscation error:`, error);
+      throw new Error(`Failed to deobfuscate code: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Analyze code for vulnerabilities with streaming support
+   */
+  async analyzeVulnerabilitiesStreaming(
+    code: string,
+    streaming: StreamingAnalysis,
+    modelId?: string
+  ): Promise<VulnerabilityAnalysisResult> {
+    try {
+      const client = await this.init();
+      
+      // Sanitize input for security
+      const sanitizedCode = sanitizeString(code);
+      
+      const messages: AIMessage[] = [
+        { role: 'system', content: SYSTEM_PROMPTS.vulnerabilityAnalysis },
+        { role: 'user', content: `Analyze this code for security vulnerabilities:\n\n${sanitizedCode}` }
+      ];
+      
+      // Report initial progress
+      streaming.onProgress(10);
+      streaming.onChunk({
+        type: 'progress',
+        data: { stage: 'initialized', message: 'Starting vulnerability analysis' },
+        timestamp: Date.now()
+      });
+      
+      const response = await this.makeStreamingRequest(
+        client,
+        messages,
+        modelId || this.provider.defaultModel,
+        streaming
+      );
+      
+      const content = this.extractContent(response);
+      
+      // Report parsing progress
+      streaming.onProgress(90);
+      streaming.onChunk({
+        type: 'progress',
+        data: { stage: 'parsing', message: 'Parsing vulnerability results' },
+        timestamp: Date.now()
+      });
+      
+      try {
+        // Extract JSON from the response (AI might wrap it in markdown code blocks)
+        const jsonMatch = content.match(/```(?:json)?\s*({[\s\S]*?})\s*```/) || [null, content];
+        const jsonStr = jsonMatch[1] || content;
+        
+        const result = JSON.parse(jsonStr);
+        const finalResult = {
+          vulnerabilities: result.vulnerabilities || [],
+          analysisReport: result.analysisReport || '',
+        };
+        
+        // Report completion
+        streaming.onProgress(100);
+        streaming.onComplete(finalResult);
+        
+        return finalResult;
+      } catch (parseError) {
+        console.error(`Error parsing ${this.provider.name} JSON response:`, parseError);
+        const fallbackResult = {
+          vulnerabilities: [],
+          analysisReport: content,
+        };
+        
+        streaming.onProgress(100);
+        streaming.onComplete(fallbackResult);
+        
+        return fallbackResult;
+      }
+    } catch (error) {
+      streaming.onError(error as Error);
+      console.error(`${this.provider.name} streaming vulnerability analysis error:`, error);
       throw new Error(`Failed to analyze vulnerabilities: ${(error as Error).message}`);
     }
   }

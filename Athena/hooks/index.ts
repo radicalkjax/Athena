@@ -23,3 +23,8 @@ export function useThemeColor(
     return Colors[theme][colorName];
   }
 }
+
+// Phase 7: Export streaming analysis hook
+export { useStreamingAnalysis } from './useStreamingAnalysis';
+// Phase 8: Export batch analysis hook
+export { useBatchAnalysis } from './useBatchAnalysis';

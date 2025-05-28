@@ -25,11 +25,49 @@ interface DatabaseConfig {
   dialect: string;
 }
 
+interface RedisConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  password?: string;
+  db: number;
+  keyPrefix: string;
+}
+
+interface APMConfig {
+  enabled: boolean;
+  provider: 'console' | 'statsd' | 'datadog' | 'newrelic';
+  endpoint?: string;
+  apiKey?: string;
+  sampleRate: number;
+}
+
 class EnvironmentConfig {
   // Cached values
   private _isDev?: boolean;
   private _environment?: Environment;
   private _platform?: AppPlatform;
+
+  // Redis environment variables (for compatibility)
+  get REDIS_ENABLED(): string | undefined {
+    return this.redis.enabled ? 'true' : undefined;
+  }
+
+  get REDIS_HOST(): string | undefined {
+    return this.redis.host;
+  }
+
+  get REDIS_PORT(): string | undefined {
+    return this.redis.port.toString();
+  }
+
+  get REDIS_PASSWORD(): string | undefined {
+    return this.redis.password;
+  }
+
+  get REDIS_DB(): string | undefined {
+    return this.redis.db.toString();
+  }
 
   // Environment detection
   get isDev(): boolean {
@@ -202,6 +240,33 @@ class EnvironmentConfig {
       bundleAnalyzer: this.isDev,
       // React DevTools
       reactDevTools: this.isDev,
+    };
+  }
+
+  // Redis configuration
+  get redis(): RedisConfig {
+    const extra = Constants.expoConfig?.extra || {};
+    
+    return {
+      enabled: !!(extra.redisEnabled || process.env.REDIS_ENABLED === 'true'),
+      host: extra.redisHost || process.env.REDIS_HOST || 'localhost',
+      port: parseInt(extra.redisPort || process.env.REDIS_PORT || '6379', 10),
+      password: extra.redisPassword || process.env.REDIS_PASSWORD,
+      db: parseInt(extra.redisDb || process.env.REDIS_DB || '0', 10),
+      keyPrefix: extra.redisKeyPrefix || process.env.REDIS_KEY_PREFIX || 'athena:',
+    };
+  }
+
+  // APM configuration
+  get apm(): APMConfig {
+    const extra = Constants.expoConfig?.extra || {};
+    
+    return {
+      enabled: !!(extra.apmEnabled || process.env.APM_ENABLED === 'true'),
+      provider: (extra.apmProvider || process.env.APM_PROVIDER || 'console') as APMConfig['provider'],
+      endpoint: extra.apmEndpoint || process.env.APM_ENDPOINT,
+      apiKey: extra.apmApiKey || process.env.APM_API_KEY,
+      sampleRate: parseFloat(extra.apmSampleRate || process.env.APM_SAMPLE_RATE || '1.0'),
     };
   }
 

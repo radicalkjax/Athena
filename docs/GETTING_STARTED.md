@@ -1,381 +1,583 @@
 # Getting Started with Athena
 
-> **IMPORTANT DISCLAIMER:** The containerization and analysis components described in this documentation are still being designed and developed. Their current implementation and documentation are not reflective of what the final design could be. This documentation represents a conceptual overview and may change significantly as development progresses.
-
-This guide will help you set up and start using Athena, the AI-powered malware analysis assistant. It provides step-by-step instructions for installation, configuration, and basic usage.
+> **Note:** This guide reflects the modernized Athena platform after 9 phases of enterprise-grade improvements.
 
 ## Table of Contents
 
+- [Overview](#overview)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
+- [Quick Start](#quick-start)
 - [Configuration](#configuration)
-- [Running Athena](#running-athena)
-- [Your First Analysis](#your-first-analysis)
+- [Running Your First Analysis](#running-your-first-analysis)
+- [Advanced Features](#advanced-features)
+- [Architecture Overview](#architecture-overview)
 - [Troubleshooting](#troubleshooting)
 - [Next Steps](#next-steps)
 
+## Overview
+
+Athena is an enterprise-grade malware analysis platform that leverages multiple AI providers (Claude, OpenAI, DeepSeek) to analyze and deobfuscate potentially malicious code. The platform has been modernized with production-ready features including:
+
+- **Multi-AI Provider Support** with automatic failover
+- **Distributed Caching** with Redis
+- **Resilience Patterns** (Circuit Breakers, Bulkheads)
+- **Real-time Streaming** analysis
+- **Container Isolation** for secure execution
+- **Comprehensive Monitoring** with APM integration
+- **Feature Flags** for runtime configuration
+
 ## Prerequisites
 
-Before you begin, ensure you have the following installed:
+### System Requirements
 
-- **Node.js** (v16 or later): [Download from nodejs.org](https://nodejs.org/)
-- **npm** (v8 or later): Included with Node.js
-- **Git**: [Download from git-scm.com](https://git-scm.com/downloads)
-- **Docker** and **Docker Compose** (for database setup): [Download from docker.com](https://www.docker.com/products/docker-desktop/)
-- **PostgreSQL** (optional, if not using Docker): [Download from postgresql.org](https://www.postgresql.org/download/)
-
-You'll also need API keys for the AI models you want to use:
-
-- **OpenAI API key**: [Get from OpenAI Platform](https://platform.openai.com/account/api-keys)
-- **Claude API key**: [Get from Anthropic Console](https://console.anthropic.com/account/keys)
-- **DeepSeek API key**: [Get from DeepSeek Platform](https://platform.deepseek.com/)
-
-## Installation
-
-### Step 1: Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/athena.git
-cd athena
+```mermaid
+graph LR
+    subgraph "Required Software"
+        Node[Node.js v18+]
+        NPM[npm v8+]
+        Git[Git]
+    end
+    
+    subgraph "Optional Services"
+        Docker[Docker]
+        Redis[Redis]
+        PostgreSQL[PostgreSQL]
+    end
+    
+    subgraph "AI API Keys"
+        Claude[Claude API]
+        OpenAI[OpenAI API]
+        DeepSeek[DeepSeek API]
+    end
 ```
 
-### Step 2: One-Command Setup and Launch
+### Installation Checklist
 
-**Simplest approach** - Just run one command:
-
-```bash
-./scripts/run.sh
-```
-
-This unified script will automatically:
-- 🔍 **Auto-detect** if setup is needed (first time or missing dependencies)
-- 🔧 **Auto-setup** all dependencies and configuration if needed
-- 🔄 **Check for updates** if already set up
-- 🚀 **Build and launch** the web application automatically
-
-**That's it!** The script handles everything automatically, including:
-- Installing all necessary dependencies for Athena
-- Installing critical web polyfills for browser compatibility
-- Creating environment files from templates
-- Verifying project configuration
-- Building and serving the application
-
-### Alternative: Manual Setup
-
-If you prefer manual control over the setup process:
-
-```bash
-# Force setup only (without running)
-./scripts/run.sh setup
-
-# Or install dependencies manually
-npm install
-cd Athena
-npm install
-npm install buffer process --save
-```
-
-### Step 3: Configure API Keys (Optional)
-
-The setup script automatically creates a `.env` file from the template. You can edit it to add your API keys:
-
-```bash
-# Edit the environment file
-nano Athena/.env
-```
-
-Add your API keys:
-
-```
-# API Keys for AI Models
-OPENAI_API_KEY=your_openai_api_key_here
-CLAUDE_API_KEY=your_claude_api_key_here
-DEEPSEEK_API_KEY=your_deepseek_api_key_here
-
-# Optional: Override API Base URLs if needed
-# OPENAI_API_BASE_URL=https://api.openai.com/v1
-# CLAUDE_API_BASE_URL=https://api.anthropic.com/v1
-# DEEPSEEK_API_BASE_URL=https://api.deepseek.com/v1
-```
-
-You can also configure API keys later through the Settings screen in the application.
-
-## Configuration
+- [ ] **Node.js** (v18 or later): [Download](https://nodejs.org/)
+- [ ] **npm** (v8 or later): Included with Node.js
+- [ ] **Git**: [Download](https://git-scm.com/downloads)
+- [ ] **Docker** (optional): [Download](https://www.docker.com/products/docker-desktop/)
+- [ ] **Redis** (optional): For distributed caching
 
 ### API Keys
 
-You can configure API keys in two ways:
+Obtain API keys from:
+- **Claude**: [Anthropic Console](https://console.anthropic.com/account/keys)
+- **OpenAI**: [OpenAI Platform](https://platform.openai.com/account/api-keys)
+- **DeepSeek**: [DeepSeek Platform](https://platform.deepseek.com/)
 
-1. **Environment Variables**: As described above, you can add your API keys to the `.env` file.
-2. **Settings Screen**: You can also add your API keys through the Settings screen in the application.
+## Quick Start
 
-### Container Configuration (Optional)
-
-If you want to use the container isolation feature for safer malware analysis, you'll need to set up a container service. This is optional but recommended for analyzing potentially harmful files.
-
-1. Install Docker: [Get Docker](https://docs.docker.com/get-docker/)
-2. Configure the container service in the Settings screen
-
-## Running Athena
-
-### Web Version (Recommended for Development)
-
-To run Athena as a web application:
+### 1. Clone and Setup
 
 ```bash
-cd Athena
-npx serve dist
-```
+# Clone the repository
+git clone https://github.com/yourusername/athena.git
+cd athena
 
-This will serve the built app from the dist directory using a static file server. Open your web browser and navigate to `http://localhost:3000` to access Athena.
-
-### Mobile Version (Currently Not Working)
-
-> **Important:** The Expo launch method is currently not working. Please use the web version with `npx serve dist` instead.
-
-When working, to run Athena on a mobile device using Expo Go:
-
-1. Install the Expo Go app on your device:
-   - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
-   - [Android Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
-
-2. Start the Expo development server:
-   ```bash
-   cd Athena
-   npx expo start
-   ```
-
-3. Scan the QR code displayed in the terminal with your device:
-   - iOS: Use the device's camera
-   - Android: Use the Expo Go app's QR code scanner
-
-The app would then load on your device.
-
-## Your First Analysis
-
-Let's walk through a basic malware analysis using Athena:
-
-### Step 1: Configure API Keys
-
-1. Open Athena in your browser or on your mobile device
-2. Navigate to the Settings screen (click the gear icon in the tab bar)
-3. Enter your API keys in the respective fields
-4. Click the "Save" button next to each field
-5. Verify that the keys are saved by clicking the "Check" button
-
-### Step 2: Upload a File
-
-1. Navigate to the Home screen
-2. In the "Uploaded Files" section, click the "Upload" button
-3. Select a file to analyze (for testing, you can use a simple script file)
-4. The file will appear in the list of uploaded files
-5. Click on the file to select it for analysis
-
-### Step 3: Select an AI Model
-
-1. In the "Select AI Model" section, you'll see a list of available AI models
-2. Click on a model to select it (e.g., OpenAI GPT-4)
-
-### Step 4: Run Analysis
-
-1. (Optional) Configure analysis options:
-   - Use Container: Toggle this option to run the analysis in an isolated container
-2. Click the "Analyze" button
-3. Wait for the analysis to complete (this may take some time depending on the file size and complexity)
-
-### Step 5: View Results
-
-Once the analysis is complete, you'll see the results in the "Analysis Results" section:
-
-1. **Deobfuscated Code**: Shows the cleaned, readable version of the code
-2. **Analysis Report**: Provides a detailed report of the analysis findings
-3. **Vulnerabilities**: Lists detected vulnerabilities with severity ratings and details
-
-## Troubleshooting
-
-### Font-Related Issues
-
-**Problem**: Application displays incorrectly or shows font-related errors like ".regular property access error".
-
-**Solution**:
-1. Check the [Font Configuration Guide](./FONT_CONFIGURATION.md) for detailed font setup instructions
-2. Verify that font assets are properly loaded in the web version
-3. Clear your browser cache and reload the application
-4. If using the mobile version, restart the Expo development server
-
-### API Key Issues
-
-**Problem**: The AI models are not showing up in the selector.
-
-**Solution**:
-1. Go to the Settings screen
-2. Check if your API keys are entered correctly
-3. Click the "Check" button next to each API key to verify it's working
-4. If the keys are not working, try re-entering them
-5. Make sure you're connected to the internet
-
-### File Upload Issues
-
-**Problem**: Unable to upload files.
-
-**Solution**:
-1. Make sure the file is accessible on your device
-2. Check if the file size is reasonable (very large files may cause issues)
-3. Try a different file format
-4. If using the web version, try a different browser
-
-### Analysis Issues
-
-**Problem**: Analysis fails or takes too long.
-
-**Solution**:
-1. Check your internet connection
-2. Try a smaller or less complex file
-3. Try a different AI model
-4. If using container analysis, try disabling it
-5. Check the console for error messages (if you're familiar with developer tools)
-
-### General Issues
-
-For comprehensive troubleshooting guidance covering common issues, error messages, and solutions, see the [Troubleshooting Guide](./TROUBLESHOOTING.md).
-
-## Helper Scripts
-
-Athena comes with several helper scripts to make it easier to set up and run the application. These scripts are located in the `scripts` directory.
-
-### Unified Run Script
-
-The main run script handles both setup and launching of Athena. It intelligently detects what needs to be done and handles it automatically.
-
-```bash
-# Run Athena (auto-setup + launch)
+# One-command setup and launch
 ./scripts/run.sh
-
-# Run different platforms
-./scripts/run.sh web      # Web version (default)
-./scripts/run.sh ios      # iOS (requires macOS + Xcode)
-./scripts/run.sh android  # Android (requires Android SDK)
-./scripts/run.sh expo     # Expo (currently not working)
-
-# Force setup only (without running)
-./scripts/run.sh setup
-
-# Show help
-./scripts/run.sh help
 ```
 
-The script will automatically:
-- 🔍 Detect if setup is needed
-- 🔧 Install all dependencies
-- 🔄 Check for updates
-- 🚀 Build and launch the application
+The intelligent setup script automatically:
+- 🔍 Detects if first-time setup is needed
+- 📦 Installs all dependencies
+- 🔧 Configures environment files
+- 🚀 Builds and launches the application
+- ✅ Verifies the setup
 
-### API Key Validation Script
+### 2. Configure API Keys
 
-The API key validation script checks if your API keys for OpenAI, Claude, and DeepSeek are valid. It makes test requests to each API and provides a summary of the results.
+Edit the auto-generated `.env` file:
 
 ```bash
-# Run the API key validation script
-node scripts/check-api-keys.js
+# Athena/.env
+OPENAI_API_KEY=your_openai_key_here
+CLAUDE_API_KEY=your_claude_key_here
+DEEPSEEK_API_KEY=your_deepseek_key_here
+
+# Optional: Enable enterprise features
+REDIS_ENABLED=true
+APM_ENABLED=true
+FEATURE_ENABLESTREAMINGANALYSIS=true
 ```
 
-This script will:
-1. Check if your API keys are present in the `.env` file
-2. Validate each API key by making a test request
-3. Allow you to update invalid or missing API keys
-4. Provide a summary of which AI models you can use
-
-## Database Setup
-
-Athena uses PostgreSQL for persistent storage of container configurations, monitoring data, and analysis results. You can set up the database using Docker Compose or connect to an existing PostgreSQL server.
-
-### Using Docker Compose (Recommended)
-
-The easiest way to set up the PostgreSQL database is using Docker Compose:
+### 3. Launch Application
 
 ```bash
-# Make the setup script executable
-chmod +x Athena/scripts/setup-db.sh
+# Web version (default)
+./scripts/run.sh web
 
-# Run the setup script
-./Athena/scripts/setup-db.sh
+# Alternative platforms
+./scripts/run.sh ios      # iOS simulator
+./scripts/run.sh android  # Android emulator
 ```
 
-This script will:
-1. Check if Docker and Docker Compose are installed
-2. Create a `.env` file from `.env.example` if it doesn't exist
-3. Start the PostgreSQL and pgAdmin containers
-4. Create the database
-5. Initialize the database schema
-6. Run a test to verify the setup
-7. Display connection information
+## Configuration
 
-You can also manually start the database containers:
+### Environment Configuration
+
+```mermaid
+graph TB
+    subgraph "Configuration Sources"
+        ENV[.env File]
+        Runtime[Runtime Config]
+        Features[Feature Flags]
+    end
+    
+    subgraph "Service Configuration"
+        AI[AI Providers]
+        Cache[Caching]
+        Monitor[Monitoring]
+        Security[Security]
+    end
+    
+    ENV --> AI
+    ENV --> Cache
+    ENV --> Monitor
+    
+    Runtime --> Features
+    Features --> AI
+    Features --> Cache
+    Features --> Monitor
+```
+
+### Key Configuration Options
 
 ```bash
+# AI Provider Configuration
+OPENAI_API_KEY=sk-...
+CLAUDE_API_KEY=sk-ant-...
+DEEPSEEK_API_KEY=...
+
+# Redis Cache (Optional)
+REDIS_ENABLED=true
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# APM Monitoring (Optional)
+APM_ENABLED=true
+APM_PROVIDER=console  # or statsd, datadog
+APM_ENDPOINT=localhost:8125
+
+# Feature Flags
+FEATURE_ENABLECIRCUITBREAKER=true
+FEATURE_ENABLEBULKHEAD=true
+FEATURE_ENABLESTREAMINGANALYSIS=true
+FEATURE_AIPROVIDERPRIORITY=claude,openai,deepseek
+```
+
+### Database Setup (Optional)
+
+For persistent storage and container monitoring:
+
+```bash
+# Using Docker Compose (recommended)
 cd Athena
 docker-compose up -d
-```
 
-This will start:
-- A PostgreSQL container with the configuration from your `.env` file
-- A pgAdmin container for database management
-
-You can access pgAdmin at http://localhost:5050 (or the port specified in your `.env` file) with the credentials from your `.env` file.
-
-### Using an Existing PostgreSQL Server
-
-If you already have PostgreSQL installed or prefer not to use Docker:
-
-1. Update your `.env` file with your PostgreSQL connection details:
-
-```
-DB_HOST=your_postgres_host
-DB_PORT=your_postgres_port
-DB_NAME=athena_db
-DB_USER=your_postgres_user
-DB_PASSWORD=your_postgres_password
-```
-
-2. Create and initialize the database:
-
-```bash
-# Create the database
-npm run db:create
-
-# Initialize the database schema
-npm run init-db
-```
-
-### Verifying the Database Setup
-
-To verify that the database is set up correctly:
-
-```bash
-# Run the database test script
+# Initialize database
+npm run db:init
 npm run db:test
 ```
 
-This script will:
-- Initialize the database
-- Create container configurations for Windows, Linux, and macOS
-- Create container instances for each OS
-- Retrieve and display all container configurations and instances
+### Redis Setup (Optional)
+
+For distributed caching across instances:
+
+```bash
+# Using Docker
+docker run -d \
+  --name athena-redis \
+  -p 6379:6379 \
+  redis:alpine
+
+# Verify connection
+docker exec athena-redis redis-cli ping
+# Should return: PONG
+```
+
+## Running Your First Analysis
+
+### Step-by-Step Analysis Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant FileUploader
+    participant AISelector
+    participant Analysis
+    participant Results
+    
+    User->>UI: Open Athena
+    UI->>User: Display Home Screen
+    
+    User->>FileUploader: Upload malware sample
+    FileUploader->>UI: Show uploaded file
+    
+    User->>AISelector: Select AI provider
+    AISelector->>UI: Show selected model
+    
+    User->>Analysis: Click Analyze
+    Analysis->>Analysis: Check cache
+    Analysis->>Analysis: Run analysis
+    Analysis->>Results: Display results
+    
+    Results->>User: Show deobfuscated code
+    Results->>User: Show vulnerabilities
+    Results->>User: Show analysis report
+```
+
+### 1. Upload a File
+
+Navigate to the home screen and upload a file:
+
+```typescript
+// Supported file types
+const ALLOWED_EXTENSIONS = [
+  '.exe', '.dll', '.js', '.py', '.sh', 
+  '.bat', '.ps1', '.vbs', '.jar', '.apk'
+];
+```
+
+### 2. Select AI Model
+
+Choose from available providers:
+
+```mermaid
+graph LR
+    subgraph "AI Providers"
+        Claude[Claude 3<br/>Best for complex analysis]
+        OpenAI[GPT-4<br/>Good general purpose]
+        DeepSeek[DeepSeek<br/>Fast and efficient]
+    end
+    
+    subgraph "Selection Factors"
+        Complexity[Code Complexity]
+        Speed[Speed Requirements]
+        Cost[Cost Considerations]
+    end
+    
+    Complexity --> Claude
+    Speed --> DeepSeek
+    Cost --> OpenAI
+```
+
+### 3. Configure Analysis Options
+
+- **Enable Container Isolation**: Run in secure environment
+- **Enable Streaming**: Get real-time results
+- **Select Analysis Type**: Deobfuscation or vulnerability scan
+
+### 4. View Results
+
+Results are displayed in three tabs:
+
+1. **Deobfuscated Code**: Cleaned, readable version
+2. **Analysis Report**: Detailed behavioral analysis
+3. **Vulnerabilities**: Security issues with severity ratings
+
+## Advanced Features
+
+### Streaming Analysis
+
+Enable real-time streaming for immediate feedback:
+
+```typescript
+// Enable in analysis options
+const options = {
+  streaming: true,
+  onChunk: (chunk) => {
+    updateUI(chunk); // Real-time updates
+  }
+};
+```
+
+### Container Isolation
+
+Run analysis in isolated environments:
+
+```mermaid
+graph TB
+    subgraph "Container Options"
+        Windows[Windows Container]
+        Linux[Linux Container]
+        macOS[macOS Container]
+    end
+    
+    subgraph "Resource Limits"
+        CPU[CPU: 2-8 cores]
+        Memory[RAM: 2-16 GB]
+        Time[Timeout: 5 min]
+    end
+    
+    subgraph "Security"
+        Network[Network Isolation]
+        FileSystem[FS Isolation]
+        Process[Process Monitoring]
+    end
+```
+
+### Performance Monitoring
+
+View real-time metrics:
+
+```mermaid
+graph LR
+    subgraph "Metrics Dashboard"
+        Response[Response Time]
+        Cache[Cache Hit Rate]
+        Circuit[Circuit Status]
+        Errors[Error Rate]
+    end
+    
+    subgraph "Thresholds"
+        RT[< 3s P95]
+        CHR[> 80%]
+        CS[Closed/Open]
+        ER[< 0.1%]
+    end
+    
+    Response --> RT
+    Cache --> CHR
+    Circuit --> CS
+    Errors --> ER
+```
+
+### Feature Flags
+
+Runtime configuration without redeployment:
+
+```typescript
+// Check feature status
+if (featureFlags.isEnabled('enableStreamingAnalysis')) {
+  // Use streaming
+}
+
+// Development mode: Override features
+featureFlags.setOverride('enableRedisCache', true);
+```
+
+## Architecture Overview
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph "Frontend"
+        UI[React Native UI]
+        Store[Zustand Store]
+    end
+    
+    subgraph "Gateway Layer"
+        API[API Gateway]
+        MW[Middleware Stack]
+    end
+    
+    subgraph "Service Layer"
+        AIManager[AI Manager]
+        Cache[Cache Manager]
+        Container[Container Service]
+    end
+    
+    subgraph "Resilience Layer"
+        CB[Circuit Breakers]
+        BH[Bulkheads]
+        Pool[Resource Pools]
+    end
+    
+    subgraph "External Services"
+        Claude[Claude API]
+        OpenAI[OpenAI API]
+        Redis[Redis Cache]
+        DB[(PostgreSQL)]
+    end
+    
+    UI --> Store
+    Store --> API
+    API --> MW
+    MW --> AIManager
+    
+    AIManager --> CB
+    CB --> BH
+    BH --> Pool
+    
+    Pool --> Claude
+    Pool --> OpenAI
+    
+    Cache --> Redis
+    Container --> DB
+```
+
+### Request Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant CircuitBreaker
+    participant Cache
+    participant AIProvider
+    
+    Client->>Gateway: POST /analyze
+    Gateway->>Cache: Check cache
+    
+    alt Cache Hit
+        Cache-->>Gateway: Cached result
+        Gateway-->>Client: Return result
+    else Cache Miss
+        Gateway->>CircuitBreaker: Check circuit
+        
+        alt Circuit Closed
+            CircuitBreaker->>AIProvider: Analyze
+            AIProvider-->>CircuitBreaker: Result
+            CircuitBreaker->>Cache: Store
+            CircuitBreaker-->>Gateway: Result
+            Gateway-->>Client: Return result
+        else Circuit Open
+            CircuitBreaker-->>Gateway: Fallback
+            Gateway-->>Client: Cached/degraded result
+        end
+    end
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### API Key Issues
+```bash
+# Validate API keys
+node scripts/check-api-keys.js
+
+# Check specific provider
+curl -H "Authorization: Bearer $CLAUDE_API_KEY" \
+  https://api.anthropic.com/v1/messages
+```
+
+#### Redis Connection Issues
+```bash
+# Check Redis connection
+redis-cli ping
+
+# Test cache functionality
+npm run test:redis-cache
+```
+
+#### Performance Issues
+```bash
+# Run load tests
+npm run load-test
+
+# Check circuit breaker status
+curl http://localhost:3000/health/circuit-breakers
+```
+
+### Debug Mode
+
+Enable detailed logging:
+
+```bash
+# Set debug environment
+export NODE_ENV=development
+export LOG_LEVEL=debug
+
+# Run with verbose output
+npm run dev -- --verbose
+```
+
+### Health Checks
+
+Monitor system health:
+
+```bash
+# Overall health
+curl http://localhost:3000/health
+
+# Detailed status
+curl http://localhost:3000/health/detailed
+```
 
 ## Next Steps
 
-Now that you've set up Athena and performed your first analysis, here are some next steps to explore:
+### 1. Production Deployment
 
-1. **Try Different AI Models**: Experiment with different AI models to see which ones work best for your specific use cases
-2. **Explore Container Isolation**: If you're analyzing potentially harmful files, set up and use the container isolation feature
-3. **Set Up Container Monitoring**: Configure the container monitoring system to track container activity during analysis
-4. **Integrate with Metasploit**: If you're using Metasploit for vulnerability research, configure the Metasploit integration
-5. **Learn More**: Check out the other documentation files to learn more about Athena's architecture and components:
-   - [Architecture Documentation](./ARCHITECTURE.md)
-   - [API Integration](./API_INTEGRATION.md)
-   - [Container Isolation](./CONTAINER_ISOLATION.md)
-   - [Database Setup](../Athena/docs/DATABASE_SETUP.md)
-   - [Container Monitoring](../Athena/docs/CONTAINER_MONITORING.md)
-   - [Font Configuration](./FONT_CONFIGURATION.md) - Guide for font setup and troubleshooting font-related issues
-   - [Troubleshooting Guide](./TROUBLESHOOTING.md) - Solutions to common issues and problems
-   - [Component Documentation](./components/)
+See [Deployment Guide](/docs/DEPLOYMENT.md) for:
+- Docker containerization
+- Kubernetes deployment
+- Load balancing setup
+- SSL/TLS configuration
+
+### 2. Advanced Configuration
+
+Explore:
+- [Feature Flags Guide](/docs/performance/FEATURE_FLAGS.md)
+- [Circuit Breaker Configuration](/docs/performance/ADAPTIVE_CIRCUIT_BREAKER.md)
+- [Redis Cache Tuning](/docs/performance/REDIS_CACHE_INTEGRATION.md)
+- [APM Integration](/docs/performance/APM_INTEGRATION.md)
+
+### 3. Development
+
+For contributors:
+- [Architecture Documentation](/docs/ARCHITECTURE.md)
+- [API Integration Guide](/docs/API_INTEGRATION.md)
+- [Testing Guide](/docs/testing/README.md)
+- [Contributing Guidelines](/CONTRIBUTING.md)
+
+### 4. Monitoring & Operations
+
+Set up production monitoring:
+- Configure APM provider (DataDog, New Relic)
+- Set up alerts for circuit breaker trips
+- Monitor cache hit rates
+- Track AI provider usage and costs
+
+## Support
+
+- **Documentation**: Check `/docs` folder
+- **Issues**: [GitHub Issues](https://github.com/yourusername/athena/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/athena/discussions)
+
+## Quick Reference
+
+### Essential Commands
+
+```bash
+# Setup and run
+./scripts/run.sh
+
+# Development
+npm run dev
+npm test
+npm run lint
+
+# Production
+npm run build
+npm run test:production
+
+# Database
+npm run db:init
+npm run db:migrate
+
+# Monitoring
+npm run monitor:start
+npm run load-test
+```
+
+### Configuration Reference
+
+```bash
+# Required
+OPENAI_API_KEY=...
+CLAUDE_API_KEY=...
+DEEPSEEK_API_KEY=...
+
+# Optional but recommended
+REDIS_ENABLED=true
+APM_ENABLED=true
+FEATURE_ENABLECIRCUITBREAKER=true
+FEATURE_ENABLESTREAMINGANALYSIS=true
+```
+
+Welcome to Athena - your enterprise-grade malware analysis platform!

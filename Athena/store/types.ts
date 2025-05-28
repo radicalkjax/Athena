@@ -1,15 +1,33 @@
 import { StateCreator } from 'zustand';
 import { AnalysisResult, AIModel, Container, MalwareFile } from '@/types';
 
+// Phase 7: Analysis progress type
+export interface AnalysisProgress {
+  progress: number;
+  stage: string;
+  message: string;
+  provider?: string;
+  timestamp: number;
+}
+
 // Analysis slice types
 export interface AnalysisSlice {
   isAnalyzing: boolean;
   analysisResults: AnalysisResult[];
   selectedResultId: string | null;
+  // Phase 7: Streaming support
+  currentProgress: AnalysisProgress | null;
+  progressHistory: AnalysisProgress[];
+  activeAnalysisId: string | null;
+  // Methods
   setIsAnalyzing: (isAnalyzing: boolean) => void;
   addAnalysisResult: (result: AnalysisResult) => void;
   selectAnalysisResult: (id: string | null) => void;
   clearAnalysisResults: () => void;
+  // Phase 7: Streaming methods
+  setAnalysisProgress: (progress: AnalysisProgress) => void;
+  startStreamingAnalysis: (analysisId: string) => void;
+  clearAnalysisProgress: () => void;
 }
 
 // AI Models slice types
