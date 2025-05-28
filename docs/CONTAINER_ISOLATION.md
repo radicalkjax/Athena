@@ -31,6 +31,27 @@ Athena's container isolation feature provides a secure, sandboxed environment fo
 ### Complete Container Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Athena Application Layer"
         UI[UI Components<br/>━━━━━━━━<br/>• Container Config<br/>• Resource Settings<br/>• OS Selection]
@@ -81,19 +102,40 @@ graph TB
     Container --> Linux
     Container --> macOS
     
-    style UI fill:#e1f5e1
-    style CS fill:#e1e5ff
-    style CB fill:#fff4e1
-    style BH fill:#fff4e1
-    style Docker fill:#e1e5ff
-    style Host fill:#ffe4e1
-    style Runtime fill:#ffe4e1
-    style Container fill:#ffe4e1
+    style UI fill:#e8f4d4
+    style CS fill:#6d105a
+    style CB fill:#f9d0c4
+    style BH fill:#f9d0c4
+    style Docker fill:#6d105a
+    style Host fill:#f9d0c4
+    style Runtime fill:#f9d0c4
+    style Container fill:#f9d0c4
 ```
 
 ### Container Service Integration
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant UI as UI Component
     participant Store as Container Store
@@ -134,6 +176,27 @@ sequenceDiagram
 ### Multi-Layer Security Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Layer 1: Host Security"
         HF[Host Firewall<br/>━━━━━━━━<br/>• iptables/nftables<br/>• Connection Tracking<br/>• Rate Limiting]
@@ -169,23 +232,44 @@ graph TB
     CG --> NP
     CAP --> NE
     
-    style HF fill:#ffe4e1
-    style HA fill:#ffe4e1
-    style HI fill:#ffe4e1
-    style DR fill:#fff4e1
-    style SE fill:#fff4e1
-    style SC fill:#fff4e1
-    style NS fill:#e1e5ff
-    style CG fill:#e1e5ff
-    style CAP fill:#e1e5ff
-    style RO fill:#e1f5e1
-    style NP fill:#e1f5e1
-    style NE fill:#e1f5e1
+    style HF fill:#f9d0c4
+    style HA fill:#f9d0c4
+    style HI fill:#f9d0c4
+    style DR fill:#f9d0c4
+    style SE fill:#f9d0c4
+    style SC fill:#f9d0c4
+    style NS fill:#6d105a
+    style CG fill:#6d105a
+    style CAP fill:#6d105a
+    style RO fill:#e8f4d4
+    style NP fill:#e8f4d4
+    style NE fill:#e8f4d4
 ```
 
 ### Security Implementation Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant App as Application
     participant Sec as Security Manager
@@ -283,6 +367,27 @@ dropped_capabilities:
 ### Windows Containers
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Windows Container Support"
         subgraph "x86 Architecture"
@@ -329,6 +434,27 @@ interface WindowsContainerConfig {
 ### Linux Containers
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Linux Container Support"
         subgraph "Distributions"
@@ -370,6 +496,27 @@ interface LinuxContainerConfig {
 ### macOS Containers
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "macOS Container Support"
         subgraph "Intel Architecture"
@@ -407,6 +554,27 @@ interface MacOSContainerConfig {
 ### Resource Management Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Resource Manager"
         RM[Resource Manager<br/>━━━━━━━━<br/>• Allocation Logic<br/>• Quota Enforcement<br/>• Priority Scheduling]
@@ -444,17 +612,38 @@ graph TB
     Network --> TC
     Memory --> NS
     
-    style RM fill:#e1e5ff
-    style CPU fill:#e1f5e1
-    style Memory fill:#e1f5e1
-    style Disk fill:#e1f5e1
-    style Network fill:#e1f5e1
-    style Cgroups fill:#fff4e1
+    style RM fill:#6d105a
+    style CPU fill:#e8f4d4
+    style Memory fill:#e8f4d4
+    style Disk fill:#e8f4d4
+    style Network fill:#e8f4d4
+    style Cgroups fill:#f9d0c4
 ```
 
 ### OS-Specific Resource Requirements
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Windows Requirements"
         WMin[Minimal<br/>━━━━━━━━<br/>🖥️ 1 CPU<br/>💾 2GB RAM<br/>💿 8GB Disk]
@@ -500,19 +689,40 @@ graph TB
     LInt --> UC4
     MInt --> UC4
     
-    style WMin fill:#e1f5e1
-    style WStd fill:#e1e5ff
-    style WPerf fill:#fff4e1
-    style WInt fill:#ffe4e1
-    style UC1 fill:#e1f5e1
-    style UC2 fill:#e1e5ff
-    style UC3 fill:#fff4e1
-    style UC4 fill:#ffe4e1
+    style WMin fill:#e8f4d4
+    style WStd fill:#6d105a
+    style WPerf fill:#f9d0c4
+    style WInt fill:#f9d0c4
+    style UC1 fill:#e8f4d4
+    style UC2 fill:#6d105a
+    style UC3 fill:#f9d0c4
+    style UC4 fill:#f9d0c4
 ```
 
 ### Resource Allocation Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant UI as UI Component
     participant Svc as Container Service
@@ -593,6 +803,27 @@ interface ResourceMetrics {
 ### Complete Lifecycle State Machine
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Pending: Create Request
     
@@ -673,19 +904,40 @@ stateDiagram-v2
     
     Failed --> Removing: Force Cleanup
     
-    style Pending fill:#fff4e1
-    style Creating fill:#e1e5ff
-    style Starting fill:#e1f5e1
-    style Running fill:#e1f5e1
-    style Stopping fill:#fff4e1
-    style Stopped fill:#e1e5ff
-    style Removing fill:#ffe4e1
-    style Failed fill:#ffe4e1
+    style Pending fill:#f9d0c4
+    style Creating fill:#6d105a
+    style Starting fill:#e8f4d4
+    style Running fill:#e8f4d4
+    style Stopping fill:#f9d0c4
+    style Stopped fill:#6d105a
+    style Removing fill:#f9d0c4
+    style Failed fill:#f9d0c4
 ```
 
 ### Detailed Lifecycle Management Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant UI as UI Component
     participant Store as Container Store
@@ -755,6 +1007,27 @@ sequenceDiagram
 ### Container Lifecycle Monitoring
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Lifecycle Metrics"
         CreateTime[Creation Time<br/>━━━━━━━━<br/>• Image Pull: 5s<br/>• Security: 2s<br/>• Total: 7s]
@@ -782,9 +1055,9 @@ graph TB
     Alerts --> Logs
     Recovery --> Metrics
     
-    style CreateTime fill:#e1f5e1
-    style Health fill:#e1e5ff
-    style Events fill:#fff4e1
+    style CreateTime fill:#e8f4d4
+    style Health fill:#6d105a
+    style Events fill:#f9d0c4
 ```
 
 ## Implementation Details
@@ -932,6 +1205,27 @@ class ContainerMonitor {
 ### Complete Monitoring Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Data Collection Layer"
         Hooks[System Hooks<br/>━━━━━━━━<br/>• Syscall Intercept<br/>• API Hooking<br/>• Kernel Events]
@@ -974,15 +1268,36 @@ graph TB
     
     API --> Reports
     
-    style Hooks fill:#e1f5e1
-    style Collector fill:#e1e5ff
-    style TSB fill:#fff4e1
-    style Dashboard fill:#e1f5e1
+    style Hooks fill:#e8f4d4
+    style Collector fill:#6d105a
+    style TSB fill:#f9d0c4
+    style Dashboard fill:#e8f4d4
 ```
 
 ### Real-time Monitoring Dashboard
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Monitor Dashboard"
         subgraph "System Metrics Panel"
@@ -1007,18 +1322,39 @@ graph TB
         end
     end
     
-    style CPU fill:#e1f5e1
-    style Memory fill:#e1f5e1
-    style Syscalls fill:#fff4e1
-    style Files fill:#fff4e1
-    style Status fill:#e1e5ff
-    style Alerts fill:#ffe4e1
-    style Score fill:#ffe4e1
+    style CPU fill:#e8f4d4
+    style Memory fill:#e8f4d4
+    style Syscalls fill:#f9d0c4
+    style Files fill:#f9d0c4
+    style Status fill:#6d105a
+    style Alerts fill:#f9d0c4
+    style Score fill:#f9d0c4
 ```
 
 ### Multi-Stage Analysis Pipeline
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Container as Container
     participant Monitor as Monitor Service
@@ -1088,6 +1424,27 @@ sequenceDiagram
 ### Event Collection and Processing
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Event Sources"
         Syscall[System Calls<br/>━━━━━━━━<br/>• open/read/write<br/>• socket/connect<br/>• exec/fork]
@@ -1133,10 +1490,10 @@ graph TB
     Alerts --> Storage
     Alerts --> Stream
     
-    style Syscall fill:#e1f5e1
-    style Queue fill:#e1e5ff
-    style Rules fill:#fff4e1
-    style Alerts fill:#ffe4e1
+    style Syscall fill:#e8f4d4
+    style Queue fill:#6d105a
+    style Rules fill:#f9d0c4
+    style Alerts fill:#f9d0c4
 ```
 
 ### Event Collection
@@ -1187,6 +1544,27 @@ class EventAggregator {
 ### Container Security Best Practices
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Design Principles"
         LP[Least Privilege<br/>━━━━━━━━<br/>• Minimal Permissions<br/>• Drop Capabilities<br/>• Non-root User]
@@ -1224,17 +1602,38 @@ graph TB
     Analyze --> Run
     Alert --> Destroy
     
-    style LP fill:#e1f5e1
-    style DID fill:#e1e5ff
-    style ZT fill:#fff4e1
-    style Create fill:#e1f5e1
-    style Run fill:#e1e5ff
-    style Destroy fill:#ffe4e1
+    style LP fill:#e8f4d4
+    style DID fill:#6d105a
+    style ZT fill:#f9d0c4
+    style Create fill:#e8f4d4
+    style Run fill:#6d105a
+    style Destroy fill:#f9d0c4
 ```
 
 ### Configuration Best Practices
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "OS Selection Guide"
         WinChoice[Windows Container<br/>━━━━━━━━<br/>✅ PE/EXE Analysis<br/>✅ Registry Activity<br/>✅ Windows APIs]
@@ -1266,11 +1665,11 @@ graph TB
     
     Always --> Never
     
-    style WinChoice fill:#e1e5ff
-    style LinuxChoice fill:#e1f5e1
-    style MacChoice fill:#fff4e1
-    style Always fill:#e1f5e1
-    style Never fill:#ffe4e1
+    style WinChoice fill:#6d105a
+    style LinuxChoice fill:#e8f4d4
+    style MacChoice fill:#f9d0c4
+    style Always fill:#e8f4d4
+    style Never fill:#f9d0c4
 ```
 
 ### Container Configuration Guidelines
@@ -1308,6 +1707,27 @@ graph TB
 ### Usage Recommendations
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Use Container Isolation For"
         A[Unknown Files]
@@ -1334,6 +1754,27 @@ graph TD
 ### Troubleshooting Decision Tree
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     Start[Container Issue<br/>━━━━━━━━<br/>🔴 Problem Detected]
     
@@ -1364,16 +1805,37 @@ graph TB
     CL1 -->|Resources| CLR[Resources Locked<br/>━━━━━━━━<br/>• Check Mounts<br/>• Clear Volumes<br/>• Release Ports]
     CL1 -->|Orphaned| CLO[Orphaned Items<br/>━━━━━━━━<br/>• Prune All<br/>• Clean Registry<br/>• Reset State]
     
-    style Start fill:#ffe4e1
-    style Creation fill:#fff4e1
-    style Runtime fill:#ffe4e1
-    style Performance fill:#fff4e1
-    style Cleanup fill:#e1e5ff
+    style Start fill:#f9d0c4
+    style Creation fill:#f9d0c4
+    style Runtime fill:#f9d0c4
+    style Performance fill:#f9d0c4
+    style Cleanup fill:#6d105a
 ```
 
 ### Common Issues and Solutions
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Creation Issues"
         CE1[Image Pull Failed<br/>━━━━━━━━<br/>🔍 Symptom: Cannot download<br/>⚡ Fix: Check registry access<br/>📝 docker pull test]
@@ -1399,19 +1861,40 @@ graph TB
         CL3[Zombie Processes<br/>━━━━━━━━<br/>🔍 Symptom: Defunct procs<br/>⚡ Fix: Init process<br/>📝 --init flag]
     end
     
-    style CE1 fill:#ffe4e1
-    style CE2 fill:#ffe4e1
-    style RE1 fill:#fff4e1
-    style RE2 fill:#fff4e1
-    style PE1 fill:#e1e5ff
-    style PE2 fill:#e1e5ff
-    style CL1 fill:#e1f5e1
-    style CL2 fill:#e1f5e1
+    style CE1 fill:#f9d0c4
+    style CE2 fill:#f9d0c4
+    style RE1 fill:#f9d0c4
+    style RE2 fill:#f9d0c4
+    style PE1 fill:#6d105a
+    style PE2 fill:#6d105a
+    style CL1 fill:#e8f4d4
+    style CL2 fill:#e8f4d4
 ```
 
 ### Diagnostic Workflow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant User
     participant CLI as Debug CLI

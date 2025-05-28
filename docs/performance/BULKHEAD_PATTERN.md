@@ -9,6 +9,27 @@ The Athena platform implements the Bulkhead pattern to provide fault isolation b
 ### System Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Client Requests"
         C1[Client 1]
@@ -60,18 +81,39 @@ graph TB
     B3 & B4 --> SVC3
     B5 & B6 --> SVC4
     
-    style BM fill:#e1e5ff
-    style B1 fill:#e1f5e1
-    style B2 fill:#e1f5e1
-    style B3 fill:#fff4e1
-    style B4 fill:#fff4e1
-    style B5 fill:#e1e5ff
-    style B6 fill:#e1e5ff
+    style BM fill:#6d105a
+    style B1 fill:#e8f4d4
+    style B2 fill:#e8f4d4
+    style B3 fill:#f9d0c4
+    style B4 fill:#f9d0c4
+    style B5 fill:#6d105a
+    style B6 fill:#6d105a
 ```
 
 ### Bulkhead Execution Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Client
     participant BulkheadManager
@@ -231,6 +273,27 @@ const result = await bulkheadManager.execute(
 ### Circuit Breaker + Bulkhead Integration
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Request[Incoming Request<br/>━━━━━━━━<br/>AI Analysis Task] --> CB{Circuit<br/>Breaker<br/>Open?}
     
@@ -255,12 +318,12 @@ flowchart TD
     HandleError --> CBUpdate[Update Circuit<br/>Breaker State]
     ReturnResult --> CBUpdate
     
-    style Request fill:#e1e5ff
-    style Fallback fill:#ffe4e1
-    style Rejected fill:#ffe4e1
-    style SemaphoreTimeout fill:#ffe4e1
-    style ReturnResult fill:#e1f5e1
-    style Execute fill:#fff4e1
+    style Request fill:#6d105a
+    style Fallback fill:#f9d0c4
+    style Rejected fill:#f9d0c4
+    style SemaphoreTimeout fill:#f9d0c4
+    style ReturnResult fill:#e8f4d4
+    style Execute fill:#f9d0c4
 ```
 
 The bulkhead pattern works in conjunction with circuit breakers:
@@ -285,6 +348,27 @@ const result = await circuitBreakerFactory.execute('ai.claude.analyze', async ()
 ### Bulkhead Health Dashboard
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Bulkhead Health Overview"
         subgraph "AI Services Health"
@@ -315,10 +399,10 @@ graph TB
         M4[Avg Wait: 2.3s]
     end
     
-    style AI2 fill:#fff4e1
-    style C1 fill:#ffe4e1
-    style DB2 fill:#fff4e1
-    style GS fill:#e1e5ff
+    style AI2 fill:#f9d0c4
+    style C1 fill:#6d105a
+    style DB2 fill:#f9d0c4
+    style GS fill:#6d105a
 ```
 
 ### Available Metrics

@@ -32,6 +32,27 @@ The FileUploader component is responsible for:
 8. Managing file storage and retrieval
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "FileUploader Component"
         A[FileUploader<br/>━━━━━━━━<br/>• File Management<br/>• Upload Interface<br/>• Selection Logic]
@@ -59,13 +80,13 @@ graph TD
     E --> F
     F --> G
     
-    style A fill:#e1e5ff
-    style B fill:#e1f5e1
-    style C fill:#e1f5e1
-    style D fill:#fff4e1
-    style E fill:#ffe4e1
-    style F fill:#e1e5ff
-    style G fill:#e1f5e1
+    style A fill:#6d105a
+    style B fill:#e8f4d4
+    style C fill:#e8f4d4
+    style D fill:#f9d0c4
+    style E fill:#f9d0c4
+    style F fill:#6d105a
+    style G fill:#e8f4d4
 ```
 
 ## Architecture
@@ -73,6 +94,27 @@ graph TD
 ### Component Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Component Layer"
         A[FileUploader<br/>━━━━━━━━<br/>• React Component<br/>• UI Rendering<br/>• Event Handling]
@@ -98,12 +140,12 @@ graph LR
     D --> E
     D --> F
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style D fill:#e1e5ff
-    style E fill:#ffe4e1
-    style F fill:#ffe4e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style D fill:#6d105a
+    style E fill:#f9d0c4
+    style F fill:#f9d0c4
 ```
 
 ## Upload State Machine
@@ -111,6 +153,27 @@ graph LR
 ### File Upload Lifecycle
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Idle: Component Mounted
     
@@ -169,6 +232,27 @@ stateDiagram-v2
 ### Validation Pipeline
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Start[File Input]
     
@@ -218,14 +302,14 @@ flowchart TD
     ReadHeader -->|Valid| Accept
     ReadHeader -->|Invalid| Reject
     
-    style Start fill:#e1e5ff
-    style Accept fill:#e1f5e1
-    style Reject fill:#ffe4e1
-    style AllowedTypes fill:#e1f5e1
-    style BlockedTypes fill:#ffe4e1
-    style SizeLimits fill:#fff4e1
-    style SecurityChecks fill:#ffe4e1
-    style ContentChecks fill:#e1e5ff
+    style Start fill:#6d105a
+    style Accept fill:#e8f4d4
+    style Reject fill:#f9d0c4
+    style AllowedTypes fill:#e8f4d4
+    style BlockedTypes fill:#f9d0c4
+    style SizeLimits fill:#f9d0c4
+    style SecurityChecks fill:#f9d0c4
+    style ContentChecks fill:#6d105a
 ```
 
 ## Drag and Drop Interaction
@@ -233,6 +317,27 @@ flowchart TD
 ### Drag and Drop Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant User
     participant DOM as DOM Events
@@ -285,6 +390,27 @@ sequenceDiagram
 ### Visual Drag States
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Normal State"
         A[Upload Area<br/>━━━━━━━━<br/>📁 Drop files here<br/>or click to browse]
@@ -308,10 +434,10 @@ graph TD
     B -->|Drag Leave| A
     D -->|Complete| A
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style D fill:#ffe4e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style D fill:#f9d0c4
 ```
 
 ## File Manager Integration
@@ -319,6 +445,27 @@ graph TD
 ### Service Integration Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "FileUploader Component"
         A[Component<br/>━━━━━━━━<br/>• UI Logic<br/>• Event Handlers<br/>• State Management]
@@ -350,13 +497,13 @@ graph TB
     E --> G
     F --> G
     
-    style A fill:#e1e5ff
-    style B fill:#e1f5e1
-    style C fill:#fff4e1
-    style D fill:#fff4e1
-    style E fill:#ffe4e1
-    style F fill:#ffe4e1
-    style G fill:#e1f5e1
+    style A fill:#6d105a
+    style B fill:#e8f4d4
+    style C fill:#f9d0c4
+    style D fill:#f9d0c4
+    style E fill:#f9d0c4
+    style F fill:#f9d0c4
+    style G fill:#e8f4d4
 ```
 
 ## Progress Tracking
@@ -364,6 +511,27 @@ graph TB
 ### Upload Progress Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant UI as User Interface
     participant Component as FileUploader
@@ -400,6 +568,27 @@ sequenceDiagram
 ### Progress UI States
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Initial State"
         A[Upload Button<br/>━━━━━━━━<br/>📤 Upload File<br/>Enabled: true]
@@ -422,10 +611,10 @@ graph LR
     C -->|Done| D
     D -->|Reset| A
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#fff4e1
-    style D fill:#e1f5e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#f9d0c4
+    style D fill:#e8f4d4
 ```
 
 ## Component Structure
@@ -433,6 +622,27 @@ graph LR
 ### Component Hierarchy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "FileUploader Root"
         A[FileUploader Component]
@@ -466,16 +676,16 @@ graph TD
     F --> I
     F --> J
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style D fill:#e1e5ff
-    style E fill:#e1e5ff
-    style F fill:#e1e5ff
-    style G fill:#fff4e1
-    style H fill:#e1f5e1
-    style I fill:#e1f5e1
-    style J fill:#ffe4e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style D fill:#6d105a
+    style E fill:#6d105a
+    style F fill:#6d105a
+    style G fill:#f9d0c4
+    style H fill:#e8f4d4
+    style I fill:#e8f4d4
+    style J fill:#f9d0c4
 ```
 
 ## Platform-Specific Implementations
@@ -483,6 +693,27 @@ graph TD
 ### Platform Detection and Routing
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Start[File Operation Request]
     
@@ -520,11 +751,11 @@ flowchart TD
     NativeAPI --> NativeStore
     NativeAPI --> NativeRead
     
-    style Start fill:#e1e5ff
-    style WebAPI fill:#fff4e1
-    style NativeAPI fill:#fff4e1
-    style WebStore fill:#e1f5e1
-    style NativeStore fill:#e1f5e1
+    style Start fill:#6d105a
+    style WebAPI fill:#f9d0c4
+    style NativeAPI fill:#f9d0c4
+    style WebStore fill:#e8f4d4
+    style NativeStore fill:#e8f4d4
 ```
 
 ## Rendering States
@@ -532,6 +763,27 @@ flowchart TD
 ### Visual Component States
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Loading State"
         A[LoadingView<br/>━━━━━━━━<br/>🔄 ActivityIndicator<br/>📝 "Loading files..."]
@@ -559,18 +811,39 @@ graph TD
     C --> E
     C --> F
     
-    style A fill:#fff4e1
-    style B fill:#e1e5ff
-    style C fill:#e1e5ff
-    style D fill:#e1f5e1
-    style E fill:#e1e5ff
-    style F fill:#fff4e1
-    style G fill:#ffe4e1
+    style A fill:#f9d0c4
+    style B fill:#6d105a
+    style C fill:#6d105a
+    style D fill:#e8f4d4
+    style E fill:#6d105a
+    style F fill:#f9d0c4
+    style G fill:#f9d0c4
 ```
 
 ### Mock UI Representation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "FileUploader UI"
         Header["<div style='background:#f9f9f9;padding:10px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between'>

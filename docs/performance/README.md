@@ -12,6 +12,27 @@ Athena includes enterprise-grade performance optimizations and resilience patter
 ## 📑 Performance Documentation Map
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Start([Performance Docs]) --> Patterns{What are you<br/>looking for?}
     
@@ -31,12 +52,12 @@ flowchart TD
     APM --> Impl
     FF --> Impl
     
-    style Start fill:#e1f5e1
-    style CB fill:#e1e5ff
-    style BH fill:#fff4e1
-    style Cache fill:#e1f5e1
-    style APM fill:#e1e5ff
-    style FF fill:#fff4e1
+    style Start fill:#e8f4d4
+    style CB fill:#6d105a
+    style BH fill:#f9d0c4
+    style Cache fill:#e8f4d4
+    style APM fill:#6d105a
+    style FF fill:#f9d0c4
 ```
 
 ## 📚 Documentation Guide

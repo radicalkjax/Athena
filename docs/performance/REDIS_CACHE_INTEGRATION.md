@@ -47,6 +47,27 @@ docker-compose up -d
 ### Cache Storage Hierarchy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Service[AI Service Call<br/>━━━━━━━━<br/>• Analysis request<br/>• Provider: Claude/OpenAI<br/>• File hash: abc123] --> CM[Cache Manager<br/>━━━━━━━━<br/>• Check cache<br/>• Route to storage<br/>• Handle fallback]
     
@@ -71,16 +92,37 @@ flowchart TD
     BothStorage --> Return
     LocalOnly --> Return
     
-    style Service fill:#e1e5ff
-    style Redis fill:#e1f5e1
-    style Local fill:#fff4e1
-    style Return fill:#e1f5e1
-    style Execute fill:#ffe4e1
+    style Service fill:#6d105a
+    style Redis fill:#e8f4d4
+    style Local fill:#f9d0c4
+    style Return fill:#e8f4d4
+    style Execute fill:#6d105a
 ```
 
 ### Redis Integration Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant App as Athena App
     participant CM as Cache Manager
@@ -197,6 +239,27 @@ console.log({
 ### Distributed Cache Benefits
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Without Redis Cache"
         U1[User 1] --> I1[Athena Instance 1]
@@ -228,13 +291,13 @@ graph TB
         Note2[Cache Hit ✓] -.-> I6
     end
     
-    style AI1 fill:#ffe4e1
-    style AI2 fill:#ffe4e1
-    style AI3 fill:#ffe4e1
-    style AI4 fill:#e1f5e1
-    style RC fill:#e1e5ff
-    style Note1 fill:#e1f5e1
-    style Note2 fill:#e1f5e1
+    style AI1 fill:#6d105a
+    style AI2 fill:#6d105a
+    style AI3 fill:#6d105a
+    style AI4 fill:#e8f4d4
+    style RC fill:#6d105a
+    style Note1 fill:#e8f4d4
+    style Note2 fill:#e8f4d4
 ```
 
 1. **Cross-Instance Sharing**: Multiple Athena instances share analysis results

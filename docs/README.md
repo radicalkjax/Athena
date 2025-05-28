@@ -7,6 +7,27 @@ Welcome to the comprehensive documentation for Athena, the AI-powered malware an
 **New to Athena? Start here:**
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart LR
     Start([New User]) --> Quick[📖 QUICKSTART.md<br/>━━━━━━━━<br/>Get running in<br/>2 minutes]
     
@@ -16,11 +37,11 @@ flowchart LR
     
     User --> Advanced[⚙️ Advanced Docs<br/>━━━━━━━━<br/>Architecture<br/>and development]
     
-    style Start fill:#e1f5e1
-    style Quick fill:#e1e5ff
-    style Setup fill:#fff4e1
-    style User fill:#e1f5e1
-    style Advanced fill:#e1e5ff
+    style Start fill:#e8f4d4
+    style Quick fill:#6d105a
+    style Setup fill:#f9d0c4
+    style User fill:#e8f4d4
+    style Advanced fill:#6d105a
 ```
 
 ## 📚 Documentation Map
@@ -78,6 +99,27 @@ flowchart LR
 
 ### 👨‍💻 **Developers**
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Dev[Developer] --> Arch[ARCHITECTURE.md<br/>System Overview]
     Dev --> API[API_INTEGRATION.md<br/>Integration Patterns]
@@ -87,14 +129,35 @@ flowchart TD
     API --> Perf[performance/<br/>Optimization]
     Test --> Trouble[TROUBLESHOOTING.md<br/>Debug Issues]
     
-    style Dev fill:#e1f5e1
-    style Arch fill:#e1e5ff
-    style API fill:#e1e5ff
-    style Test fill:#e1e5ff
+    style Dev fill:#e8f4d4
+    style Arch fill:#6d105a
+    style API fill:#6d105a
+    style Test fill:#6d105a
 ```
 
 ### 👨‍💼 **DevOps/Admins**
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Admin[DevOps/Admin] --> Setup[GETTING_STARTED.md<br/>System Setup]
     Admin --> Container[CONTAINER_ISOLATION.md<br/>Security Config]
@@ -104,23 +167,44 @@ flowchart TD
     Container --> Cache[REDIS_CACHE_INTEGRATION.md<br/>Caching]
     Perf --> Trouble[TROUBLESHOOTING.md<br/>Issues]
     
-    style Admin fill:#e1f5e1
-    style Setup fill:#fff4e1
-    style Container fill:#ffe4e1
-    style Perf fill:#e1e5ff
+    style Admin fill:#e8f4d4
+    style Setup fill:#f9d0c4
+    style Container fill:#6d105a
+    style Perf fill:#6d105a
 ```
 
 ### 👤 **End Users**
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     User[End User] --> Quick[QUICKSTART.md<br/>Quick Setup]
     Quick --> Guide[USER_GUIDE.md<br/>How to Use]
     Guide --> Trouble[TROUBLESHOOTING.md<br/>Common Issues]
     
-    style User fill:#e1f5e1
-    style Quick fill:#e1e5ff
-    style Guide fill:#e1f5e1
-    style Trouble fill:#fff4e1
+    style User fill:#e8f4d4
+    style Quick fill:#6d105a
+    style Guide fill:#e8f4d4
+    style Trouble fill:#f9d0c4
 ```
 
 ## 🎨 Documentation Legend
@@ -174,8 +258,10 @@ flowchart TD
 **Looking for specific topics?**
 - **API Keys**: [GETTING_STARTED.md](./GETTING_STARTED.md#configure-api-keys)
 - **Container Setup**: [CONTAINER_ISOLATION.md](./CONTAINER_ISOLATION.md)
+- **Dependency Issues**: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#dependency-issues)
 - **Error Messages**: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 - **Performance Issues**: [performance/](./performance/)
+- **React Navigation v7**: [modernization/REACT_NAVIGATION_V7_UPGRADE.md](./modernization/REACT_NAVIGATION_V7_UPGRADE.md)
 - **Testing**: [testing/](./testing/)
 - **UI Components**: [components/](./components/)
 

@@ -17,6 +17,27 @@ The component automatically refreshes the data at regular intervals to provide u
 ## Component Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Monitoring Component"
         CM[ContainerMonitoring<br/>━━━━━━━━<br/>• Auto-refresh<br/>• Activity Tracking<br/>• Real-time Updates]
@@ -47,19 +68,40 @@ graph TB
     CM -.-> CDB
     CM -.-> STORE
     
-    style CM fill:#e1e5ff
-    style RS fill:#e1f5e1
-    style SA fill:#ffe4e1
-    style NA fill:#fff4e1
-    style FA fill:#fff4e1
-    style PA fill:#fff4e1
-    style CDB fill:#e1e5ff
-    style STORE fill:#e1e5ff
+    style CM fill:#6d105a
+    style RS fill:#e8f4d4
+    style SA fill:#f9d0c4
+    style NA fill:#f9d0c4
+    style FA fill:#f9d0c4
+    style PA fill:#f9d0c4
+    style CDB fill:#6d105a
+    style STORE fill:#6d105a
 ```
 
 ## Data Flow and Refresh Cycle
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Component as ContainerMonitoring
     participant Timer as Refresh Timer
@@ -97,6 +139,27 @@ sequenceDiagram
 ## State Management
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Initializing: Component Mount
     
@@ -210,6 +273,27 @@ The component displays detailed information about processes:
 ## Mock UI Representation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Monitoring UI"
         Header["<b>Container ID: container-123</b><br/>━━━━━━━━━━━━━━━━━━━━━━━━<br/>🔄 Auto-refresh: Every 5s"]
@@ -231,17 +315,38 @@ graph TB
     Network --> Files
     Files --> Processes
     
-    style Header fill:#e1e5ff
-    style Resources fill:#e1f5e1
-    style Suspicious fill:#ffe4e1
-    style Network fill:#fff4e1
-    style Files fill:#fff4e1
-    style Processes fill:#fff4e1
+    style Header fill:#6d105a
+    style Resources fill:#e8f4d4
+    style Suspicious fill:#f9d0c4
+    style Network fill:#f9d0c4
+    style Files fill:#f9d0c4
+    style Processes fill:#f9d0c4
 ```
 
 ## Activity Detection Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TB
     subgraph "Activity Sources"
         NET[Network<br/>Connections]
@@ -282,16 +387,16 @@ flowchart TB
     SUSPICIOUS --> DETAIL
     SUSPICIOUS --> ALERT
     
-    style NET fill:#e1e5ff
-    style FILE fill:#e1e5ff
-    style PROC fill:#e1e5ff
-    style RULES fill:#fff4e1
-    style ANALYZE fill:#fff4e1
-    style NORMAL fill:#e1f5e1
-    style SUSPICIOUS fill:#ffe4e1
-    style SUMMARY fill:#e1e5ff
-    style DETAIL fill:#e1e5ff
-    style ALERT fill:#ffe4e1
+    style NET fill:#6d105a
+    style FILE fill:#6d105a
+    style PROC fill:#6d105a
+    style RULES fill:#f9d0c4
+    style ANALYZE fill:#f9d0c4
+    style NORMAL fill:#e8f4d4
+    style SUSPICIOUS fill:#f9d0c4
+    style SUMMARY fill:#6d105a
+    style DETAIL fill:#6d105a
+    style ALERT fill:#f9d0c4
 ```
 
 ## Integration with Monitoring System
@@ -307,6 +412,27 @@ The `ContainerMonitoring` component integrates with the container monitoring sys
 ## Data Structure Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Container DB Service"
         DB[(Container<br/>Database)]
@@ -336,13 +462,13 @@ graph LR
     S4 --> STATE
     S5 --> STATE
     
-    style DB fill:#e1e5ff
-    style S1 fill:#e1f5e1
-    style S2 fill:#ffe4e1
-    style S3 fill:#fff4e1
-    style S4 fill:#fff4e1
-    style S5 fill:#fff4e1
-    style STATE fill:#e1e5ff
+    style DB fill:#6d105a
+    style S1 fill:#e8f4d4
+    style S2 fill:#f9d0c4
+    style S3 fill:#f9d0c4
+    style S4 fill:#f9d0c4
+    style S5 fill:#f9d0c4
+    style STATE fill:#6d105a
 ```
 
 ## Styling
@@ -394,6 +520,27 @@ export default AnalysisResultScreen;
 ## Monitoring Data Types
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 classDiagram
     class MonitoringSummary {
         +string containerId

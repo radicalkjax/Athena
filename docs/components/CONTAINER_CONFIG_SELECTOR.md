@@ -5,6 +5,27 @@ The Container Configuration Selector is a UI component that allows users to sele
 ## Component Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Config Selector"
         CCS[ContainerConfigSelector<br/>━━━━━━━━<br/>• State Management<br/>• Config Updates<br/>• System Checks]
@@ -40,21 +61,42 @@ graph TB
     CCS -.-> CS
     CCS -.-> TOAST
     
-    style CCS fill:#e1e5ff
-    style OS fill:#e1f5e1
-    style ARCH fill:#e1f5e1
-    style VER fill:#e1f5e1
-    style DIST fill:#fff4e1
-    style PRESET fill:#e1f5e1
-    style CUSTOM fill:#fff4e1
-    style SUMMARY fill:#e1e5ff
-    style CS fill:#e1e5ff
-    style TOAST fill:#ffe4e1
+    style CCS fill:#6d105a
+    style OS fill:#e8f4d4
+    style ARCH fill:#e8f4d4
+    style VER fill:#e8f4d4
+    style DIST fill:#f9d0c4
+    style PRESET fill:#e8f4d4
+    style CUSTOM fill:#f9d0c4
+    style SUMMARY fill:#6d105a
+    style CS fill:#6d105a
+    style TOAST fill:#f9d0c4
 ```
 
 ## State Management Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Initialize: Component Mount
     
@@ -228,6 +270,27 @@ The component provides predefined resource presets that are OS-specific to ensur
 #### Windows Resource Presets
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     A[Windows Resource Presets] --> B[Minimal]
     A --> C[Standard]
@@ -269,6 +332,27 @@ graph TD
 #### Linux Resource Presets
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     A[Linux Resource Presets] --> B[Minimal]
     A --> C[Standard]
@@ -310,6 +394,27 @@ graph TD
 #### macOS Resource Presets
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     A[macOS Resource Presets] --> B[Minimal]
     A --> C[Standard]
@@ -353,6 +458,27 @@ Users can also select the "Custom" preset to manually configure each resource li
 ## Configuration Update Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant User
     participant CCS as ContainerConfigSelector
@@ -396,6 +522,27 @@ sequenceDiagram
 ## Mock UI Representation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Configuration UI"
         OS["<b>Operating System</b> ▼<br/>━━━━━━━━━━━━━━━━━━<br/>Windows"]
@@ -414,16 +561,37 @@ graph TB
     VER --> RES
     RES --> SUMMARY
     
-    style OS fill:#e1f5e1
-    style ARCH fill:#e1f5e1
-    style VER fill:#e1f5e1
-    style RES fill:#e1f5e1
-    style SUMMARY fill:#e1e5ff
+    style OS fill:#e8f4d4
+    style ARCH fill:#e8f4d4
+    style VER fill:#e8f4d4
+    style RES fill:#e8f4d4
+    style SUMMARY fill:#6d105a
 ```
 
 ## System Requirements Validation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart LR
     subgraph "Resource Configuration"
         CPU[CPU Cores]
@@ -456,16 +624,16 @@ flowchart LR
     
     WARN --> TOAST[Toast Notification<br/>━━━━━━━━<br/>Display specific<br/>resource warnings]
     
-    style CPU fill:#e1e5ff
-    style MEM fill:#e1e5ff
-    style DISK fill:#e1e5ff
-    style NET fill:#e1e5ff
-    style IO fill:#e1e5ff
-    style CHECK fill:#fff4e1
-    style COMPARE fill:#fff4e1
-    style PASS fill:#e1f5e1
-    style WARN fill:#ffe4e1
-    style TOAST fill:#ffe4e1
+    style CPU fill:#6d105a
+    style MEM fill:#6d105a
+    style DISK fill:#6d105a
+    style NET fill:#6d105a
+    style IO fill:#6d105a
+    style CHECK fill:#f9d0c4
+    style COMPARE fill:#f9d0c4
+    style PASS fill:#e8f4d4
+    style WARN fill:#f9d0c4
+    style TOAST fill:#f9d0c4
 ```
 
 ## Custom Resource Configuration
@@ -473,6 +641,27 @@ flowchart LR
 When "Custom" preset is selected, the component displays interactive sliders:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Custom Resource Controls"
         CPU["<b>CPU Cores: 2</b><br/>━━━━━━━━━━━━━━<br/>[----■----------] 0.5 → 8"]
@@ -491,16 +680,37 @@ graph TB
     DISK --> NET
     NET --> IO
     
-    style CPU fill:#fff4e1
-    style MEM fill:#fff4e1
-    style DISK fill:#fff4e1
-    style NET fill:#fff4e1
-    style IO fill:#fff4e1
+    style CPU fill:#f9d0c4
+    style MEM fill:#f9d0c4
+    style DISK fill:#f9d0c4
+    style NET fill:#f9d0c4
+    style IO fill:#f9d0c4
 ```
 
 ## Integration with Container Service
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "ContainerConfigSelector"
         SEL[Selector Component]
@@ -524,13 +734,13 @@ graph LR
         SEL --> |Resources Updated| CSR
     end
     
-    style SEL fill:#e1e5ff
-    style GWV fill:#e1f5e1
-    style GLV fill:#e1f5e1
-    style GMV fill:#e1f5e1
-    style GLD fill:#e1f5e1
-    style GRP fill:#fff4e1
-    style CSR fill:#ffe4e1
+    style SEL fill:#6d105a
+    style GWV fill:#e8f4d4
+    style GLV fill:#e8f4d4
+    style GMV fill:#e8f4d4
+    style GLD fill:#e8f4d4
+    style GRP fill:#f9d0c4
+    style CSR fill:#f9d0c4
 ```
 
 ## Modernization Benefits

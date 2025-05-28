@@ -28,6 +28,27 @@ The AIModelSelector component is responsible for:
 6. Supporting automatic failover and circuit breaker patterns
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "AIModelSelector Component"
         A[AIModelSelector<br/>━━━━━━━━<br/>• Model Loading<br/>• Selection UI<br/>• Error Handling]
@@ -51,11 +72,11 @@ graph TD
     A --> D
     D --> E
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style D fill:#ffe4e1
-    style E fill:#e1e5ff
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style D fill:#f9d0c4
+    style E fill:#6d105a
 ```
 
 ## Architecture
@@ -63,6 +84,27 @@ graph TD
 ### Component Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Component Layer"
         A[AIModelSelector<br/>━━━━━━━━<br/>• React Component<br/>• UI Rendering<br/>• Event Handling]
@@ -89,12 +131,12 @@ graph LR
     D --> E
     E --> F
     
-    style A fill:#e1e5ff
-    style B fill:#e1f5e1
-    style C fill:#e1f5e1
-    style D fill:#fff4e1
-    style E fill:#fff4e1
-    style F fill:#ffe4e1
+    style A fill:#6d105a
+    style B fill:#e8f4d4
+    style C fill:#e8f4d4
+    style D fill:#f9d0c4
+    style E fill:#f9d0c4
+    style F fill:#f9d0c4
 ```
 
 ## Component Structure
@@ -104,6 +146,27 @@ The AIModelSelector component is structured as follows:
 ### Component Lifecycle
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Mounting: Component Mount
     
@@ -151,6 +214,27 @@ stateDiagram-v2
 ### Component Hierarchy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "AIModelSelector Component"
         A[Component Root]
@@ -178,13 +262,13 @@ graph TD
         D -->|models exist| H
     end
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style E fill:#ffe4e1
-    style F fill:#ffe4e1
-    style G fill:#fff4e1
-    style H fill:#e1f5e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style E fill:#f9d0c4
+    style F fill:#f9d0c4
+    style G fill:#f9d0c4
+    style H fill:#e8f4d4
 ```
 
 ## State Management
@@ -192,6 +276,27 @@ graph TD
 ### State Flow Diagram
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Component as AIModelSelector
     participant Store as Zustand Store
@@ -240,6 +345,27 @@ sequenceDiagram
 ### Provider Health Monitoring
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "AI Manager Service"
         A[AI Manager<br/>━━━━━━━━<br/>• Provider Registry<br/>• Health Monitoring<br/>• Circuit Breakers]
@@ -271,12 +397,12 @@ graph TB
     F --> H
     G --> H
     
-    style B fill:#e1f5e1
-    style C fill:#fff4e1
-    style D fill:#e1f5e1
-    style E fill:#e1f5e1
-    style F fill:#fff4e1
-    style G fill:#e1f5e1
+    style B fill:#e8f4d4
+    style C fill:#f9d0c4
+    style D fill:#e8f4d4
+    style E fill:#e8f4d4
+    style F fill:#f9d0c4
+    style G fill:#e8f4d4
 ```
 
 ## Props and Events
@@ -284,6 +410,27 @@ graph TB
 ### Props Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Parent Component"
         A[Home Screen<br/>━━━━━━━━<br/>• Manages selection<br/>• Triggers analysis]
@@ -307,11 +454,11 @@ graph LR
     D --> E
     E -->|Notify| A
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style D fill:#e1f5e1
-    style E fill:#ffe4e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style D fill:#e8f4d4
+    style E fill:#f9d0c4
 ```
 
 ## Provider Selection Logic
@@ -319,6 +466,27 @@ graph LR
 ### Model Filtering Process
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Start[Start Model Loading]
     
@@ -374,14 +542,14 @@ flowchart TD
     
     Combine --> End
     
-    style Start fill:#e1e5ff
-    style EnvKeys fill:#e1f5e1
-    style ServiceKeys fill:#fff4e1
-    style AddOpenAI fill:#e1f5e1
-    style AddClaude fill:#e1f5e1
-    style AddDeepSeek fill:#e1f5e1
-    style ServiceFallback fill:#ffe4e1
-    style End fill:#e1e5ff
+    style Start fill:#6d105a
+    style EnvKeys fill:#e8f4d4
+    style ServiceKeys fill:#f9d0c4
+    style AddOpenAI fill:#e8f4d4
+    style AddClaude fill:#e8f4d4
+    style AddDeepSeek fill:#e8f4d4
+    style ServiceFallback fill:#f9d0c4
+    style End fill:#6d105a
 ```
 
 ## Rendering States
@@ -389,6 +557,27 @@ flowchart TD
 ### Visual Component States
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Loading State"
         A[LoadingView<br/>━━━━━━━━<br/>🔄 ActivityIndicator<br/>📝 "Loading AI models..."]
@@ -416,18 +605,39 @@ graph TD
     D --> F
     D --> G
     
-    style A fill:#fff4e1
-    style B fill:#ffe4e1
-    style C fill:#fff4e1
-    style D fill:#e1e5ff
-    style E fill:#e1f5e1
-    style F fill:#e1e5ff
-    style G fill:#e1e5ff
+    style A fill:#f9d0c4
+    style B fill:#f9d0c4
+    style C fill:#f9d0c4
+    style D fill:#6d105a
+    style E fill:#e8f4d4
+    style F fill:#6d105a
+    style G fill:#6d105a
 ```
 
 ### Mock UI Representation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "AIModelSelector UI"
         Header["<div style='background:#d76e8b;padding:10px;border-radius:8px 8px 0 0'>

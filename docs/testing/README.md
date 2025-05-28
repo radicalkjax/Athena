@@ -58,6 +58,27 @@ As of Phase 6 completion:
 ## Testing Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Test Types"
         UT[Unit Tests<br/>━━━━━━━━<br/>• Services<br/>• Utilities<br/>• Hooks]
@@ -96,20 +117,41 @@ graph TB
     CT --> UTILS
     IT --> UTILS
     
-    style UT fill:#e1f5e1
-    style CT fill:#e1e5ff
-    style IT fill:#fff4e1
-    style E2E fill:#ffe4e1
-    style JEST fill:#e1e5ff
-    style RTL fill:#e1e5ff
-    style MOCK fill:#fff4e1
-    style FIXTURES fill:#e1f5e1
-    style UTILS fill:#e1f5e1
+    style UT fill:#e8f4d4
+    style CT fill:#6d105a
+    style IT fill:#f9d0c4
+    style E2E fill:#6d105a
+    style JEST fill:#6d105a
+    style RTL fill:#6d105a
+    style MOCK fill:#f9d0c4
+    style FIXTURES fill:#e8f4d4
+    style UTILS fill:#e8f4d4
 ```
 
 ## Test Execution Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Dev as Developer
     participant NPM as NPM Scripts
@@ -144,6 +186,27 @@ sequenceDiagram
 ## Test Coverage Strategy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Coverage Targets"
         API[API Layer<br/>━━━━━━━━<br/>Target: 90%<br/>Current: 95%]
@@ -179,14 +242,14 @@ graph LR
     STORE --> FUNC
     STORE --> LINE
     
-    style API fill:#e1f5e1
-    style SERVICES fill:#e1f5e1
-    style COMPONENTS fill:#e1f5e1
-    style STORE fill:#e1f5e1
-    style STMT fill:#e1e5ff
-    style BRANCH fill:#e1e5ff
-    style FUNC fill:#e1e5ff
-    style LINE fill:#e1e5ff
+    style API fill:#e8f4d4
+    style SERVICES fill:#e8f4d4
+    style COMPONENTS fill:#e8f4d4
+    style STORE fill:#e8f4d4
+    style STMT fill:#6d105a
+    style BRANCH fill:#6d105a
+    style FUNC fill:#6d105a
+    style LINE fill:#6d105a
 ```
 
 ## Testing Philosophy
@@ -199,6 +262,27 @@ graph LR
 ## Mock Strategy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TB
     subgraph "Module Mocks"
         ENV[@env Module<br/>━━━━━━━━<br/>Environment vars]
@@ -238,14 +322,14 @@ flowchart TB
     DB_MOCK --> UNIT
     DB_MOCK --> INT
     
-    style ENV fill:#fff4e1
-    style EFS fill:#fff4e1
-    style ICON fill:#fff4e1
-    style DEVICE fill:#fff4e1
-    style API_MOCK fill:#e1e5ff
-    style STORE_MOCK fill:#e1e5ff
-    style DB_MOCK fill:#e1e5ff
-    style UNIT fill:#e1f5e1
-    style COMP fill:#e1f5e1
-    style INT fill:#e1f5e1
+    style ENV fill:#f9d0c4
+    style EFS fill:#f9d0c4
+    style ICON fill:#f9d0c4
+    style DEVICE fill:#f9d0c4
+    style API_MOCK fill:#6d105a
+    style STORE_MOCK fill:#6d105a
+    style DB_MOCK fill:#6d105a
+    style UNIT fill:#e8f4d4
+    style COMP fill:#e8f4d4
+    style INT fill:#e8f4d4
 ```

@@ -31,6 +31,27 @@ The AnalysisResults component is responsible for:
 8. Managing loading, error, and empty states
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "AnalysisResults Component"
         A[AnalysisResults<br/>━━━━━━━━<br/>• Results Display<br/>• Tab Management<br/>• Export Controls]
@@ -60,14 +81,14 @@ graph TD
     G --> A
     H --> A
     
-    style A fill:#e1e5ff
-    style B fill:#e1f5e1
-    style C fill:#fff4e1
-    style D fill:#e1f5e1
-    style E fill:#e1f5e1
-    style F fill:#ffe4e1
-    style G fill:#e1e5ff
-    style H fill:#e1e5ff
+    style A fill:#6d105a
+    style B fill:#e8f4d4
+    style C fill:#f9d0c4
+    style D fill:#e8f4d4
+    style E fill:#e8f4d4
+    style F fill:#f9d0c4
+    style G fill:#6d105a
+    style H fill:#6d105a
 ```
 
 ## Architecture
@@ -75,6 +96,27 @@ graph TD
 ### Component Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Component Layer"
         A[AnalysisResults<br/>━━━━━━━━<br/>• React Component<br/>• Tab Controller<br/>• Export Handler]
@@ -106,15 +148,15 @@ graph LR
     E --> I
     A --> H
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style D fill:#e1e5ff
-    style E fill:#e1f5e1
-    style F fill:#e1f5e1
-    style G fill:#ffe4e1
-    style H fill:#e1e5ff
-    style I fill:#e1e5ff
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style D fill:#6d105a
+    style E fill:#e8f4d4
+    style F fill:#e8f4d4
+    style G fill:#f9d0c4
+    style H fill:#6d105a
+    style I fill:#6d105a
 ```
 
 ## Results Rendering Architecture
@@ -122,6 +164,27 @@ graph LR
 ### Rendering Pipeline
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Start[Analysis Complete]
     
@@ -158,15 +221,15 @@ flowchart TD
     ReportRender --> Display
     VulnRender --> Display
     
-    style Start fill:#e1e5ff
-    style Parse fill:#fff4e1
-    style Transform fill:#e1f5e1
-    style Enhance fill:#e1e5ff
-    style TabNav fill:#e1e5ff
-    style CodeRender fill:#e1f5e1
-    style ReportRender fill:#e1f5e1
-    style VulnRender fill:#ffe4e1
-    style Display fill:#e1e5ff
+    style Start fill:#6d105a
+    style Parse fill:#f9d0c4
+    style Transform fill:#e8f4d4
+    style Enhance fill:#6d105a
+    style TabNav fill:#6d105a
+    style CodeRender fill:#e8f4d4
+    style ReportRender fill:#e8f4d4
+    style VulnRender fill:#f9d0c4
+    style Display fill:#6d105a
 ```
 
 ## Tab Management Flow
@@ -174,6 +237,27 @@ flowchart TD
 ### Tab State Machine
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> CodeTab: Initial Load
     
@@ -214,6 +298,27 @@ stateDiagram-v2
 ### Tab Navigation UI
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Tab Bar"
         A[Code Tab<br/>━━━━━━━━<br/>📄 Icon<br/>Count: 1250 lines<br/>Active: ✓]
@@ -230,11 +335,11 @@ graph LR
     B --> E
     C --> E
     
-    style A fill:#e1f5e1
-    style B fill:#e1e5ff
-    style C fill:#e1e5ff
-    style D fill:#e1f5e1
-    style E fill:#fff4e1
+    style A fill:#e8f4d4
+    style B fill:#6d105a
+    style C fill:#6d105a
+    style D fill:#e8f4d4
+    style E fill:#f9d0c4
 ```
 
 ## Data Transformation Pipeline
@@ -242,6 +347,27 @@ graph LR
 ### Analysis Data Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant API as Analysis API
     participant Transform as Data Transformer
@@ -283,6 +409,27 @@ sequenceDiagram
 ### Export Pipeline
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart LR
     subgraph "Export Triggers"
         A[Export Button<br/>━━━━━━━━<br/>• PDF Export<br/>• JSON Export<br/>• Copy Code]
@@ -313,14 +460,14 @@ flowchart LR
     E --> G
     F --> H
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1f5e1
-    style D fill:#e1e5ff
-    style E fill:#e1e5ff
-    style F fill:#e1e5ff
-    style G fill:#e1f5e1
-    style H fill:#e1f5e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#e8f4d4
+    style D fill:#6d105a
+    style E fill:#6d105a
+    style F fill:#6d105a
+    style G fill:#e8f4d4
+    style H fill:#e8f4d4
 ```
 
 ## Streaming Updates
@@ -328,6 +475,27 @@ flowchart LR
 ### Real-time Update Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Stream as Streaming Manager
     participant Component as AnalysisResults
@@ -365,6 +533,27 @@ sequenceDiagram
 ### Progress Visualization
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Streaming Progress"
         A[Initial State<br/>━━━━━━━━<br/>0% Complete<br/>⏳ Starting...]
@@ -383,11 +572,11 @@ graph TD
     C -->|Stream Update| D
     D -->|Stream Complete| E
     
-    style A fill:#fff4e1
-    style B fill:#fff4e1
-    style C fill:#fff4e1
-    style D fill:#fff4e1
-    style E fill:#e1f5e1
+    style A fill:#f9d0c4
+    style B fill:#f9d0c4
+    style C fill:#f9d0c4
+    style D fill:#f9d0c4
+    style E fill:#e8f4d4
 ```
 
 ## Rendering States
@@ -395,6 +584,27 @@ graph TD
 ### Visual Component States
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Loading State"
         A[LoadingView<br/>━━━━━━━━<br/>🔄 ActivityIndicator<br/>📝 "Analyzing malware..."<br/>📊 Progress indicator]
@@ -419,17 +629,38 @@ graph TD
     D --> E
     E --> F
     
-    style A fill:#fff4e1
-    style B fill:#e1e5ff
-    style C fill:#ffe4e1
-    style D fill:#e1e5ff
-    style E fill:#e1e5ff
-    style F fill:#e1f5e1
+    style A fill:#f9d0c4
+    style B fill:#6d105a
+    style C fill:#f9d0c4
+    style D fill:#6d105a
+    style E fill:#6d105a
+    style F fill:#e8f4d4
 ```
 
 ### Mock UI Representation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "AnalysisResults UI - Code Tab"
         Header1["<div style='background:#f9f9f9;padding:10px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between'>
@@ -499,6 +730,27 @@ graph TD
 ### Component Hierarchy
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "AnalysisResults Component"
         A[Root Component<br/>━━━━━━━━<br/>• Props Handler<br/>• State Manager<br/>• Export Logic]
@@ -532,16 +784,16 @@ graph TD
     G --> I
     G --> J
     
-    style A fill:#e1e5ff
-    style B fill:#fff4e1
-    style C fill:#e1e5ff
-    style D fill:#ffe4e1
-    style E fill:#e1e5ff
-    style F fill:#e1e5ff
-    style G fill:#e1f5e1
-    style H fill:#e1f5e1
-    style I fill:#e1f5e1
-    style J fill:#ffe4e1
+    style A fill:#6d105a
+    style B fill:#f9d0c4
+    style C fill:#6d105a
+    style D fill:#f9d0c4
+    style E fill:#6d105a
+    style F fill:#6d105a
+    style G fill:#e8f4d4
+    style H fill:#e8f4d4
+    style I fill:#e8f4d4
+    style J fill:#f9d0c4
 ```
 
 ## Props

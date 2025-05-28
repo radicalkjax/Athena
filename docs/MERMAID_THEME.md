@@ -2,14 +2,14 @@
 
 ## Color Palette
 
-Based on the Athena brand colors:
+Based on the research blog's readable mermaid diagram colors:
 
-- **Dusty Rose** - #C86681 (RGB: 200, 102, 129) - Primary accent
-- **Soft Blush** - #E8A6BA (RGB: 232, 166, 186) - Light backgrounds
-- **Warm Tan** - #D58C61 (RGB: 213, 140, 97) - Secondary accent
-- **Deep Chocolate** - #3E231A (RGB: 62, 35, 26) - Text and borders
-- **Golden Amber** - #F6BD6B (RGB: 246, 189, 107) - Highlights
-- **Muted Plum** - #B65E71 (RGB: 182, 94, 113) - Alternative accent
+- **Deep Purple** - #6d105a - Primary nodes with excellent contrast
+- **Light Green** - #e8f4d4 - Secondary/agent components  
+- **Light Peach** - #f9d0c4 - Tertiary/environment components
+- **White** - #ffffff - Text on dark backgrounds
+- **Dark Gray** - #333333 - Text on light backgrounds and borders
+- **Pure White** - #fff - Borders on dark elements
 
 ## Mermaid Theme Configuration
 
@@ -19,29 +19,25 @@ Add this configuration to the beginning of each mermaid diagram:
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'primaryBorderColor': '#C86681',
-    'secondaryBorderColor': '#B65E71',
-    'tertiaryBorderColor': '#D58C61',
-    'primaryTextColor': '#3E231A',
-    'secondaryTextColor': '#3E231A',
-    'tertiaryTextColor': '#3E231A',
-    'lineColor': '#B65E71',
-    'textColor': '#3E231A',
-    'mainContrastColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'mainContrastColor': '#ffffff',
     'darkMode': false,
     'fontFamily': 'Arial, sans-serif',
-    'fontSize': '16px',
-    'THEME_COLOR_LIMIT': '12'
+    'fontSize': '16px'
   }
 }}%%
 ```

@@ -31,6 +31,27 @@ Athena's API integration layer provides a robust solution for handling Cross-Ori
 ### Complete CORS Handling Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Client Applications"
         Browser[Web Browser<br/>━━━━━━━━<br/>• React App<br/>• Same-Origin Policy<br/>• CORS Restrictions]
@@ -80,15 +101,36 @@ graph TB
     Gateway --> DeepSeek
     Gateway --> Local
     
-    style Browser fill:#e1e5ff
-    style Proxy fill:#fff4e1
-    style Gateway fill:#e1f5e1
-    style ErrorHandler fill:#ffe4e1
+    style Browser fill:#6d105a
+    style Proxy fill:#f9d0c4
+    style Gateway fill:#e8f4d4
+    style ErrorHandler fill:#f9d0c4
 ```
 
 ### Detailed Request Flow with CORS Handling
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Client as Client App
     participant Env as Environment Detector
@@ -168,6 +210,27 @@ sequenceDiagram
 ### Understanding the CORS Problem
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Browser Security Model"
         Browser[Web Browser<br/>━━━━━━━━<br/>🌐 Origin: localhost:19006<br/>🔒 Same-Origin Policy<br/>⚠️ CORS Enforcement]
@@ -198,15 +261,36 @@ graph TB
     
     Preflight --> Headers
     
-    style Browser fill:#e1e5ff
-    style Same1 fill:#e1f5e1
-    style Diff1 fill:#ffe4e1
-    style Headers fill:#fff4e1
+    style Browser fill:#6d105a
+    style Same1 fill:#e8f4d4
+    style Diff1 fill:#f9d0c4
+    style Headers fill:#f9d0c4
 ```
 
 ### CORS Error Manifestation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant App as React App
     participant Browser
@@ -237,6 +321,27 @@ sequenceDiagram
 ### Our Multi-Layer Solution Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Layer 1: Detection"
         Detect[Environment Detection<br/>━━━━━━━━<br/>• Platform Check<br/>• Dev/Prod Mode<br/>• CORS Risk Assessment]
@@ -268,15 +373,36 @@ graph TB
     HeaderTrans --> CORSDetect
     CORSDetect --> Recovery
     
-    style Detect fill:#e1e5ff
-    style DevRoute fill:#fff4e1
-    style URLTrans fill:#e1f5e1
-    style CORSDetect fill:#ffe4e1
+    style Detect fill:#6d105a
+    style DevRoute fill:#f9d0c4
+    style URLTrans fill:#e8f4d4
+    style CORSDetect fill:#f9d0c4
 ```
 
 ### Development Proxy Configuration
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Webpack Dev Server"
         Config[Proxy Configuration<br/>━━━━━━━━<br/>📁 webpack.config.js<br/>🔧 devServer.proxy<br/>🌐 Port: 19006]
@@ -308,9 +434,9 @@ graph TB
     Intercept --> Transform
     Transform --> Forward
     
-    style Config fill:#e1e5ff
-    style Intercept fill:#fff4e1
-    style Transform fill:#e1f5e1
+    style Config fill:#6d105a
+    style Intercept fill:#f9d0c4
+    style Transform fill:#e8f4d4
 ```
 
 #### 2. Environment-Aware Routing
@@ -331,6 +457,27 @@ const getBaseURL = (provider: string, env: Environment): string => {
 #### 3. Intelligent Error Handling
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Request
     Request --> Success: 200 OK
@@ -484,6 +631,27 @@ npm run dev
 ### Verify Proxy Configuration
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Console Output"
         Start[npm run dev]
@@ -529,6 +697,27 @@ ENABLE_PROXY=auto  # auto, true, false
 ### Environment Configuration Matrix
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Development Environment"
         DevWeb[Web Development<br/>━━━━━━━━<br/>🌐 localhost:19006<br/>🔧 Webpack DevServer<br/>✅ Proxy Enabled]
@@ -562,17 +751,38 @@ graph TB
     StageMobile --> DirectConfig
     ProdMobile --> DirectConfig
     
-    style DevWeb fill:#e1f5e1
-    style StageWeb fill:#fff4e1
-    style ProdWeb fill:#e1e5ff
-    style ProxyConfig fill:#e1f5e1
-    style GatewayConfig fill:#fff4e1
-    style DirectConfig fill:#e1e5ff
+    style DevWeb fill:#e8f4d4
+    style StageWeb fill:#f9d0c4
+    style ProdWeb fill:#6d105a
+    style ProxyConfig fill:#e8f4d4
+    style GatewayConfig fill:#f9d0c4
+    style DirectConfig fill:#6d105a
 ```
 
 ### Deployment Architecture by Platform
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Web Production Stack"
         CloudFront[CloudFront CDN<br/>━━━━━━━━<br/>• Global Edge<br/>• DDoS Protection<br/>• Cache Headers]
@@ -600,10 +810,10 @@ graph TB
     DirectAPI --> APIs
     DirectAPI --> OfflineCache
     
-    style CloudFront fill:#e1e5ff
-    style Gateway fill:#e1f5e1
-    style DirectAPI fill:#e1f5e1
-    style APIs fill:#fff4e1
+    style CloudFront fill:#6d105a
+    style Gateway fill:#e8f4d4
+    style DirectAPI fill:#e8f4d4
+    style APIs fill:#f9d0c4
 ```
 
 ### Configuration by Platform
@@ -637,6 +847,27 @@ const PLATFORM_CONFIG = {
 ### Comprehensive Error Handling Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Error Detection Layer"
         ErrorCapture[Error Capture<br/>━━━━━━━━<br/>• Try/Catch Blocks<br/>• Promise Rejection<br/>• Network Errors]
@@ -682,16 +913,37 @@ graph TB
     Strategy3 --> Toast
     Strategy4 --> Modal
     
-    style ErrorCapture fill:#e1e5ff
-    style Pattern1 fill:#ffe4e1
-    style Strategy1 fill:#e1f5e1
-    style Silent fill:#e1f5e1
-    style Modal fill:#fff4e1
+    style ErrorCapture fill:#6d105a
+    style Pattern1 fill:#f9d0c4
+    style Strategy1 fill:#e8f4d4
+    style Silent fill:#e8f4d4
+    style Modal fill:#f9d0c4
 ```
 
 ### CORS Error Response Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant User as User
     participant App as Application
@@ -755,6 +1007,27 @@ sequenceDiagram
 ### Error Recovery Strategy Matrix
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Error Conditions"
         E1[CORS Error<br/>━━━━━━━━<br/>🔴 Severity: High<br/>📊 Frequency: Common<br/>🌐 Web Only]
@@ -790,10 +1063,10 @@ graph TB
     A3 --> UX2
     A4 --> UX3
     
-    style E1 fill:#ffe4e1
-    style A1 fill:#e1f5e1
-    style UX1 fill:#e1f5e1
-    style UX4 fill:#fff4e1
+    style E1 fill:#f9d0c4
+    style A1 fill:#e8f4d4
+    style UX1 fill:#e8f4d4
+    style UX4 fill:#f9d0c4
 ```
 
 ### User-Friendly Error Messages
@@ -815,6 +1088,27 @@ const CORS_ERROR_MESSAGES = {
 ### Error Recovery Strategies
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     subgraph "Error Detection"
         Error[CORS Error]
@@ -851,6 +1145,27 @@ graph TD
 ### Comprehensive Monitoring Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Data Collection Layer"
         ReqInt[Request Interceptor<br/>━━━━━━━━<br/>• URL Capture<br/>• Header Logging<br/>• Timing Metrics]
@@ -891,15 +1206,36 @@ graph TB
     Thresholds --> Notifications
     Thresholds --> Actions
     
-    style ReqInt fill:#e1e5ff
-    style Aggregator fill:#e1f5e1
-    style Dashboard fill:#fff4e1
-    style Notifications fill:#ffe4e1
+    style ReqInt fill:#6d105a
+    style Aggregator fill:#e8f4d4
+    style Dashboard fill:#f9d0c4
+    style Notifications fill:#f9d0c4
 ```
 
 ### Real-time Health Monitoring Dashboard
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "API Health Dashboard"
         subgraph "Provider Status Panel"
@@ -922,17 +1258,38 @@ graph TB
         end
     end
     
-    style OpenAI fill:#e1f5e1
-    style Claude fill:#e1f5e1
-    style DeepSeek fill:#fff4e1
-    style CORSRate fill:#fff4e1
-    style Recovery fill:#e1f5e1
-    style ErrorTypes fill:#ffe4e1
+    style OpenAI fill:#e8f4d4
+    style Claude fill:#e8f4d4
+    style DeepSeek fill:#f9d0c4
+    style CORSRate fill:#f9d0c4
+    style Recovery fill:#e8f4d4
+    style ErrorTypes fill:#f9d0c4
 ```
 
 ### Debug Mode Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Dev as Developer
     participant Console as Browser Console
@@ -990,6 +1347,27 @@ sequenceDiagram
 ### Performance Metrics Collection
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Metric Types"
         Latency[Response Latency<br/>━━━━━━━━<br/>• Request Start<br/>• Response End<br/>• Total Duration]
@@ -1022,10 +1400,10 @@ graph TB
     RealTime --> Alerts
     Alerts --> Actions
     
-    style Latency fill:#e1e5ff
-    style Interceptors fill:#e1f5e1
-    style RealTime fill:#fff4e1
-    style Alerts fill:#ffe4e1
+    style Latency fill:#6d105a
+    style Interceptors fill:#e8f4d4
+    style RealTime fill:#f9d0c4
+    style Alerts fill:#f9d0c4
 ```
 
 ## Best Practices
@@ -1105,6 +1483,27 @@ const apiConfig = {
 ### CORS Troubleshooting Decision Tree
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     Start[CORS Issue Detected<br/>━━━━━━━━<br/>🔴 Error in Console]
     
@@ -1127,16 +1526,37 @@ graph TB
     P1 -->|Web| PW1[Check Gateway<br/>━━━━━━━━<br/>🌐 Gateway URL<br/>🔒 HTTPS only]
     P1 -->|Mobile| PM1[Direct Access<br/>━━━━━━━━<br/>📱 No CORS<br/>✅ Should work]
     
-    style Start fill:#ffe4e1
-    style DP1 fill:#e1f5e1
-    style DP2 fill:#e1f5e1
-    style DP3 fill:#fff4e1
-    style DP4 fill:#e1e5ff
+    style Start fill:#f9d0c4
+    style DP1 fill:#e8f4d4
+    style DP2 fill:#e8f4d4
+    style DP3 fill:#f9d0c4
+    style DP4 fill:#6d105a
 ```
 
 ### Common Issues Diagnosis and Solutions
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Issue 1: Proxy Not Working"
         I1[Symptom<br/>━━━━━━━━<br/>❌ CORS errors<br/>📝 Console shows<br/>blocked by CORS]
@@ -1167,19 +1587,40 @@ graph TB
     I3 --> C3 --> S3
     I4 --> C4 --> S4
     
-    style I1 fill:#ffe4e1
-    style I2 fill:#ffe4e1
-    style I3 fill:#fff4e1
-    style I4 fill:#fff4e1
-    style S1 fill:#e1f5e1
-    style S2 fill:#e1f5e1
-    style S3 fill:#e1f5e1
-    style S4 fill:#e1f5e1
+    style I1 fill:#f9d0c4
+    style I2 fill:#f9d0c4
+    style I3 fill:#f9d0c4
+    style I4 fill:#f9d0c4
+    style S1 fill:#e8f4d4
+    style S2 fill:#e8f4d4
+    style S3 fill:#e8f4d4
+    style S4 fill:#e8f4d4
 ```
 
 ### Debug Workflow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Dev as Developer
     participant Browser
@@ -1234,6 +1675,27 @@ sequenceDiagram
 ### Quick Fix Command Reference
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Terminal Commands"
         T1[Check Status<br/>━━━━━━━━<br/>📝 ps aux | grep webpack<br/>📝 lsof -i :19006<br/>📝 npm ls webpack]
@@ -1253,10 +1715,10 @@ graph TB
         C3[API Gateway<br/>━━━━━━━━<br/>📝 Check base URLs<br/>📝 Verify routing<br/>📝 Test endpoints]
     end
     
-    style T1 fill:#e1e5ff
-    style T2 fill:#e1f5e1
-    style B1 fill:#fff4e1
-    style C1 fill:#e1e5ff
+    style T1 fill:#6d105a
+    style T2 fill:#e8f4d4
+    style B1 fill:#f9d0c4
+    style C1 fill:#6d105a
 ```
 
 ### Debug Checklist

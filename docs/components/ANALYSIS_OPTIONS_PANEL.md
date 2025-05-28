@@ -5,6 +5,27 @@ The Analysis Options Panel is a UI component that allows users to configure vari
 ## Component Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Analysis Options Panel"
         AOP[AnalysisOptionsPanel<br/>━━━━━━━━<br/>• State Management<br/>• Option Updates<br/>• Change Callbacks]
@@ -33,18 +54,39 @@ graph TB
     SR -.-> DB
     DA -.-> AS
     
-    style AOP fill:#e1e5ff
-    style CC fill:#e1f5e1
-    style DA fill:#fff4e1
-    style SR fill:#e1f5e1
-    style CS fill:#e1e5ff
-    style DB fill:#e1e5ff
-    style AS fill:#e1e5ff
+    style AOP fill:#6d105a
+    style CC fill:#e8f4d4
+    style DA fill:#f9d0c4
+    style SR fill:#e8f4d4
+    style CS fill:#6d105a
+    style DB fill:#6d105a
+    style AS fill:#6d105a
 ```
 
 ## State Management Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Initialized: Component Mount
     
@@ -187,6 +229,27 @@ const DEFAULT_OPTIONS: AnalysisOptions = {
 ## Data Flow Diagram
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Parent as Parent Component
     participant AOP as AnalysisOptionsPanel
@@ -324,6 +387,27 @@ I/O Operations: ${options.containerConfig.resources?.ioOperations || 'Default'} 
 ## Mock UI Representation
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Analysis Options Panel UI"
         Header["<b>Container Configuration</b><br/>Malware is always analyzed in an isolated container<br/>environment for enhanced security"]
@@ -339,15 +423,36 @@ graph TB
     ContainerSection --> DeepAnalysis
     DeepAnalysis --> SaveResults
     
-    style Header fill:#e1e5ff
-    style ContainerSection fill:#e1f5e1
-    style DeepAnalysis fill:#fff4e1
-    style SaveResults fill:#e1f5e1
+    style Header fill:#6d105a
+    style ContainerSection fill:#e8f4d4
+    style DeepAnalysis fill:#f9d0c4
+    style SaveResults fill:#e8f4d4
 ```
 
 ## Option Update Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart LR
     subgraph "User Actions"
         UC[Container Change]
@@ -371,12 +476,12 @@ flowchart LR
     State --> CB
     CB --> PC
     
-    style UC fill:#e1e5ff
-    style UD fill:#e1e5ff
-    style US fill:#e1e5ff
-    style State fill:#fff4e1
-    style CB fill:#e1f5e1
-    style PC fill:#e1f5e1
+    style UC fill:#6d105a
+    style UD fill:#6d105a
+    style US fill:#6d105a
+    style State fill:#f9d0c4
+    style CB fill:#e8f4d4
+    style PC fill:#e8f4d4
 ```
 
 ## Integration with Other Components

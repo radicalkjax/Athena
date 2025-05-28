@@ -258,17 +258,21 @@ Athena follows a modular architecture with clear separation of concerns. The app
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'textColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
     'fontFamily': 'Arial, sans-serif'
   }
 }}%%

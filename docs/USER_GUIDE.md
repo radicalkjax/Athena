@@ -56,17 +56,21 @@ Athena is an enterprise-grade malware analysis platform that combines the power 
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'textColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
     'fontFamily': 'Arial, sans-serif'
   }
 }}%%
@@ -103,17 +107,21 @@ journey
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'textColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
     'fontFamily': 'Arial, sans-serif'
   }
 }}%%
@@ -170,9 +178,9 @@ graph TB
     Settings --> AISelect
     Settings --> Monitor
     
-    style Home fill:#E8A6BA
-    style Analyze fill:#F6BD6B
-    style Results fill:#D58C61
+    style Home fill:#6d105a
+    style Analyze fill:#e8f4d4
+    style Results fill:#f9d0c4
 ```
 
 ## Installation
@@ -334,17 +342,21 @@ The Home screen is the main interface for analyzing malware files. Here's the vi
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'textColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
     'fontFamily': 'Arial, sans-serif'
   }
 }}%%
@@ -381,9 +393,9 @@ graph TB
         end
     end
     
-    style AISelector fill:#E8A6BA
-    style ActionButtons fill:#F6BD6B
-    style Performance fill:#D58C61
+    style AISelector fill:#6d105a
+    style ActionButtons fill:#e8f4d4
+    style Performance fill:#f9d0c4
 ```
 
 ### File Upload Workflow
@@ -392,25 +404,29 @@ graph TB
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'textColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
     'fontFamily': 'Arial, sans-serif',
-    'sequenceNumberColor': '#3E231A',
-    'actorTextColor': '#3E231A',
-    'actorLineColor': '#B65E71',
-    'signalColor': '#B65E71',
-    'signalTextColor': '#3E231A',
-    'activationBkgColor': '#F6BD6B',
-    'activationBorderColor': '#C86681'
+    'sequenceNumberColor': '#333333',
+    'actorTextColor': '#333333',
+    'actorLineColor': '#333333',
+    'signalColor': '#333333',
+    'signalTextColor': '#333333',
+    'activationBkgColor': '#e8f4d4',
+    'activationBorderColor': '#333333'
   }
 }}%%
 sequenceDiagram
@@ -444,17 +460,21 @@ sequenceDiagram
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'textColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
     'fontFamily': 'Arial, sans-serif'
   }
 }}%%
@@ -482,10 +502,10 @@ graph LR
     DeepSeek --> Status
     Local --> Status
     
-    style Claude fill:#E8A6BA
-    style OpenAI fill:#E8A6BA
-    style DeepSeek fill:#F6BD6B
-    style Local fill:#D58C61
+    style Claude fill:#6d105a
+    style OpenAI fill:#6d105a
+    style DeepSeek fill:#e8f4d4
+    style Local fill:#f9d0c4
 ```
 
 ### Analysis Execution Flow
@@ -494,24 +514,28 @@ graph LR
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'primaryColor': '#E8A6BA',
-    'primaryTextColor': '#3E231A',
-    'primaryBorderColor': '#C86681',
-    'lineColor': '#B65E71',
-    'secondaryColor': '#F6BD6B',
-    'tertiaryColor': '#D58C61',
-    'background': '#FFFFFF',
-    'mainBkg': '#E8A6BA',
-    'secondBkg': '#F6BD6B',
-    'tertiaryBkg': '#D58C61',
-    'textColor': '#3E231A',
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
     'fontFamily': 'Arial, sans-serif',
-    'stateBkg': '#E8A6BA',
-    'stateBorder': '#C86681',
-    'compositeBorder': '#C86681',
-    'compositeBackground': '#FFFFFF',
-    'altBackground': '#F6BD6B',
-    'compositeTitleBackground': '#E8A6BA'
+    'stateBkg': '#6d105a',
+    'stateBorder': '#333333',
+    'compositeBorder': '#333333',
+    'compositeBackground': '#ffffff',
+    'altBackground': '#e8f4d4',
+    'compositeTitleBackground': '#6d105a'
   }
 }}%%
 stateDiagram-v2
@@ -585,6 +609,27 @@ stateDiagram-v2
 ### Results Visualization
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Results Interface"
         subgraph "Tab Navigation"
@@ -630,9 +675,9 @@ graph TB
     Critical --> High
     High --> Medium
     
-    style Tab1 fill:#e1f5e1
-    style Tab2 fill:#e1e5ff
-    style Tab3 fill:#ffe4e1
+    style Tab1 fill:#6d105a
+    style Tab2 fill:#f9d0c4
+    style Tab3 fill:#e8f4d4
 ```
 
 ## Advanced Features
@@ -640,6 +685,27 @@ graph TB
 ### Container Isolation Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Isolation System"
         subgraph "Container Types"
@@ -678,14 +744,41 @@ graph TB
     Process --> Memory
     Process --> IO
     
-    style Windows fill:#e1f5e1
-    style Linux fill:#fff4e1
-    style macOS fill:#e1e5ff
+    style Windows fill:#6d105a
+    style Linux fill:#e8f4d4
+    style macOS fill:#f9d0c4
 ```
 
 ### Container Configuration Workflow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif',
+    'stateBkg': '#6d105a',
+    'stateBorder': '#333333',
+    'compositeBorder': '#333333',
+    'compositeBackground': '#ffffff',
+    'altBackground': '#e8f4d4',
+    'compositeTitleBackground': '#6d105a'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Disabled: Default State
     
@@ -752,6 +845,34 @@ stateDiagram-v2
 Real-time streaming provides immediate feedback during analysis:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif',
+    'sequenceNumberColor': '#333333',
+    'actorTextColor': '#333333',
+    'actorLineColor': '#333333',
+    'signalColor': '#333333',
+    'signalTextColor': '#333333',
+    'activationBkgColor': '#e8f4d4',
+    'activationBorderColor': '#333333'
+  }
+}}%%
 sequenceDiagram
     participant User
     participant UI
@@ -801,6 +922,27 @@ sequenceDiagram
 Process multiple files efficiently:
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Batch Processing System"
         subgraph "Input Queue"
@@ -848,9 +990,9 @@ graph TB
     
     Collector --> Report
     
-    style Queue fill:#e1f5e1
-    style Scheduler fill:#fff4e1
-    style Report fill:#e1e5ff
+    style Queue fill:#6d105a
+    style Scheduler fill:#e8f4d4
+    style Report fill:#f9d0c4
 ```
 
 | Preset | CPU Cores | Memory (MB) | Disk Space (MB) | Network Speed (Mbps) | I/O Operations (IOPS) | Use Case |
@@ -883,6 +1025,27 @@ graph TB
 ### Monitoring Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Monitoring System"
         subgraph "Data Collection"
@@ -916,14 +1079,35 @@ graph TB
     TimeSeries --> Dashboard
     EventStore --> Dashboard
     
-    style Agent fill:#e1f5e1
-    style Analyzer fill:#ffe4e1
-    style Dashboard fill:#e1e5ff
+    style Agent fill:#e8f4d4
+    style Analyzer fill:#f9d0c4
+    style Dashboard fill:#6d105a
 ```
 
 ### Monitoring Dashboard Interface
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Container Monitoring Dashboard"
         subgraph "Header Controls"
@@ -972,6 +1156,27 @@ graph TB
 ### Resource Usage Monitoring
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Resource Monitoring"
         subgraph "CPU Monitoring"
@@ -1001,6 +1206,27 @@ graph LR
 ### Network Activity Visualization
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Container
     participant Monitor
@@ -1036,6 +1262,27 @@ sequenceDiagram
 ### File Activity Tracking
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "File Operations Monitor"
         subgraph "Operation Types"
@@ -1064,13 +1311,34 @@ graph TB
     
     Alert --> Timeline
     
-    style Alert fill:#ffe4e1
-    style Execute fill:#ff6b6b
+    style Alert fill:#f9d0c4
+    style Execute fill:#6d105a
 ```
 
 ### Process Activity Monitoring
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Process Tree Monitor"
         subgraph "Process Hierarchy"
@@ -1104,14 +1372,35 @@ graph TB
     Malware --> Details
     Details --> Actions
     
-    style Malware fill:#ffe4e1
-    style Payload fill:#ff6b6b
-    style PowerShell fill:#fff4e1
+    style Malware fill:#f9d0c4
+    style Payload fill:#6d105a
+    style PowerShell fill:#e8f4d4
 ```
 
 ### Suspicious Activity Detection
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> Monitoring: Start Monitoring
     
@@ -1151,6 +1440,27 @@ stateDiagram-v2
 ### Performance Optimization Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Performance Features"
         subgraph "Caching System"
@@ -1185,15 +1495,36 @@ graph TB
     
     ConnPool --> WorkerPool
     
-    style L1 fill:#e1f5e1
-    style CB1 fill:#e1f5e1
-    style CB2 fill:#fff4e1
-    style CB3 fill:#ffe4e1
+    style L1 fill:#e8f4d4
+    style CB1 fill:#e8f4d4
+    style CB2 fill:#f9d0c4
+    style CB3 fill:#6d105a
 ```
 
 ### Real-time Performance Dashboard
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Performance Metrics"
         subgraph "Response Times"

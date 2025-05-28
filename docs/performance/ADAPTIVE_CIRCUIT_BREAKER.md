@@ -25,6 +25,27 @@ The Athena platform features an enhanced circuit breaker implementation with ada
 ## Architecture
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Circuit Breaker System"
         CB[AdaptiveCircuitBreaker<br/>━━━━━━━━<br/>• State Management<br/>• Failure Tracking<br/>• Adaptive Logic]
@@ -63,20 +84,41 @@ graph TB
     FACTORY --> CB
     METRICS --> APM
     
-    style CB fill:#e1e5ff
-    style CLOSED fill:#e1f5e1
-    style OPEN fill:#ffe4e1
-    style HALF fill:#fff4e1
-    style ADAPT fill:#e1e5ff
-    style BACKOFF fill:#e1e5ff
-    style METRICS fill:#e1e5ff
-    style FACTORY fill:#e1f5e1
-    style APM fill:#e1f5e1
+    style CB fill:#6d105a
+    style CLOSED fill:#e8f4d4
+    style OPEN fill:#f9d0c4
+    style HALF fill:#f9d0c4
+    style ADAPT fill:#6d105a
+    style BACKOFF fill:#6d105a
+    style METRICS fill:#6d105a
+    style FACTORY fill:#e8f4d4
+    style APM fill:#e8f4d4
 ```
 
 ## State Transitions
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 stateDiagram-v2
     [*] --> CLOSED: Initial State
     
@@ -207,6 +249,27 @@ const stats = breaker.getStats();
 ## Request Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 sequenceDiagram
     participant Client
     participant Factory as CircuitBreakerFactory
@@ -248,6 +311,27 @@ sequenceDiagram
 ### Health Dashboard
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TB
     subgraph "Circuit Breaker Health"
         SUMMARY[Health Summary<br/>━━━━━━━━<br/>• Total Breakers: 6<br/>• Healthy: 5<br/>• Unhealthy: 1]
@@ -271,11 +355,11 @@ graph TB
     E2 --> METRICS
     E3 --> METRICS
     
-    style SUMMARY fill:#e1e5ff
-    style E1 fill:#ffe4e1
-    style E2 fill:#e1f5e1
-    style E3 fill:#e1f5e1
-    style METRICS fill:#e1e5ff
+    style SUMMARY fill:#6d105a
+    style E1 fill:#f9d0c4
+    style E2 fill:#e8f4d4
+    style E3 fill:#e8f4d4
+    style METRICS fill:#6d105a
 ```
 
 ### APM Integration
@@ -312,6 +396,27 @@ const allStats = circuitBreakerFactory.getAllStats();
 ## Backoff Strategies
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph LR
     subgraph "Backoff Types"
         EXP[Exponential<br/>━━━━━━━━<br/>1s → 2s → 4s → 8s<br/>Multiplier: 2.0]
@@ -330,11 +435,11 @@ graph LR
     
     JITTER --> MAX
     
-    style EXP fill:#e1e5ff
-    style LIN fill:#e1e5ff
-    style FIB fill:#e1e5ff
-    style JITTER fill:#fff4e1
-    style MAX fill:#e1f5e1
+    style EXP fill:#6d105a
+    style LIN fill:#6d105a
+    style FIB fill:#6d105a
+    style JITTER fill:#f9d0c4
+    style MAX fill:#e8f4d4
 ```
 
 ## Best Practices

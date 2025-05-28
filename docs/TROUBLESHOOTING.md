@@ -5,6 +5,27 @@ This document provides solutions to common issues encountered when developing or
 ## Troubleshooting Overview
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Start([Issue Encountered<br/>━━━━━━━━<br/>Application not<br/>working as expected]) --> Category{Issue<br/>Category?}
     
@@ -24,14 +45,14 @@ flowchart TD
     Perf --> PerfTree[Profile<br/>Application]
     Platform --> PlatformTree[Check Platform<br/>Compatibility]
     
-    style Start fill:#ffe4e1
-    style FontTree fill:#e1e5ff
-    style DevTree fill:#e1e5ff
-    style APITree fill:#e1e5ff
-    style DBTree fill:#e1e5ff
-    style BuildTree fill:#e1e5ff
-    style PerfTree fill:#e1e5ff
-    style PlatformTree fill:#e1e5ff
+    style Start fill:#f9d0c4
+    style FontTree fill:#6d105a
+    style DevTree fill:#6d105a
+    style APITree fill:#6d105a
+    style DBTree fill:#6d105a
+    style BuildTree fill:#6d105a
+    style PerfTree fill:#6d105a
+    style PlatformTree fill:#6d105a
 ```
 
 ## Font-Related Issues
@@ -39,6 +60,27 @@ flowchart TD
 ### Font Troubleshooting Decision Tree
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     FontIssue[Font Issue<br/>━━━━━━━━<br/>Font not displaying<br/>or error] --> FontType{What type<br/>of error?}
     
@@ -60,12 +102,12 @@ flowchart TD
     CheckPath -->|No| FixPaths[Update font<br/>paths in CSS]
     CheckPath -->|Yes| ClearCache
     
-    style FontIssue fill:#ffe4e1
-    style FixTheme fill:#e1f5e1
-    style AddFonts fill:#e1f5e1
-    style FixCSS fill:#e1f5e1
-    style FixPaths fill:#e1f5e1
-    style ClearCache fill:#fff4e1
+    style FontIssue fill:#f9d0c4
+    style FixTheme fill:#e8f4d4
+    style AddFonts fill:#e8f4d4
+    style FixCSS fill:#e8f4d4
+    style FixPaths fill:#e8f4d4
+    style ClearCache fill:#f9d0c4
 ```
 
 ### ".regular property access error"
@@ -105,6 +147,27 @@ flowchart TD
 ### Server Issue Resolution Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     ServerIssue[Server Issue<br/>━━━━━━━━<br/>Can't start<br/>dev server] --> IssueType{What's the<br/>error?}
     
@@ -130,10 +193,10 @@ flowchart TD
     CheckCode --> FixErrors[Fix code<br/>errors]
     FixErrors --> Restart
     
-    style ServerIssue fill:#ffe4e1
-    style Resolved fill:#e1f5e1
-    style ClearCache fill:#fff4e1
-    style DeepClean fill:#fff4e1
+    style ServerIssue fill:#f9d0c4
+    style Resolved fill:#e8f4d4
+    style ClearCache fill:#f9d0c4
+    style DeepClean fill:#f9d0c4
 ```
 
 ### Port Already in Use
@@ -162,6 +225,27 @@ flowchart TD
 ### API Issue Diagnosis Flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     APIIssue[API Issue<br/>━━━━━━━━<br/>AI models not<br/>working] --> CheckKeys{API keys<br/>configured?}
     
@@ -187,11 +271,11 @@ flowchart TD
     CheckNet --> RestartServer
     CheckLogs --> DebugService[Debug specific<br/>service]
     
-    style APIIssue fill:#ffe4e1
-    style AddKeys fill:#e1f5e1
-    style CheckFormat fill:#fff4e1
-    style CheckNet fill:#fff4e1
-    style RestartServer fill:#e1e5ff
+    style APIIssue fill:#f9d0c4
+    style AddKeys fill:#e8f4d4
+    style CheckFormat fill:#f9d0c4
+    style CheckNet fill:#f9d0c4
+    style RestartServer fill:#6d105a
 ```
 
 ### Missing API Keys
@@ -248,6 +332,101 @@ flowchart TD
 3. Check migration files for syntax errors
 4. Verify database permissions
 
+## Dependency Issues
+
+### npm ci Failures (CI/CD)
+
+**Symptoms**:
+- `ERESOLVE could not resolve` errors
+- Peer dependency conflicts
+- CI/CD pipeline failures
+
+**Solutions**:
+1. Ensure exact package versions match Expo SDK 52:
+   ```bash
+   npx expo install --fix
+   ```
+2. Clean install locally:
+   ```bash
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+3. For specific conflicts, see [React Navigation v7 Upgrade](modernization/REACT_NAVIGATION_V7_UPGRADE.md)
+
+### Dependency Version Conflicts
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+flowchart TD
+    DepIssue[Dependency<br/>Conflict<br/>━━━━━━━━<br/>npm install fails] --> ErrorType{Error Type?}
+    
+    ErrorType -->|ERESOLVE| PeerDep[Peer Dependency<br/>Conflict]
+    ErrorType -->|Version Mismatch| Version[Version<br/>Incompatibility]
+    ErrorType -->|Not Found| Missing[Missing<br/>Package]
+    
+    PeerDep --> CheckExpo{Expo Package?}
+    CheckExpo -->|Yes| UseExpoInstall[Use expo install<br/>━━━━━━━━<br/>npx expo install --fix]
+    CheckExpo -->|No| CheckVersions[Pin exact versions<br/>in package.json]
+    
+    Version --> CleanInstall[Clean Install<br/>━━━━━━━━<br/>rm -rf node_modules<br/>package-lock.json<br/>npm install]
+    
+    Missing --> VerifyRegistry[Check npm registry<br/>━━━━━━━━<br/>npm config get registry]
+    
+    UseExpoInstall --> Resolved[✓ Resolved]
+    CheckVersions --> Resolved
+    CleanInstall --> Resolved
+    VerifyRegistry --> Resolved
+    
+    style DepIssue fill:#f9d0c4
+    style UseExpoInstall fill:#6d105a
+    style CleanInstall fill:#6d105a
+    style Resolved fill:#e8f4d4
+```
+
+### Common Dependency Fixes
+
+**React Navigation v7 Conflicts**:
+```json
+{
+  "@react-navigation/native": "^7.0.14",
+  "@react-navigation/bottom-tabs": "^7.1.5"
+}
+```
+
+**Picker Version Conflicts**:
+```json
+{
+  "@react-native-picker/picker": "2.9.0"  // Exact version, no ^
+}
+```
+
+**Type Definition Conflicts**:
+```json
+{
+  "@types/react": "~18.3.12"  // Constrained to patch versions
+}
+```
+
 ## Build and Deployment Issues
 
 ### Web Build Failures
@@ -261,7 +440,7 @@ flowchart TD
 1. Clear build cache: `rm -rf dist .expo`
 2. Check for TypeScript errors: `npx tsc --noEmit`
 3. Verify all imports and dependencies
-4. Update dependencies: `npm update`
+4. Update dependencies using Expo: `npx expo install --fix`
 
 ### Asset Loading Issues
 
@@ -337,6 +516,27 @@ flowchart TD
 ### Error Severity Classification
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     Error[Error Encountered<br/>━━━━━━━━<br/>Need to determine<br/>severity] --> Impact{What's the<br/>impact?}
     
@@ -358,12 +558,12 @@ flowchart TD
     MediumEx --> FixThird[Fix soon<br/>━━━━━━━━<br/>Affects quality]
     LowEx --> FixLater[Fix later<br/>━━━━━━━━<br/>Polish phase]
     
-    style Critical fill:#ffe4e1
-    style High fill:#fff4e1
-    style Medium fill:#e1e5ff
-    style Low fill:#e1f5e1
-    style FixFirst fill:#ffe4e1
-    style FixSecond fill:#fff4e1
+    style Critical fill:#f9d0c4
+    style High fill:#f9d0c4
+    style Medium fill:#6d105a
+    style Low fill:#e8f4d4
+    style FixFirst fill:#f9d0c4
+    style FixSecond fill:#f9d0c4
 ```
 
 ## Getting Help

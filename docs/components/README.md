@@ -12,6 +12,27 @@ This directory contains documentation for all UI components in Athena. Each comp
 ## 🧩 Component Map
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart TD
     User[User Interface] --> Upload[📤 File Upload<br/>━━━━━━━━<br/>FILE_UPLOADER.md]
     User --> Config[⚙️ Configuration<br/>━━━━━━━━<br/>Multiple panels]
@@ -28,11 +49,11 @@ flowchart TD
     
     Monitor --> Live[CONTAINER_MONITORING.md<br/>Live system metrics]
     
-    style User fill:#e1f5e1
-    style Upload fill:#e1e5ff
-    style Config fill:#fff4e1
-    style Results fill:#e1e5ff
-    style Monitor fill:#e1f5e1
+    style User fill:#e8f4d4
+    style Upload fill:#6d105a
+    style Config fill:#f9d0c4
+    style Results fill:#6d105a
+    style Monitor fill:#e8f4d4
 ```
 
 ## 📚 Component Documentation
