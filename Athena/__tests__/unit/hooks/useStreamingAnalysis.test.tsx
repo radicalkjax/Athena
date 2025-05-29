@@ -5,7 +5,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useStreamingAnalysis } from '@/hooks/useStreamingAnalysis';
 import { aiServiceManager } from '@/services/ai/manager';
-import { useAnalysisStore } from '@/store';
+import { useAppStore } from '@/store';
 import { MalwareFile } from '@/types';
 
 // Mock dependencies
@@ -18,7 +18,7 @@ jest.mock('@/services/ai/manager', () => ({
 }));
 
 jest.mock('@/store', () => ({
-  useAnalysisStore: jest.fn()
+  useAppStore: jest.fn()
 }));
 
 jest.mock('@/shared/logging/logger', () => ({
@@ -48,7 +48,7 @@ describe('useStreamingAnalysis', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAnalysisStore as jest.Mock).mockReturnValue(mockStoreMethods);
+    (useAppStore as jest.Mock).mockReturnValue(mockStoreMethods);
     
     (aiServiceManager.getProviderStatus as jest.Mock).mockReturnValue(new Map([
       ['claude', { status: 'healthy' }],

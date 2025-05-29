@@ -1,4 +1,5 @@
-// Mock for expo-file-system to avoid memory issues
+// Mock for expo-file-system
+/* global jest */
 const mockFileSystem = {
   documentDirectory: 'file:///test/',
   

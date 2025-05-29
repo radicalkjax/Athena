@@ -16,7 +16,7 @@ describe('AnalysisCacheManager', () => {
       maxEntries: 10,
       cleanupInterval: 5000,
     };
-    cacheManager = new AnalysisCacheManager(config, {}, false);
+    cacheManager = new AnalysisCacheManager({ config });
   });
   
   afterEach(() => {
@@ -124,39 +124,80 @@ describe('AnalysisCacheManager', () => {
   
   describe('TTL and Expiration', () => {
     it('should expire entries after TTL', async () => {
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+      
       const key = 'test-key';
       const value = { deobfuscatedCode: 'test', analysisReport: 'report' };
+      
+      // Mock Date.now to return a specific time
+      const startTime = Date.now();
+      jest.spyOn(Date, 'now').mockReturnValue(startTime);
       
       await cacheManager.set(key, value);
       
       // Should exist immediately
       expect(await cacheManager.get(key)).toEqual(value);
       
-      // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      // Advance Date.now past TTL
+      jest.spyOn(Date, 'now').mockReturnValue(startTime + 1100);
       
       // Should be expired
       expect(await cacheManager.get(key)).toBeNull();
+      
+      jest.useRealTimers();
     });
     
     it('should prune expired entries', async () => {
+      // Mock Date.now for consistent time
+      jest.useFakeTimers();
+      const startTime = Date.now();
+      jest.spyOn(Date, 'now').mockReturnValue(startTime);
+      
+      // Create a custom memory storage mock to control the behavior
+      const mockStorage = {
+        cache: new Map<string, any>(),
+        async get(key: string) {
+          return this.cache.get(key);
+        },
+        async set(key: string, entry: any) {
+          this.cache.set(key, entry);
+        },
+        async delete(key: string) {
+          return this.cache.delete(key);
+        },
+        async clear() {
+          this.cache.clear();
+        },
+        async getKeys() {
+          return Array.from(this.cache.keys());
+        },
+        async getSize() {
+          return 100; // Mock size
+        }
+      };
+      
+      // Create cache manager with mocked storage
+      cacheManager = new AnalysisCacheManager({ 
+        config: { ttl: 1000 },
+        storage: mockStorage as any
+      });
+      
       await cacheManager.set('key1', { deobfuscatedCode: 'test1', analysisReport: 'report1' });
       await cacheManager.set('key2', { deobfuscatedCode: 'test2', analysisReport: 'report2' });
       await cacheManager.set('key3', { deobfuscatedCode: 'test3', analysisReport: 'report3' });
       
-      const initialStats = cacheManager.getStats();
-      expect(initialStats.entryCount).toBe(3);
-      
-      // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      // Advance time past TTL (1 second)
+      jest.spyOn(Date, 'now').mockReturnValue(startTime + 1100);
       
       // Prune should remove expired entries
       const pruned = await cacheManager.prune();
       expect(pruned).toBe(3);
       
       // Verify all entries are gone
-      const finalStats = cacheManager.getStats();
-      expect(finalStats.entryCount).toBe(0);
+      expect(mockStorage.cache.size).toBe(0);
+      
+      // Restore Date.now
+      jest.useRealTimers();
     });
   });
   
@@ -188,7 +229,7 @@ describe('AnalysisCacheManager', () => {
         ttl: 60000,
         maxEntries: 3,
       };
-      const limitedCache = new AnalysisCacheManager(config, {}, false);
+      const limitedCache = new AnalysisCacheManager({ config });
       
       // Add entries up to the limit
       await limitedCache.set('entry1', { 

@@ -74,12 +74,14 @@ const containerAttributes: ModelAttributes = {
   },
 };
 
-// Initialize Container model
-Container.init(containerAttributes, {
-  sequelize,
-  modelName: 'Container',
-  tableName: 'containers',
-  paranoid: true, // Enable soft deletes
-});
+// Initialize Container model only if sequelize is properly initialized
+if (sequelize && typeof sequelize.define === 'function') {
+  Container.init(containerAttributes, {
+    sequelize,
+    modelName: 'Container',
+    tableName: 'containers',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default Container;

@@ -123,11 +123,13 @@ const processActivityAttributes: ModelAttributes = {
 };
 
 // Initialize ProcessActivity model
-ProcessActivity.init(processActivityAttributes, {
-  sequelize,
-  modelName: 'ProcessActivity',
-  tableName: 'process_activities',
-  paranoid: true, // Enable soft deletes
-});
+if (sequelize && typeof sequelize.define === 'function') {
+  ProcessActivity.init(processActivityAttributes, {
+    sequelize,
+    modelName: 'ProcessActivity',
+    tableName: 'process_activities',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default ProcessActivity;

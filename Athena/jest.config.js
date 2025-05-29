@@ -8,7 +8,8 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^~/(.*)$': '<rootDir>/$1',
-    '^@env$': '<rootDir>/__mocks__/@env.js'
+    '^@env$': '<rootDir>/__mocks__/@env.js',
+    '^@/design-system$': '<rootDir>/__mocks__/design-system.js'
   },
   collectCoverageFrom: [
     'components/**/*.{ts,tsx}',

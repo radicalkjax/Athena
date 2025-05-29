@@ -105,7 +105,9 @@
     "serve": "^14.2.4",
     "source-map-explorer": "^2.5.3",
     "typescript": "^5.3.3",
-    "webpack-bundle-analyzer": "^4.10.2"
+    "webpack-bundle-analyzer": "^4.10.2",
+    "eslint": "^8.57.0",
+    "eslint-config-expo": "~8.0.1"
   },
   "private": true
 }

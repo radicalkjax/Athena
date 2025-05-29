@@ -540,4 +540,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ContainerConfigSelector;
+export { ContainerConfigSelector };

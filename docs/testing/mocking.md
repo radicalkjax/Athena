@@ -87,9 +87,56 @@ jest.mock('react-icons/ai', () => ({
 jest.mock('react-icons/fa', () => ({
   FaTrash: () => null
 }));
+
+// @react-native-picker/picker
+jest.mock('@react-native-picker/picker', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return {
+    Picker: ({ children, ...props }) => React.createElement(View, props, children),
+    PickerItem: ({ label, value }) => React.createElement(Text, { value }, label)
+  };
+});
+
+// @react-native-community/slider
+jest.mock('@react-native-community/slider', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return ({ value, onValueChange, ...props }) => 
+    React.createElement(View, { ...props, testID: props.testID || 'slider' });
+});
 ```
 
-### 4. Store Mocking
+### 4. Design System Components
+```typescript
+// Create __mocks__/design-system.js
+const React = require('react');
+const { View, Text, TouchableOpacity, Modal: RNModal } = require('react-native');
+
+module.exports = {
+  Button: ({ children, onPress, testID, disabled, variant = 'primary', size = 'medium' }) => 
+    React.createElement(TouchableOpacity, { onPress, testID, disabled }, 
+      React.createElement(Text, null, children)
+    ),
+  Card: ({ children, variant = 'outlined', testID, style }) => 
+    React.createElement(View, { testID, style }, children),
+  Input: ({ onChangeText, value, placeholder, testID, secureTextEntry, error }) => 
+    React.createElement(View, { testID }, 
+      React.createElement(Text, null, value || placeholder)
+    ),
+  Modal: ({ children, visible, onClose, testID, showCloseButton = true, title }) => 
+    visible ? React.createElement(View, { testID }, children) : null,
+  Toast: ({ visible, message, type, onDismiss }) => 
+    visible ? React.createElement(Text, null, message) : null
+};
+
+// In jest.config.js
+moduleNameMapper: {
+  '^@/design-system$': '<rootDir>/__mocks__/design-system.js',
+}
+```
+
+### 5. Store Mocking
 ```typescript
 // Mock the entire store
 jest.mock('@/store');

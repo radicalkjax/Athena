@@ -11,14 +11,35 @@
 - Clear all timers: `jest.clearAllTimers()`
 - Use `waitFor` with proper timeout
 - Ensure async operations complete before test ends
+- Use fake timers to control async behavior
 
 ```typescript
-afterEach(() => {
-  jest.clearAllTimers();
-  jest.clearAllMocks();
+// Proper timer setup and cleanup
+describe('Component with timers', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+  
+  it('should handle delayed operations', async () => {
+    const { getByText } = render(<Component />);
+    
+    // Trigger action that starts timer
+    fireEvent.press(getByText('Start'));
+    
+    // Advance timers
+    jest.advanceTimersByTime(1000);
+    
+    // Verify result
+    expect(getByText('Complete')).toBeTruthy();
+  });
 });
 
-// For async tests
+// For async tests without fake timers
 it('should handle async operation', async () => {
   const result = render(<Component />);
   
@@ -146,7 +167,31 @@ const mockNavigation = {
 render(<Component navigation={mockNavigation} />);
 ```
 
-### 10. Store Testing Issues
+### 10. Component Export Mismatches
+
+**Error**: `Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined`
+
+**Cause**: Component uses default export but test imports as named export (or vice versa)
+
+**Solution**: Check and match export types
+```typescript
+// ❌ Wrong - Component uses named export
+// Component file
+export const MyComponent = () => <View />;
+
+// Test file
+import MyComponent from '@/components/MyComponent'; // Incorrect!
+
+// ✅ Correct
+import { MyComponent } from '@/components/MyComponent';
+
+// For components that changed from default to named export:
+// Before: export default ContainerConfigSelector
+// After: export { ContainerConfigSelector }
+// Update imports: import { ContainerConfigSelector } from '...'
+```
+
+### 11. Store Testing Issues
 
 **Error**: Complex middleware causing test failures
 

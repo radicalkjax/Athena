@@ -129,11 +129,13 @@ const networkActivityAttributes: ModelAttributes = {
 };
 
 // Initialize NetworkActivity model
-NetworkActivity.init(networkActivityAttributes, {
-  sequelize,
-  modelName: 'NetworkActivity',
-  tableName: 'network_activities',
-  paranoid: true, // Enable soft deletes
-});
+if (sequelize && typeof sequelize.define === 'function') {
+  NetworkActivity.init(networkActivityAttributes, {
+    sequelize,
+    modelName: 'NetworkActivity',
+    tableName: 'network_activities',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default NetworkActivity;

@@ -50,6 +50,8 @@ describe('FeatureFlagsService', () => {
   beforeEach(() => {
     localStorageMock.clear();
     jest.clearAllMocks();
+    // Reset any module-level state by clearing the module cache
+    jest.resetModules();
     service = new FeatureFlagsService();
   });
 
@@ -133,6 +135,8 @@ describe('FeatureFlagsService', () => {
     beforeEach(() => {
       originalIsDev = env.isDev;
       (env as any).isDev = false;
+      // Clear any existing overrides before testing production mode
+      service.clearAllOverrides();
     });
 
     afterEach(() => {
@@ -142,8 +146,16 @@ describe('FeatureFlagsService', () => {
     it('should not allow overrides in production mode', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
       
-      service.setOverride('enableAPM', true);
-      expect(service.getOverrides()).toEqual({});
+      // Clear any existing overrides from localStorage and reset the mock
+      localStorageMock.clear();
+      localStorageMock.getItem.mockClear();
+      localStorageMock.getItem.mockReturnValue(null);
+      
+      // Create a new service instance in production mode
+      const prodService = new FeatureFlagsService();
+      
+      prodService.setOverride('enableAPM', true);
+      expect(prodService.getOverrides()).toEqual({});
       expect(consoleSpy).toHaveBeenCalledWith(
         'Feature flag overrides are only available in development mode'
       );

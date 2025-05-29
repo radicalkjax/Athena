@@ -43,6 +43,14 @@ export class APMManager {
       ...customConfig,
     };
 
+    // Skip initialization if APM is disabled
+    if (!config.enabled) {
+      this.provider = null;
+      this.initialized = true;
+      logger.info('APM Manager initialized (disabled)');
+      return;
+    }
+
     // Choose provider based on environment
     if (env.isDev || !config.endpoint) {
       this.provider = new ConsoleAPMProvider();
@@ -73,20 +81,20 @@ export class APMManager {
     // Memory metrics
     const memStats = memoryProfiler.getMemoryStats();
     if (memStats.current) {
-      this.provider.gauge('memory.heap.used', memStats.current.heapUsed);
-      this.provider.gauge('memory.heap.total', memStats.current.heapTotal);
-      this.provider.gauge('memory.rss', memStats.current.rss);
+      this.provider.metric('memory.heap.used', memStats.current.heapUsed, 'gauge');
+      this.provider.metric('memory.heap.total', memStats.current.heapTotal, 'gauge');
+      this.provider.metric('memory.rss', memStats.current.rss, 'gauge');
     }
 
     // Cache metrics
     const cacheManager = getCacheManager();
     const cacheStats = cacheManager.getStats();
-    this.provider.gauge('cache.size', cacheStats.currentSize);
-    this.provider.gauge('cache.entries', cacheStats.entryCount);
-    this.provider.gauge('cache.hit_rate', cacheStats.hitRate);
-    this.provider.counter('cache.hits', cacheStats.hits);
-    this.provider.counter('cache.misses', cacheStats.misses);
-    this.provider.counter('cache.evictions', cacheStats.evictions);
+    this.provider.metric('cache.size', cacheStats.currentSize, 'gauge');
+    this.provider.metric('cache.entries', cacheStats.entryCount, 'gauge');
+    this.provider.metric('cache.hit_rate', cacheStats.hitRate, 'gauge');
+    this.provider.metric('cache.hits', cacheStats.hits, 'counter');
+    this.provider.metric('cache.misses', cacheStats.misses, 'counter');
+    this.provider.metric('cache.evictions', cacheStats.evictions, 'counter');
   }
 
   // Instrumentation methods
@@ -124,27 +132,48 @@ export class APMManager {
     }
   }
 
+  // Convenience metric methods
+  private counter(name: string, value: number, tags?: MetricTags): void {
+    if (!this.provider) return;
+    this.provider.metric(name, value, 'counter', tags);
+  }
+
+  private gauge(name: string, value: number, tags?: MetricTags): void {
+    if (!this.provider) return;
+    this.provider.metric(name, value, 'gauge', tags);
+  }
+
+  private histogram(name: string, value: number, tags?: MetricTags): void {
+    if (!this.provider) return;
+    this.provider.metric(name, value, 'histogram', tags);
+  }
+
+  private timer(name: string, value: number, tags?: MetricTags): void {
+    if (!this.provider) return;
+    this.provider.metric(name, value, 'timer', tags);
+  }
+
   // Metric shortcuts
   recordAnalysis(provider: string, type: string, duration: number, success: boolean): void {
     if (!this.provider) return;
 
     const tags: MetricTags = { provider, type };
     
-    this.provider.timer('ai.analysis.duration', duration, tags);
-    this.provider.counter('ai.analysis.total', 1, tags);
+    this.timer('ai.analysis.duration', duration, tags);
+    this.counter('ai.analysis.total', 1, tags);
     
     if (!success) {
-      this.provider.counter('ai.analysis.error', 1, tags);
+      this.counter('ai.analysis.error', 1, tags);
     }
   }
 
   recordCacheOperation(operation: 'hit' | 'miss' | 'set' | 'evict', duration?: number): void {
     if (!this.provider) return;
 
-    this.provider.counter(`cache.${operation}`, 1);
+    this.counter(`cache.${operation}`, 1);
     
     if (duration !== undefined) {
-      this.provider.timer(`cache.operation.duration`, duration, { operation });
+      this.timer(`cache.operation.duration`, duration, { operation });
     }
   }
 
@@ -153,11 +182,11 @@ export class APMManager {
 
     const tags: MetricTags = { endpoint, method, status_code: statusCode };
     
-    this.provider.timer('api.request.duration', duration, tags);
-    this.provider.counter('api.request.total', 1, tags);
+    this.timer('api.request.duration', duration, tags);
+    this.counter('api.request.total', 1, tags);
     
     if (statusCode >= 400) {
-      this.provider.counter('api.request.error', 1, tags);
+      this.counter('api.request.error', 1, tags);
     }
   }
 
@@ -166,14 +195,14 @@ export class APMManager {
 
     const tags: MetricTags = { operation };
     
-    this.provider.counter('container.operation.total', 1, tags);
+    this.counter('container.operation.total', 1, tags);
     
     if (!success) {
-      this.provider.counter('container.operation.error', 1, tags);
+      this.counter('container.operation.error', 1, tags);
     }
     
     if (duration !== undefined) {
-      this.provider.timer('container.operation.duration', duration, tags);
+      this.timer('container.operation.duration', duration, tags);
     }
   }
 
@@ -181,50 +210,29 @@ export class APMManager {
   recordCircuitBreakerEvent(provider: string, event: 'open' | 'close' | 'half_open'): void {
     if (!this.provider) return;
 
-    this.provider.counter('circuit_breaker.event', 1, { provider, event });
-    this.provider.gauge(`circuit_breaker.state.${provider}`, event === 'open' ? 1 : 0);
+    this.counter('circuit_breaker.event', 1, { provider, event });
+    this.gauge(`circuit_breaker.state.${provider}`, event === 'open' ? 1 : 0);
   }
 
   // Business metrics
   recordFileAnalyzed(fileType: string, size: number): void {
     if (!this.provider) return;
 
-    this.provider.counter('files.analyzed', 1, { type: fileType });
-    this.provider.histogram('files.size', size, { type: fileType });
+    this.counter('files.analyzed', 1, { type: fileType });
+    this.histogram('files.size', size, { type: fileType });
   }
 
   recordVulnerability(severity: string, type: string): void {
     if (!this.provider) return;
 
-    this.provider.counter('vulnerabilities.found', 1, { severity, type });
+    this.counter('vulnerabilities.found', 1, { severity, type });
   }
 
   recordMalwareDetected(type: string, confidence: number): void {
     if (!this.provider) return;
 
-    this.provider.counter('malware.detected', 1, { type });
-    this.provider.gauge('malware.confidence', confidence, { type });
-  }
-
-  // Manual metric recording
-  counter(name: string, value = 1, tags?: MetricTags): void {
-    if (!this.provider) return;
-    this.provider.counter(name, value, tags);
-  }
-
-  gauge(name: string, value: number, tags?: MetricTags): void {
-    if (!this.provider) return;
-    this.provider.gauge(name, value, tags);
-  }
-
-  histogram(name: string, value: number, tags?: MetricTags): void {
-    if (!this.provider) return;
-    this.provider.histogram(name, value, tags);
-  }
-
-  timer(name: string, value: number, tags?: MetricTags): void {
-    if (!this.provider) return;
-    this.provider.timer(name, value, tags);
+    this.counter('malware.detected', 1, { type });
+    this.gauge('malware.confidence', confidence, { type });
   }
 
   // Lifecycle

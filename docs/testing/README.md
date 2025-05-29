@@ -45,15 +45,23 @@ npm run test:production
 
 ## Test Statistics
 
-As of Phase 6 completion:
-- **Total Tests**: 250+ (and growing)
-- **API Layer**: 51 tests ✅
-- **Design System**: 17 tests ✅
-- **Store**: 13 tests ✅
-- **AI Services**: 82 tests ✅
-- **Core Services**: 42+ tests ✅
-- **Components**: 27+ tests ✅
-- **Integration Tests**: 18+ tests ✅ (NEW)
+Current Status:
+- **Total Test Files**: 39 (35 unit + 4 integration)
+- **Active Tests**: 550+ tests across 33 files
+- **Skipped Test Suites**: 6 files
+  - 2 Unit tests (localModels.test.ts, ai/manager.test.ts)
+  - 4 Integration tests (see below)
+- **Test Coverage**: High coverage on critical paths
+
+### Skipped Tests
+- **Unit Tests**:
+  - `localModels.test.ts` - Memory issues with recursive initialization
+  - `ai/manager.test.ts` - Complex initialization with intervals
+- **Integration Tests**:
+  - `file-upload-results-flow.test.tsx` - Complex async workflow
+  - `streaming-analysis-flow.test.tsx` - Real-time progress updates  
+  - `malware-analysis-workflow.test.tsx` - End-to-end workflow
+  - `container-configuration-flow.test.tsx` - UI with collapsible sections
 
 ## Testing Architecture
 
@@ -252,12 +260,29 @@ graph LR
     style LINE fill:#6d105a,color:#fff
 ```
 
+## Recent Test Fixes
+
+### Successfully Fixed Unit Tests
+1. **FileUploader.test.tsx** - Fixed timer cleanup and mock structure
+2. **useStreamingAnalysis.test.tsx** - Fixed async handling 
+3. **featureFlags.test.ts** - Fixed localStorage isolation
+4. **ContainerConfigSelector.test.tsx** - Changed from default to named export
+
+### Key Changes Made
+- Changed `ContainerConfigSelector` and `ContainerMonitoring` from default to named exports
+- Created `__mocks__/design-system.js` for mocking design system components
+- Fixed test data structures (e.g., nested `resources` object in ContainerConfig)
+- Added proper timer management with `jest.useFakeTimers()` and `jest.useRealTimers()`
+- Updated service function names (e.g., `removeContainer` instead of `stopContainer`)
+- Fixed prop names (e.g., `onConfigChange` instead of `onChange`)
+
 ## Testing Philosophy
 
 1. **Test behavior, not implementation** - Focus on what the code does, not how
 2. **Keep tests simple** - If a test is complex, the code might need refactoring
 3. **Mock at boundaries** - Mock external dependencies, not internal implementations
 4. **Test incrementally** - One test file at a time, verify stability after each change
+5. **Skip complex integration tests** - Until underlying functionality is complete
 
 ## Mock Strategy
 

@@ -105,11 +105,13 @@ const containerMonitoringAttributes: ModelAttributes = {
 };
 
 // Initialize ContainerMonitoring model
-ContainerMonitoring.init(containerMonitoringAttributes, {
-  sequelize,
-  modelName: 'ContainerMonitoring',
-  tableName: 'container_monitorings',
-  paranoid: true, // Enable soft deletes
-});
+if (sequelize && typeof sequelize.define === 'function') {
+  ContainerMonitoring.init(containerMonitoringAttributes, {
+    sequelize,
+    modelName: 'ContainerMonitoring',
+    tableName: 'container_monitorings',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default ContainerMonitoring;

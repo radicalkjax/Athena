@@ -1,4 +1,5 @@
 // Mock for expo-document-picker
+/* global jest */
 const mockDocumentPicker = {
   getDocumentAsync: jest.fn(),
   

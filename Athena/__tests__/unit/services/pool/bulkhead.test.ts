@@ -140,11 +140,16 @@ describe('Bulkhead', () => {
     it('should drain all tasks', async () => {
       const task = () => new Promise(resolve => setTimeout(() => resolve('done'), 100));
       
-      bulkhead.execute(task);
-      bulkhead.execute(task);
-      bulkhead.execute(task); // queued
+      const promises = [
+        bulkhead.execute(task),
+        bulkhead.execute(task),
+        bulkhead.execute(task).catch(() => {}), // queued task might be rejected during drain
+      ];
       
       await bulkhead.drain();
+      
+      // Wait for all promises to settle
+      await Promise.allSettled(promises);
       
       const stats = bulkhead.getStats();
       expect(stats.activeCount).toBe(0);

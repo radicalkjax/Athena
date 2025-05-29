@@ -254,12 +254,16 @@ export class AnalysisBatchProcessor implements BatchProcessor {
       }
       
       if (batch.length > 0) {
-        // Process batch
-        const promises = batch.map(request => 
-          this.processRequest(request, new AbortController().signal)
-        );
+        // Process batch with concurrency control
+        const chunks = this.chunkRequests(batch, this.config.maxConcurrency);
         
-        await Promise.all(promises);
+        for (const chunk of chunks) {
+          const promises = chunk.map(request => 
+            this.processRequest(request, new AbortController().signal)
+          );
+          
+          await Promise.all(promises);
+        }
       }
       
       // Small delay to prevent tight loop

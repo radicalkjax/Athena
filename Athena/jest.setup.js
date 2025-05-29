@@ -121,6 +121,11 @@ global.console = {
   error: jest.fn(),
 };
 
+// Mock database modules to prevent sequelize initialization in tests
+jest.mock('@/config/database', () => require('./__mocks__/config/database'));
+jest.mock('@/models', () => require('./__mocks__/models'));
+jest.mock('@/services/container-db', () => require('./__mocks__/services/container-db'));
+
 // Set up global test timeout
 jest.setTimeout(30000);
 

@@ -14,8 +14,11 @@ export const resetStores = () => {
     malwareFiles: [],
     selectedMalwareId: null,
     isAnalyzing: false,
-    analysisResults: null,
-    analysisProgress: 0,
+    analysisResults: [],
+    selectedResultId: null,
+    currentProgress: null,
+    progressHistory: [],
+    activeAnalysisId: null,
     containerConfig: null,
     error: null,
   });
@@ -55,22 +58,20 @@ export const mockServices = {
       // Simulate analysis delay
       await new Promise(resolve => setTimeout(resolve, 500));
       return {
-        fileId: file.id,
-        fileName: file.name,
-        threats: ['Trojan.Generic', 'Ransomware.Suspect'],
-        riskScore: 8.5,
+        id: `analysis-${Date.now()}`,
+        malwareId: file.id,
+        modelId: 'test-model',
+        timestamp: Date.now(),
+        deobfuscatedCode: 'function maliciousCode() { /* deobfuscated */ }',
+        analysisReport: `Risk Score: 8.5\nThreats: Trojan.Generic, Ransomware.Suspect\nRecommendations: Quarantine immediately, Run in isolated environment only`,
         vulnerabilities: [
           {
-            type: 'Buffer Overflow',
+            id: 'vuln-1',
+            name: 'Buffer Overflow',
             severity: 'high',
             description: 'Potential buffer overflow in main function'
           }
-        ],
-        recommendations: [
-          'Quarantine immediately',
-          'Run in isolated environment only'
-        ],
-        timestamp: new Date().toISOString()
+        ]
       };
     }),
   },
@@ -206,10 +207,15 @@ export const generateAnalysisResult = (fileId: string, overrides = {}) => ({
 
 export const generateContainerConfig = (overrides = {}) => ({
   os: 'linux',
-  resourcePreset: 'standard',
-  cpuCores: 2,
-  memoryGB: 4,
-  diskGB: 20,
-  networkIsolation: true,
+  architecture: 'x64',
+  version: 'ubuntu-20.04',
+  distribution: 'ubuntu',
+  resources: {
+    cpu: 2,
+    memory: 2048,
+    diskSpace: 10240,
+    networkSpeed: 100,
+    ioOperations: 1000
+  },
   ...overrides
 });

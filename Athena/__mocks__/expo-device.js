@@ -1,4 +1,5 @@
 // Mock for expo-device
+/* global jest */
 const mockDevice = {
   // Device type enum
   DeviceType: {
@@ -15,7 +16,7 @@ const mockDevice = {
   osInternalBuildId: 'mock-build-id',
   
   // Mock functions
-  getDeviceTypeAsync: jest.fn().mockResolvedValue(1), // PHONE by default
+  getDeviceTypeAsync: jest.fn().mockResolvedValue(1), // PHONE by default // eslint-disable-line no-undef
   
   // Reset function for tests
   _reset: () => {

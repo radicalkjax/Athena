@@ -4,7 +4,7 @@
 
 import { useCallback, useRef } from 'react';
 import { aiServiceManager } from '@/services/ai/manager';
-import { useAnalysisStore } from '@/store';
+import { useAppStore } from '@/store';
 import { MalwareFile } from '@/types';
 import { StreamingAnalysis } from '@/services/ai/types';
 import { logger } from '@/shared/logging/logger';
@@ -23,7 +23,7 @@ export function useStreamingAnalysis(options?: UseStreamingAnalysisOptions) {
     addAnalysisResult,
     setIsAnalyzing,
     clearAnalysisProgress
-  } = useAnalysisStore();
+  } = useAppStore();
   
   const analyze = useCallback(async (
     file: MalwareFile,

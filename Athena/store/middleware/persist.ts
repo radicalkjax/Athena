@@ -44,7 +44,7 @@ const storage = createJSONStorage(() => {
 // Custom partialize function to control what gets persisted
 const partialize = (state: AppState): PersistedState => ({
   selectedModelId: state.selectedModelId,
-  analysisResults: state.analysisResults.map(result => ({
+  analysisResults: (state.analysisResults || []).map(result => ({
     id: result.id,
     malwareId: result.malwareId,
     modelId: result.modelId,
@@ -53,7 +53,7 @@ const partialize = (state: AppState): PersistedState => ({
     error: result.error,
   })),
   selectedResultId: state.selectedResultId,
-  containers: state.containers.map(container => ({
+  containers: (state.containers || []).map(container => ({
     id: container.id,
     status: container.status,
     malwareId: container.malwareId,

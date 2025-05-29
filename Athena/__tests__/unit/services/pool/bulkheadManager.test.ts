@@ -159,17 +159,22 @@ describe('BulkheadManager', () => {
       const slowTask = () => new Promise(resolve => setTimeout(resolve, 1000));
       
       // Fill to capacity (using default config)
+      const activeTasks = [];
       for (let i = 0; i < 10; i++) {
-        bulkhead.execute(slowTask);
+        activeTasks.push(bulkhead.execute(slowTask).catch(() => {}));
       }
       
       // Queue some tasks
+      const queuedTasks = [];
       for (let i = 0; i < 5; i++) {
-        bulkhead.execute(slowTask);
+        queuedTasks.push(bulkhead.execute(slowTask).catch(() => {}));
       }
       
       const summary = bulkheadManager.getHealthSummary();
       expect(summary.saturated).toContain('test.saturated');
+      
+      // Clean up - drain the bulkhead to prevent interference with other tests
+      await bulkhead.drain();
     });
   });
   
@@ -209,7 +214,7 @@ describe('BulkheadManager', () => {
       bulkheadManager.resetAll();
       
       const stats = bulkheadManager.getAllStats();
-      Object.values(stats.bulkheads).forEach(bulkheadStats => {
+      Object.values(stats.bulkheads).forEach((bulkheadStats: any) => {
         expect(bulkheadStats.totalExecuted).toBe(0);
       });
     });

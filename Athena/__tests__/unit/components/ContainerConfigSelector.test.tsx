@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { View } from 'react-native';
-import ContainerConfigSelector from '@/components/ContainerConfigSelector';
+import { ContainerConfigSelector } from '@/components/ContainerConfigSelector';
 import * as containerService from '@/services/container';
 import { ContainerConfig, OSType, ArchitectureType } from '@/types';
 

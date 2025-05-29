@@ -16,7 +16,25 @@ npm test
 
 ### Run Specific Test File
 ```bash
-npx jest __tests__/unit/services/fileManager.test.ts --no-watchman
+# Run a specific test file
+npx jest __tests__/unit/services/fileManager.test.ts --no-watch
+
+# Run recently fixed tests
+npx jest __tests__/unit/components/FileUploader.test.tsx --no-watch
+npx jest __tests__/unit/hooks/useStreamingAnalysis.test.tsx --no-watch
+npx jest __tests__/unit/services/config/featureFlags.test.ts --no-watch
+```
+
+### Run Tests by Directory
+```bash
+# Run only unit tests (excluding integration)
+npm test -- --no-watch __tests__/unit/
+
+# Run only component tests
+npm test -- --no-watch __tests__/unit/components/
+
+# Run only service tests
+npm test -- --no-watch __tests__/unit/services/
 ```
 
 ### Run Tests in Watch Mode
@@ -27,6 +45,15 @@ npm test -- --watch
 ### Run Tests with Coverage
 ```bash
 npm run test:coverage
+```
+
+### Handling Test Timeouts
+```bash
+# For large test suites that may timeout
+npm test -- --no-watch --testTimeout=30000
+
+# Run tests in smaller batches
+npm test -- --no-watch --maxWorkers=2
 ```
 
 ## Test Structure

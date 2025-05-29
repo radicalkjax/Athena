@@ -138,20 +138,33 @@ describe('FileUploader', () => {
 
 ### ContainerConfigSelector Component
 ```typescript
+// Note: ContainerConfigSelector uses NAMED export, not default
+import { ContainerConfigSelector } from '@/components/ContainerConfigSelector';
+
 describe('ContainerConfigSelector', () => {
   it('should update config on OS change', () => {
-    const onChange = jest.fn();
+    const onConfigChange = jest.fn(); // Note: prop is onConfigChange, not onChange
     const { getByText } = render(
       <ContainerConfigSelector 
         initialConfig={defaultConfig}
-        onChange={onChange}
+        onConfigChange={onConfigChange}
       />
     );
     
+    // Note: Component uses Collapsible sections - may need to expand first
     fireEvent.press(getByText('Windows'));
     
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ os: 'windows' })
+    expect(onConfigChange).toHaveBeenCalledWith(
+      expect.objectContaining({ 
+        os: 'windows',
+        resources: { // Resources are nested, not flat
+          cpu: 2,
+          memory: 2048,
+          diskSpace: 10240,
+          networkSpeed: 100,
+          ioOperations: 1000
+        }
+      })
     );
   });
 });

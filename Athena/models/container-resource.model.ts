@@ -70,11 +70,13 @@ const containerResourceAttributes: ModelAttributes = {
 };
 
 // Initialize ContainerResource model
-ContainerResource.init(containerResourceAttributes, {
-  sequelize,
-  modelName: 'ContainerResource',
-  tableName: 'container_resources',
-  paranoid: true, // Enable soft deletes
-});
+if (sequelize && typeof sequelize.define === 'function') {
+  ContainerResource.init(containerResourceAttributes, {
+    sequelize,
+    modelName: 'ContainerResource',
+    tableName: 'container_resources',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default ContainerResource;

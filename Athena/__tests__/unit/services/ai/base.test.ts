@@ -178,7 +178,10 @@ describe('BaseAIService', () => {
 
     it('should return true when API key is in AsyncStorage', async () => {
       // Create a fresh service instance without any cached values
-      const freshService = new TestAIService(testProvider);
+      const freshService = new TestAIService(testProvider, ''); // Pass empty string to avoid env key
+      
+      // Reset expo constants to ensure no key is there
+      (Constants as any).expoConfig = { extra: {} };
       
       (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
         if (key === 'claude_api_key') return Promise.resolve('stored-api-key');

@@ -217,11 +217,13 @@ const containerSecurityAttributes: ModelAttributes = {
 };
 
 // Initialize ContainerSecurity model
-ContainerSecurity.init(containerSecurityAttributes, {
-  sequelize,
-  modelName: 'ContainerSecurity',
-  tableName: 'container_securities',
-  paranoid: true, // Enable soft deletes
-});
+if (sequelize && typeof sequelize.define === 'function') {
+  ContainerSecurity.init(containerSecurityAttributes, {
+    sequelize,
+    modelName: 'ContainerSecurity',
+    tableName: 'container_securities',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default ContainerSecurity;

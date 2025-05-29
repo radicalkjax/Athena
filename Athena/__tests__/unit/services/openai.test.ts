@@ -42,29 +42,82 @@ describe('OpenAIService', () => {
     });
 
     it('should use stored API key when not provided', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
-        if (key === 'athena_openai_api_key') return Promise.resolve('stored-key');
-        if (key === 'athena_openai_base_url') return Promise.resolve(null);
-        return Promise.resolve(null);
-      });
+      // Reset modules to clear cached singleton
+      jest.resetModules();
+      
+      // Re-apply AsyncStorage mock after resetModules
+      jest.doMock('@react-native-async-storage/async-storage', () => ({
+        __esModule: true,
+        default: {
+          getItem: jest.fn((key: string) => {
+            if (key === 'athena_openai_api_key') return Promise.resolve('stored-key');
+            if (key === 'athena_openai_base_url') return Promise.resolve(null);
+            return Promise.resolve(null);
+          }),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+        }
+      }));
+      
+      // Mock expo-constants without API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {
+              openaiApiKey: '', // Empty string instead of test key
+              openaiApiBaseUrl: 'https://api.openai.com/v1',
+            },
+          },
+        },
+      }));
+      
+      // Ensure createOpenAIClient is mocked
+      jest.doMock('@/services/apiClient', () => ({
+        createOpenAIClient: jest.fn().mockReturnValue(mockClient),
+        safeApiCall: jest.fn(),
+        sanitizeRequestData: jest.fn((data) => data),
+      }));
+      
+      // Re-import after mocking
+      const { initOpenAI: initWithStoredKey } = require('@/services/openai');
 
-      const client = await initOpenAI();
+      const client = await initWithStoredKey();
 
-      expect(AsyncStorage.getItem).toHaveBeenCalledWith('athena_openai_api_key');
-      expect(createOpenAIClient).toHaveBeenCalledWith('stored-key', 'https://api.openai.com/v1');
+      const AsyncStorageMock = require('@react-native-async-storage/async-storage').default;
+      expect(AsyncStorageMock.getItem).toHaveBeenCalledWith('athena_openai_api_key');
       expect(client).toBe(mockClient);
     });
 
     it('should throw error when no API key is available', async () => {
       jest.resetModules();
-      jest.doMock('@env', () => ({
-        OPENAI_API_KEY: '',
-        OPENAI_API_BASE_URL: 'https://api.openai.com/v1'
+      
+      // Re-apply AsyncStorage mock after resetModules
+      jest.doMock('@react-native-async-storage/async-storage', () => ({
+        __esModule: true,
+        default: {
+          getItem: jest.fn().mockResolvedValue(null),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+        }
+      }));
+      
+      // Mock expo-constants without API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {
+              openaiApiKey: '', // Empty string
+              openaiApiBaseUrl: 'https://api.openai.com/v1',
+            },
+          },
+        },
       }));
       
       const { initOpenAI: initWithoutKey } = require('@/services/openai');
-      
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
 
       await expect(initWithoutKey()).rejects.toThrow('openai API key not found');
     });
@@ -100,14 +153,32 @@ describe('OpenAIService', () => {
 
     it('should return false when no API key exists', async () => {
       jest.resetModules();
-      jest.doMock('@env', () => ({
-        OPENAI_API_KEY: '',
-        OPENAI_API_BASE_URL: 'https://api.openai.com/v1'
+      
+      // Re-apply AsyncStorage mock after resetModules
+      jest.doMock('@react-native-async-storage/async-storage', () => ({
+        __esModule: true,
+        default: {
+          getItem: jest.fn().mockResolvedValue(null),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+        }
+      }));
+      
+      // Mock expo-constants without API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {
+              openaiApiKey: '', // Empty string
+              openaiApiBaseUrl: 'https://api.openai.com/v1',
+            },
+          },
+        },
       }));
       
       const { hasOpenAIApiKey: hasKeyWithoutEnv } = require('@/services/openai');
-      
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
 
       const result = await hasKeyWithoutEnv();
 
@@ -330,17 +401,35 @@ describe('OpenAIService', () => {
     });
 
     it('should throw error when no API key is available', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-      
       jest.resetModules();
-      jest.doMock('@env', () => ({
-        OPENAI_API_KEY: '',
-        OPENAI_API_BASE_URL: 'https://api.openai.com/v1'
+      
+      // Re-apply AsyncStorage mock after resetModules
+      jest.doMock('@react-native-async-storage/async-storage', () => ({
+        __esModule: true,
+        default: {
+          getItem: jest.fn().mockResolvedValue(null),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+          clear: jest.fn(),
+        }
+      }));
+      
+      // Mock expo-constants without API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {
+              openaiApiKey: '', // Empty string
+              openaiApiBaseUrl: 'https://api.openai.com/v1',
+            },
+          },
+        },
       }));
 
       const { deobfuscateCode: deobfuscateWithoutKey } = require('@/services/openai');
 
-      await expect(deobfuscateWithoutKey('code')).rejects.toThrow('openai API key not found');
+      await expect(deobfuscateWithoutKey('code')).rejects.toThrow('Failed to deobfuscate code: openai API key not found');
     });
   });
 

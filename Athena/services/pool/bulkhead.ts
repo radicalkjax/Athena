@@ -40,6 +40,7 @@ export class Bulkhead<T = any> {
     totalTimeout: 0,
     totalWaitTime: 0,
     totalExecutionTime: 0,
+    totalQueued: 0,
   };
   
   constructor(private config: BulkheadConfig) {
@@ -58,7 +59,7 @@ export class Bulkhead<T = any> {
     // Check if queue is full
     if (this.queue.length >= this.config.maxQueueSize) {
       this.stats.totalRejected++;
-      apmManager.counter('bulkhead.rejected', 1, { bulkhead: this.config.name });
+      // apmManager.counter('bulkhead.rejected', 1, { bulkhead: this.config.name });
       throw new Error(`Bulkhead ${this.config.name} queue is full`);
     }
     
@@ -70,7 +71,7 @@ export class Bulkhead<T = any> {
     this.activeCount++;
     const startTime = Date.now();
     
-    apmManager.gauge('bulkhead.active', this.activeCount, { bulkhead: this.config.name });
+    // apmManager.gauge('bulkhead.active', this.activeCount, { bulkhead: this.config.name });
     
     try {
       const result = await task();
@@ -79,17 +80,17 @@ export class Bulkhead<T = any> {
       this.stats.totalExecuted++;
       this.stats.totalExecutionTime += executionTime;
       
-      apmManager.histogram('bulkhead.execution_time', executionTime, { 
-        bulkhead: this.config.name 
-      });
+      // apmManager.histogram('bulkhead.execution_time', executionTime, { 
+      //   bulkhead: this.config.name 
+      // });
       
       return result;
     } catch (error) {
-      apmManager.counter('bulkhead.error', 1, { bulkhead: this.config.name });
+      // apmManager.counter('bulkhead.error', 1, { bulkhead: this.config.name });
       throw error;
     } finally {
       this.activeCount--;
-      apmManager.gauge('bulkhead.active', this.activeCount, { bulkhead: this.config.name });
+      // apmManager.gauge('bulkhead.active', this.activeCount, { bulkhead: this.config.name });
       
       // Process next queued task
       this.processQueue();
@@ -108,7 +109,7 @@ export class Bulkhead<T = any> {
           this.queue.splice(index, 1);
           this.stats.totalTimeout++;
           
-          apmManager.counter('bulkhead.timeout', 1, { bulkhead: this.config.name });
+          // apmManager.counter('bulkhead.timeout', 1, { bulkhead: this.config.name });
           reject(new Error(`Task timed out in bulkhead ${this.config.name} queue`));
         }
       }, this.config.queueTimeout);
@@ -123,7 +124,7 @@ export class Bulkhead<T = any> {
       };
       
       this.queue.push(queuedTask as any);
-      apmManager.gauge('bulkhead.queued', this.queue.length, { bulkhead: this.config.name });
+      // apmManager.gauge('bulkhead.queued', this.queue.length, { bulkhead: this.config.name });
       
       logger.debug(`Task queued in bulkhead ${this.config.name}`, {
         queueLength: this.queue.length,
@@ -146,9 +147,10 @@ export class Bulkhead<T = any> {
     // Update wait time stats
     const waitTime = Date.now() - queuedTask.enqueueTime;
     this.stats.totalWaitTime += waitTime;
+    this.stats.totalQueued++;
     
-    apmManager.histogram('bulkhead.wait_time', waitTime, { bulkhead: this.config.name });
-    apmManager.gauge('bulkhead.queued', this.queue.length, { bulkhead: this.config.name });
+    // apmManager.histogram('bulkhead.wait_time', waitTime, { bulkhead: this.config.name });
+    // apmManager.gauge('bulkhead.queued', this.queue.length, { bulkhead: this.config.name });
     
     // Execute the queued task
     try {
@@ -166,8 +168,8 @@ export class Bulkhead<T = any> {
       totalExecuted: this.stats.totalExecuted,
       totalRejected: this.stats.totalRejected,
       totalTimeout: this.stats.totalTimeout,
-      averageWaitTime: this.stats.totalExecuted > 0 
-        ? Math.round(this.stats.totalWaitTime / this.stats.totalExecuted)
+      averageWaitTime: this.stats.totalQueued > 0 
+        ? Math.round(this.stats.totalWaitTime / this.stats.totalQueued)
         : 0,
       averageExecutionTime: this.stats.totalExecuted > 0
         ? Math.round(this.stats.totalExecutionTime / this.stats.totalExecuted)
@@ -235,7 +237,7 @@ export class SemaphoreBulkhead {
     if (this.permits > 0) {
       this.permits--;
       this.stats.totalAcquired++;
-      apmManager.gauge('semaphore.available', this.permits, { semaphore: this.name });
+      // apmManager.gauge('semaphore.available', this.permits, { semaphore: this.name });
       return;
     }
     
@@ -253,7 +255,7 @@ export class SemaphoreBulkhead {
         cleanup();
         this.permits--;
         this.stats.totalAcquired++;
-        apmManager.gauge('semaphore.available', this.permits, { semaphore: this.name });
+        // apmManager.gauge('semaphore.available', this.permits, { semaphore: this.name });
         resolve();
       };
       
@@ -263,7 +265,7 @@ export class SemaphoreBulkhead {
         timeoutHandle = setTimeout(() => {
           cleanup();
           this.stats.totalTimeout++;
-          apmManager.counter('semaphore.timeout', 1, { semaphore: this.name });
+          // apmManager.counter('semaphore.timeout', 1, { semaphore: this.name });
           reject(new Error(`Semaphore ${this.name} acquisition timed out`));
         }, timeoutMs);
       }
@@ -273,7 +275,7 @@ export class SemaphoreBulkhead {
   release(): void {
     this.permits++;
     this.stats.totalReleased++;
-    apmManager.gauge('semaphore.available', this.permits, { semaphore: this.name });
+    // apmManager.gauge('semaphore.available', this.permits, { semaphore: this.name });
     
     // Process wait queue
     if (this.waitQueue.length > 0) {

@@ -110,11 +110,13 @@ const fileActivityAttributes: ModelAttributes = {
 };
 
 // Initialize FileActivity model
-FileActivity.init(fileActivityAttributes, {
-  sequelize,
-  modelName: 'FileActivity',
-  tableName: 'file_activities',
-  paranoid: true, // Enable soft deletes
-});
+if (sequelize && typeof sequelize.define === 'function') {
+  FileActivity.init(fileActivityAttributes, {
+    sequelize,
+    modelName: 'FileActivity',
+    tableName: 'file_activities',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default FileActivity;

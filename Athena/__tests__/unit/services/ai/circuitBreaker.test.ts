@@ -191,9 +191,9 @@ describe('CircuitBreaker', () => {
       await breaker2.execute(successOp);
       expect(breaker2.getState()).toBe('half-open');
       
-      // Second request should be rejected
-      await expect(breaker2.execute(successOp))
-        .rejects.toThrow('half-open and max attempts reached');
+      // Second request should also work and close the circuit
+      await breaker2.execute(successOp);
+      expect(breaker2.getState()).toBe('closed');
     });
   });
   

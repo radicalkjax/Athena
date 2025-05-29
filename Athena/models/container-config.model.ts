@@ -57,11 +57,13 @@ const containerConfigAttributes: ModelAttributes = {
 };
 
 // Initialize ContainerConfig model
-ContainerConfig.init(containerConfigAttributes, {
-  sequelize,
-  modelName: 'ContainerConfig',
-  tableName: 'container_configs',
-  paranoid: true, // Enable soft deletes
-});
+if (sequelize && typeof sequelize.define === 'function') {
+  ContainerConfig.init(containerConfigAttributes, {
+    sequelize,
+    modelName: 'ContainerConfig',
+    tableName: 'container_configs',
+    paranoid: true, // Enable soft deletes
+  });
+}
 
 export default ContainerConfig;
