@@ -27,8 +27,8 @@ export abstract class BaseAIService {
 
   constructor(provider: AIProvider, envApiKey?: string) {
     this.provider = provider;
-    // Only store envApiKey if it's not an empty string
-    this.envApiKey = envApiKey && envApiKey.trim() ? envApiKey : undefined;
+    // Only store envApiKey if it's a non-empty string
+    this.envApiKey = (envApiKey && typeof envApiKey === 'string' && envApiKey.trim()) ? envApiKey : undefined;
   }
 
   /**
