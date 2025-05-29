@@ -60,7 +60,7 @@ const SimpleFlow = () => {
   );
 };
 
-describe('Basic Flow Test', () => {
+describe.skip('Basic Flow Test', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     resetStores();

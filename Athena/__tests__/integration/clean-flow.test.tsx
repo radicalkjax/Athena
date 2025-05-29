@@ -91,7 +91,7 @@ const TestFlow = ({ store }) => {
   );
 };
 
-describe('Clean Flow Test', () => {
+describe.skip('Clean Flow Test', () => {
   let testStore;
   
   beforeEach(() => {

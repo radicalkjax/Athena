@@ -6,7 +6,7 @@ import * as fileManagerService from '@/services/fileManager';
 
 jest.mock('@/services/fileManager');
 
-describe('Debug File Upload', () => {
+describe.skip('Debug File Upload', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     resetStores();

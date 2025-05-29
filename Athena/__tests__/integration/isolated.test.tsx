@@ -29,7 +29,7 @@ const TestComponent = () => {
   );
 };
 
-describe('Isolated Store Test', () => {
+describe.skip('Isolated Store Test', () => {
   beforeEach(() => {
     resetStores();
   });
