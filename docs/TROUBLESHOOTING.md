@@ -46,13 +46,13 @@ flowchart TD
     Platform --> PlatformTree[Check Platform<br/>Compatibility]
     
     style Start fill:#f9d0c4
-    style FontTree fill:#6d105a
-    style DevTree fill:#6d105a
-    style APITree fill:#6d105a
-    style DBTree fill:#6d105a
-    style BuildTree fill:#6d105a
-    style PerfTree fill:#6d105a
-    style PlatformTree fill:#6d105a
+    style FontTree fill:#6d105a,color:#fff
+    style DevTree fill:#6d105a,color:#fff
+    style APITree fill:#6d105a,color:#fff
+    style DBTree fill:#6d105a,color:#fff
+    style BuildTree fill:#6d105a,color:#fff
+    style PerfTree fill:#6d105a,color:#fff
+    style PlatformTree fill:#6d105a,color:#fff
 ```
 
 ## Font-Related Issues
@@ -275,7 +275,7 @@ flowchart TD
     style AddKeys fill:#e8f4d4
     style CheckFormat fill:#f9d0c4
     style CheckNet fill:#f9d0c4
-    style RestartServer fill:#6d105a
+    style RestartServer fill:#6d105a,color:#fff
 ```
 
 ### Missing API Keys
@@ -398,8 +398,8 @@ flowchart TD
     VerifyRegistry --> Resolved
     
     style DepIssue fill:#f9d0c4
-    style UseExpoInstall fill:#6d105a
-    style CleanInstall fill:#6d105a
+    style UseExpoInstall fill:#6d105a,color:#fff
+    style CleanInstall fill:#6d105a,color:#fff
     style Resolved fill:#e8f4d4
 ```
 
@@ -560,7 +560,7 @@ flowchart TD
     
     style Critical fill:#f9d0c4
     style High fill:#f9d0c4
-    style Medium fill:#6d105a
+    style Medium fill:#6d105a,color:#fff
     style Low fill:#e8f4d4
     style FixFirst fill:#f9d0c4
     style FixSecond fill:#f9d0c4

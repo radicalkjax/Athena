@@ -101,7 +101,7 @@ graph TB
     Gateway --> DeepSeek
     Gateway --> Local
     
-    style Browser fill:#6d105a
+    style Browser fill:#6d105a,color:#fff
     style Proxy fill:#f9d0c4
     style Gateway fill:#e8f4d4
     style ErrorHandler fill:#f9d0c4
@@ -261,7 +261,7 @@ graph TB
     
     Preflight --> Headers
     
-    style Browser fill:#6d105a
+    style Browser fill:#6d105a,color:#fff
     style Same1 fill:#e8f4d4
     style Diff1 fill:#f9d0c4
     style Headers fill:#f9d0c4
@@ -373,7 +373,7 @@ graph TB
     HeaderTrans --> CORSDetect
     CORSDetect --> Recovery
     
-    style Detect fill:#6d105a
+    style Detect fill:#6d105a,color:#fff
     style DevRoute fill:#f9d0c4
     style URLTrans fill:#e8f4d4
     style CORSDetect fill:#f9d0c4
@@ -434,7 +434,7 @@ graph TB
     Intercept --> Transform
     Transform --> Forward
     
-    style Config fill:#6d105a
+    style Config fill:#6d105a,color:#fff
     style Intercept fill:#f9d0c4
     style Transform fill:#e8f4d4
 ```
@@ -753,10 +753,10 @@ graph TB
     
     style DevWeb fill:#e8f4d4
     style StageWeb fill:#f9d0c4
-    style ProdWeb fill:#6d105a
+    style ProdWeb fill:#6d105a,color:#fff
     style ProxyConfig fill:#e8f4d4
     style GatewayConfig fill:#f9d0c4
-    style DirectConfig fill:#6d105a
+    style DirectConfig fill:#6d105a,color:#fff
 ```
 
 ### Deployment Architecture by Platform
@@ -810,7 +810,7 @@ graph TB
     DirectAPI --> APIs
     DirectAPI --> OfflineCache
     
-    style CloudFront fill:#6d105a
+    style CloudFront fill:#6d105a,color:#fff
     style Gateway fill:#e8f4d4
     style DirectAPI fill:#e8f4d4
     style APIs fill:#f9d0c4
@@ -913,7 +913,7 @@ graph TB
     Strategy3 --> Toast
     Strategy4 --> Modal
     
-    style ErrorCapture fill:#6d105a
+    style ErrorCapture fill:#6d105a,color:#fff
     style Pattern1 fill:#f9d0c4
     style Strategy1 fill:#e8f4d4
     style Silent fill:#e8f4d4
@@ -1206,7 +1206,7 @@ graph TB
     Thresholds --> Notifications
     Thresholds --> Actions
     
-    style ReqInt fill:#6d105a
+    style ReqInt fill:#6d105a,color:#fff
     style Aggregator fill:#e8f4d4
     style Dashboard fill:#f9d0c4
     style Notifications fill:#f9d0c4
@@ -1400,7 +1400,7 @@ graph TB
     RealTime --> Alerts
     Alerts --> Actions
     
-    style Latency fill:#6d105a
+    style Latency fill:#6d105a,color:#fff
     style Interceptors fill:#e8f4d4
     style RealTime fill:#f9d0c4
     style Alerts fill:#f9d0c4
@@ -1530,7 +1530,7 @@ graph TB
     style DP1 fill:#e8f4d4
     style DP2 fill:#e8f4d4
     style DP3 fill:#f9d0c4
-    style DP4 fill:#6d105a
+    style DP4 fill:#6d105a,color:#fff
 ```
 
 ### Common Issues Diagnosis and Solutions
@@ -1715,10 +1715,10 @@ graph TB
         C3[API Gateway<br/>━━━━━━━━<br/>📝 Check base URLs<br/>📝 Verify routing<br/>📝 Test endpoints]
     end
     
-    style T1 fill:#6d105a
+    style T1 fill:#6d105a,color:#fff
     style T2 fill:#e8f4d4
     style B1 fill:#f9d0c4
-    style C1 fill:#6d105a
+    style C1 fill:#6d105a,color:#fff
 ```
 
 ### Debug Checklist

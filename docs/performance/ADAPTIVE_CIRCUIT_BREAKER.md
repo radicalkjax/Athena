@@ -84,13 +84,13 @@ graph TB
     FACTORY --> CB
     METRICS --> APM
     
-    style CB fill:#6d105a
+    style CB fill:#6d105a,color:#fff
     style CLOSED fill:#e8f4d4
     style OPEN fill:#f9d0c4
     style HALF fill:#f9d0c4
-    style ADAPT fill:#6d105a
-    style BACKOFF fill:#6d105a
-    style METRICS fill:#6d105a
+    style ADAPT fill:#6d105a,color:#fff
+    style BACKOFF fill:#6d105a,color:#fff
+    style METRICS fill:#6d105a,color:#fff
     style FACTORY fill:#e8f4d4
     style APM fill:#e8f4d4
 ```
@@ -355,11 +355,11 @@ graph TB
     E2 --> METRICS
     E3 --> METRICS
     
-    style SUMMARY fill:#6d105a
+    style SUMMARY fill:#6d105a,color:#fff
     style E1 fill:#f9d0c4
     style E2 fill:#e8f4d4
     style E3 fill:#e8f4d4
-    style METRICS fill:#6d105a
+    style METRICS fill:#6d105a,color:#fff
 ```
 
 ### APM Integration
@@ -435,9 +435,9 @@ graph LR
     
     JITTER --> MAX
     
-    style EXP fill:#6d105a
-    style LIN fill:#6d105a
-    style FIB fill:#6d105a
+    style EXP fill:#6d105a,color:#fff
+    style LIN fill:#6d105a,color:#fff
+    style FIB fill:#6d105a,color:#fff
     style JITTER fill:#f9d0c4
     style MAX fill:#e8f4d4
 ```

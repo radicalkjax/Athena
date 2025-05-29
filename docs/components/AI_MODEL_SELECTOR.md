@@ -72,11 +72,11 @@ graph TD
     A --> D
     D --> E
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#f9d0c4
     style C fill:#e8f4d4
     style D fill:#f9d0c4
-    style E fill:#6d105a
+    style E fill:#6d105a,color:#fff
 ```
 
 ## Architecture
@@ -131,7 +131,7 @@ graph LR
     D --> E
     E --> F
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#e8f4d4
     style C fill:#e8f4d4
     style D fill:#f9d0c4
@@ -262,7 +262,7 @@ graph TD
         D -->|models exist| H
     end
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#f9d0c4
     style C fill:#e8f4d4
     style E fill:#f9d0c4
@@ -454,7 +454,7 @@ graph LR
     D --> E
     E -->|Notify| A
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#f9d0c4
     style C fill:#e8f4d4
     style D fill:#e8f4d4
@@ -542,14 +542,14 @@ flowchart TD
     
     Combine --> End
     
-    style Start fill:#6d105a
+    style Start fill:#6d105a,color:#fff
     style EnvKeys fill:#e8f4d4
     style ServiceKeys fill:#f9d0c4
     style AddOpenAI fill:#e8f4d4
     style AddClaude fill:#e8f4d4
     style AddDeepSeek fill:#e8f4d4
     style ServiceFallback fill:#f9d0c4
-    style End fill:#6d105a
+    style End fill:#6d105a,color:#fff
 ```
 
 ## Rendering States
@@ -608,10 +608,10 @@ graph TD
     style A fill:#f9d0c4
     style B fill:#f9d0c4
     style C fill:#f9d0c4
-    style D fill:#6d105a
+    style D fill:#6d105a,color:#fff
     style E fill:#e8f4d4
-    style F fill:#6d105a
-    style G fill:#6d105a
+    style F fill:#6d105a,color:#fff
+    style G fill:#6d105a,color:#fff
 ```
 
 ### Mock UI Representation

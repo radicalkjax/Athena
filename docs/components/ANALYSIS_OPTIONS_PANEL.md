@@ -54,13 +54,13 @@ graph TB
     SR -.-> DB
     DA -.-> AS
     
-    style AOP fill:#6d105a
+    style AOP fill:#6d105a,color:#fff
     style CC fill:#e8f4d4
     style DA fill:#f9d0c4
     style SR fill:#e8f4d4
-    style CS fill:#6d105a
-    style DB fill:#6d105a
-    style AS fill:#6d105a
+    style CS fill:#6d105a,color:#fff
+    style DB fill:#6d105a,color:#fff
+    style AS fill:#6d105a,color:#fff
 ```
 
 ## State Management Flow
@@ -423,7 +423,7 @@ graph TB
     ContainerSection --> DeepAnalysis
     DeepAnalysis --> SaveResults
     
-    style Header fill:#6d105a
+    style Header fill:#6d105a,color:#fff
     style ContainerSection fill:#e8f4d4
     style DeepAnalysis fill:#f9d0c4
     style SaveResults fill:#e8f4d4
@@ -476,9 +476,9 @@ flowchart LR
     State --> CB
     CB --> PC
     
-    style UC fill:#6d105a
-    style UD fill:#6d105a
-    style US fill:#6d105a
+    style UC fill:#6d105a,color:#fff
+    style UD fill:#6d105a,color:#fff
+    style US fill:#6d105a,color:#fff
     style State fill:#f9d0c4
     style CB fill:#e8f4d4
     style PC fill:#e8f4d4

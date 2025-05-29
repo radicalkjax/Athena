@@ -81,13 +81,13 @@ graph TB
     B3 & B4 --> SVC3
     B5 & B6 --> SVC4
     
-    style BM fill:#6d105a
+    style BM fill:#6d105a,color:#fff
     style B1 fill:#e8f4d4
     style B2 fill:#e8f4d4
     style B3 fill:#f9d0c4
     style B4 fill:#f9d0c4
-    style B5 fill:#6d105a
-    style B6 fill:#6d105a
+    style B5 fill:#6d105a,color:#fff
+    style B6 fill:#6d105a,color:#fff
 ```
 
 ### Bulkhead Execution Flow
@@ -318,7 +318,7 @@ flowchart TD
     HandleError --> CBUpdate[Update Circuit<br/>Breaker State]
     ReturnResult --> CBUpdate
     
-    style Request fill:#6d105a
+    style Request fill:#6d105a,color:#fff
     style Fallback fill:#f9d0c4
     style Rejected fill:#f9d0c4
     style SemaphoreTimeout fill:#f9d0c4
@@ -400,9 +400,9 @@ graph TB
     end
     
     style AI2 fill:#f9d0c4
-    style C1 fill:#6d105a
+    style C1 fill:#6d105a,color:#fff
     style DB2 fill:#f9d0c4
-    style GS fill:#6d105a
+    style GS fill:#6d105a,color:#fff
 ```
 
 ### Available Metrics

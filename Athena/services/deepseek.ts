@@ -6,7 +6,7 @@ import { AxiosInstance } from 'axios';
 import { createDeepSeekClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { BaseAIService } from './ai/base';
 import { AIProvider, AIMessage } from './ai/types';
-import { DEEPSEEK_API_KEY, DEEPSEEK_API_BASE_URL } from '@env';
+import { env } from '@/shared/config/environment';
 
 // Export types for backward compatibility
 export { DeobfuscationResult, VulnerabilityAnalysisResult } from './ai/types';
@@ -17,12 +17,12 @@ class DeepSeekService extends BaseAIService {
       name: 'deepseek',
       storageKeyPrefix: 'athena_deepseek',
       defaultModel: 'deepseek-coder',
-      defaultBaseUrl: DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com/v1',
+      defaultBaseUrl: env.api.deepseek.baseUrl || 'https://api.deepseek.com/v1',
       envKeyName: 'DEEPSEEK_API_KEY',
       envBaseUrlName: 'DEEPSEEK_API_BASE_URL'
     };
     // Pass undefined instead of empty string
-    super(provider, DEEPSEEK_API_KEY && DEEPSEEK_API_KEY.trim() ? DEEPSEEK_API_KEY : undefined);
+    super(provider, env.api.deepseek.key);
   }
 
   protected getClient(apiKey: string, baseUrl: string): AxiosInstance {

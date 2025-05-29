@@ -103,10 +103,10 @@ graph TB
     Container --> macOS
     
     style UI fill:#e8f4d4
-    style CS fill:#6d105a
+    style CS fill:#6d105a,color:#fff
     style CB fill:#f9d0c4
     style BH fill:#f9d0c4
-    style Docker fill:#6d105a
+    style Docker fill:#6d105a,color:#fff
     style Host fill:#f9d0c4
     style Runtime fill:#f9d0c4
     style Container fill:#f9d0c4
@@ -238,9 +238,9 @@ graph TB
     style DR fill:#f9d0c4
     style SE fill:#f9d0c4
     style SC fill:#f9d0c4
-    style NS fill:#6d105a
-    style CG fill:#6d105a
-    style CAP fill:#6d105a
+    style NS fill:#6d105a,color:#fff
+    style CG fill:#6d105a,color:#fff
+    style CAP fill:#6d105a,color:#fff
     style RO fill:#e8f4d4
     style NP fill:#e8f4d4
     style NE fill:#e8f4d4
@@ -612,7 +612,7 @@ graph TB
     Network --> TC
     Memory --> NS
     
-    style RM fill:#6d105a
+    style RM fill:#6d105a,color:#fff
     style CPU fill:#e8f4d4
     style Memory fill:#e8f4d4
     style Disk fill:#e8f4d4
@@ -690,11 +690,11 @@ graph TB
     MInt --> UC4
     
     style WMin fill:#e8f4d4
-    style WStd fill:#6d105a
+    style WStd fill:#6d105a,color:#fff
     style WPerf fill:#f9d0c4
     style WInt fill:#f9d0c4
     style UC1 fill:#e8f4d4
-    style UC2 fill:#6d105a
+    style UC2 fill:#6d105a,color:#fff
     style UC3 fill:#f9d0c4
     style UC4 fill:#f9d0c4
 ```
@@ -905,11 +905,11 @@ stateDiagram-v2
     Failed --> Removing: Force Cleanup
     
     style Pending fill:#f9d0c4
-    style Creating fill:#6d105a
+    style Creating fill:#6d105a,color:#fff
     style Starting fill:#e8f4d4
     style Running fill:#e8f4d4
     style Stopping fill:#f9d0c4
-    style Stopped fill:#6d105a
+    style Stopped fill:#6d105a,color:#fff
     style Removing fill:#f9d0c4
     style Failed fill:#f9d0c4
 ```
@@ -1056,7 +1056,7 @@ graph TB
     Recovery --> Metrics
     
     style CreateTime fill:#e8f4d4
-    style Health fill:#6d105a
+    style Health fill:#6d105a,color:#fff
     style Events fill:#f9d0c4
 ```
 
@@ -1269,7 +1269,7 @@ graph TB
     API --> Reports
     
     style Hooks fill:#e8f4d4
-    style Collector fill:#6d105a
+    style Collector fill:#6d105a,color:#fff
     style TSB fill:#f9d0c4
     style Dashboard fill:#e8f4d4
 ```
@@ -1326,7 +1326,7 @@ graph TB
     style Memory fill:#e8f4d4
     style Syscalls fill:#f9d0c4
     style Files fill:#f9d0c4
-    style Status fill:#6d105a
+    style Status fill:#6d105a,color:#fff
     style Alerts fill:#f9d0c4
     style Score fill:#f9d0c4
 ```
@@ -1491,7 +1491,7 @@ graph TB
     Alerts --> Stream
     
     style Syscall fill:#e8f4d4
-    style Queue fill:#6d105a
+    style Queue fill:#6d105a,color:#fff
     style Rules fill:#f9d0c4
     style Alerts fill:#f9d0c4
 ```
@@ -1603,10 +1603,10 @@ graph TB
     Alert --> Destroy
     
     style LP fill:#e8f4d4
-    style DID fill:#6d105a
+    style DID fill:#6d105a,color:#fff
     style ZT fill:#f9d0c4
     style Create fill:#e8f4d4
-    style Run fill:#6d105a
+    style Run fill:#6d105a,color:#fff
     style Destroy fill:#f9d0c4
 ```
 
@@ -1665,7 +1665,7 @@ graph TB
     
     Always --> Never
     
-    style WinChoice fill:#6d105a
+    style WinChoice fill:#6d105a,color:#fff
     style LinuxChoice fill:#e8f4d4
     style MacChoice fill:#f9d0c4
     style Always fill:#e8f4d4
@@ -1809,7 +1809,7 @@ graph TB
     style Creation fill:#f9d0c4
     style Runtime fill:#f9d0c4
     style Performance fill:#f9d0c4
-    style Cleanup fill:#6d105a
+    style Cleanup fill:#6d105a,color:#fff
 ```
 
 ### Common Issues and Solutions
@@ -1865,8 +1865,8 @@ graph TB
     style CE2 fill:#f9d0c4
     style RE1 fill:#f9d0c4
     style RE2 fill:#f9d0c4
-    style PE1 fill:#6d105a
-    style PE2 fill:#6d105a
+    style PE1 fill:#6d105a,color:#fff
+    style PE2 fill:#6d105a,color:#fff
     style CL1 fill:#e8f4d4
     style CL2 fill:#e8f4d4
 ```

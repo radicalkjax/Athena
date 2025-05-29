@@ -6,7 +6,7 @@ import { AxiosInstance } from 'axios';
 import { createOpenAIClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { BaseAIService } from './ai/base';
 import { AIProvider, AIMessage } from './ai/types';
-import { OPENAI_API_KEY } from '@env';
+import { env } from '@/shared/config/environment';
 
 // Export types for backward compatibility
 export { DeobfuscationResult, VulnerabilityAnalysisResult } from './ai/types';
@@ -17,11 +17,11 @@ class OpenAIService extends BaseAIService {
       name: 'openai',
       storageKeyPrefix: 'athena_openai',
       defaultModel: 'gpt-4-turbo',
-      defaultBaseUrl: 'https://api.openai.com/v1',
+      defaultBaseUrl: env.api.openai.baseUrl || 'https://api.openai.com/v1',
       envKeyName: 'OPENAI_API_KEY'
     };
     // Pass undefined instead of empty string
-    super(provider, OPENAI_API_KEY && OPENAI_API_KEY.trim() ? OPENAI_API_KEY : undefined);
+    super(provider, env.api.openai.key);
   }
 
   protected getClient(apiKey: string, baseUrl: string): AxiosInstance {

@@ -96,7 +96,8 @@ describe('BaseAIService', () => {
 
     it('should use expo constants as fallback for API key', async () => {
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-      Constants.manifest = { extra: { claudeApiKey: 'expo-api-key' } };
+      // Mock Constants.expoConfig for this test
+      (Constants as any).expoConfig = { extra: { claudeApiKey: 'expo-api-key' } };
 
       const client = await service.init();
 
@@ -105,7 +106,8 @@ describe('BaseAIService', () => {
 
     it('should throw error when no API key is found', async () => {
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-      Constants.manifest = { extra: {} };
+      // Mock Constants.expoConfig with empty extra
+      (Constants as any).expoConfig = { extra: {} };
 
       await expect(service.init()).rejects.toThrow(
         'claude API key not found. Please set your API key in the settings or .env file.'
@@ -167,7 +169,7 @@ describe('BaseAIService', () => {
     });
 
     it('should return true when API key is in expo constants', async () => {
-      Constants.manifest = { extra: { claudeApiKey: 'expo-api-key' } };
+      (Constants as any).expoConfig = { extra: { claudeApiKey: 'expo-api-key' } };
 
       const result = await service.hasApiKey();
 
@@ -192,7 +194,7 @@ describe('BaseAIService', () => {
 
     it('should return false when no API key is found', async () => {
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-      Constants.manifest = { extra: {} };
+      (Constants as any).expoConfig = { extra: {} };
 
       const result = await service.hasApiKey();
 

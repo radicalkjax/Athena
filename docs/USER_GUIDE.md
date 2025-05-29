@@ -178,7 +178,7 @@ graph TB
     Settings --> AISelect
     Settings --> Monitor
     
-    style Home fill:#6d105a
+    style Home fill:#6d105a,color:#fff
     style Analyze fill:#e8f4d4
     style Results fill:#f9d0c4
 ```
@@ -393,7 +393,7 @@ graph TB
         end
     end
     
-    style AISelector fill:#6d105a
+    style AISelector fill:#6d105a,color:#fff
     style ActionButtons fill:#e8f4d4
     style Performance fill:#f9d0c4
 ```
@@ -502,8 +502,8 @@ graph LR
     DeepSeek --> Status
     Local --> Status
     
-    style Claude fill:#6d105a
-    style OpenAI fill:#6d105a
+    style Claude fill:#6d105a,color:#fff
+    style OpenAI fill:#6d105a,color:#fff
     style DeepSeek fill:#e8f4d4
     style Local fill:#f9d0c4
 ```
@@ -675,7 +675,7 @@ graph TB
     Critical --> High
     High --> Medium
     
-    style Tab1 fill:#6d105a
+    style Tab1 fill:#6d105a,color:#fff
     style Tab2 fill:#f9d0c4
     style Tab3 fill:#e8f4d4
 ```
@@ -744,7 +744,7 @@ graph TB
     Process --> Memory
     Process --> IO
     
-    style Windows fill:#6d105a
+    style Windows fill:#6d105a,color:#fff
     style Linux fill:#e8f4d4
     style macOS fill:#f9d0c4
 ```
@@ -990,7 +990,7 @@ graph TB
     
     Collector --> Report
     
-    style Queue fill:#6d105a
+    style Queue fill:#6d105a,color:#fff
     style Scheduler fill:#e8f4d4
     style Report fill:#f9d0c4
 ```
@@ -1081,7 +1081,7 @@ graph TB
     
     style Agent fill:#e8f4d4
     style Analyzer fill:#f9d0c4
-    style Dashboard fill:#6d105a
+    style Dashboard fill:#6d105a,color:#fff
 ```
 
 ### Monitoring Dashboard Interface
@@ -1312,7 +1312,7 @@ graph TB
     Alert --> Timeline
     
     style Alert fill:#f9d0c4
-    style Execute fill:#6d105a
+    style Execute fill:#6d105a,color:#fff
 ```
 
 ### Process Activity Monitoring
@@ -1373,7 +1373,7 @@ graph TB
     Details --> Actions
     
     style Malware fill:#f9d0c4
-    style Payload fill:#6d105a
+    style Payload fill:#6d105a,color:#fff
     style PowerShell fill:#e8f4d4
 ```
 
@@ -1498,7 +1498,7 @@ graph TB
     style L1 fill:#e8f4d4
     style CB1 fill:#e8f4d4
     style CB2 fill:#f9d0c4
-    style CB3 fill:#6d105a
+    style CB3 fill:#6d105a,color:#fff
 ```
 
 ### Real-time Performance Dashboard

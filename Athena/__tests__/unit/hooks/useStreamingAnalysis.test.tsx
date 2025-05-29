@@ -2,7 +2,7 @@
  * Tests for useStreamingAnalysis hook
  */
 
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react-native';
 import { useStreamingAnalysis } from '@/hooks/useStreamingAnalysis';
 import { aiServiceManager } from '@/services/ai/manager';
 import { useAnalysisStore } from '@/store';

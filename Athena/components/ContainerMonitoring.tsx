@@ -5,7 +5,7 @@ import { useAppStore } from '@/store';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Collapsible } from './Collapsible';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '@/hooks';
 import { Card } from '@/design-system';
 
 interface ContainerMonitoringProps {

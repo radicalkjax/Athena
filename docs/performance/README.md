@@ -53,10 +53,10 @@ flowchart TD
     FF --> Impl
     
     style Start fill:#e8f4d4
-    style CB fill:#6d105a
+    style CB fill:#6d105a,color:#fff
     style BH fill:#f9d0c4
     style Cache fill:#e8f4d4
-    style APM fill:#6d105a
+    style APM fill:#6d105a,color:#fff
     style FF fill:#f9d0c4
 ```
 

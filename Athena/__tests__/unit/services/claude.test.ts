@@ -42,15 +42,35 @@ describe('ClaudeService', () => {
     });
 
     it('should use stored API key when not provided', async () => {
+      // Reset modules to clear cached values
+      jest.resetModules();
+      jest.doMock('@env', () => ({
+        CLAUDE_API_KEY: '',  // No env key
+        CLAUDE_API_BASE_URL: 'https://api.anthropic.com/v1'
+      }));
+      
+      // Mock expo-constants to have no API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {}
+          }
+        }
+      }));
+      
+      const { initClaude: initWithoutEnv } = require('@/services/claude');
+      
       (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
         if (key === 'athena_claude_api_key') return Promise.resolve('stored-key');
         if (key === 'athena_claude_base_url') return Promise.resolve(null);
         return Promise.resolve(null);
       });
 
-      const client = await initClaude();
+      const client = await initWithoutEnv();
 
       expect(AsyncStorage.getItem).toHaveBeenCalledWith('athena_claude_api_key');
+      expect(AsyncStorage.getItem).toHaveBeenCalledWith('athena_claude_base_url');
       expect(createClaudeClient).toHaveBeenCalledWith('stored-key', 'https://api.anthropic.com/v1');
       expect(client).toBe(mockClient);
     });
@@ -61,6 +81,16 @@ describe('ClaudeService', () => {
       jest.doMock('@env', () => ({
         CLAUDE_API_KEY: '',
         CLAUDE_API_BASE_URL: 'https://api.anthropic.com/v1'
+      }));
+      
+      // Mock expo-constants to have no API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {}
+          }
+        }
       }));
       
       const { initClaude: initWithoutKey } = require('@/services/claude');
@@ -106,6 +136,16 @@ describe('ClaudeService', () => {
       jest.doMock('@env', () => ({
         CLAUDE_API_KEY: '',
         CLAUDE_API_BASE_URL: 'https://api.anthropic.com/v1'
+      }));
+      
+      // Mock expo-constants to have no API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {}
+          }
+        }
       }));
       
       const { hasClaudeApiKey: hasKeyWithoutEnv } = require('@/services/claude');
@@ -321,6 +361,16 @@ describe('ClaudeService', () => {
       jest.doMock('@env', () => ({
         CLAUDE_API_KEY: '',
         CLAUDE_API_BASE_URL: 'https://api.anthropic.com/v1'
+      }));
+      
+      // Mock expo-constants to have no API key
+      jest.doMock('expo-constants', () => ({
+        __esModule: true,
+        default: {
+          expoConfig: {
+            extra: {}
+          }
+        }
       }));
 
       // Use require instead of dynamic import to avoid the experimental modules error

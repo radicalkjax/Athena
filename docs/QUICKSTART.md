@@ -43,9 +43,9 @@ flowchart TB
     
     Launch --> Ready([Ready!<br/>━━━━━━━━<br/>Athena running at<br/>http://localhost:3000])
     
-    style Start fill:#6d105a
-    style Ready fill:#e8f4d4
-    style AutoSetup fill:#f9d0c4
+    style Start fill:#6d105a,color:#fff
+    style Ready fill:#e8f4d4,color:#333
+    style AutoSetup fill:#f9d0c4,color:#333
 ```
 
 ## Prerequisites

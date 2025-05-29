@@ -81,14 +81,14 @@ graph TD
     G --> A
     H --> A
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#e8f4d4
     style C fill:#f9d0c4
     style D fill:#e8f4d4
     style E fill:#e8f4d4
     style F fill:#f9d0c4
-    style G fill:#6d105a
-    style H fill:#6d105a
+    style G fill:#6d105a,color:#fff
+    style H fill:#6d105a,color:#fff
 ```
 
 ## Architecture
@@ -148,15 +148,15 @@ graph LR
     E --> I
     A --> H
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#f9d0c4
     style C fill:#e8f4d4
-    style D fill:#6d105a
+    style D fill:#6d105a,color:#fff
     style E fill:#e8f4d4
     style F fill:#e8f4d4
     style G fill:#f9d0c4
-    style H fill:#6d105a
-    style I fill:#6d105a
+    style H fill:#6d105a,color:#fff
+    style I fill:#6d105a,color:#fff
 ```
 
 ## Results Rendering Architecture
@@ -221,15 +221,15 @@ flowchart TD
     ReportRender --> Display
     VulnRender --> Display
     
-    style Start fill:#6d105a
+    style Start fill:#6d105a,color:#fff
     style Parse fill:#f9d0c4
     style Transform fill:#e8f4d4
-    style Enhance fill:#6d105a
-    style TabNav fill:#6d105a
+    style Enhance fill:#6d105a,color:#fff
+    style TabNav fill:#6d105a,color:#fff
     style CodeRender fill:#e8f4d4
     style ReportRender fill:#e8f4d4
     style VulnRender fill:#f9d0c4
-    style Display fill:#6d105a
+    style Display fill:#6d105a,color:#fff
 ```
 
 ## Tab Management Flow
@@ -336,8 +336,8 @@ graph LR
     C --> E
     
     style A fill:#e8f4d4
-    style B fill:#6d105a
-    style C fill:#6d105a
+    style B fill:#6d105a,color:#fff
+    style C fill:#6d105a,color:#fff
     style D fill:#e8f4d4
     style E fill:#f9d0c4
 ```
@@ -460,12 +460,12 @@ flowchart LR
     E --> G
     F --> H
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#f9d0c4
     style C fill:#e8f4d4
-    style D fill:#6d105a
-    style E fill:#6d105a
-    style F fill:#6d105a
+    style D fill:#6d105a,color:#fff
+    style E fill:#6d105a,color:#fff
+    style F fill:#6d105a,color:#fff
     style G fill:#e8f4d4
     style H fill:#e8f4d4
 ```
@@ -630,10 +630,10 @@ graph TD
     E --> F
     
     style A fill:#f9d0c4
-    style B fill:#6d105a
+    style B fill:#6d105a,color:#fff
     style C fill:#f9d0c4
-    style D fill:#6d105a
-    style E fill:#6d105a
+    style D fill:#6d105a,color:#fff
+    style E fill:#6d105a,color:#fff
     style F fill:#e8f4d4
 ```
 
@@ -784,12 +784,12 @@ graph TD
     G --> I
     G --> J
     
-    style A fill:#6d105a
+    style A fill:#6d105a,color:#fff
     style B fill:#f9d0c4
-    style C fill:#6d105a
+    style C fill:#6d105a,color:#fff
     style D fill:#f9d0c4
-    style E fill:#6d105a
-    style F fill:#6d105a
+    style E fill:#6d105a,color:#fff
+    style F fill:#6d105a,color:#fff
     style G fill:#e8f4d4
     style H fill:#e8f4d4
     style I fill:#e8f4d4

@@ -92,11 +92,11 @@ flowchart TD
     BothStorage --> Return
     LocalOnly --> Return
     
-    style Service fill:#6d105a
+    style Service fill:#6d105a,color:#fff
     style Redis fill:#e8f4d4
     style Local fill:#f9d0c4
     style Return fill:#e8f4d4
-    style Execute fill:#6d105a
+    style Execute fill:#6d105a,color:#fff
 ```
 
 ### Redis Integration Flow
@@ -291,11 +291,11 @@ graph TB
         Note2[Cache Hit ✓] -.-> I6
     end
     
-    style AI1 fill:#6d105a
-    style AI2 fill:#6d105a
-    style AI3 fill:#6d105a
+    style AI1 fill:#6d105a,color:#fff
+    style AI2 fill:#6d105a,color:#fff
+    style AI3 fill:#6d105a,color:#fff
     style AI4 fill:#e8f4d4
-    style RC fill:#6d105a
+    style RC fill:#6d105a,color:#fff
     style Note1 fill:#e8f4d4
     style Note2 fill:#e8f4d4
 ```

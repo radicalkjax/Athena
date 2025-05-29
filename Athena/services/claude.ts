@@ -6,7 +6,7 @@ import { AxiosInstance } from 'axios';
 import { createClaudeClient, safeApiCall, sanitizeRequestData } from './apiClient';
 import { BaseAIService } from './ai/base';
 import { AIProvider, AIMessage } from './ai/types';
-import { CLAUDE_API_KEY, CLAUDE_API_BASE_URL } from '@env';
+import { env } from '@/shared/config/environment';
 
 // Export types for backward compatibility
 export { DeobfuscationResult, VulnerabilityAnalysisResult } from './ai/types';
@@ -17,12 +17,12 @@ class ClaudeService extends BaseAIService {
       name: 'claude',
       storageKeyPrefix: 'athena_claude',
       defaultModel: 'claude-3-opus-20240229',
-      defaultBaseUrl: CLAUDE_API_BASE_URL || 'https://api.anthropic.com/v1',
+      defaultBaseUrl: env.api.claude.baseUrl || 'https://api.anthropic.com/v1',
       envKeyName: 'CLAUDE_API_KEY',
       envBaseUrlName: 'CLAUDE_API_BASE_URL'
     };
     // Pass undefined instead of empty string
-    super(provider, CLAUDE_API_KEY && CLAUDE_API_KEY.trim() ? CLAUDE_API_KEY : undefined);
+    super(provider, env.api.claude.key);
   }
 
   protected getClient(apiKey: string, baseUrl: string): AxiosInstance {

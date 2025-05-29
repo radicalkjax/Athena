@@ -118,11 +118,11 @@ graph TB
     IT --> UTILS
     
     style UT fill:#e8f4d4
-    style CT fill:#6d105a
+    style CT fill:#6d105a,color:#fff
     style IT fill:#f9d0c4
-    style E2E fill:#6d105a
-    style JEST fill:#6d105a
-    style RTL fill:#6d105a
+    style E2E fill:#6d105a,color:#fff
+    style JEST fill:#6d105a,color:#fff
+    style RTL fill:#6d105a,color:#fff
     style MOCK fill:#f9d0c4
     style FIXTURES fill:#e8f4d4
     style UTILS fill:#e8f4d4
@@ -246,10 +246,10 @@ graph LR
     style SERVICES fill:#e8f4d4
     style COMPONENTS fill:#e8f4d4
     style STORE fill:#e8f4d4
-    style STMT fill:#6d105a
-    style BRANCH fill:#6d105a
-    style FUNC fill:#6d105a
-    style LINE fill:#6d105a
+    style STMT fill:#6d105a,color:#fff
+    style BRANCH fill:#6d105a,color:#fff
+    style FUNC fill:#6d105a,color:#fff
+    style LINE fill:#6d105a,color:#fff
 ```
 
 ## Testing Philosophy
@@ -326,9 +326,9 @@ flowchart TB
     style EFS fill:#f9d0c4
     style ICON fill:#f9d0c4
     style DEVICE fill:#f9d0c4
-    style API_MOCK fill:#6d105a
-    style STORE_MOCK fill:#6d105a
-    style DB_MOCK fill:#6d105a
+    style API_MOCK fill:#6d105a,color:#fff
+    style STORE_MOCK fill:#6d105a,color:#fff
+    style DB_MOCK fill:#6d105a,color:#fff
     style UNIT fill:#e8f4d4
     style COMP fill:#e8f4d4
     style INT fill:#e8f4d4

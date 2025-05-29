@@ -14,13 +14,45 @@ jest.mock('expo-secure-store', () => ({
 }));
 
 jest.mock('expo-constants', () => ({
-  ...jest.requireActual('expo-constants'),
-  manifest: {
-    extra: {
-      OPENAI_API_KEY: 'test-openai-key',
-      CLAUDE_API_KEY: 'test-claude-key',
-      DEEPSEEK_API_KEY: 'test-deepseek-key',
-      DATABASE_URL: 'postgres://test:test@localhost:5432/test',
+  __esModule: true,
+  default: {
+    expoConfig: {
+      version: '1.0.0',
+      extra: {
+        openaiApiKey: 'test-openai-key',
+        claudeApiKey: 'test-claude-key',
+        deepseekApiKey: 'test-deepseek-key',
+        databaseUrl: 'postgres://test:test@localhost:5432/test',
+        openaiApiBaseUrl: 'https://api.openai.com/v1',
+        claudeApiBaseUrl: 'https://api.anthropic.com/v1',
+        deepseekApiBaseUrl: 'https://api.deepseek.com/v1',
+      },
+    },
+    manifest: {
+      extra: {
+        openaiApiKey: 'test-openai-key',
+        claudeApiKey: 'test-claude-key',
+        deepseekApiKey: 'test-deepseek-key',
+        databaseUrl: 'postgres://test:test@localhost:5432/test',
+      },
+    },
+  },
+  Constants: {
+    expoConfig: {
+      extra: {
+        openaiApiKey: 'test-openai-key',
+        claudeApiKey: 'test-claude-key',
+        deepseekApiKey: 'test-deepseek-key',
+        databaseUrl: 'postgres://test:test@localhost:5432/test',
+      },
+    },
+    manifest: {
+      extra: {
+        openaiApiKey: 'test-openai-key',
+        claudeApiKey: 'test-claude-key',
+        deepseekApiKey: 'test-deepseek-key',
+        databaseUrl: 'postgres://test:test@localhost:5432/test',
+      },
     },
   },
 }));

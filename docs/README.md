@@ -38,10 +38,10 @@ flowchart LR
     User --> Advanced[⚙️ Advanced Docs<br/>━━━━━━━━<br/>Architecture<br/>and development]
     
     style Start fill:#e8f4d4
-    style Quick fill:#6d105a
+    style Quick fill:#6d105a,color:#fff
     style Setup fill:#f9d0c4
     style User fill:#e8f4d4
-    style Advanced fill:#6d105a
+    style Advanced fill:#6d105a,color:#fff
 ```
 
 ## 📚 Documentation Map
@@ -130,9 +130,9 @@ flowchart TD
     Test --> Trouble[TROUBLESHOOTING.md<br/>Debug Issues]
     
     style Dev fill:#e8f4d4
-    style Arch fill:#6d105a
-    style API fill:#6d105a
-    style Test fill:#6d105a
+    style Arch fill:#6d105a,color:#fff
+    style API fill:#6d105a,color:#fff
+    style Test fill:#6d105a,color:#fff
 ```
 
 ### 👨‍💼 **DevOps/Admins**
@@ -169,8 +169,8 @@ flowchart TD
     
     style Admin fill:#e8f4d4
     style Setup fill:#f9d0c4
-    style Container fill:#6d105a
-    style Perf fill:#6d105a
+    style Container fill:#6d105a,color:#fff
+    style Perf fill:#6d105a,color:#fff
 ```
 
 ### 👤 **End Users**
@@ -202,7 +202,7 @@ flowchart TD
     Guide --> Trouble[TROUBLESHOOTING.md<br/>Common Issues]
     
     style User fill:#e8f4d4
-    style Quick fill:#6d105a
+    style Quick fill:#6d105a,color:#fff
     style Guide fill:#e8f4d4
     style Trouble fill:#f9d0c4
 ```
