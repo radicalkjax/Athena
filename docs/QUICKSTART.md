@@ -41,7 +41,7 @@ flowchart TB
     
     Build --> Launch[Launch Server<br/>━━━━━━━━<br/>• Start web server<br/>• Open browser<br/>• Port 3000]
     
-    Launch --> Ready([Ready!<br/>━━━━━━━━<br/>Athena running at<br/>http://localhost:3000])
+    Launch --> Ready([Ready!<br/>━━━━━━━━<br/>Athena running at<br/>localhost:3000])
     
     style Start fill:#6d105a,color:#fff
     style Ready fill:#e8f4d4,color:#333
