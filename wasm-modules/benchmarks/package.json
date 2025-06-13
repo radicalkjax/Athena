@@ -1,0 +1,15 @@
+{
+  "name": "wasm-benchmarks",
+  "version": "1.0.0",
+  "description": "Performance benchmarks for WASM analysis engine",
+  "main": "analysis-engine-bench.ts",
+  "scripts": {
+    "bench": "tsx analysis-engine-bench.ts",
+    "bench:watch": "tsx watch analysis-engine-bench.ts"
+  },
+  "dependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

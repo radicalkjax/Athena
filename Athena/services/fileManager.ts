@@ -1,11 +1,34 @@
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { MalwareFile } from '@/types';
+import { createFileProcessor, type IFileProcessor, type ParsedFile, type FileValidation } from '../../wasm-modules/bridge/file-processor-bridge';
 
 /**
  * File Manager Service
  * Handles file operations for malware analysis
+ * Enhanced with WASM file processing capabilities
  */
+
+// Singleton instance of the file processor
+let fileProcessor: IFileProcessor | null = null;
+
+/**
+ * Initialize the WASM file processor
+ */
+async function initFileProcessor(): Promise<IFileProcessor> {
+  if (!fileProcessor) {
+    try {
+      fileProcessor = createFileProcessor();
+      await fileProcessor.initialize();
+      console.log('WASM file processor initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize WASM file processor:', error);
+      // Fallback to JS implementation if WASM fails
+      fileProcessor = null;
+    }
+  }
+  return fileProcessor!;
+}
 
 export interface FileInfo {
   uri: string;
@@ -31,6 +54,58 @@ export async function initFileSystem(): Promise<void> {
 }
 
 /**
+ * Validate a file using WASM processor
+ */
+async function validateFileWithWASM(uri: string, size: number): Promise<FileValidation | null> {
+  try {
+    const processor = await initFileProcessor();
+    if (!processor) return null;
+
+    // Read file as base64 and convert to ArrayBuffer
+    const base64Content = await readFileAsBase64(uri);
+    const binaryString = atob(base64Content);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const buffer = bytes.buffer;
+
+    // Validate the file
+    const validation = await processor.validateFile(buffer);
+    return validation;
+  } catch (error) {
+    console.error('WASM file validation failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Parse a file using WASM processor
+ */
+async function parseFileWithWASM(uri: string, formatHint?: string): Promise<ParsedFile | null> {
+  try {
+    const processor = await initFileProcessor();
+    if (!processor) return null;
+
+    // Read file as base64 and convert to ArrayBuffer
+    const base64Content = await readFileAsBase64(uri);
+    const binaryString = atob(base64Content);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const buffer = bytes.buffer;
+
+    // Parse the file
+    const parsed = await processor.parseFile(buffer, formatHint);
+    return parsed;
+  } catch (error) {
+    console.error('WASM file parsing failed:', error);
+    return null;
+  }
+}
+
+/**
  * Pick a file using the document picker
  */
 export async function pickFile(): Promise<MalwareFile | null> {
@@ -43,10 +118,34 @@ export async function pickFile(): Promise<MalwareFile | null> {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const asset = result.assets[0];
       
-      // Read file content for small text files
+      // Try to validate and parse with WASM first
+      let wasmValidation: FileValidation | null = null;
+      let wasmParsed: ParsedFile | null = null;
+      
+      try {
+        // Performance tracking
+        const startTime = Date.now();
+        
+        // Validate the file
+        wasmValidation = await validateFileWithWASM(asset.uri, asset.size || 0);
+        
+        // Parse the file if validation passed
+        if (wasmValidation?.isValid) {
+          wasmParsed = await parseFileWithWASM(asset.uri, asset.mimeType || undefined);
+        }
+        
+        const processingTime = Date.now() - startTime;
+        console.log(`WASM file processing completed in ${processingTime}ms`);
+      } catch (error) {
+        console.warn('WASM processing failed, falling back to JS:', error);
+      }
+      
+      // Read file content for small text files (fallback or for content display)
       let content = '';
-      if (
-        asset.size && asset.size < 1024 * 1024 && // Less than 1MB
+      const isTextFile = wasmParsed ? 
+        ['text', 'script', 'json', 'xml', 'html'].some(type => 
+          wasmParsed.format.toLowerCase().includes(type)
+        ) :
         (asset.mimeType?.includes('text') || 
          asset.mimeType?.includes('javascript') || 
          asset.mimeType?.includes('json') || 
@@ -63,8 +162,9 @@ export async function pickFile(): Promise<MalwareFile | null> {
          asset.name.endsWith('.go') ||
          asset.name.endsWith('.rb') ||
          asset.name.endsWith('.pl') ||
-         asset.name.endsWith('.sh'))
-      ) {
+         asset.name.endsWith('.sh'));
+      
+      if (asset.size && asset.size < 1024 * 1024 && isTextFile) {
         try {
           content = await readFileAsText(asset.uri);
         } catch (error) {
@@ -72,14 +172,28 @@ export async function pickFile(): Promise<MalwareFile | null> {
         }
       }
       
-      return {
-        id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      // Create enhanced MalwareFile object
+      const malwareFile: MalwareFile = {
+        id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
         name: asset.name,
         size: asset.size || 0,
-        type: asset.mimeType || 'application/octet-stream',
+        type: wasmParsed?.metadata?.mimeType || asset.mimeType || 'application/octet-stream',
         uri: asset.uri,
         content,
+        // Add WASM analysis results
+        wasmAnalysis: wasmParsed ? {
+          format: wasmParsed.format,
+          metadata: wasmParsed.metadata,
+          suspiciousIndicators: wasmParsed.suspicious_indicators,
+          extractedStrings: wasmParsed.strings.filter((s: any) => s.suspicious).length,
+          entropy: wasmParsed.metadata.entropy,
+          validStructure: wasmParsed.integrity.validStructure,
+        } : undefined,
+        validationErrors: wasmValidation?.errors,
+        validationWarnings: wasmValidation?.warnings,
       };
+      
+      return malwareFile;
     }
     
     return null;
@@ -231,7 +345,7 @@ export async function createMalwareFile(uri: string, name?: string): Promise<Mal
     }
     
     return {
-      id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       name: fileName,
       size: info.size || 0,
       type: fileType,
@@ -282,5 +396,20 @@ export async function cleanupOldFiles(daysOld: number = 7): Promise<number> {
   } catch (error) {
     console.error('Error cleaning up old files:', error);
     throw new Error('Failed to cleanup old files');
+  }
+}
+
+/**
+ * Cleanup WASM file processor resources
+ */
+export function cleanupFileProcessor(): void {
+  if (fileProcessor) {
+    try {
+      fileProcessor.destroy();
+      fileProcessor = null;
+      console.log('WASM file processor cleaned up');
+    } catch (error) {
+      console.error('Error cleaning up WASM file processor:', error);
+    }
   }
 }

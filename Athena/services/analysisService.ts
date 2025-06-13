@@ -8,6 +8,18 @@ import * as localModelsService from './localModels';
 import * as containerDbService from './container-db';
 import * as fileManagerService from './fileManager';
 import * as metasploitService from './metasploit';
+import { 
+  analysisEngine, 
+  initializeAnalysisEngine, 
+  AnalysisResult as WASMAnalysisResult, 
+  ThreatInfo,
+  WASMError,
+  WASMErrorCode,
+  isHighSeverity
+} from '../../wasm-modules/bridge';
+import { createFileProcessor, IFileProcessor } from '../../wasm-modules/bridge/file-processor-bridge';
+import { getPatternMatcher, PatternMatcherBridge } from '../../wasm-modules/bridge/pattern-matcher-bridge';
+import { DeobfuscatorBridge } from '../../wasm-modules/bridge/deobfuscator-bridge';
 
 // Type definitions
 interface DeobfuscationResult {
@@ -39,6 +51,295 @@ interface ContainerAnalysisResults {
 
 // Utility function for promise-based delays
 const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+// WASM Analysis Integration
+let wasmInitialized = false;
+let fileProcessor: IFileProcessor | null = null;
+let patternMatcher: PatternMatcherBridge | null = null;
+let deobfuscator: DeobfuscatorBridge | null = null;
+
+const ensureWASMInitialized = async (): Promise<void> => {
+  if (!wasmInitialized) {
+    try {
+      // Initialize all WASM modules in parallel
+      const initPromises: Promise<void>[] = [
+        initializeAnalysisEngine()
+      ];
+
+      // Initialize file processor
+      fileProcessor = createFileProcessor({
+        minStringLength: 4,
+        extractMetadata: true,
+        deepAnalysis: true
+      });
+      initPromises.push(fileProcessor.initialize());
+
+      // Initialize pattern matcher
+      patternMatcher = getPatternMatcher();
+      initPromises.push(patternMatcher.initialize());
+
+      // Initialize deobfuscator
+      deobfuscator = DeobfuscatorBridge.getInstance();
+      initPromises.push(deobfuscator.initialize());
+
+      await Promise.all(initPromises);
+      
+      wasmInitialized = true;
+      console.log('All WASM modules initialized successfully');
+    } catch (error) {
+      if (error instanceof WASMError) {
+        console.error(`WASM initialization failed with code ${error.code}:`, error.message);
+      } else {
+        console.error('Failed to initialize WASM modules:', error);
+      }
+      throw new Error('WASM initialization failed');
+    }
+  }
+};
+
+/**
+ * Convert WASM threat info to vulnerability format
+ */
+const convertThreatToVulnerability = (threat: ThreatInfo, index: number): Vulnerability => {
+  return {
+    id: generateId(),
+    name: threat.threat_type,
+    severity: threat.confidence > 0.8 ? 'high' : threat.confidence > 0.5 ? 'medium' : 'low',
+    description: threat.description,
+    cveId: '',
+    affectedVersions: [],
+    fixedVersions: [],
+    references: threat.indicators.map(indicator => `Indicator: ${indicator}`),
+    exploitAvailable: threat.confidence > 0.8,
+    patchAvailable: false,
+  };
+};
+
+/**
+ * Run WASM-powered analysis on file content using all Phase 2 modules
+ */
+const runWASMAnalysis = async (fileContent: string, fileName: string): Promise<{
+  deobfuscatedCode: string;
+  analysisReport: string;
+  vulnerabilities: Vulnerability[];
+}> => {
+  await ensureWASMInitialized();
+  
+  if (!fileProcessor || !patternMatcher || !deobfuscator) {
+    throw new Error('WASM modules not properly initialized');
+  }
+  
+  try {
+    // Convert string to ArrayBuffer
+    const encoder = new TextEncoder();
+    const arrayBuffer = encoder.encode(fileContent).buffer;
+    
+    const startTime = Date.now();
+    let analysisReport = `## WASM Analysis Report\n\n`;
+    let vulnerabilities: Vulnerability[] = [];
+    let deobfuscatedContent = fileContent;
+    
+    // Phase 1: File Processing
+    analysisReport += `### File Processing\n\n`;
+    try {
+      const [fileFormat, parsedFile] = await Promise.all([
+        fileProcessor.detectFormat(arrayBuffer, fileName),
+        fileProcessor.parseFile(arrayBuffer)
+      ]);
+      
+      analysisReport += `**File Format:** ${fileFormat.format} (confidence: ${(fileFormat.confidence * 100).toFixed(1)}%)\n`;
+      analysisReport += `**MIME Type:** ${fileFormat.mime_type}\n`;
+      
+      if (parsedFile.metadata) {
+        analysisReport += `**File Size:** ${parsedFile.metadata.size} bytes\n`;
+        if (parsedFile.metadata.hashes?.sha256) {
+          analysisReport += `**SHA256:** ${parsedFile.metadata.hashes.sha256}\n`;
+        }
+      }
+      
+      if (parsedFile.suspicious_indicators.length > 0) {
+        analysisReport += `\n**Suspicious Indicators:**\n`;
+        parsedFile.suspicious_indicators.forEach(indicator => {
+          analysisReport += `- ${indicator}\n`;
+        });
+      }
+      
+      analysisReport += `\n`;
+    } catch (fpError) {
+      console.error('File processing error:', fpError);
+      analysisReport += `File processing failed: ${fpError.message}\n\n`;
+    }
+    
+    // Phase 2: Pattern Matching
+    analysisReport += `### Pattern Matching\n\n`;
+    try {
+      const scanResult = await patternMatcher.scan(arrayBuffer);
+      
+      analysisReport += `**Threat Score:** ${scanResult.threat_score}/100\n`;
+      analysisReport += `**Matches Found:** ${scanResult.matches.length}\n`;
+      
+      if (scanResult.has_malware) {
+        analysisReport += `**⚠️ MALWARE DETECTED**\n`;
+      }
+      
+      if (scanResult.matches.length > 0) {
+        analysisReport += `\n**Pattern Matches:**\n`;
+        scanResult.matches.forEach(match => {
+          analysisReport += `- **${match.rule_name}** (severity: ${match.severity})\n`;
+          analysisReport += `  - Pattern: ${match.pattern_name}\n`;
+          if (match.metadata && Object.keys(match.metadata).length > 0) {
+            analysisReport += `  - Metadata: ${JSON.stringify(match.metadata)}\n`;
+          }
+          
+          // Convert pattern match to vulnerability
+          vulnerabilities.push({
+            id: generateId(),
+            name: match.rule_name,
+            severity: match.severity === 'critical' ? 'high' : match.severity as 'high' | 'medium' | 'low',
+            description: `Pattern match: ${match.pattern_name}`,
+            cveId: '',
+            affectedVersions: [],
+            fixedVersions: [],
+            references: [],
+            exploitAvailable: match.severity === 'critical',
+            patchAvailable: false,
+          });
+        });
+      }
+      
+      analysisReport += `\n`;
+    } catch (pmError) {
+      console.error('Pattern matching error:', pmError);
+      analysisReport += `Pattern matching failed: ${pmError.message}\n\n`;
+    }
+    
+    // Phase 3: Deobfuscation
+    analysisReport += `### Deobfuscation Analysis\n\n`;
+    try {
+      // First detect obfuscation
+      const obfuscationDetection = await deobfuscator.detectObfuscation(fileContent);
+      
+      if (obfuscationDetection.isObfuscated) {
+        analysisReport += `**Obfuscation Detected:** Yes\n`;
+        analysisReport += `**Confidence:** ${(obfuscationDetection.confidence * 100).toFixed(1)}%\n`;
+        analysisReport += `**Techniques:** ${obfuscationDetection.techniques.join(', ')}\n\n`;
+        
+        // Perform deobfuscation
+        const deobResult = await deobfuscator.deobfuscate(fileContent);
+        
+        if (deobResult.success) {
+          deobfuscatedContent = deobResult.deobfuscated;
+          analysisReport += `**Deobfuscation Successful**\n`;
+          analysisReport += `**Layers Processed:** ${deobResult.layers.length}\n`;
+          
+          if (deobResult.layers.length > 0) {
+            analysisReport += `\n**Deobfuscation Layers:**\n`;
+            deobResult.layers.forEach((layer, idx) => {
+              analysisReport += `${idx + 1}. ${layer.technique} (confidence: ${(layer.confidence * 100).toFixed(1)}%)\n`;
+            });
+          }
+          
+          if (deobResult.warnings.length > 0) {
+            analysisReport += `\n**Warnings:**\n`;
+            deobResult.warnings.forEach(warning => {
+              analysisReport += `- ${warning}\n`;
+            });
+          }
+        } else {
+          analysisReport += `**Deobfuscation Failed:** ${deobResult.error || 'Unknown error'}\n`;
+        }
+      } else {
+        analysisReport += `**Obfuscation Detected:** No\n`;
+      }
+      
+      // Extract IOCs from deobfuscated content
+      const iocs = await deobfuscator.extractIOCs(deobfuscatedContent);
+      if (iocs.length > 0) {
+        analysisReport += `\n**Indicators of Compromise (IOCs):**\n`;
+        iocs.forEach(ioc => {
+          analysisReport += `- ${ioc}\n`;
+        });
+      }
+      
+      analysisReport += `\n`;
+    } catch (deobError) {
+      console.error('Deobfuscation error:', deobError);
+      analysisReport += `Deobfuscation failed: ${deobError.message}\n\n`;
+    }
+    
+    // Phase 4: Original Analysis Engine (for backward compatibility)
+    analysisReport += `### Core Analysis Engine\n\n`;
+    try {
+      // Convert deobfuscated content to ArrayBuffer for analysis engine
+      const deobArrayBuffer = encoder.encode(deobfuscatedContent).buffer;
+      
+      const wasmResult = await analysisEngine.analyze(deobArrayBuffer, {
+        enableDeobfuscation: false, // Already deobfuscated
+        patternSets: ['malware', 'exploits', 'backdoors']
+      });
+      
+      analysisReport += `**Engine Version:** ${wasmResult.metadata.engine_version}\n`;
+      analysisReport += `**Severity:** ${wasmResult.severity.toUpperCase()}\n`;
+      
+      if (wasmResult.threats.length > 0) {
+        analysisReport += `\n**Detected Threats:**\n`;
+        wasmResult.threats.forEach((threat, index) => {
+          analysisReport += `${index + 1}. **${threat.threat_type}** (Confidence: ${(threat.confidence * 100).toFixed(1)}%)\n`;
+          analysisReport += `   - ${threat.description}\n`;
+          if (threat.indicators.length > 0) {
+            analysisReport += `   - Indicators:\n`;
+            threat.indicators.forEach(indicator => {
+              analysisReport += `     - ${indicator}\n`;
+            });
+          }
+          analysisReport += `\n`;
+        });
+        
+        // Add core engine vulnerabilities
+        vulnerabilities.push(...wasmResult.threats.map(convertThreatToVulnerability));
+      }
+    } catch (coreError) {
+      console.error('Core analysis engine error:', coreError);
+      analysisReport += `Core analysis failed: ${coreError.message}\n`;
+    }
+    
+    const analysisTime = Date.now() - startTime;
+    analysisReport = `**Total Analysis Time:** ${analysisTime}ms\n\n` + analysisReport;
+    
+    // Deduplicate vulnerabilities
+    const uniqueVulnerabilities = new Map<string, Vulnerability>();
+    vulnerabilities.forEach(vuln => {
+      const key = `${vuln.name}-${vuln.description}`;
+      if (!uniqueVulnerabilities.has(key) || 
+          (vuln.severity === 'high' && uniqueVulnerabilities.get(key)?.severity !== 'high')) {
+        uniqueVulnerabilities.set(key, vuln);
+      }
+    });
+    
+    return {
+      deobfuscatedCode: deobfuscatedContent,
+      analysisReport,
+      vulnerabilities: Array.from(uniqueVulnerabilities.values())
+    };
+  } catch (error) {
+    if (error instanceof WASMError) {
+      console.error(`WASM analysis failed with code ${error.code}:`, error.message);
+      
+      // Handle specific error codes
+      switch (error.code) {
+        case WASMErrorCode.TimeoutError:
+          throw new Error('WASM analysis timed out. File may be too complex.');
+        case WASMErrorCode.InvalidInput:
+          throw new Error('Invalid file content for WASM analysis.');
+        default:
+          throw new Error(`WASM analysis failed: ${error.message}`);
+      }
+    } else {
+      console.error('WASM analysis error:', error);
+      throw new Error(`WASM analysis failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+};
 
 // Error handling utilities
 class AnalysisError extends Error {
@@ -161,7 +462,7 @@ export const runAnalysis = async (
       let fileContent = malwareFile.content || '';
       
       if (!fileContent) {
-        fileContent = await fileManagerService.readFileContent(malwareFile.uri);
+        fileContent = await fileManagerService.readFileAsText(malwareFile.uri);
       }
       
       if (useContainer && await containerDbService.hasContainerConfig()) {
@@ -345,17 +646,48 @@ export const runAnalysis = async (
         }
       }
       
-      // Run AI deobfuscation
+      // First, run WASM analysis for fast pattern detection
+      try {
+        const wasmAnalysis = await runWASMAnalysis(fileContent, malwareFile.name);
+        analysisReport += `\n\n## WASM Engine Analysis\n\n${wasmAnalysis.analysisReport}`;
+        
+        // Use WASM deobfuscated content if available
+        if (wasmAnalysis.deobfuscatedCode !== fileContent) {
+          fileContent = wasmAnalysis.deobfuscatedCode;
+          analysisReport += `\n\n### Deobfuscation Applied\n\nThe WASM engine successfully deobfuscated the content.\n`;
+        }
+        
+        // Add WASM-detected vulnerabilities
+        vulnerabilities.push(...wasmAnalysis.vulnerabilities);
+      } catch (wasmError) {
+        console.error('WASM analysis failed, continuing with AI analysis:', wasmError);
+        analysisReport += `\n\n## WASM Analysis\n\nWASM analysis failed: ${wasmError.message}\n`;
+      }
+      
+      // Run AI deobfuscation for additional insights
       const deobfuscationResult = await deobfuscateCode(fileContent, model);
       deobfuscatedCode = deobfuscationResult.deobfuscatedCode;
-      analysisReport += deobfuscationResult.analysisReport;
+      analysisReport += `\n\n## AI Analysis\n\n${deobfuscationResult.analysisReport}`;
       
       // Run vulnerability analysis on the deobfuscated code
       const vulnerabilityResult = await analyzeVulnerabilities(
         deobfuscatedCode || fileContent,
         model
       );
-      vulnerabilities = vulnerabilityResult.vulnerabilities;
+      
+      // Merge vulnerabilities from both analyses
+      const aiVulnerabilities = vulnerabilityResult.vulnerabilities;
+      
+      // Deduplicate vulnerabilities by name
+      const uniqueVulnerabilities = new Map<string, Vulnerability>();
+      [...vulnerabilities, ...aiVulnerabilities].forEach(vuln => {
+        if (!uniqueVulnerabilities.has(vuln.name) || 
+            (vuln.severity === 'high' && uniqueVulnerabilities.get(vuln.name)?.severity !== 'high')) {
+          uniqueVulnerabilities.set(vuln.name, vuln);
+        }
+      });
+      
+      vulnerabilities = Array.from(uniqueVulnerabilities.values());
       analysisReport += `\n\n## Vulnerability Analysis\n\n${vulnerabilityResult.analysisReport}`;
       
       // TODO: Implement saveAnalysisResult in fileManager service if needed
@@ -391,6 +723,64 @@ export const runAnalysis = async (
     console.error('Analysis service error:', error);
     handleError(error, 'Analysis failed');
   }
+};
+
+/**
+ * Run WASM analysis directly (for testing and benchmarking)
+ * @param fileContent The file content to analyze
+ * @param fileName The name of the file
+ * @returns Analysis results from WASM engine
+ */
+export const analyzeWithWASM = async (
+  fileContent: string,
+  fileName: string = 'unknown'
+): Promise<{
+  deobfuscatedCode: string;
+  analysisReport: string;
+  vulnerabilities: Vulnerability[];
+}> => {
+  return runWASMAnalysis(fileContent, fileName);
+};
+
+/**
+ * Get WASM module statistics
+ * @returns Statistics from all WASM modules
+ */
+export const getWASMStats = async (): Promise<{
+  initialized: boolean;
+  patternMatcherStats?: {
+    rulesLoaded: number;
+    totalScans: number;
+    totalMatches: number;
+    avgScanTime: number;
+  };
+  deobfuscatorConfig?: {
+    maxLayers: number;
+    timeoutMs: number;
+    enableMlPredictions: boolean;
+  };
+}> => {
+  await ensureWASMInitialized();
+  
+  const stats: any = {
+    initialized: wasmInitialized
+  };
+  
+  if (patternMatcher) {
+    const pmStats = patternMatcher.getStats();
+    stats.patternMatcherStats = {
+      rulesLoaded: patternMatcher.getRuleCount(),
+      totalScans: pmStats.totalScans,
+      totalMatches: pmStats.totalMatches,
+      avgScanTime: pmStats.avgScanTime
+    };
+  }
+  
+  if (deobfuscator) {
+    stats.deobfuscatorConfig = await deobfuscator.getConfig();
+  }
+  
+  return stats;
 };
 
 /**

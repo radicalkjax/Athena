@@ -23,6 +23,23 @@ export interface MalwareFile {
   type: string;
   uri: string;
   content?: string;
+  // WASM file processor results
+  wasmAnalysis?: {
+    format: string;
+    metadata: Record<string, any>;
+    suspiciousIndicators: Array<{
+      type: string;
+      value: string;
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      location?: string;
+      evidence: string;
+    }>;
+    extractedStrings: number;
+    entropy: number;
+    validStructure: boolean;
+  };
+  validationErrors?: string[];
+  validationWarnings?: string[];
 }
 
 export interface AnalysisResult {
