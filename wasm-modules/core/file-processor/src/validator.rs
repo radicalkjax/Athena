@@ -131,13 +131,16 @@ impl FileValidator {
             return;
         }
 
-        // Check for PE signature offset
+        // Check for PE signature offset with bounds checking
         if buffer.len() >= 0x3C + 4 {
             let pe_offset = u32::from_le_bytes([
                 buffer[0x3C], buffer[0x3D], buffer[0x3E], buffer[0x3F]
             ]) as usize;
 
-            if pe_offset + 4 <= buffer.len() {
+            // Security: Validate PE offset to prevent integer overflow
+            if pe_offset > buffer.len() || pe_offset < 0x40 {
+                result.warnings.push("Invalid PE offset detected".to_string());
+            } else if pe_offset + 4 <= buffer.len() {
                 if &buffer[pe_offset..pe_offset + 4] != b"PE\0\0" {
                     result.warnings.push("PE signature not found at expected offset".to_string());
                 }
@@ -227,15 +230,19 @@ impl FileValidator {
             // Look for central directory to estimate uncompressed size
             // This is simplified - real implementation would properly parse ZIP
             if let Some(pos) = buffer.windows(4).position(|w| w == b"PK\x01\x02") {
-                if pos + 24 < buffer.len() {
+                if pos + 26 < buffer.len() {
                     let uncompressed_hint = u32::from_le_bytes([
                         buffer[pos + 22], buffer[pos + 23], 
                         buffer[pos + 24], buffer[pos + 25]
                     ]) as usize;
                     
-                    if uncompressed_hint > 0 && uncompressed_hint / compressed_size > 100 {
-                        result.content_safe = false;
-                        result.errors.push("Potential zip bomb detected: extreme compression ratio".to_string());
+                    // Security: Check for integer overflow in ratio calculation
+                    if uncompressed_hint > 0 && compressed_size > 0 {
+                        let ratio = uncompressed_hint.saturating_div(compressed_size);
+                        if ratio > 100 {
+                            result.content_safe = false;
+                            result.errors.push("Potential zip bomb detected: extreme compression ratio".to_string());
+                        }
                     }
                 }
             }

@@ -52,6 +52,50 @@ export {
   FileIntegrity
 } from './file-processor-bridge';
 
+// Export sandbox bridge
+export {
+  initializeSandbox,
+  getSandbox,
+  cleanupSandbox,
+  executeInSandbox,
+  createSandboxInstance,
+  Sandbox,
+  SandboxInstance,
+  ExecutionPolicy,
+  ExecutionResult,
+  ResourceUsage,
+  SecurityEvent,
+  SandboxInstanceInfo
+} from './sandbox-bridge';
+
+// Export crypto bridge
+export {
+  cryptoBridge,
+  CryptoBridge,
+  CryptoCapabilities,
+  HashOptions,
+  HmacOptions,
+  AesOptions,
+  RsaOptions,
+  RsaKeyPair
+} from './crypto-bridge';
+
+// Export network bridge
+export {
+  getNetworkBridge,
+  NetworkBridge,
+  NetworkResult,
+  PacketAnalysis,
+  ProtocolInfo,
+  NetworkAnomaly,
+  TrafficPattern,
+  PortScanInfo,
+  DataExfiltrationInfo,
+  CCPatternResult,
+  PortScanResult,
+  ExfiltrationResult
+} from './network-bridge';
+
 // Convenience exports for common use cases
 export { 
   isAnalysisResultSuccess,

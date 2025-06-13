@@ -68,10 +68,19 @@ impl PatternMatcher {
                 severity: format!("{:?}", m.severity),
                 category: format!("{:?}", m.category),
                 confidence: m.confidence,
-                matched_data_base64: base64::Engine::encode(
-                    &base64::engine::general_purpose::STANDARD,
-                    &m.matched_data
-                ),
+                matched_data_base64: {
+                    // Security: Limit matched data size to prevent memory issues
+                    const MAX_MATCH_DATA: usize = 1024; // 1KB max
+                    let data_to_encode = if m.matched_data.len() > MAX_MATCH_DATA {
+                        &m.matched_data[..MAX_MATCH_DATA]
+                    } else {
+                        &m.matched_data
+                    };
+                    base64::Engine::encode(
+                        &base64::engine::general_purpose::STANDARD,
+                        data_to_encode
+                    )
+                },
             }).collect(),
             total_rules_evaluated: result.total_rules_evaluated as u32,
             scan_time_ms: result.scan_time_ms as u32,

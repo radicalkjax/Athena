@@ -66,6 +66,12 @@ impl AnalysisEngine {
 
     #[wasm_bindgen]
     pub fn analyze(&self, content: &[u8], _options: JsValue) -> Result<JsValue, JsValue> {
+        // Security: Validate input size to prevent memory exhaustion
+        const MAX_INPUT_SIZE: usize = 100 * 1024 * 1024; // 100MB
+        if content.len() > MAX_INPUT_SIZE {
+            return Err(JsValue::from_str(&format!("Input too large: {} bytes exceeds maximum of {} bytes", content.len(), MAX_INPUT_SIZE)));
+        }
+        
         console_log!("Starting analysis of {} bytes", content.len());
         
         let start_time = js_sys::Date::now();
@@ -73,8 +79,14 @@ impl AnalysisEngine {
         // Pattern matching
         let pattern_matches = self.pattern_matcher.scan(content);
         
-        // Deobfuscation attempt
-        let text_content = String::from_utf8_lossy(content);
+        // Deobfuscation attempt with validation
+        let text_content = match String::from_utf8(content.to_vec()) {
+            Ok(s) => s,
+            Err(_) => {
+                // For binary content, convert safely
+                String::from_utf8_lossy(content).into_owned()
+            }
+        };
         let deobfuscation_result = self.deobfuscator.deobfuscate(&text_content);
         
         // Determine severity based on findings

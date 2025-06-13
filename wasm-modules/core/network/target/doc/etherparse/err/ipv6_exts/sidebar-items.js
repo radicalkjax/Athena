@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ExtPayloadLenError","ExtsWalkError","HeaderError","HeaderLimitedReadError","HeaderReadError","HeaderSliceError","HeaderWriteError"]};

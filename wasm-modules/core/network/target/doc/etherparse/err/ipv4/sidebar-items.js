@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["HeaderError","HeaderReadError","HeaderSliceError","SliceError"],"struct":["BadOptionsLen"]};

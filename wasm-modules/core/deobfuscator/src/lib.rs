@@ -181,6 +181,7 @@ pub struct StreamingDeobfuscator {
     deobfuscator: Deobfuscator,
     buffer: Vec<u8>,
     chunk_size: usize,
+    max_buffer_size: usize,
 }
 
 #[wasm_bindgen]
@@ -191,11 +192,17 @@ impl StreamingDeobfuscator {
             deobfuscator: Deobfuscator::new(),
             buffer: Vec::new(),
             chunk_size: chunk_size.unwrap_or(1024 * 1024), // 1MB default
+            max_buffer_size: 10 * 1024 * 1024, // 10MB max buffer
         }
     }
 
     #[wasm_bindgen(js_name = processChunk)]
     pub fn process_chunk(&mut self, chunk: &[u8]) -> std::result::Result<JsValue, JsValue> {
+        // Security: Prevent buffer overflow
+        if self.buffer.len() + chunk.len() > self.max_buffer_size {
+            return Err(JsValue::from_str("Buffer size limit exceeded"));
+        }
+        
         self.buffer.extend_from_slice(chunk);
         
         if self.buffer.len() >= self.chunk_size {

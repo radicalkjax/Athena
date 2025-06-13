@@ -1,4 +1,10 @@
 {
+  "name": "athena",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
   "dependencies": {
     "dotenv-safe": "^9.1.0",
     "pg": "^8.15.6",
@@ -9,7 +15,9 @@
   "devDependencies": {
     "@types/pg": "^8.11.14",
     "@types/uuid": "^10.0.0",
+    "@vitest/ui": "^3.2.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.3"
   }
 }

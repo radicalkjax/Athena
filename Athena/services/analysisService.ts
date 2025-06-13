@@ -20,6 +20,27 @@ import {
 import { createFileProcessor, IFileProcessor } from '../../wasm-modules/bridge/file-processor-bridge';
 import { getPatternMatcher, PatternMatcherBridge } from '../../wasm-modules/bridge/pattern-matcher-bridge';
 import { DeobfuscatorBridge } from '../../wasm-modules/bridge/deobfuscator-bridge';
+import { 
+  initializeSandbox, 
+  getSandbox, 
+  executeInSandbox,
+  Sandbox,
+  ExecutionPolicy,
+  ExecutionResult,
+  SecurityEvent
+} from '../../wasm-modules/bridge/sandbox-bridge';
+import { 
+  cryptoBridge,
+  HashOptions,
+  AesOptions
+} from '../../wasm-modules/bridge/crypto-bridge';
+import { 
+  getNetworkBridge,
+  NetworkBridge,
+  PacketAnalysis,
+  NetworkAnomaly,
+  TrafficPattern
+} from '../../wasm-modules/bridge/network-bridge';
 
 // Type definitions
 interface DeobfuscationResult {
@@ -57,6 +78,8 @@ let wasmInitialized = false;
 let fileProcessor: IFileProcessor | null = null;
 let patternMatcher: PatternMatcherBridge | null = null;
 let deobfuscator: DeobfuscatorBridge | null = null;
+let sandbox: Sandbox | null = null;
+let networkBridge: NetworkBridge | null = null;
 
 const ensureWASMInitialized = async (): Promise<void> => {
   if (!wasmInitialized) {
@@ -81,6 +104,16 @@ const ensureWASMInitialized = async (): Promise<void> => {
       // Initialize deobfuscator
       deobfuscator = DeobfuscatorBridge.getInstance();
       initPromises.push(deobfuscator.initialize());
+
+      // Initialize sandbox
+      initPromises.push(initializeSandbox().then(s => { sandbox = s; }));
+
+      // Initialize crypto module
+      initPromises.push(cryptoBridge.initialize());
+
+      // Initialize network module
+      networkBridge = getNetworkBridge();
+      initPromises.push(networkBridge.initialize());
 
       await Promise.all(initPromises);
       
@@ -142,13 +175,21 @@ const runWASMAnalysis = async (fileContent: string, fileName: string): Promise<{
     // Phase 1: File Processing
     analysisReport += `### File Processing\n\n`;
     try {
-      const [fileFormat, parsedFile] = await Promise.all([
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const [fileFormat, parsedFile, hashes] = await Promise.all([
         fileProcessor.detectFormat(arrayBuffer, fileName),
-        fileProcessor.parseFile(arrayBuffer)
+        fileProcessor.parseFile(arrayBuffer),
+        calculateFileHashes(uint8Array)
       ]);
       
       analysisReport += `**File Format:** ${fileFormat.format} (confidence: ${(fileFormat.confidence * 100).toFixed(1)}%)\n`;
       analysisReport += `**MIME Type:** ${fileFormat.mime_type}\n`;
+      
+      // Add hash information
+      analysisReport += `\n**File Hashes:**\n`;
+      analysisReport += `- SHA256: ${hashes.sha256}\n`;
+      analysisReport += `- SHA512: ${hashes.sha512}\n`;
+      analysisReport += `- MD5: ${hashes.md5}\n`;
       
       if (parsedFile.metadata) {
         analysisReport += `**File Size:** ${parsedFile.metadata.size} bytes\n`;
@@ -743,6 +784,172 @@ export const analyzeWithWASM = async (
 };
 
 /**
+ * Analyze potentially malicious code in a secure sandbox environment
+ * @param code The code to analyze (as string or Uint8Array)
+ * @param policy Optional execution policy to override defaults
+ * @returns Analysis results including security events and resource usage
+ */
+export const analyzeInSandbox = async (
+  code: string | Uint8Array,
+  policy?: ExecutionPolicy
+): Promise<{
+  executionResult: ExecutionResult;
+  analysisReport: string;
+  securityEvents: SecurityEvent[];
+  vulnerabilities: Vulnerability[];
+}> => {
+  await ensureWASMInitialized();
+  
+  if (!sandbox) {
+    throw new Error('Sandbox module not properly initialized');
+  }
+  
+  try {
+    // Convert string to Uint8Array if needed
+    const codeBytes = typeof code === 'string' 
+      ? new TextEncoder().encode(code)
+      : code;
+    
+    // Execute in sandbox with default policy if not provided
+    const executionResult = await sandbox.execute(codeBytes, policy);
+    
+    // Build analysis report
+    let analysisReport = `## Sandbox Execution Report\n\n`;
+    analysisReport += `### Execution Status\n\n`;
+    analysisReport += `**Success:** ${executionResult.success ? 'Yes' : 'No'}\n`;
+    analysisReport += `**Exit Code:** ${executionResult.exitCode}\n`;
+    analysisReport += `**Execution Time:** ${executionResult.executionTime}ms\n\n`;
+    
+    // Resource usage
+    analysisReport += `### Resource Usage\n\n`;
+    analysisReport += `**Memory Used:** ${(executionResult.resourceUsage.memoryUsed / 1024 / 1024).toFixed(2)}MB\n`;
+    analysisReport += `**Peak Memory:** ${(executionResult.resourceUsage.peakMemory / 1024 / 1024).toFixed(2)}MB\n`;
+    analysisReport += `**CPU Time:** ${executionResult.resourceUsage.cpuTimeUsed}s\n`;
+    analysisReport += `**Syscall Count:** ${executionResult.resourceUsage.syscallCount}\n`;
+    analysisReport += `**File Handles:** ${executionResult.resourceUsage.fileHandlesUsed}\n\n`;
+    
+    // Security events
+    if (executionResult.securityEvents.length > 0) {
+      analysisReport += `### Security Events (${executionResult.securityEvents.length})\n\n`;
+      executionResult.securityEvents.forEach(event => {
+        analysisReport += `- **${event.eventType}** (${event.severity}): ${event.details}\n`;
+      });
+      analysisReport += `\n`;
+    }
+    
+    // Error information
+    if (executionResult.error) {
+      analysisReport += `### Execution Error\n\n`;
+      analysisReport += `\`\`\`\n${executionResult.error}\n\`\`\`\n\n`;
+    }
+    
+    // Output if available
+    if (executionResult.output && executionResult.output.length > 0) {
+      analysisReport += `### Output\n\n`;
+      const outputText = new TextDecoder().decode(executionResult.output);
+      analysisReport += `\`\`\`\n${outputText}\n\`\`\`\n\n`;
+    }
+    
+    // Convert security events to vulnerabilities
+    const vulnerabilities: Vulnerability[] = executionResult.securityEvents
+      .filter(event => event.severity === 'high' || event.severity === 'critical')
+      .map(event => ({
+        id: generateId(),
+        name: `Sandbox Security Violation: ${event.eventType}`,
+        severity: event.severity === 'critical' ? 'high' : event.severity as 'high' | 'medium' | 'low',
+        description: event.details,
+        cveId: '',
+        affectedVersions: [],
+        fixedVersions: [],
+        references: [`Timestamp: ${new Date(event.timestamp).toISOString()}`],
+        exploitAvailable: false,
+        patchAvailable: false,
+      }));
+    
+    return {
+      executionResult,
+      analysisReport,
+      securityEvents: executionResult.securityEvents,
+      vulnerabilities
+    };
+  } catch (error) {
+    if (error instanceof WASMError) {
+      throw error;
+    }
+    throw new Error(`Sandbox execution failed: ${error.message}`);
+  }
+};
+
+/**
+ * Calculate file hashes for integrity verification
+ * @param fileContent - File content as Uint8Array
+ * @returns Object containing various hashes
+ */
+export const calculateFileHashes = async (fileContent: Uint8Array): Promise<{
+  sha256: string;
+  sha512: string;
+  md5: string;
+}> => {
+  await ensureWASMInitialized();
+  
+  return {
+    sha256: cryptoBridge.hash(fileContent, { algorithm: 'sha256' }),
+    sha512: cryptoBridge.hash(fileContent, { algorithm: 'sha512' }),
+    md5: cryptoBridge.hash(fileContent, { algorithm: 'md5' })
+  };
+};
+
+/**
+ * Encrypt sensitive analysis results
+ * @param data - Data to encrypt
+ * @param password - Password for key derivation
+ * @returns Encrypted data as base64 string
+ */
+export const encryptAnalysisData = async (
+  data: string,
+  password: string
+): Promise<{ encrypted: string; salt: string }> => {
+  await ensureWASMInitialized();
+  
+  const salt = cryptoBridge.generateRandomBytes(16);
+  const key = cryptoBridge.deriveKeyFromPassword(password, salt, 256);
+  const plaintext = new TextEncoder().encode(data);
+  
+  const encrypted = await cryptoBridge.encryptAES(key, plaintext, { 
+    algorithm: 'aes-256-gcm' 
+  });
+  
+  return {
+    encrypted,
+    salt: cryptoBridge.bytesToBase64(salt)
+  };
+};
+
+/**
+ * Decrypt sensitive analysis results
+ * @param encrypted - Encrypted data as base64 string
+ * @param password - Password for key derivation
+ * @param salt - Salt used for key derivation (base64)
+ * @returns Decrypted data as string
+ */
+export const decryptAnalysisData = async (
+  encrypted: string,
+  password: string,
+  salt: string
+): Promise<string> => {
+  await ensureWASMInitialized();
+  
+  const saltBytes = cryptoBridge.base64ToBytes(salt);
+  const key = cryptoBridge.deriveKeyFromPassword(password, saltBytes, 256);
+  
+  const decrypted = await cryptoBridge.decryptAES(key, encrypted, {
+    algorithm: 'aes-256-gcm'
+  });
+  
+  return new TextDecoder().decode(decrypted);
+};
+
+/**
  * Get WASM module statistics
  * @returns Statistics from all WASM modules
  */
@@ -781,6 +988,126 @@ export const getWASMStats = async (): Promise<{
   }
   
   return stats;
+};
+
+/**
+ * Analyze network traffic for suspicious patterns
+ */
+export const analyzeNetworkTraffic = async (packets: Uint8Array[]): Promise<{
+  anomalies: NetworkAnomaly[];
+  patterns: TrafficPattern[];
+  ccDetected: boolean;
+  portScans: any;
+}> => {
+  await ensureWASMInitialized();
+  
+  if (!networkBridge) {
+    throw new Error('Network module not initialized');
+  }
+
+  try {
+    // Analyze each packet
+    const analyzedPackets: PacketAnalysis[] = [];
+    for (const packet of packets) {
+      try {
+        const analysis = await networkBridge.analyzePacket(packet);
+        analyzedPackets.push(analysis);
+      } catch (error) {
+        console.warn('Failed to analyze packet:', error);
+      }
+    }
+
+    // Detect anomalies
+    const anomalies = await networkBridge.detectAnomalies(analyzedPackets);
+
+    // Analyze traffic patterns
+    const patterns = await networkBridge.analyzeTrafficPattern(analyzedPackets);
+
+    // Detect C&C communication
+    const ccResult = await networkBridge.detectCCCommunication(analyzedPackets);
+
+    // Detect port scans
+    const portScans = await networkBridge.detectPortScan(analyzedPackets);
+
+    return {
+      anomalies,
+      patterns,
+      ccDetected: ccResult.total_detected > 0,
+      portScans
+    };
+  } catch (error) {
+    console.error('Network analysis error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Analyze network capture file (PCAP)
+ */
+export const analyzeNetworkCapture = async (fileContent: Uint8Array): Promise<string> => {
+  await ensureWASMInitialized();
+  
+  if (!networkBridge) {
+    throw new Error('Network module not initialized');
+  }
+
+  try {
+    // Parse PCAP file and extract packets
+    // Note: This is a simplified example - you'd need a proper PCAP parser
+    const packets: Uint8Array[] = [];
+    
+    // For now, treat the entire content as a single packet
+    packets.push(fileContent);
+
+    const results = await analyzeNetworkTraffic(packets);
+    
+    let report = '## Network Analysis Report\n\n';
+    
+    // Anomalies section
+    if (results.anomalies.length > 0) {
+      report += '### Detected Anomalies\n\n';
+      results.anomalies.forEach(anomaly => {
+        report += `- **${anomaly.anomaly_type}** (${anomaly.severity}): ${anomaly.description}\n`;
+        anomaly.indicators.forEach(indicator => {
+          report += `  - ${indicator}\n`;
+        });
+      });
+      report += '\n';
+    }
+
+    // Patterns section
+    if (results.patterns.length > 0) {
+      report += '### Traffic Patterns\n\n';
+      results.patterns.forEach(pattern => {
+        report += `- **${pattern.pattern_type}** (Confidence: ${(pattern.confidence * 100).toFixed(1)}%)\n`;
+        pattern.matches.forEach(match => {
+          report += `  - ${match}\n`;
+        });
+      });
+      report += '\n';
+    }
+
+    // C&C Detection
+    if (results.ccDetected) {
+      report += '### ⚠️ Command & Control Communication Detected\n\n';
+      report += 'Suspicious communication patterns consistent with C&C activity were detected.\n\n';
+    }
+
+    // Port Scans
+    if (results.portScans.scans_detected > 0) {
+      report += '### Port Scanning Activity\n\n';
+      results.portScans.scan_details.forEach((scan: any) => {
+        report += `- **${scan.scan_type}** from ${scan.source_ip}\n`;
+        report += `  - Targets: ${scan.target_ips.length} hosts\n`;
+        report += `  - Ports: ${scan.scanned_ports.length} ports scanned\n`;
+      });
+    }
+
+    return report;
+  } catch (error) {
+    console.error('Network capture analysis error:', error);
+    throw error;
+  }
 };
 
 /**
