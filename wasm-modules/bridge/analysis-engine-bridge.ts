@@ -1,9 +1,10 @@
 /**
  * TypeScript bridge for the WASM Analysis Engine
- * Provides a unified interface for both web and React Native platforms
+ * Provides a unified interface for both web and Node.js platforms
  */
 
-import { Platform } from 'react-native';
+declare const window: any;
+const isBrowser = typeof window !== 'undefined';
 
 export interface AnalysisOptions {
   enableDeobfuscation?: boolean;
@@ -39,23 +40,23 @@ class AnalysisEngineBridge {
     if (this.isInitialized) return;
 
     try {
-      if (Platform.OS === 'web') {
+      // Check if we're in a browser environment
+      if (isBrowser) {
         // Dynamic import for web
         const wasm = await import('../core/analysis-engine/pkg-web/athena_analysis_engine');
         await wasm.default();
         this.engine = new wasm.AnalysisEngine();
       } else {
-        // Node.js import for React Native
-        // Note: pkg-node will be created when we run build for nodejs target
+        // Node.js import
         const wasm = require('../core/analysis-engine/pkg-node/athena_analysis_engine');
         this.engine = new wasm.AnalysisEngine();
       }
       
       this.isInitialized = true;
       console.log(`Analysis Engine initialized: v${this.getVersion()}`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to initialize WASM Analysis Engine:', error);
-      throw new Error(`WASM initialization failed: ${error.message}`);
+      throw new Error(`WASM initialization failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -72,9 +73,9 @@ class AnalysisEngineBridge {
     try {
       const result = await this.engine.analyze(uint8Array, options);
       return result as AnalysisResult;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Analysis failed:', error);
-      throw new Error(`Analysis failed: ${error.message}`);
+      throw new Error(`Analysis failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

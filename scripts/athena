@@ -57,26 +57,33 @@ print_banner() {
 show_menu() {
     echo -e "${TRANS_BLUE}${BOLD}Main Menu${NC}"
     echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}💡 Tip: For the full malware analysis platform, use Option 1${NC}"
     echo
     echo -e "${TRANS_WHITE}${BOLD}Quick Start:${NC}"
-    echo -e "  ${GREEN}1${NC}) ${ROCKET} Start Athena Web"
+    echo -e "  ${GREEN}1${NC}) ${ROCKET} Start Athena API Platform"
     echo -e "  ${GREEN}2${NC}) ${KEY} Check API Keys"
     echo -e "  ${GREEN}3${NC}) ${PACKAGE} Update Everything"
     echo
-    echo -e "${TRANS_WHITE}${BOLD}Development:${NC}"
-    echo -e "  ${GREEN}4${NC}) 📱 Start iOS Version"
-    echo -e "  ${GREEN}5${NC}) 🤖 Start Android Version"
-    echo -e "  ${GREEN}6${NC}) 📲 Start Expo Development"
+    echo -e "${TRANS_WHITE}${BOLD}Frontend Development:${NC}"
+    echo -e "  ${GREEN}4${NC}) 🌐 Start React Native Web ${DIM}(UI only)${NC}"
+    echo -e "  ${GREEN}5${NC}) 📱 Start iOS Version"
+    echo -e "  ${GREEN}6${NC}) 🤖 Start Android Version"
+    echo -e "  ${GREEN}7${NC}) 📲 Start Expo Development"
     echo
     echo -e "${TRANS_WHITE}${BOLD}Maintenance:${NC}"
-    echo -e "  ${GREEN}7${NC}) ${TOOL} Run Setup"
-    echo -e "  ${GREEN}8${NC}) 🧹 Clean Build Files"
-    echo -e "  ${GREEN}9${NC}) ${SHIELD} Security Audit"
-    echo -e "  ${GREEN}10${NC}) 🗄️  Database Setup"
+    echo -e "  ${GREEN}8${NC}) ${TOOL} Run Setup"
+    echo -e "  ${GREEN}9${NC}) 🧹 Clean Build Files"
+    echo -e "  ${GREEN}10${NC}) ${SHIELD} Security Audit"
+    echo -e "  ${GREEN}11${NC}) 🗄️  Database Setup"
+    echo
+    echo -e "${TRANS_WHITE}${BOLD}Backend Services:${NC}"
+    echo -e "  ${GREEN}12${NC}) 🚀 Launch Platform (Docker)"
+    echo -e "  ${GREEN}13${NC}) 🖥️  Start Local Services"
+    echo -e "  ${GREEN}14${NC}) 📊 Run Load Tests"
     echo
     echo -e "${TRANS_WHITE}${BOLD}Testing:${NC}"
-    echo -e "  ${GREEN}11${NC}) 🧪 Run All Tests"
-    echo -e "  ${GREEN}12${NC}) 📊 Run Load Tests"
+    echo -e "  ${GREEN}15${NC}) 🧪 Run All Tests"
+    echo -e "  ${GREEN}16${NC}) 💪 Run Stress Test (1000+ RPS)"
     echo
     echo -e "${DIM}Type 'h' for help, 'q' to quit${NC}"
     echo
@@ -189,8 +196,8 @@ main() {
 
         case $choice in
             1)
-                echo -e "\n${ROCKET} Starting Athena Web..."
-                ./scripts/run.sh web
+                echo -e "\n${ROCKET} Starting Athena API Platform..."
+                ./scripts/launch-athena.sh
                 ;;
             2)
                 echo -e "\n${KEY} Checking API Keys..."
@@ -205,46 +212,63 @@ main() {
                 read
                 ;;
             4)
+                echo -e "\n🌐 Starting React Native Web UI..."
+                ./scripts/start-web-ui.sh
+                ;;
+            5)
                 echo -e "\n📱 Starting iOS Version..."
                 ./scripts/run.sh ios
                 ;;
-            5)
+            6)
                 echo -e "\n🤖 Starting Android Version..."
                 ./scripts/run.sh android
                 ;;
-            6)
+            7)
                 echo -e "\n📲 Starting Expo Development..."
                 ./scripts/run.sh expo
                 ;;
-            7)
+            8)
                 echo -e "\n${TOOL} Running Setup..."
                 ./scripts/run.sh setup
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;
-            8)
+            9)
                 echo -e "\n🧹 Cleaning Build Files..."
                 ./scripts/run.sh clean
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;
-            9)
+            10)
                 run_security_audit
                 ;;
-            10)
+            11)
                 echo -e "\n🗄️  Setting up Database..."
                 cd Athena && ./scripts/setup-db.sh
                 cd ..
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;
-            11)
+            12)
+                echo -e "\n🚀 Launching Platform with Docker..."
+                ./scripts/launch-athena.sh
+                ;;
+            13)
+                echo -e "\n🖥️  Starting Local Services..."
+                ./scripts/start-all-services.sh
+                ;;
+            14)
+                echo -e "\n📊 Running Load Tests..."
+                ./scripts/run-load-test.sh
+                echo -e "${DIM}Press Enter to continue...${NC}"
+                read
+                ;;
+            15)
                 run_all_tests
                 ;;
-            12)
-                echo -e "\n📊 Running Load Tests..."
-                cd Athena/load-tests && ./run-tests.sh
-                cd ../..
+            16)
+                echo -e "\n💪 Running Stress Test..."
+                ./scripts/run-stress-test.sh
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;

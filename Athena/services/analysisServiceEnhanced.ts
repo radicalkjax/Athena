@@ -76,7 +76,7 @@ export async function analyzeMalwareStreaming(
     if (!fileContent && fileManagerService.readFile) {
       try {
         fileContent = await fileManagerService.readFile(malwareFile.uri);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Error reading file:', error);
       }
     }
@@ -123,11 +123,11 @@ export async function analyzeMalwareStreaming(
             if (containerFileContent) {
               fileContent = containerFileContent;
             }
-          } catch (error) {
+          } catch (error: unknown) {
             logger.warn('Could not retrieve file from container:', error);
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Container setup error:', error);
         // Continue without container
       }
@@ -189,7 +189,7 @@ export async function analyzeMalwareStreaming(
           try {
             const modules = await metasploitService.searchMetasploitModule(vuln.cveId);
             metasploitModules = metasploitModules.concat(modules);
-          } catch (error) {
+          } catch (error: unknown) {
             logger.warn('Metasploit search error:', error);
           }
         }
@@ -200,7 +200,7 @@ export async function analyzeMalwareStreaming(
     if (containerId && containerDbService.stopContainer) {
       try {
         await containerDbService.stopContainer(containerId);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Error stopping container:', error);
       }
     }
@@ -242,7 +242,7 @@ export async function analyzeMalwareStreaming(
     
     return analysisResult;
     
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Analysis failed:', error);
     
     const errorResult: AnalysisResult = {

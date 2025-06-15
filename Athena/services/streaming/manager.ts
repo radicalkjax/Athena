@@ -158,7 +158,7 @@ export class StreamingConnectionManager implements StreamingManager {
     for (const [id, client] of this.connections) {
       try {
         client.disconnect();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error(`Error disconnecting ${id}:`, error);
       }
     }

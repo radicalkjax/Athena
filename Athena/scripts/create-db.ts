@@ -47,7 +47,7 @@ const createDb = async () => {
     await client.end();
     console.log('Disconnected from PostgreSQL server');
     process.exit(0);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating database:', error);
     process.exit(1);
   }

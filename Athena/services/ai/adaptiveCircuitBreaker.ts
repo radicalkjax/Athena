@@ -120,7 +120,7 @@ export class AdaptiveCircuitBreaker {
       }
       
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       const duration = Date.now() - startTime;
       
       this.recordRequest({ timestamp: startTime, duration, success: false });

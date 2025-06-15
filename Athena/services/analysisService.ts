@@ -119,7 +119,7 @@ const ensureWASMInitialized = async (): Promise<void> => {
       
       wasmInitialized = true;
       console.log('All WASM modules initialized successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof WASMError) {
         console.error(`WASM initialization failed with code ${error.code}:`, error.message);
       } else {
@@ -362,7 +362,7 @@ const runWASMAnalysis = async (fileContent: string, fileName: string): Promise<{
       analysisReport,
       vulnerabilities: Array.from(uniqueVulnerabilities.values())
     };
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof WASMError) {
       console.error(`WASM analysis failed with code ${error.code}:`, error.message);
       
@@ -373,7 +373,7 @@ const runWASMAnalysis = async (fileContent: string, fileName: string): Promise<{
         case WASMErrorCode.InvalidInput:
           throw new Error('Invalid file content for WASM analysis.');
         default:
-          throw new Error(`WASM analysis failed: ${error.message}`);
+          throw new Error(`WASM analysis failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     } else {
       console.error('WASM analysis error:', error);
@@ -418,7 +418,7 @@ export const deobfuscateCode = async (
       default:
         throw new Error(`Unsupported model type: ${model.type}`);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Deobfuscation error:', error);
     handleError(error, 'Failed to deobfuscate code');
   }
@@ -459,13 +459,13 @@ export const analyzeVulnerabilities = async (
       if (await metasploitService.hasMetasploitConfig()) {
         result.vulnerabilities = await metasploitService.enrichVulnerabilityData(result.vulnerabilities);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error enriching vulnerability data:', error);
       // Continue without enrichment if it fails
     }
     
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Vulnerability analysis error:', error);
     handleError(error, 'Failed to analyze vulnerabilities');
   }
@@ -555,7 +555,7 @@ export const runAnalysis = async (
             if (containerFileContent) {
               fileContent = containerFileContent;
             }
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('Error getting file from container:', error);
             // Continue with original file content
           }
@@ -577,7 +577,7 @@ export const runAnalysis = async (
           } catch (monitoringError) {
             const error = monitoringError instanceof Error ? monitoringError : new Error(String(monitoringError));
             console.error('Error getting monitoring summary:', error);
-            analysisReport += `\n\n## Container Monitoring\n\nUnable to retrieve monitoring data: ${error.message}\n\n`;
+            analysisReport += `\n\n## Container Monitoring\n\nUnable to retrieve monitoring data: ${error instanceof Error ? error.message : String(error)}\n\n`;
           }
           
           // Get suspicious activities
@@ -675,11 +675,11 @@ export const runAnalysis = async (
           try {
             await containerDbService.removeContainer(container.id);
             useAppStore.getState().removeContainer(container.id);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('Error removing container:', error);
             // Continue with analysis even if container removal fails
           }
-        } catch (error) {
+        } catch (error: unknown) {
           const containerError = error as Error;
           console.error('Container analysis error:', containerError);
           analysisReport += `\n\nContainer analysis failed: ${containerError.message}\n\n`;
@@ -757,7 +757,7 @@ export const runAnalysis = async (
     useAppStore.getState().setIsAnalyzing(false);
     
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     // Reset analyzing state
     useAppStore.getState().setIsAnalyzing(false);
     
@@ -872,11 +872,11 @@ export const analyzeInSandbox = async (
       securityEvents: executionResult.securityEvents,
       vulnerabilities
     };
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof WASMError) {
       throw error;
     }
-    throw new Error(`Sandbox execution failed: ${error.message}`);
+    throw new Error(`Sandbox execution failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -1012,7 +1012,7 @@ export const analyzeNetworkTraffic = async (packets: Uint8Array[]): Promise<{
       try {
         const analysis = await networkBridge.analyzePacket(packet);
         analyzedPackets.push(analysis);
-      } catch (error) {
+      } catch (error: unknown) {
         console.warn('Failed to analyze packet:', error);
       }
     }
@@ -1035,7 +1035,7 @@ export const analyzeNetworkTraffic = async (packets: Uint8Array[]): Promise<{
       ccDetected: ccResult.total_detected > 0,
       portScans
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Network analysis error:', error);
     throw error;
   }
@@ -1104,7 +1104,7 @@ export const analyzeNetworkCapture = async (fileContent: Uint8Array): Promise<st
     }
 
     return report;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Network capture analysis error:', error);
     throw error;
   }
@@ -1153,7 +1153,7 @@ export const getAvailableModels = async (): Promise<AIModel[]> => {
           console.log(`Model ${model.name} is not available (no API key)`);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error checking model ${model.name}:`, error);
       // Skip this model if there's an error
     }

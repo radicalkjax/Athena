@@ -92,7 +92,7 @@ export function useBatchAnalysis(options: UseBatchAnalysisOptions = {}): UseBatc
       
       return responses;
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to submit batch:', error);
       throw error;
     } finally {

@@ -88,7 +88,7 @@ async function macOSContainerExample() {
       container,
       analysisResult
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in macOS container example:', error);
     throw error;
   }
@@ -140,7 +140,7 @@ async function createMultiVersionContainers() {
     }
     
     return containers;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating multi-version containers:', error);
     throw error;
   }
@@ -218,7 +218,7 @@ async function compareMacOSVersions() {
     }
     
     return results;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error comparing macOS versions:', error);
     throw error;
   }
@@ -295,7 +295,7 @@ async function compareArchitectures() {
     }
     
     return results;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error comparing architectures:', error);
     throw error;
   }

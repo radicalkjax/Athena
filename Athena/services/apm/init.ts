@@ -46,7 +46,7 @@ export async function initializeAPM(): Promise<void> {
         process.exit(0);
       });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to initialize APM:', error);
   }
 }
@@ -60,7 +60,7 @@ export async function shutdownAPM(): Promise<void> {
     await apmManager.shutdown();
     initialized = false;
     logger.info('APM shutdown complete');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to shutdown APM:', error);
   }
 }

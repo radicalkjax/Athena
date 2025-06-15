@@ -3,15 +3,14 @@
  * Provides type-safe interface and error handling for file processing operations
  */
 
-import { Platform } from 'react-native';
 import {
   WASMError,
-  WASMErrorCode,
   EngineConfig,
   PerformanceMetrics,
   MAX_FILE_SIZE,
   DEFAULT_TIMEOUT
 } from './types';
+import { WASMErrorCode, ExtendedPerformanceMetrics, isBrowser } from './wasm-error-codes';
 
 // File processor specific types
 export interface FileFormat {
@@ -106,7 +105,7 @@ class FileProcessorBridge implements IFileProcessor {
   private isInitialized = false;
   private config: FileProcessorConfig;
   private initPromise?: Promise<void>;
-  private performanceMetrics: Partial<PerformanceMetrics> = {};
+  private performanceMetrics: Partial<ExtendedPerformanceMetrics> = {};
 
   constructor(config: FileProcessorConfig = {}) {
     this.config = {
@@ -143,10 +142,10 @@ class FileProcessorBridge implements IFileProcessor {
 
     try {
       // Platform-specific loading
-      if (Platform.OS === 'web' || typeof window !== 'undefined') {
+      if (isBrowser) {
         await this.loadForWeb();
       } else {
-        await this.loadForNative();
+        await this.loadForNode();
       }
 
       // Create processor instance
@@ -161,7 +160,7 @@ class FileProcessorBridge implements IFileProcessor {
       if (this.config.logLevel === 'debug') {
         console.log(`File Processor initialized in ${this.performanceMetrics.initTime}ms`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to initialize File Processor',
         WASMErrorCode.INIT_FAILED,
@@ -176,7 +175,7 @@ class FileProcessorBridge implements IFileProcessor {
       const module = await import('../core/file-processor/pkg-web/file_processor');
       await module.default();
       this.wasmModule = module;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to load WASM module for web',
         WASMErrorCode.LOAD_FAILED,
@@ -185,14 +184,14 @@ class FileProcessorBridge implements IFileProcessor {
     }
   }
 
-  private async loadForNative(): Promise<void> {
+  private async loadForNode(): Promise<void> {
     try {
-      // For React Native, use the Node.js build
-      const module = await import('../core/file-processor/pkg-node/file_processor');
+      // For Node.js environment - file-processor doesn't have pkg-node yet, use pkg
+      const module = require('../core/file-processor/pkg/file_processor');
       this.wasmModule = module;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
-        'Failed to load WASM module for native platform',
+        'Failed to load WASM module for Node.js',
         WASMErrorCode.LOAD_FAILED,
         error
       );
@@ -223,9 +222,10 @@ class FileProcessorBridge implements IFileProcessor {
       );
     }
 
-    if (buffer.byteLength > this.config.maxFileSize) {
+    const maxSize = this.config.maxFileSize || MAX_FILE_SIZE;
+    if (buffer.byteLength > maxSize) {
       throw new WASMError(
-        `File size ${buffer.byteLength} exceeds maximum allowed size ${this.config.maxFileSize}`,
+        `File size ${buffer.byteLength} exceeds maximum allowed size ${maxSize}`,
         WASMErrorCode.SIZE_LIMIT_EXCEEDED
       );
     }
@@ -241,7 +241,7 @@ class FileProcessorBridge implements IFileProcessor {
       const uint8Array = new Uint8Array(buffer);
       const resultJson = await this.withTimeout(
         () => this.processor.detectFormat(uint8Array, filename || null),
-        this.config.timeout
+        this.config.timeout || DEFAULT_TIMEOUT
       );
 
       const result = JSON.parse(resultJson);
@@ -256,7 +256,7 @@ class FileProcessorBridge implements IFileProcessor {
         confidence: 1.0, // TODO: Add confidence scoring
         mimeType
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to detect file format',
         WASMErrorCode.PROCESSING_FAILED,
@@ -275,14 +275,14 @@ class FileProcessorBridge implements IFileProcessor {
       const uint8Array = new Uint8Array(buffer);
       const resultJson = await this.withTimeout(
         () => this.processor.parseFile(uint8Array, formatHint || null),
-        this.config.timeout
+        this.config.timeout || DEFAULT_TIMEOUT
       );
 
       const result = JSON.parse(resultJson);
       this.performanceMetrics.lastOperationTime = performance.now() - startTime;
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to parse file',
         WASMErrorCode.PROCESSING_FAILED,
@@ -301,14 +301,14 @@ class FileProcessorBridge implements IFileProcessor {
       const uint8Array = new Uint8Array(buffer);
       const resultJson = await this.withTimeout(
         () => this.processor.validateFile(uint8Array),
-        this.config.timeout
+        this.config.timeout || DEFAULT_TIMEOUT
       );
 
       const result = JSON.parse(resultJson);
       this.performanceMetrics.lastOperationTime = performance.now() - startTime;
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to validate file',
         WASMErrorCode.PROCESSING_FAILED,
@@ -330,14 +330,14 @@ class FileProcessorBridge implements IFileProcessor {
           uint8Array, 
           minLength || this.config.minStringLength || null
         ),
-        this.config.timeout
+        this.config.timeout || DEFAULT_TIMEOUT
       );
 
       const result = JSON.parse(resultJson);
       this.performanceMetrics.lastOperationTime = performance.now() - startTime;
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to extract strings',
         WASMErrorCode.PROCESSING_FAILED,
@@ -356,14 +356,14 @@ class FileProcessorBridge implements IFileProcessor {
       const uint8Array = new Uint8Array(buffer);
       const resultJson = await this.withTimeout(
         () => this.processor.extractMetadata(uint8Array),
-        this.config.timeout
+        this.config.timeout || DEFAULT_TIMEOUT
       );
 
       const result = JSON.parse(resultJson);
       this.performanceMetrics.lastOperationTime = performance.now() - startTime;
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to extract metadata',
         WASMErrorCode.PROCESSING_FAILED,
@@ -387,14 +387,14 @@ class FileProcessorBridge implements IFileProcessor {
     try {
       const resultJson = await this.withTimeout(
         () => this.processor.extractSuspiciousPatterns(content),
-        this.config.timeout
+        this.config.timeout || DEFAULT_TIMEOUT
       );
 
       const result = JSON.parse(resultJson);
       this.performanceMetrics.lastOperationTime = performance.now() - startTime;
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to extract suspicious patterns',
         WASMErrorCode.PROCESSING_FAILED,
@@ -410,7 +410,7 @@ class FileProcessorBridge implements IFileProcessor {
     try {
       const uint8Array = new Uint8Array(buffer);
       return this.processor.isTextFile(uint8Array);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         'Failed to check if file is text',
         WASMErrorCode.PROCESSING_FAILED,
@@ -424,7 +424,7 @@ class FileProcessorBridge implements IFileProcessor {
 
     try {
       return this.processor.getMimeType(format);
-    } catch (error) {
+    } catch (error: unknown) {
       // Return a default MIME type on error
       return 'application/octet-stream';
     }
@@ -446,7 +446,7 @@ class FileProcessorBridge implements IFileProcessor {
         const result = operation();
         clearTimeout(timer);
         resolve(result);
-      } catch (error) {
+      } catch (error: unknown) {
         clearTimeout(timer);
         reject(error);
       }
@@ -464,11 +464,11 @@ class FileProcessorBridge implements IFileProcessor {
 
   getPerformanceMetrics(): PerformanceMetrics {
     return {
-      initTime: this.performanceMetrics.initTime || 0,
-      lastOperationTime: this.performanceMetrics.lastOperationTime || 0,
-      totalOperations: 0, // TODO: Track operations
-      averageOperationTime: 0, // TODO: Calculate average
-      peakMemoryUsage: 0 // TODO: Track memory
+      initializationTime: this.performanceMetrics.initTime || 0,
+      analysisTime: this.performanceMetrics.lastOperationTime || 0,
+      totalTime: (this.performanceMetrics.initTime || 0) + (this.performanceMetrics.lastOperationTime || 0),
+      memoryUsed: 0, // TODO: Track memory usage
+      throughput: 0 // TODO: Calculate throughput
     };
   }
 }
@@ -478,5 +478,4 @@ export function createFileProcessor(config?: FileProcessorConfig): IFileProcesso
   return new FileProcessorBridge(config);
 }
 
-// Export types
-export type { FileProcessorConfig, IFileProcessor };
+// Types are already exported as interfaces above

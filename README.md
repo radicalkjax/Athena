@@ -70,6 +70,15 @@ The application is designed with security in mind, providing isolated container 
   - One-click access to all Athena features  
   - Automated setup and configuration
   - System health checks and maintenance tools
+- **⚡ WebAssembly (WASM) Integration**: High-performance security analysis modules:
+  - **Analysis Engine**: Core malware analysis and threat detection
+  - **Crypto Module**: Advanced cryptographic operations and hash verification
+  - **Deobfuscator**: Real-time code deobfuscation and unpacking
+  - **File Processor**: Binary parsing and format analysis
+  - **Pattern Matcher**: Signature-based malware detection
+  - **Network Analysis**: Protocol parsing and traffic analysis
+  - **Sandbox**: Isolated WASM-based execution environment
+  - All modules optimized with Binaryen for maximum performance
 - **Multiple AI Models**: Connect to different AI models including:
   - OpenAI GPT-4
   - Claude 3 Opus
@@ -252,7 +261,7 @@ When working, this would start the Expo development server, allowing you to run 
 
 ## 🏗️ Architecture
 
-Athena follows a modular architecture with clear separation of concerns. The application is built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms.
+Athena follows a modular architecture with clear separation of concerns. The application is built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms. The core analysis capabilities are powered by high-performance WebAssembly modules.
 
 ```mermaid
 %%{init: {
@@ -281,12 +290,24 @@ flowchart TD
     B --> C[Services Layer]
     C --> D[API Client]
     C --> E[Local Storage]
+    C --> W[WASM Bridge Layer]
     D --> F[External APIs]
+    W --> WM[WASM Modules]
     
     subgraph "Core Architecture"
         A
         B
         C
+    end
+    
+    subgraph "WASM Security Modules"
+        WM --> WM1[Analysis Engine]
+        WM --> WM2[Crypto Module]
+        WM --> WM3[Deobfuscator]
+        WM --> WM4[File Processor]
+        WM --> WM5[Pattern Matcher]
+        WM --> WM6[Network Analysis]
+        WM --> WM7[Sandbox]
     end
     
     subgraph "External Communication"
@@ -316,6 +337,7 @@ Athena comes with comprehensive documentation to help you understand and use the
 
 ### 🏗️ Technical Documentation
 - **[📐 Architecture](./docs/ARCHITECTURE.md)** - System design and component overview
+- **[⚡ WASM Architecture](./docs/WASM-ARCHITECTURE-COMPLETE.md)** - WebAssembly modules and integration
 - **[🔌 API Integration](./docs/API_INTEGRATION.md)** - AI provider integration patterns
 - **[🛡️ Container Isolation](./docs/CONTAINER_ISOLATION.md)** - Security and sandboxing
 - **[⚡ Performance](./docs/performance/)** - Optimization, caching, and monitoring

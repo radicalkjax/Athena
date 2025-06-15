@@ -102,7 +102,7 @@ async function resourcePresetsExample() {
       macOSContainer,
       windowsContainer2
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in resource presets example:', error);
     throw error;
   }
@@ -198,7 +198,7 @@ async function customResourceLimitsExample() {
       linuxContainer,
       macOSContainer
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in custom resource limits example:', error);
     throw error;
   }
@@ -292,7 +292,7 @@ async function resourcePerformanceComparisonExample() {
     });
     
     return results;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in resource performance comparison example:', error);
     throw error;
   }

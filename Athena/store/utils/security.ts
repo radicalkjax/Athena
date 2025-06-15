@@ -28,7 +28,7 @@ export function encryptMalwareContent(content: string): string {
     const combined = Buffer.concat([iv, authTag, Buffer.from(encrypted, 'base64')]);
     
     return combined.toString('base64');
-  } catch (error) {
+  } catch (error: unknown) {
     throw new Error('Failed to encrypt malware content');
   }
 }
@@ -59,7 +59,7 @@ export function decryptMalwareContent(encryptedContent: string): string {
     decrypted += decipher.final('utf8');
     
     return decrypted;
-  } catch (error) {
+  } catch (error: unknown) {
     throw new Error('Failed to decrypt malware content');
   }
 }

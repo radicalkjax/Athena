@@ -3,7 +3,6 @@
  * Provides comprehensive type safety and error handling
  */
 
-import { Platform } from 'react-native';
 import {
   IAnalysisEngine,
   AnalysisOptions,
@@ -20,6 +19,7 @@ import {
   MAX_FILE_SIZE,
   DEFAULT_TIMEOUT
 } from './types';
+import { isBrowser } from './wasm-error-codes';
 import { wasmTypeMarshaler } from './type-marshaling';
 
 class AnalysisEngineBridge implements IAnalysisEngine {
@@ -62,13 +62,13 @@ class AnalysisEngineBridge implements IAnalysisEngine {
     try {
       this.log('info', 'Initializing WASM Analysis Engine...');
 
-      if (Platform.OS === 'web') {
+      if (isBrowser) {
         // Dynamic import for web
         this.wasmModule = await import('../core/analysis-engine/pkg-web/athena_analysis_engine');
         await this.wasmModule.default();
         this.engine = new this.wasmModule.AnalysisEngine();
       } else {
-        // Node.js import for React Native
+        // Node.js import - use pkg-node which should be CommonJS compatible
         this.wasmModule = require('../core/analysis-engine/pkg-node/athena_analysis_engine');
         this.engine = new this.wasmModule.AnalysisEngine();
       }
@@ -77,10 +77,10 @@ class AnalysisEngineBridge implements IAnalysisEngine {
       this.performanceMetrics.initializationTime = performance.now() - startTime;
       
       this.log('info', `Analysis Engine initialized: v${this.get_version()} in ${this.performanceMetrics.initializationTime.toFixed(2)}ms`);
-    } catch (error) {
+    } catch (error: unknown) {
       this.log('error', 'Failed to initialize WASM Analysis Engine:', error);
       throw new WASMError(
-        `WASM initialization failed: ${error.message}`,
+        `WASM initialization failed: ${error instanceof Error ? error.message : String(error)}`,
         WASMErrorCode.InitializationFailed
       );
     } finally {
@@ -141,7 +141,7 @@ class AnalysisEngineBridge implements IAnalysisEngine {
       this.log('debug', `Analysis completed in ${this.performanceMetrics.analysisTime.toFixed(2)}ms`);
       
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       const wasmError = this.wrapError(error, WASMErrorCode.AnalysisFailed);
       eventHandlers?.onError?.(wasmError);
       throw wasmError;
@@ -167,7 +167,7 @@ class AnalysisEngineBridge implements IAnalysisEngine {
       this.log('debug', `Deobfuscation completed in ${this.performanceMetrics.deobfuscationTime.toFixed(2)}ms`);
       
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw this.wrapError(error, WASMErrorCode.DeobfuscationFailed);
     }
   }
@@ -193,7 +193,7 @@ class AnalysisEngineBridge implements IAnalysisEngine {
       this.log('debug', `Pattern scan completed in ${this.performanceMetrics.patternScanTime.toFixed(2)}ms`);
       
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw this.wrapError(error, WASMErrorCode.PatternScanFailed);
     }
   }
@@ -235,7 +235,7 @@ class AnalysisEngineBridge implements IAnalysisEngine {
       try {
         const result = await this.analyzeFile(file, options);
         results.push(result);
-      } catch (error) {
+      } catch (error: unknown) {
         // Include error in results but continue processing
         this.log('error', `Failed to analyze file ${file.name}:`, error);
         results.push({
@@ -243,7 +243,7 @@ class AnalysisEngineBridge implements IAnalysisEngine {
           threats: [{
             threat_type: 'AnalysisError',
             confidence: 1.0,
-            description: `Failed to analyze file: ${error.message}`,
+            description: `Failed to analyze file: ${error instanceof Error ? error.message : String(error)}`,
             indicators: []
           }],
           metadata: {
@@ -307,7 +307,10 @@ class AnalysisEngineBridge implements IAnalysisEngine {
 
   private log(level: string, ...args: any[]): void {
     if (this.shouldLog(level)) {
-      console[level]('[WASM Analysis Engine]', ...args);
+      const consoleMethod = console[level as keyof Console] as Function;
+      if (typeof consoleMethod === 'function') {
+        consoleMethod('[WASM Analysis Engine]', ...args);
+      }
     }
   }
 

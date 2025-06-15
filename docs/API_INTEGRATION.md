@@ -1794,6 +1794,151 @@ this.validateApiKey(apiKey);
 // Assume valid input
 ```
 
+## WASM API Endpoints
+
+### WASM Module Status
+
+```typescript
+// GET /api/v1/status/wasm
+interface WASMStatusResponse {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  modules: {
+    [moduleName: string]: {
+      loaded: boolean;
+      version: string;
+      performanceMetrics: {
+        avgExecutionTime: number;
+        totalExecutions: number;
+        errors: number;
+      };
+    };
+  };
+  totalMemoryUsage: number;
+  lastCheck: string;
+}
+```
+
+### WASM Analysis Endpoints
+
+```typescript
+// POST /api/v1/wasm/analyze
+interface WASMAnalysisRequest {
+  fileData: string | ArrayBuffer;
+  analysisType: 'full' | 'quick' | 'pattern' | 'behavior';
+  modules?: string[]; // Specific modules to use
+  options?: {
+    includeDeobfuscation?: boolean;
+    includeCrypto?: boolean;
+    includeNetworkAnalysis?: boolean;
+    timeout?: number;
+  };
+}
+
+// Response includes streaming support
+interface WASMAnalysisResponse {
+  id: string;
+  status: 'processing' | 'completed' | 'failed';
+  results: {
+    analysis?: AnalysisResult;
+    crypto?: CryptoResult;
+    deobfuscation?: DeobfuscationResult;
+    patterns?: PatternMatchResult;
+    network?: NetworkAnalysisResult;
+    sandbox?: SandboxResult;
+  };
+  performance: {
+    totalTime: number;
+    moduleTimings: Record<string, number>;
+  };
+}
+```
+
+### WASM Module Management
+
+```typescript
+// GET /api/v1/wasm/modules
+interface WASMModulesResponse {
+  modules: Array<{
+    name: string;
+    status: 'loaded' | 'unloaded' | 'error';
+    version: string;
+    capabilities: string[];
+    memoryUsage: number;
+  }>;
+}
+
+// POST /api/v1/wasm/modules/{moduleName}/reload
+interface ModuleReloadResponse {
+  success: boolean;
+  module: string;
+  previousVersion: string;
+  newVersion: string;
+  reloadTime: number;
+}
+```
+
+### WASM Processing Flow
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+sequenceDiagram
+    participant Client
+    participant API[API Gateway]
+    participant Service[Analysis Service]
+    participant Bridge[WASM Bridge]
+    participant Modules[WASM Modules]
+    participant Cache
+    
+    Client->>API: POST /api/v1/wasm/analyze
+    API->>Service: Forward request
+    
+    Service->>Cache: Check for cached result
+    alt Cache Hit
+        Cache-->>Service: Cached result
+        Service-->>API: Return cached
+        API-->>Client: Response
+    else Cache Miss
+        Service->>Bridge: Initialize analysis
+        Bridge->>Bridge: Allocate memory
+        
+        par Parallel Processing
+            Bridge->>Modules: File processing
+        and
+            Bridge->>Modules: Pattern matching
+        and
+            Bridge->>Modules: Crypto analysis
+        end
+        
+        Modules-->>Bridge: Results
+        Bridge->>Bridge: Marshal results
+        Bridge->>Service: Combined results
+        
+        Service->>Cache: Store results
+        Service-->>API: Return results
+        API-->>Client: Response
+    end
+```
+
 ## Complete API Request Lifecycle
 
 This diagram shows how all components work together to process an API request:
@@ -1841,6 +1986,7 @@ graph TB
             Analysis[Analysis Service]
             AI[AI Manager]
             Container[Container Service]
+            WASM[WASM Bridge]
         end
     end
     
@@ -1883,6 +2029,7 @@ graph TB
     Router --> Analysis
     Router --> AI
     Router --> Container
+    Router --> WASM
     
     AI --> CircuitBreaker
     CircuitBreaker --> Bulkhead
@@ -1894,6 +2041,7 @@ graph TB
     
     Analysis --> Transform
     Container --> Transform
+    WASM --> Transform
     
     Transform --> CacheWrite
     CacheWrite --> Compress

@@ -1,4 +1,11 @@
-import { Deobfuscator, StreamingDeobfuscator, getSupportedTechniques, getVersion } from '../core/deobfuscator/pkg-web/deobfuscator';
+// Dynamic imports - will be loaded based on platform
+let Deobfuscator: any;
+let StreamingDeobfuscator: any;
+let getSupportedTechniques: any;
+let getVersion: any;
+
+declare const window: any;
+const isBrowser = typeof window !== 'undefined';
 
 export interface DeobfuscationResult {
   original: string;
@@ -79,7 +86,7 @@ class WASMError extends Error {
 
 export class DeobfuscatorBridge {
   private static instance: DeobfuscatorBridge | null = null;
-  private deobfuscator: Deobfuscator | null = null;
+  private deobfuscator: any | null = null;
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
 
@@ -107,20 +114,34 @@ export class DeobfuscatorBridge {
 
   private async doInitialize(config?: DeobfuscatorConfig): Promise<void> {
     try {
-      // Dynamic import to support both environments
-      const wasmModule = await import('../core/deobfuscator/pkg-web/deobfuscator');
+      // Platform-specific loading
+      let wasmModule: any;
+      if (isBrowser) {
+        // Browser environment
+        wasmModule = await import('../core/deobfuscator/pkg-web/deobfuscator');
+        await wasmModule.default();
+      } else {
+        // Node.js environment - deobfuscator doesn't have pkg-node yet, use pkg
+        wasmModule = require('../core/deobfuscator/pkg/deobfuscator');
+      }
+      
+      // Store module references
+      Deobfuscator = wasmModule.Deobfuscator;
+      StreamingDeobfuscator = wasmModule.StreamingDeobfuscator;
+      getSupportedTechniques = wasmModule.getSupportedTechniques;
+      getVersion = wasmModule.getVersion;
       
       if (config) {
-        this.deobfuscator = wasmModule.Deobfuscator.withConfig(config);
+        this.deobfuscator = Deobfuscator.withConfig(config);
       } else {
-        this.deobfuscator = new wasmModule.Deobfuscator();
+        this.deobfuscator = new Deobfuscator();
       }
       
       this.isInitialized = true;
-    } catch (error) {
+    } catch (error: unknown) {
       this.isInitialized = false;
       this.initPromise = null;
-      throw new WASMError(`Failed to initialize deobfuscator: ${error.message}`);
+      throw new WASMError(`Failed to initialize deobfuscator: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -136,8 +157,8 @@ export class DeobfuscatorBridge {
     try {
       const result = await this.deobfuscator!.detectObfuscation(content);
       return result as ObfuscationAnalysis;
-    } catch (error) {
-      throw new WASMError(`Obfuscation detection failed: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Obfuscation detection failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -147,8 +168,8 @@ export class DeobfuscatorBridge {
     try {
       const result = await this.deobfuscator!.deobfuscate(content);
       return result as DeobfuscationResult;
-    } catch (error) {
-      throw new WASMError(`Deobfuscation failed: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Deobfuscation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -158,8 +179,8 @@ export class DeobfuscatorBridge {
     try {
       const result = await this.deobfuscator!.analyzeEntropy(content);
       return result as EntropyAnalysis;
-    } catch (error) {
-      throw new WASMError(`Entropy analysis failed: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Entropy analysis failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -169,8 +190,8 @@ export class DeobfuscatorBridge {
     try {
       const result = await this.deobfuscator!.extractStrings(content);
       return result as ExtractedString[];
-    } catch (error) {
-      throw new WASMError(`String extraction failed: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`String extraction failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -180,8 +201,8 @@ export class DeobfuscatorBridge {
     try {
       const result = await this.deobfuscator!.extractIOCs(content);
       return result as string[];
-    } catch (error) {
-      throw new WASMError(`IOC extraction failed: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`IOC extraction failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -191,8 +212,8 @@ export class DeobfuscatorBridge {
     try {
       const config = await this.deobfuscator!.getConfig();
       return config as DeobfuscatorConfig;
-    } catch (error) {
-      throw new WASMError(`Failed to get config: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Failed to get config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -201,24 +222,24 @@ export class DeobfuscatorBridge {
     
     try {
       await this.deobfuscator!.updateConfig(config);
-    } catch (error) {
-      throw new WASMError(`Failed to update config: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Failed to update config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
   getSupportedTechniques(): string[] {
     try {
       return getSupportedTechniques() as string[];
-    } catch (error) {
-      throw new WASMError(`Failed to get supported techniques: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Failed to get supported techniques: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
   getVersion(): string {
     try {
       return getVersion();
-    } catch (error) {
-      throw new WASMError(`Failed to get version: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Failed to get version: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -238,7 +259,7 @@ export class DeobfuscatorBridge {
 }
 
 export class StreamingDeobfuscatorBridge {
-  private streamingDeobfuscator: StreamingDeobfuscator | null = null;
+  private streamingDeobfuscator: any | null = null;
   private isInitialized = false;
 
   constructor(private chunkSize?: number) {
@@ -247,11 +268,19 @@ export class StreamingDeobfuscatorBridge {
 
   private async initialize(): Promise<void> {
     try {
-      const wasmModule = await import('../core/deobfuscator/pkg-web/deobfuscator');
+      let wasmModule: any;
+      if (isBrowser) {
+        // Browser environment
+        wasmModule = await import('../core/deobfuscator/pkg-web/deobfuscator');
+        await wasmModule.default();
+      } else {
+        // Node.js environment
+        wasmModule = require('../core/deobfuscator/pkg/deobfuscator');
+      }
       this.streamingDeobfuscator = new wasmModule.StreamingDeobfuscator(this.chunkSize);
       this.isInitialized = true;
-    } catch (error) {
-      throw new WASMError(`Failed to initialize streaming deobfuscator: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Failed to initialize streaming deobfuscator: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -270,8 +299,8 @@ export class StreamingDeobfuscatorBridge {
         return result.result as DeobfuscationResult | null;
       }
       return null;
-    } catch (error) {
-      throw new WASMError(`Failed to process chunk: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Failed to process chunk: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -284,8 +313,8 @@ export class StreamingDeobfuscatorBridge {
         return result.result as DeobfuscationResult | null;
       }
       return null;
-    } catch (error) {
-      throw new WASMError(`Failed to flush: ${error.message}`);
+    } catch (error: unknown) {
+      throw new WASMError(`Failed to flush: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

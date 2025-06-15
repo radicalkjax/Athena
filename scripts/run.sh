@@ -649,6 +649,12 @@ run_web() {
     echo -e "${TRANS_WHITE}${PACKAGE} Building web application...${NC}"
     echo
 
+    # First, try to fix any web build issues
+    if [ -f "../scripts/fix-web-build.sh" ]; then
+        echo -e "${TRANS_BLUE}Running web build fix...${NC}"
+        ../scripts/fix-web-build.sh
+    fi
+
     # Show build phases with progress bar
     local build_phases=(
         "Analyzing dependencies"

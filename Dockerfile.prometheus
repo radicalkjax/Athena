@@ -1,0 +1,6 @@
+FROM prom/prometheus:latest
+
+# Copy the prometheus configuration
+COPY prometheus.yml /etc/prometheus/prometheus.yml
+
+# The command is specified in docker-compose.yml

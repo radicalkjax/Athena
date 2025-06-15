@@ -75,7 +75,7 @@ export const searchModules = async (query: string): Promise<any[]> => {
     );
     
     return response.modules || [];
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Metasploit module search error:', error);
     throw error;
   }
@@ -100,7 +100,7 @@ export const getModuleDetails = async (moduleType: string, moduleName: string): 
     );
     
     return response.module || {};
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Metasploit module details error:', error);
     throw error;
   }
@@ -123,7 +123,7 @@ export const searchVulnerabilityByCVE = async (cveId: string): Promise<any[]> =>
     );
     
     return response.vulnerabilities || [];
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Metasploit vulnerability search error:', error);
     throw error;
   }
@@ -146,7 +146,7 @@ export const getVulnerabilityDetails = async (id: string): Promise<any> => {
     );
     
     return response.vulnerability || {};
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Metasploit vulnerability details error:', error);
     throw error;
   }
@@ -169,7 +169,7 @@ export const findRelatedModules = async (vulnerabilityId: string): Promise<any[]
     );
     
     return response.modules || [];
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Metasploit related modules error:', error);
     throw error;
   }
@@ -210,7 +210,7 @@ export const enrichVulnerabilityData = async (vulnerabilities: any[]): Promise<a
           } else {
             enrichedVulnerabilities.push(vulnerability);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error(`Error enriching vulnerability ${vulnerability.name}:`, error);
           enrichedVulnerabilities.push(vulnerability);
         }
@@ -220,7 +220,7 @@ export const enrichVulnerabilityData = async (vulnerabilities: any[]): Promise<a
     }
     
     return enrichedVulnerabilities;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error enriching vulnerability data:', error);
     return vulnerabilities;
   }

@@ -255,7 +255,7 @@ describe('WASM Bridge Integration Tests', () => {
     test('should provide detailed error information', async () => {
       try {
         await analysisEngine.analyzeBuffer(null as any);
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(WASMError);
         const wasmError = error as WASMError;
         expect(wasmError.code).toBe(ErrorCode.INVALID_INPUT);

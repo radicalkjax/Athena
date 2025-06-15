@@ -14,8 +14,9 @@
 
 ## Overview
 
-Athena is an enterprise-grade malware analysis platform that leverages multiple AI providers (Claude, OpenAI, DeepSeek) to analyze and deobfuscate potentially malicious code. The platform has been modernized with production-ready features including:
+Athena is an enterprise-grade malware analysis platform that leverages multiple AI providers (Claude, OpenAI, DeepSeek) and high-performance WebAssembly modules to analyze and deobfuscate potentially malicious code. The platform has been modernized with production-ready features including:
 
+- **WebAssembly Security Modules** for high-performance analysis
 - **Multi-AI Provider Support** with automatic failover
 - **Distributed Caching** with Redis
 - **Resilience Patterns** (Circuit Breakers, Bulkheads)
@@ -421,6 +422,12 @@ docker exec athena-redis redis-cli ping
 
 ### Complete Analysis Walkthrough
 
+The analysis process leverages both AI providers and WASM modules for comprehensive security analysis:
+
+1. **WASM Pre-processing**: High-performance binary analysis
+2. **AI Analysis**: Deep semantic understanding
+3. **Combined Results**: Integrated findings from both systems
+
 ```mermaid
 %%{init: {
   'theme': 'base',
@@ -555,8 +562,14 @@ sequenceDiagram
     
     User->>Analysis: Click Analyze
     Analysis->>Analysis: Check cache
-    Analysis->>Analysis: Run analysis
-    Analysis->>Results: Display results
+    
+    Analysis->>Analysis: WASM Pre-processing
+    Note over Analysis: File Processor, Pattern Matcher,<br/>Crypto Analysis, Deobfuscator
+    
+    Analysis->>Analysis: AI Analysis
+    Note over Analysis: Claude/OpenAI/DeepSeek<br/>with failover
+    
+    Analysis->>Results: Display combined results
     
     Results->>User: Show deobfuscated code
     Results->>User: Show vulnerabilities
@@ -884,6 +897,7 @@ graph TB
     
     subgraph "Service Layer"
         AIManager[AI Manager]
+        WASMBridge[WASM Bridge]
         Cache[Cache Manager]
         Container[Container Service]
     end
@@ -892,6 +906,16 @@ graph TB
         CB[Circuit Breakers]
         BH[Bulkheads]
         Pool[Resource Pools]
+    end
+    
+    subgraph "WASM Modules"
+        Analysis[Analysis Engine]
+        Crypto[Crypto Module]
+        Deobf[Deobfuscator]
+        FileProc[File Processor]
+        Pattern[Pattern Matcher]
+        Network[Network Analysis]
+        Sandbox[Sandbox]
     end
     
     subgraph "External Services"
@@ -905,6 +929,15 @@ graph TB
     Store --> API
     API --> MW
     MW --> AIManager
+    MW --> WASMBridge
+    
+    WASMBridge --> Analysis
+    WASMBridge --> Crypto
+    WASMBridge --> Deobf
+    WASMBridge --> FileProc
+    WASMBridge --> Pattern
+    WASMBridge --> Network
+    WASMBridge --> Sandbox
     
     AIManager --> CB
     CB --> BH

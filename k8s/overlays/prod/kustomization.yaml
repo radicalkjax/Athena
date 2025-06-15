@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: athena
+
+bases:
+- ../../base
+
+patchesStrategicMerge:
+- deployment-patch.yaml
+- redis-patch.yaml
+- hpa-patch.yaml
+
+configMapGenerator:
+- name: athena-config
+  behavior: replace
+  files:
+  - ../../configmap-production.yaml
+
+secretGenerator:
+- name: athena-secrets
+  behavior: replace
+  files:
+  - secrets.env
+
+resources:
+- ingress.yaml
+- certificate.yaml
+- network-policy.yaml

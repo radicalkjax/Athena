@@ -92,7 +92,7 @@ export const createContainer = async (
     }
 
     return dbContainer;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating container with database integration:', error);
     throw error;
   }
@@ -139,7 +139,7 @@ export const getContainerStatus = async (containerId: string): Promise<'creating
     }
 
     return status;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting container status with database integration:', error);
     throw error;
   }
@@ -164,7 +164,7 @@ export const executeCommand = async (
 
     // Execute command using the container service
     return await containerService.executeCommand(containerId, command);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error executing command with database integration:', error);
     throw error;
   }
@@ -189,7 +189,7 @@ export const runMalwareAnalysis = async (
 
     // Run malware analysis using the container service
     return await containerService.runMalwareAnalysis(containerId, timeout);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error running malware analysis with database integration:', error);
     throw error;
   }
@@ -224,7 +224,7 @@ export const removeContainer = async (containerId: string): Promise<boolean> => 
     }
 
     return success;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error removing container with database integration:', error);
     throw error;
   }
@@ -276,7 +276,7 @@ export const createWindowsContainer = async (
       ...windowsConfig,
       securityOptions: windowsSecurityOptions,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating Windows container with database integration:', error);
     throw error;
   }
@@ -329,7 +329,7 @@ export const createLinuxContainer = async (
       ...linuxConfig,
       securityOptions: linuxSecurityOptions,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating Linux container with database integration:', error);
     throw error;
   }
@@ -383,7 +383,7 @@ export const createMacOSContainer = async (
       ...macOSConfig,
       securityOptions: macOSSecurityOptions,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating macOS container with database integration:', error);
     throw error;
   }
@@ -408,7 +408,7 @@ export const getContainerFile = async (
 
     // Get file from container using the container service
     return await containerService.getContainerFile(containerId, filePath);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting file from container with database integration:', error);
     throw error;
   }

@@ -1,0 +1,101 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Athena API Performance",
+    "tags": ["athena", "api", "performance"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"athena\"}[5m])) by (method, status)",
+            "legendFormat": "{{method}} - {{status}}"
+          }
+        ]
+      },
+      {
+        "title": "Response Time (p95)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"athena\"}[5m])) by (endpoint, le))",
+            "legendFormat": "{{endpoint}}"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"athena\",status=~\"5..\"}[5m])) by (endpoint)",
+            "legendFormat": "{{endpoint}}"
+          }
+        ]
+      },
+      {
+        "title": "Active Connections",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "http_active_connections{job=\"athena\"}",
+            "legendFormat": "Active Connections"
+          }
+        ]
+      },
+      {
+        "title": "Request Success Rate",
+        "type": "singlestat",
+        "gridPos": {"x": 0, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(sum(rate(http_requests_total{job=\"athena\",status!~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"athena\"}[5m]))) * 100"
+          }
+        ],
+        "format": "percent"
+      },
+      {
+        "title": "Average Response Time",
+        "type": "singlestat",
+        "gridPos": {"x": 6, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "avg(rate(http_request_duration_seconds_sum{job=\"athena\"}[5m]) / rate(http_request_duration_seconds_count{job=\"athena\"}[5m]))"
+          }
+        ],
+        "format": "s"
+      },
+      {
+        "title": "Total Requests/min",
+        "type": "singlestat",
+        "gridPos": {"x": 12, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"athena\"}[1m])) * 60"
+          }
+        ]
+      },
+      {
+        "title": "5xx Errors/min",
+        "type": "singlestat",
+        "gridPos": {"x": 18, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"athena\",status=~\"5..\"}[1m])) * 60"
+          }
+        ]
+      }
+    ],
+    "refresh": "10s",
+    "time": {"from": "now-1h", "to": "now"},
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"]
+    }
+  }
+}

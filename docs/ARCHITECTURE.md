@@ -23,10 +23,18 @@
 
 ## Overview
 
-Athena is an enterprise-grade malware analysis platform built with React Native and Expo, providing cross-platform support for iOS, Android, and web. The platform features advanced resilience patterns, distributed caching, and comprehensive monitoring for production-ready deployments.
+Athena is an enterprise-grade malware analysis platform built with React Native and Expo, providing cross-platform support for iOS, Android, and web. The platform features high-performance WebAssembly modules for security analysis, advanced resilience patterns, distributed caching, and comprehensive monitoring for production-ready deployments.
 
 ### Key Features
 
+- **WebAssembly Security Modules**: High-performance analysis with WASM
+  - Analysis Engine for core malware detection
+  - Crypto Module for cryptographic operations
+  - Deobfuscator for code unpacking
+  - File Processor for binary analysis
+  - Pattern Matcher for signature detection
+  - Network Analysis for protocol parsing
+  - Sandbox for isolated execution
 - **Multi-AI Provider Support**: Claude, OpenAI, DeepSeek with automatic failover
 - **Container Isolation**: Secure malware execution environments
 - **Distributed Caching**: Redis-backed caching with local fallback
@@ -79,6 +87,17 @@ graph TB
         Container[Container Service]
         Cache[Cache Manager]
         APM[APM Manager]
+        WASMBridge[WASM Bridge]
+    end
+    
+    subgraph "WASM Modules"
+        AnalysisEngine[Analysis Engine]
+        CryptoModule[Crypto Module]
+        Deobfuscator[Deobfuscator]
+        FileProc[File Processor]
+        PatternMatch[Pattern Matcher]
+        NetworkAnalysis[Network Analysis]
+        Sandbox[WASM Sandbox]
     end
     
     subgraph "Resilience Layer"
@@ -106,6 +125,15 @@ graph TB
     Gateway --> AIManager
     Gateway --> Analysis
     Gateway --> Container
+    
+    Analysis --> WASMBridge
+    WASMBridge --> AnalysisEngine
+    WASMBridge --> CryptoModule
+    WASMBridge --> Deobfuscator
+    WASMBridge --> FileProc
+    WASMBridge --> PatternMatch
+    WASMBridge --> NetworkAnalysis
+    WASMBridge --> Sandbox
     
     AIManager --> CircuitBreaker
     CircuitBreaker --> Bulkhead
@@ -338,6 +366,139 @@ graph LR
     Complex --> FileUploader
     Complex --> ModelSelector
     Complex --> ResultsViewer
+```
+
+## WebAssembly Integration
+
+### WASM Architecture
+
+The WebAssembly integration provides high-performance security analysis capabilities:
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
+graph TB
+    subgraph "WASM Bridge Layer"
+        Bridge[TypeScript Bridge]
+        Memory[Memory Management]
+        Types[Type Marshaling]
+        Metrics[Performance Metrics]
+    end
+    
+    subgraph "WASM Core Modules"
+        Analysis[Analysis Engine<br/>Rust/WASM]
+        Crypto[Crypto Module<br/>Rust/WASM]
+        Deobf[Deobfuscator<br/>Rust/WASM]
+        FileProc[File Processor<br/>Rust/WASM]
+        Pattern[Pattern Matcher<br/>Rust/WASM]
+        Network[Network Analysis<br/>Rust/WASM]
+        Sandbox[Sandbox<br/>Rust/WASM]
+    end
+    
+    subgraph "Module Capabilities"
+        AnalysisCap[Malware Detection<br/>Threat Analysis]
+        CryptoCap[Hash Verification<br/>Encryption/Decryption]
+        DeobfCap[Code Unpacking<br/>String Deobfuscation]
+        FileCap[Binary Parsing<br/>Format Analysis]
+        PatternCap[Signature Matching<br/>YARA Rules]
+        NetworkCap[Protocol Parsing<br/>Traffic Analysis]
+        SandboxCap[Isolated Execution<br/>Behavior Analysis]
+    end
+    
+    Bridge --> Memory
+    Bridge --> Types
+    Bridge --> Metrics
+    
+    Memory --> Analysis
+    Memory --> Crypto
+    Memory --> Deobf
+    Memory --> FileProc
+    Memory --> Pattern
+    Memory --> Network
+    Memory --> Sandbox
+    
+    Analysis --> AnalysisCap
+    Crypto --> CryptoCap
+    Deobf --> DeobfCap
+    FileProc --> FileCap
+    Pattern --> PatternCap
+    Network --> NetworkCap
+    Sandbox --> SandboxCap
+```
+
+### WASM Module Flow
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  },
+  'sequence': {
+    'actorMargin': 50,
+    'boxMargin': 10,
+    'boxTextMargin': 5,
+    'noteMargin': 10,
+    'messageMargin': 35,
+    'mirrorActors': true
+  }
+}}%%
+sequenceDiagram
+    participant Service
+    participant Bridge
+    participant WASM
+    participant Memory
+    
+    Service->>Bridge: analyzeFile(data)
+    Bridge->>Memory: allocate(size)
+    Memory-->>Bridge: memoryPtr
+    Bridge->>Bridge: marshalData(data, memoryPtr)
+    Bridge->>WASM: analyze(memoryPtr, size)
+    
+    WASM->>WASM: processData()
+    WASM->>Memory: writeResult(resultPtr)
+    WASM-->>Bridge: resultPtr
+    
+    Bridge->>Memory: readResult(resultPtr)
+    Memory-->>Bridge: result
+    Bridge->>Bridge: unmarshalResult(result)
+    Bridge->>Memory: free(memoryPtr)
+    Bridge->>Memory: free(resultPtr)
+    Bridge-->>Service: analysisResult
 ```
 
 ## Services Layer
@@ -1649,6 +1810,15 @@ The 9-phase modernization project has transformed Athena into an enterprise-read
 - Redis distributed caching
 - Feature flags system
 - Load testing suite
+
+### Phase 10: WebAssembly Integration
+- 7 high-performance WASM modules
+- Rust-based security analysis
+- Type-safe TypeScript bridges
+- Memory-efficient processing
+- Performance metrics wrapper
+- Binaryen optimization
+- Cross-platform compatibility
 
 ## Conclusion
 

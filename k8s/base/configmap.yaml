@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: athena-config
+  labels:
+    app: athena
+data:
+  # AI Provider Configuration
+  DEFAULT_AI_PROVIDER: "claude"
+  AI_ORCHESTRATION_STRATEGY: "auto"
+  
+  # Cache Configuration
+  CACHE_TTL: "300"
+  CACHE_KEY_PREFIX: "athena:"
+  
+  # WASM Configuration
+  WASM_MAX_MEMORY_MB: "512"
+  WASM_INIT_TIMEOUT_MS: "30000"
+  
+  # API Configuration
+  API_RATE_LIMIT_WINDOW_MS: "60000"
+  API_RATE_LIMIT_MAX_REQUESTS: "100"
+  
+  # Security Configuration
+  ENABLE_WASM_PREPROCESSING: "true"
+  BLOCK_PROMPT_INJECTION: "true"
+  SANITIZE_URLS: "true"
+  
+  # Performance Configuration
+  ENABLE_REQUEST_BATCHING: "true"
+  MAX_BATCH_SIZE: "10"
+  BATCH_TIMEOUT_MS: "100"

@@ -3,6 +3,9 @@
  * Provides TypeScript interface to WASM network analysis functions
  */
 
+declare const window: any;
+const isBrowser = typeof window !== 'undefined';
+
 export interface NetworkResult {
   success: boolean;
   data?: any;
@@ -166,9 +169,16 @@ export class NetworkBridge {
     }
 
     try {
-      // Dynamic import for better code splitting
-      const wasmModule = await import('../core/network/pkg/network.js');
-      await wasmModule.default();
+      // Platform-specific loading
+      let wasmModule: any;
+      if (isBrowser) {
+        // Browser environment - network doesn't have pkg-web yet, use pkg
+        wasmModule = await import('../core/network/pkg/network');
+        await wasmModule.default();
+      } else {
+        // Node.js environment
+        wasmModule = require('../core/network/pkg/network');
+      }
       
       this.module = wasmModule;
       this.moduleInstance = new wasmModule.NetworkModule();
@@ -179,7 +189,7 @@ export class NetworkBridge {
       
       this.initialized = true;
       console.log(`Network WASM module initialized, version: ${this.moduleInstance.get_version()}`);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Failed to initialize network module: ${error}`);
     }
   }
@@ -202,7 +212,7 @@ export class NetworkBridge {
       }
       
       return result.data as PacketAnalysis;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Packet analysis error: ${error}`);
     }
   }
@@ -219,7 +229,7 @@ export class NetworkBridge {
       }
       
       return result.data as ProtocolInfo;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Protocol detection error: ${error}`);
     }
   }
@@ -237,7 +247,7 @@ export class NetworkBridge {
       }
       
       return result.data as TrafficPattern[];
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Traffic pattern analysis error: ${error}`);
     }
   }
@@ -255,7 +265,7 @@ export class NetworkBridge {
       }
       
       return result.data as NetworkAnomaly[];
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Anomaly detection error: ${error}`);
     }
   }
@@ -272,7 +282,7 @@ export class NetworkBridge {
       }
       
       return result.data;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`DNS analysis error: ${error}`);
     }
   }
@@ -289,7 +299,7 @@ export class NetworkBridge {
       }
       
       return result.data;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`HTTP analysis error: ${error}`);
     }
   }
@@ -307,7 +317,7 @@ export class NetworkBridge {
       }
       
       return result.data as CCPatternResult;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`C&C detection error: ${error}`);
     }
   }
@@ -325,7 +335,7 @@ export class NetworkBridge {
       }
       
       return result.data as PortScanResult;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Port scan detection error: ${error}`);
     }
   }
@@ -343,21 +353,15 @@ export class NetworkBridge {
       }
       
       return result.data as ExfiltrationResult;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Data exfiltration detection error: ${error}`);
     }
   }
 
-  // Analyze a single packet
-  async analyzePacket(packet: Uint8Array): Promise<PacketAnalysisResult> {
+  // Analyze a single packet with extended result format
+  async analyzePacketExtended(packet: Uint8Array): Promise<PacketAnalysisResult> {
     try {
-      const result = await this.analyzePacketData(packet);
-      if (!result.success) {
-        throw new Error(result.error || 'Packet analysis failed');
-      }
-      
-      // Convert the result to expected format
-      const analysis = result.data as PacketAnalysis;
+      const analysis = await this.analyzePacket(packet);
       return {
         ...analysis,
         ethernetInfo: analysis.source_ip ? {
@@ -377,7 +381,7 @@ export class NetworkBridge {
         } : undefined,
         anomalies: []
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Packet analysis error: ${error}`);
     }
   }
@@ -391,7 +395,7 @@ export class NetworkBridge {
       ).length;
       const ratio = randomChars / domain.length;
       return ratio > 0.8 || domain.length > 20;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Domain check error: ${error}`);
     }
   }
@@ -404,13 +408,16 @@ export class NetworkBridge {
       
       // Analyze each packet
       for (const packet of capture.packets) {
-        const analysis = await this.analyzePacketData(packet.data);
-        if (analysis.success && analysis.data) {
-          protocols.add(analysis.data.protocol);
+        try {
+          const analysis = await this.analyzePacket(packet.data);
+          protocols.add(analysis.protocol);
           // Check for suspicious patterns
-          if (analysis.data.flags?.includes('suspicious')) {
+          if (analysis.flags?.includes('suspicious')) {
             suspiciousActivities++;
           }
+        } catch (error: unknown) {
+          // Continue with next packet on error
+          console.warn('Failed to analyze packet:', error);
         }
       }
 
@@ -426,7 +433,7 @@ export class NetworkBridge {
         suspiciousActivities,
         riskScore
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Network capture analysis error: ${error}`);
     }
   }
@@ -449,8 +456,80 @@ export class NetworkBridge {
       if (mbPerSecond > 10) score += 20;
       
       return Math.min(100, Math.max(0, score));
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(`Risk score calculation error: ${error}`);
+    }
+  }
+
+  // Domain analysis for security checks
+  async analyzeDomain(domain: string): Promise<{ isMalicious: boolean; suspicious: boolean; risk_score: number; details?: string }> {
+    this.ensureInitialized();
+    
+    try {
+      // For now, implement a basic domain analysis
+      // In production, this would call the WASM module's domain analysis function
+      const maliciousDomains = [
+        'malicious.com', 'phishing.net', 'badsite.org', 'evil.com',
+        'malware-download.net', 'cryptolocker.biz', 'ransomware.org'
+      ];
+      
+      const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf'];
+      const suspiciousPatterns = [
+        /[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/, // IP addresses
+        /[a-z0-9]{32,}/, // Long random strings
+        /(paypal|amazon|google|microsoft|apple).*\.(tk|ml|ga|cf)/, // Phishing patterns
+        /[0-9]+-[0-9]+-[0-9]+/, // Multiple hyphens with numbers
+      ];
+      
+      const domainLower = domain.toLowerCase();
+      
+      // Check if explicitly malicious
+      const isMalicious = maliciousDomains.some(mal => domainLower.includes(mal));
+      
+      // Check if suspicious
+      let suspicious = false;
+      let risk_score = 0;
+      
+      // Check TLD
+      if (suspiciousTLDs.some(tld => domainLower.endsWith(tld))) {
+        suspicious = true;
+        risk_score += 30;
+      }
+      
+      // Check patterns
+      for (const pattern of suspiciousPatterns) {
+        if (pattern.test(domainLower)) {
+          suspicious = true;
+          risk_score += 20;
+        }
+      }
+      
+      // Check domain length
+      if (domain.length > 50) {
+        suspicious = true;
+        risk_score += 10;
+      }
+      
+      // Check for homograph attacks (simplified)
+      if (/[а-я]/.test(domain)) { // Cyrillic characters
+        suspicious = true;
+        risk_score += 40;
+      }
+      
+      if (isMalicious) {
+        risk_score = 100;
+      }
+      
+      return {
+        isMalicious,
+        suspicious: suspicious || isMalicious,
+        risk_score: Math.min(100, risk_score),
+        details: isMalicious ? 'Known malicious domain' : 
+                 suspicious ? 'Domain exhibits suspicious characteristics' : 
+                 'Domain appears safe'
+      };
+    } catch (error: unknown) {
+      throw new WASMError(`Domain analysis error: ${error}`);
     }
   }
 

@@ -91,7 +91,7 @@ export class SSEClient {
           }
         }, 10000);
 
-      } catch (error) {
+      } catch (error: unknown) {
         this.connection.status = 'error';
         reject(error);
       }
@@ -154,12 +154,12 @@ export class SSEClient {
       for (const handler of this.messageHandlers.values()) {
         try {
           handler(message);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error('Message handler error:', error);
         }
       }
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to process SSE message:', error);
     }
   }

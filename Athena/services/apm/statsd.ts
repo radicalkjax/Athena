@@ -153,7 +153,7 @@ export class StatsDProvider extends BaseAPMProvider {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('StatsD HTTP send error:', error);
     }
   }

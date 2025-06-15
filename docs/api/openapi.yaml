@@ -1,0 +1,588 @@
+openapi: 3.0.3
+info:
+  title: Athena Malware Analysis API
+  description: |
+    Advanced malware analysis platform leveraging WASM modules and AI providers
+    for comprehensive threat detection and analysis.
+  version: 1.0.0
+  contact:
+    name: Athena Support
+    email: support@athena.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.athena.yourdomain.com
+    description: Production server
+  - url: https://staging.api.athena.yourdomain.com
+    description: Staging server
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Analysis
+    description: Malware analysis operations
+  - name: WASM
+    description: WASM module operations
+  - name: Monitoring
+    description: Metrics and monitoring
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v1/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API is healthy and responsive
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/analysis/upload:
+    post:
+      tags:
+        - Analysis
+      summary: Upload file for analysis
+      description: Submit a file for comprehensive malware analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileUploadRequest'
+      responses:
+        '201':
+          description: Analysis started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/analysis/{analysisId}/status:
+    get:
+      tags:
+        - Analysis
+      summary: Get analysis status
+      description: Check the current status of an analysis job
+      parameters:
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique analysis identifier
+      responses:
+        '200':
+          description: Analysis status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisStatus'
+        '404':
+          description: Analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/analysis/{analysisId}/results:
+    get:
+      tags:
+        - Analysis
+      summary: Get analysis results
+      description: Retrieve complete analysis results
+      parameters:
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique analysis identifier
+      responses:
+        '200':
+          description: Analysis results retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResults'
+        '404':
+          description: Analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '202':
+          description: Analysis still in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisStatus'
+
+  /api/v1/analysis/batch:
+    post:
+      tags:
+        - Analysis
+      summary: Batch file analysis
+      description: Submit multiple files for analysis in a single request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchUploadRequest'
+      responses:
+        '202':
+          description: Batch analysis accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchAnalysisResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Batch too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/wasm/analyze:
+    post:
+      tags:
+        - WASM
+      summary: Direct WASM analysis
+      description: Run analysis using specific WASM module
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WasmAnalysisRequest'
+      responses:
+        '200':
+          description: WASM analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WasmAnalysisResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /metrics:
+    get:
+      tags:
+        - Monitoring
+      summary: Prometheus metrics
+      description: Export metrics in Prometheus format
+      security: []
+      responses:
+        '200':
+          description: Metrics retrieved
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP http_requests_total Total HTTP requests
+                  # TYPE http_requests_total counter
+                  http_requests_total{method="GET",status="200"} 1234
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        services:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [connected, disconnected]
+            wasm:
+              type: string
+              enum: [loaded, error]
+            ai_providers:
+              type: object
+              additionalProperties:
+                type: string
+                enum: [available, unavailable]
+
+    FileUploadRequest:
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: object
+          required:
+            - name
+            - content
+            - type
+          properties:
+            name:
+              type: string
+              description: File name
+              example: suspicious.exe
+            content:
+              type: string
+              format: base64
+              description: Base64 encoded file content
+            type:
+              type: string
+              description: MIME type
+              example: application/octet-stream
+        options:
+          $ref: '#/components/schemas/AnalysisOptions'
+
+    AnalysisOptions:
+      type: object
+      properties:
+        deepAnalysis:
+          type: boolean
+          default: false
+          description: Enable comprehensive deep analysis
+        aiProvider:
+          type: string
+          enum: [claude, deepseek, openai, auto]
+          default: auto
+          description: AI provider for analysis
+        enableSandbox:
+          type: boolean
+          default: true
+          description: Enable sandboxed execution
+        timeout:
+          type: integer
+          minimum: 30
+          maximum: 600
+          default: 300
+          description: Analysis timeout in seconds
+
+    AnalysisResponse:
+      type: object
+      required:
+        - analysisId
+        - status
+        - createdAt
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+        estimatedCompletionTime:
+          type: string
+          format: date-time
+
+    AnalysisStatus:
+      type: object
+      required:
+        - analysisId
+        - status
+        - progress
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        currentStep:
+          type: string
+        cached:
+          type: boolean
+          default: false
+        error:
+          type: string
+
+    AnalysisResults:
+      type: object
+      required:
+        - analysisId
+        - threatLevel
+        - analysis
+        - metadata
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        threatLevel:
+          type: string
+          enum: [benign, low, medium, high, critical]
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        analysis:
+          type: object
+          properties:
+            static:
+              $ref: '#/components/schemas/StaticAnalysis'
+            dynamic:
+              $ref: '#/components/schemas/DynamicAnalysis'
+            ai:
+              $ref: '#/components/schemas/AIAnalysis'
+        metadata:
+          type: object
+          properties:
+            fileName:
+              type: string
+            fileSize:
+              type: integer
+            fileHash:
+              type: string
+            analysisTime:
+              type: number
+              description: Analysis duration in seconds
+
+    StaticAnalysis:
+      type: object
+      properties:
+        fileType:
+          type: string
+        entropy:
+          type: number
+          format: float
+        strings:
+          type: array
+          items:
+            type: string
+        imports:
+          type: array
+          items:
+            type: string
+        signatures:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              severity:
+                type: string
+              description:
+                type: string
+
+    DynamicAnalysis:
+      type: object
+      properties:
+        behaviors:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+              target:
+                type: string
+              risk:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+        networkActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              protocol:
+                type: string
+              destination:
+                type: string
+              port:
+                type: integer
+              data:
+                type: string
+        fileActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              operation:
+                type: string
+              path:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+
+    AIAnalysis:
+      type: object
+      properties:
+        provider:
+          type: string
+        summary:
+          type: string
+        indicators:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: number
+          format: float
+
+    BatchUploadRequest:
+      type: object
+      required:
+        - files
+      properties:
+        files:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            required:
+              - name
+              - content
+              - type
+            properties:
+              name:
+                type: string
+              content:
+                type: string
+                format: base64
+              type:
+                type: string
+        options:
+          $ref: '#/components/schemas/AnalysisOptions'
+
+    BatchAnalysisResponse:
+      type: object
+      required:
+        - batchId
+        - analyses
+      properties:
+        batchId:
+          type: string
+          format: uuid
+        analyses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalysisResponse'
+
+    WasmAnalysisRequest:
+      type: object
+      required:
+        - module
+        - data
+      properties:
+        module:
+          type: string
+          enum: [pattern-matcher, deobfuscator, file-processor, crypto, sandbox]
+        data:
+          type: string
+          format: base64
+        options:
+          type: object
+          additionalProperties: true
+
+    WasmAnalysisResponse:
+      type: object
+      required:
+        - module
+        - result
+        - executionTime
+      properties:
+        module:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        executionTime:
+          type: number
+          description: Execution time in milliseconds
+        error:
+          type: string
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        requestId:
+          type: string
+          format: uuid

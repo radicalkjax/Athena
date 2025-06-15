@@ -85,7 +85,7 @@ export class Bulkhead<T = any> {
       // });
       
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       // apmManager.counter('bulkhead.error', 1, { bulkhead: this.config.name });
       throw error;
     } finally {
@@ -156,7 +156,7 @@ export class Bulkhead<T = any> {
     try {
       const result = await this.executeTask(queuedTask.execute);
       queuedTask.resolve(result);
-    } catch (error) {
+    } catch (error: unknown) {
       queuedTask.reject(error as Error);
     }
   }

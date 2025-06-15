@@ -61,7 +61,7 @@ class SecureStorage {
         ).join('')
       );
       return encrypted;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Web encryption failed', error);
       throw error;
     }
@@ -76,7 +76,7 @@ class SecureStorage {
         String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
       ).join('');
       return decrypted;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Web decryption failed', error);
       throw error;
     }
@@ -102,7 +102,7 @@ class SecureStorage {
       this.memoryCache.set(storageKey, key);
       
       logger.info(`API key stored securely for ${provider}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to store API key for ${provider}`, error);
       throw new Error(`Failed to store API key: ${error}`);
     }
@@ -138,7 +138,7 @@ class SecureStorage {
       }
       
       return value;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to retrieve API key for ${provider}`, error);
       return null;
     }
@@ -163,7 +163,7 @@ class SecureStorage {
       this.memoryCache.delete(storageKey);
       
       logger.info(`API key removed for ${provider}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to remove API key for ${provider}`, error);
       throw new Error(`Failed to remove API key: ${error}`);
     }
@@ -185,7 +185,7 @@ class SecureStorage {
       
       this.memoryCache.set(storageKey, value);
       logger.debug(`Secure item stored: ${key}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to store secure item: ${key}`, error);
       throw error;
     }
@@ -217,7 +217,7 @@ class SecureStorage {
       }
       
       return value;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to retrieve secure item: ${key}`, error);
       return null;
     }
@@ -255,7 +255,7 @@ class SecureStorage {
       
       this.memoryCache.clear();
       logger.warn('All secure storage cleared');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to clear secure storage', error);
       throw error;
     }

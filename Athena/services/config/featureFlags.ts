@@ -60,7 +60,7 @@ class FeatureFlagsService {
         if (saved) {
           this.overrides = JSON.parse(saved);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.warn('Failed to load feature flag overrides:', error);
       }
     }
@@ -214,7 +214,7 @@ class FeatureFlagsService {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         localStorage.setItem(this.storageKey, JSON.stringify(this.overrides));
-      } catch (error) {
+      } catch (error: unknown) {
         console.warn('Failed to save feature flag overrides:', error);
       }
     }

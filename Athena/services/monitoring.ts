@@ -48,7 +48,7 @@ export const createContainerMonitoring = async (
       openSocketCount,
       suspiciousActivities,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating container monitoring:', error);
     throw error;
   }
@@ -73,7 +73,7 @@ export const getContainerMonitoringByContainerId = async (
       offset,
       order: [['timestamp', 'DESC']],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting container monitoring by container ID:', error);
     throw error;
   }
@@ -135,7 +135,7 @@ export const createNetworkActivity = async (
       maliciousReason,
       payload,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating network activity:', error);
     throw error;
   }
@@ -160,7 +160,7 @@ export const getNetworkActivityByContainerId = async (
       offset,
       order: [['timestamp', 'DESC']],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting network activity by container ID:', error);
     throw error;
   }
@@ -213,7 +213,7 @@ export const createFileActivity = async (
       fileHash,
       fileContent,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating file activity:', error);
     throw error;
   }
@@ -238,7 +238,7 @@ export const getFileActivityByContainerId = async (
       offset,
       order: [['timestamp', 'DESC']],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting file activity by container ID:', error);
     throw error;
   }
@@ -297,7 +297,7 @@ export const createProcessActivity = async (
       isMalicious,
       maliciousReason,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating process activity:', error);
     throw error;
   }
@@ -322,7 +322,7 @@ export const getProcessActivityByContainerId = async (
       offset,
       order: [['timestamp', 'DESC']],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting process activity by container ID:', error);
     throw error;
   }
@@ -439,13 +439,13 @@ export const startContainerMonitoring = async (
             false
           );
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error monitoring container:', error);
       }
     }, interval);
 
     return monitoringInterval;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error starting container monitoring:', error);
     throw error;
   }
@@ -495,7 +495,7 @@ export const getSuspiciousActivities = async (
       fileActivities,
       processActivities,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting suspicious activities:', error);
     throw error;
   }
@@ -561,7 +561,7 @@ export const getContainerMonitoringSummary = async (
       totalProcesses: processActivities.length,
       suspiciousActivityCount,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting container monitoring summary:', error);
     throw error;
   }

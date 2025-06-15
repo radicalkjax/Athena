@@ -13,7 +13,7 @@ export const initializeDatabase = async (): Promise<void> => {
   try {
     await initDatabase();
     console.log('Database initialized successfully');
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error initializing database:', error);
     throw error;
   }
@@ -53,7 +53,7 @@ export const createContainerConfig = async (
     });
 
     return containerConfig;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating container configuration:', error);
     throw error;
   }
@@ -72,7 +72,7 @@ export const getContainerConfigById = async (id: string): Promise<ContainerConfi
         { model: ContainerSecurity, as: 'security' },
       ],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting container configuration:', error);
     throw error;
   }
@@ -90,7 +90,7 @@ export const getAllContainerConfigs = async (): Promise<ContainerConfig[]> => {
         { model: ContainerSecurity, as: 'security' },
       ],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting all container configurations:', error);
     throw error;
   }
@@ -143,7 +143,7 @@ export const updateContainerConfig = async (
 
     // Return updated container configuration
     return await getContainerConfigById(id);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating container configuration:', error);
     throw error;
   }
@@ -175,7 +175,7 @@ export const deleteContainerConfig = async (id: string): Promise<boolean> => {
     await containerConfig.destroy();
 
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error deleting container configuration:', error);
     throw error;
   }
@@ -194,7 +194,7 @@ export const createContainer = async (
       ...container,
       id: uuidv4(),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating container:', error);
     throw error;
   }
@@ -219,7 +219,7 @@ export const getContainerById = async (id: string): Promise<Container | null> =>
         },
       ],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting container:', error);
     throw error;
   }
@@ -243,7 +243,7 @@ export const getAllContainers = async (): Promise<Container[]> => {
         },
       ],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting all containers:', error);
     throw error;
   }
@@ -267,7 +267,7 @@ export const updateContainer = async (
 
     await containerInstance.update(container);
     return containerInstance;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating container:', error);
     throw error;
   }
@@ -287,7 +287,7 @@ export const deleteContainer = async (id: string): Promise<boolean> => {
 
     await container.destroy();
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error deleting container:', error);
     throw error;
   }

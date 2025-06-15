@@ -124,7 +124,7 @@ export class AnalysisBatchProcessor implements BatchProcessor {
       callbacks?.onBatchComplete?.(responses);
       return responses;
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Batch ${batchId} failed:`, error);
       callbacks?.onError?.(error as Error);
       throw error;
@@ -207,7 +207,7 @@ export class AnalysisBatchProcessor implements BatchProcessor {
         processingTime,
       };
       
-    } catch (error) {
+    } catch (error: unknown) {
       const processingTime = Date.now() - startTime;
       this.processingStats.failed++;
       

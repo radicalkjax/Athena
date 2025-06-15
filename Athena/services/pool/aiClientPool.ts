@@ -52,7 +52,7 @@ class AIClientFactory implements ResourceFactory<AIClientResource> {
     try {
       // Quick validation - check if API key is still valid
       return await resource.service.hasValidApiKey();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Validation failed for ${resource.provider}:`, error);
       return false;
     }

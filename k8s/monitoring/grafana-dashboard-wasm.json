@@ -1,0 +1,105 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Athena WASM Performance",
+    "tags": ["athena", "wasm", "performance"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "WASM Module Load Times",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(wasm_module_load_duration_bucket[5m])) by (module, le))",
+            "legendFormat": "{{module}} - p95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(wasm_module_load_duration_bucket[5m])) by (module, le))",
+            "legendFormat": "{{module}} - p50"
+          }
+        ]
+      },
+      {
+        "title": "WASM Module Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "wasm_module_memory_bytes{job=\"athena\"}",
+            "legendFormat": "{{module}}"
+          }
+        ]
+      },
+      {
+        "title": "WASM Function Call Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(wasm_function_calls_total[5m])",
+            "legendFormat": "{{module}}.{{function}}"
+          }
+        ]
+      },
+      {
+        "title": "WASM Function Execution Time",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(wasm_function_duration_bucket[5m])) by (module, function, le))",
+            "legendFormat": "{{module}}.{{function}}"
+          }
+        ]
+      },
+      {
+        "title": "WASM Error Rate",
+        "type": "singlestat",
+        "gridPos": {"x": 0, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(rate(wasm_errors_total[5m]))"
+          }
+        ]
+      },
+      {
+        "title": "Total WASM Module Size",
+        "type": "singlestat",
+        "gridPos": {"x": 6, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(wasm_module_size_bytes)"
+          }
+        ],
+        "format": "bytes"
+      },
+      {
+        "title": "Active WASM Instances",
+        "type": "singlestat",
+        "gridPos": {"x": 12, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(wasm_active_instances)"
+          }
+        ]
+      },
+      {
+        "title": "WASM Compilation Time",
+        "type": "singlestat",
+        "gridPos": {"x": 18, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "avg(wasm_compilation_duration_seconds)"
+          }
+        ],
+        "format": "s"
+      }
+    ],
+    "refresh": "10s",
+    "time": {"from": "now-1h", "to": "now"},
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"]
+    }
+  }
+}

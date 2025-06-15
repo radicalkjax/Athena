@@ -311,7 +311,7 @@ if (require.main === module) {
     try {
       await benchmark.initialize();
       await benchmark.runAllBenchmarks();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Benchmark failed:', error);
     } finally {
       await benchmark.cleanup();

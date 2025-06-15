@@ -78,7 +78,7 @@ class HybridAnalysisEngine implements IAnalysisEngine {
       await initializeAnalysisEngine();
       this.useWasm = true;
       console.log('WASM engine loaded successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       console.warn('Failed to load WASM engine, falling back to JS implementation');
       this.useWasm = false;
     }
@@ -132,7 +132,7 @@ if (require.main === module) {
       await hybrid.initialize();
       console.log('\nHybrid Engine Version:', hybrid.getVersion());
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Example failed:', error);
     }
   })();

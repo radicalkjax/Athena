@@ -1,6 +1,20 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
+
+// Ensure expo-router is properly configured
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'mjs'];
+
+// Explicitly set the project root
+config.projectRoot = __dirname;
+config.watchFolders = [__dirname];
+
+// Ensure the app directory is included
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, 'node_modules'),
+  path.resolve(__dirname, '..')
+];
 
 // Add polyfills for Node.js modules
 config.resolver.alias = {

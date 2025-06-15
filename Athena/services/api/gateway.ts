@@ -201,7 +201,7 @@ export class APIGateway {
         cached: false,
         timestamp: Date.now(),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw this.handleError(error as AxiosError, config.provider);
     }
   }

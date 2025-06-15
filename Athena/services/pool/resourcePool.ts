@@ -76,7 +76,7 @@ export class GenericResourcePool<T> implements ResourcePool<T> {
         const resource = await this.createResource();
         this.updateAcquisitionStats(Date.now() - startTime);
         return resource;
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Failed to create resource:', error);
       }
     }
@@ -115,7 +115,7 @@ export class GenericResourcePool<T> implements ResourcePool<T> {
 
     try {
       await this.factory.destroy(pooledResource.resource);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to destroy resource ${resourceId}:`, error);
     }
 
@@ -181,7 +181,7 @@ export class GenericResourcePool<T> implements ResourcePool<T> {
 
     try {
       await Promise.all(createPromises);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to initialize resource pool:', error);
     }
   }
@@ -214,7 +214,7 @@ export class GenericResourcePool<T> implements ResourcePool<T> {
         }
 
         return pooledResource;
-      } catch (error) {
+      } catch (error: unknown) {
         lastError = error as Error;
         logger.warn(`Resource creation attempt ${i + 1} failed:`, error);
       }
@@ -241,7 +241,7 @@ export class GenericResourcePool<T> implements ResourcePool<T> {
           await this.destroy(resource.id);
           throw new Error('Resource validation failed');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         await this.destroy(resource.id);
         throw error;
       }

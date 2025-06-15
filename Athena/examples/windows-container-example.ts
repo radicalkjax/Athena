@@ -84,7 +84,7 @@ async function windowsContainerExample() {
       container,
       analysisResult
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in Windows container example:', error);
     throw error;
   }
@@ -139,7 +139,7 @@ async function createMultiArchContainers() {
     }
     
     return containers;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating multi-arch containers:', error);
     throw error;
   }

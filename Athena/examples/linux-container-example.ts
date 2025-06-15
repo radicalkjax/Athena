@@ -89,7 +89,7 @@ async function linuxContainerExample() {
       container,
       analysisResult
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in Linux container example:', error);
     throw error;
   }
@@ -147,7 +147,7 @@ async function createMultiDistroContainers() {
     }
     
     return containers;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating multi-distro containers:', error);
     throw error;
   }
@@ -222,7 +222,7 @@ async function compareMalwareBehavior() {
     }
     
     return results;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error comparing malware behavior:', error);
     throw error;
   }

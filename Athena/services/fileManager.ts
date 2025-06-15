@@ -21,7 +21,7 @@ async function initFileProcessor(): Promise<IFileProcessor> {
       fileProcessor = createFileProcessor();
       await fileProcessor.initialize();
       console.log('WASM file processor initialized successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to initialize WASM file processor:', error);
       // Fallback to JS implementation if WASM fails
       fileProcessor = null;
@@ -47,7 +47,7 @@ export async function initFileSystem(): Promise<void> {
     if (!dirInfo.exists) {
       await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory!, { intermediates: true });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error initializing file system:', error);
     throw new Error('Failed to initialize file system');
   }
@@ -73,7 +73,7 @@ async function validateFileWithWASM(uri: string, size: number): Promise<FileVali
     // Validate the file
     const validation = await processor.validateFile(buffer);
     return validation;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('WASM file validation failed:', error);
     return null;
   }
@@ -99,7 +99,7 @@ async function parseFileWithWASM(uri: string, formatHint?: string): Promise<Pars
     // Parse the file
     const parsed = await processor.parseFile(buffer, formatHint);
     return parsed;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('WASM file parsing failed:', error);
     return null;
   }
@@ -136,7 +136,7 @@ export async function pickFile(): Promise<MalwareFile | null> {
         
         const processingTime = Date.now() - startTime;
         console.log(`WASM file processing completed in ${processingTime}ms`);
-      } catch (error) {
+      } catch (error: unknown) {
         console.warn('WASM processing failed, falling back to JS:', error);
       }
       
@@ -167,7 +167,7 @@ export async function pickFile(): Promise<MalwareFile | null> {
       if (asset.size && asset.size < 1024 * 1024 && isTextFile) {
         try {
           content = await readFileAsText(asset.uri);
-        } catch (error) {
+        } catch (error: unknown) {
           console.warn('Could not read file content as text:', error);
         }
       }
@@ -197,7 +197,7 @@ export async function pickFile(): Promise<MalwareFile | null> {
     }
     
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error picking file:', error);
     throw new Error('Failed to pick file');
   }
@@ -216,13 +216,13 @@ export async function listMalwareFiles(): Promise<MalwareFile[]> {
         const fileUri = `${FileSystem.documentDirectory}${fileName}`;
         const malwareFile = await createMalwareFile(fileUri, fileName);
         malwareFiles.push(malwareFile);
-      } catch (error) {
+      } catch (error: unknown) {
         console.warn(`Could not create malware file for ${fileName}:`, error);
       }
     }
     
     return malwareFiles;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error listing malware files:', error);
     throw new Error('Failed to list malware files');
   }
@@ -243,7 +243,7 @@ export async function saveFile(file: FileInfo): Promise<string> {
     });
     
     return fileUri;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error saving file:', error);
     throw new Error('Failed to save file');
   }
@@ -256,7 +256,7 @@ export async function readFileAsText(uri: string): Promise<string> {
   try {
     const content = await FileSystem.readAsStringAsync(uri);
     return content;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error reading file:', error);
     throw new Error('Failed to read file');
   }
@@ -271,7 +271,7 @@ export async function readFileAsBase64(uri: string): Promise<string> {
       encoding: FileSystem.EncodingType.Base64,
     });
     return content;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error reading file as base64:', error);
     throw new Error('Failed to read file as base64');
   }
@@ -284,7 +284,7 @@ export async function getFileInfo(uri: string): Promise<FileSystem.FileInfo> {
   try {
     const info = await FileSystem.getInfoAsync(uri);
     return info;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting file info:', error);
     throw new Error('Failed to get file info');
   }
@@ -297,7 +297,7 @@ export async function deleteFile(uri: string): Promise<boolean> {
   try {
     await FileSystem.deleteAsync(uri);
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error deleting file:', error);
     return false;
   }
@@ -339,7 +339,7 @@ export async function createMalwareFile(uri: string, name?: string): Promise<Mal
     ) {
       try {
         content = await readFileAsText(uri);
-      } catch (error) {
+      } catch (error: unknown) {
         console.warn('Could not read file content as text:', error);
       }
     }
@@ -352,7 +352,7 @@ export async function createMalwareFile(uri: string, name?: string): Promise<Mal
       uri: uri,
       content,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating malware file:', error);
     throw new Error('Failed to create malware file object');
   }
@@ -365,7 +365,7 @@ export async function listFiles(): Promise<string[]> {
   try {
     const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory!);
     return files;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error listing files:', error);
     throw new Error('Failed to list files');
   }
@@ -393,7 +393,7 @@ export async function cleanupOldFiles(daysOld: number = 7): Promise<number> {
     }
     
     return deletedCount;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error cleaning up old files:', error);
     throw new Error('Failed to cleanup old files');
   }
@@ -408,7 +408,7 @@ export function cleanupFileProcessor(): void {
       fileProcessor.destroy();
       fileProcessor = null;
       console.log('WASM file processor cleaned up');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error cleaning up WASM file processor:', error);
     }
   }

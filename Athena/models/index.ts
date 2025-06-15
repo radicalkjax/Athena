@@ -99,7 +99,7 @@ export const initDatabase = async (): Promise<void> => {
     // Sync all models with the database
     await sequelize.sync({ alter: true });
     console.log('Database synchronized successfully');
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error synchronizing database:', error);
     throw error;
   }

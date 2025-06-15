@@ -94,7 +94,7 @@ export abstract class BaseAIService {
             key = storedKey;
           }
           console.log(`Checking AsyncStorage for ${this.provider.name} key:`, !!(storedKey && storedKey.trim()));
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Error accessing AsyncStorage:', error);
         }
       }
@@ -111,7 +111,7 @@ export abstract class BaseAIService {
             this.cachedBaseUrl = storedUrl;
             url = storedUrl;
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Error accessing AsyncStorage for base URL:', error);
         }
       }
@@ -119,7 +119,7 @@ export abstract class BaseAIService {
       console.log(`Initializing ${this.provider.name} client with key`);
       
       return this.getClient(key, url);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error initializing ${this.provider.name} client:`, error);
       throw error;
     }
@@ -144,12 +144,12 @@ export abstract class BaseAIService {
           await AsyncStorage.setItem(`${this.provider.storageKeyPrefix}_base_url`, baseUrl);
         }
         console.log(`Saved ${this.provider.name} API configuration to AsyncStorage`);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error saving to AsyncStorage:', error);
       }
       
       console.log(`Saved ${this.provider.name} API configuration to memory cache`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error saving ${this.provider.name} API configuration:`, error);
       throw error;
     }
@@ -198,7 +198,7 @@ export abstract class BaseAIService {
         
         return true;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error accessing AsyncStorage:', error);
     }
     
@@ -219,12 +219,12 @@ export abstract class BaseAIService {
         await AsyncStorage.removeItem(`${this.provider.storageKeyPrefix}_api_key`);
         await AsyncStorage.removeItem(`${this.provider.storageKeyPrefix}_base_url`);
         console.log(`Deleted ${this.provider.name} API configuration from AsyncStorage`);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error deleting from AsyncStorage:', error);
       }
       
       console.log(`Deleted ${this.provider.name} API configuration from memory cache`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error deleting ${this.provider.name} API configuration:`, error);
     }
   }
@@ -260,7 +260,7 @@ export abstract class BaseAIService {
       
       // Default to polling
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to create streaming connection:', error);
       return null;
     }
@@ -300,7 +300,7 @@ export abstract class BaseAIService {
         deobfuscatedCode: deobfuscatedCodeMatch ? deobfuscatedCodeMatch[1].trim() : '',
         analysisReport: analysisMatch ? analysisMatch[1].trim() : content,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`${this.provider.name} deobfuscation error:`, error);
       throw new Error(`Failed to deobfuscate code: ${(error as Error).message}`);
     }
@@ -349,7 +349,7 @@ export abstract class BaseAIService {
           analysisReport: content,
         };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`${this.provider.name} vulnerability analysis error:`, error);
       throw new Error(`Failed to analyze vulnerabilities: ${(error as Error).message}`);
     }
@@ -413,7 +413,7 @@ export abstract class BaseAIService {
       streaming.onComplete(result);
       
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       streaming.onError(error as Error);
       console.error(`${this.provider.name} streaming deobfuscation error:`, error);
       throw new Error(`Failed to deobfuscate code: ${(error as Error).message}`);
@@ -492,7 +492,7 @@ export abstract class BaseAIService {
         
         return fallbackResult;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       streaming.onError(error as Error);
       console.error(`${this.provider.name} streaming vulnerability analysis error:`, error);
       throw new Error(`Failed to analyze vulnerabilities: ${(error as Error).message}`);

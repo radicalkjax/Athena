@@ -34,8 +34,10 @@ export {
 } from './analysis-engine-bridge';
 
 // Export platform-specific bridges
-export { WebStreamingBridge, webStreamingBridge } from './web-streaming-bridge';
-export { ReactNativeBridge, reactNativeBridge } from './react-native-bridge';
+// Web streaming bridge moved to browser-only folder to avoid Node.js compatibility issues
+// Use: import { WebStreamingBridge, webStreamingBridge } from './wasm-modules/browser-only/web-streaming-bridge';
+// React Native bridge is exported separately to avoid import issues in non-React Native environments
+// Use: import { ReactNativeBridge, reactNativeBridge } from './wasm-modules/browser-only/react-native-bridge';
 
 // Export file processor bridge
 export {

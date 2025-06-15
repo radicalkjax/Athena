@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: athena
+  labels:
+    app: athena
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: athena
+      component: api
+  template:
+    metadata:
+      labels:
+        app: athena
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: athena
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: athena
+        image: athena:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: LOG_LEVEL
+          value: "info"
+        envFrom:
+        - secretRef:
+            name: athena-secrets
+        - configMapRef:
+            name: athena-config
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: wasm-cache
+          mountPath: /app/wasm-cache
+        - name: temp
+          mountPath: /app/temp
+      volumes:
+      - name: wasm-cache
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: temp
+        emptyDir:
+          sizeLimit: 500Mi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: athena
+  labels:
+    app: athena

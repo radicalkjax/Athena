@@ -76,7 +76,8 @@ The script will automatically:
 - ✅ Install all dependencies
 - ✅ Configure web polyfills for browser compatibility
 - ✅ Set up environment files
-- ✅ Build the application
+- ✅ Build the application (including WASM modules)
+- ✅ Load all WebAssembly security modules
 - ✅ Launch the web server at http://localhost:3000
 
 ## What happens on first run?

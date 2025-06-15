@@ -1,13 +1,15 @@
-import { 
-    CryptoModule,
-    HashModule,
-    HmacModule,
-    AesModule,
-    RsaModule,
-    CryptoUtils,
-    RsaKeyPairWrapper,
-    init_crypto_module
-} from '../core/crypto/pkg/web/crypto';
+// Dynamic imports - will be loaded based on platform
+let CryptoModule: any;
+let HashModule: any;
+let HmacModule: any;
+let AesModule: any;
+let RsaModule: any;
+let CryptoUtils: any;
+let RsaKeyPairWrapper: any;
+let init_crypto_module: any;
+
+declare const window: any;
+const isBrowser = typeof window !== 'undefined';
 
 // Type definitions
 export interface CryptoCapabilities {
@@ -54,12 +56,12 @@ export class WASMError extends Error {
 
 export class CryptoBridge {
     private static instance: CryptoBridge | null = null;
-    private cryptoModule: CryptoModule | null = null;
-    private hashModule: HashModule | null = null;
-    private hmacModule: HmacModule | null = null;
-    private aesModule: AesModule | null = null;
-    private rsaModule: RsaModule | null = null;
-    private utils: CryptoUtils | null = null;
+    private cryptoModule: any | null = null;
+    private hashModule: any | null = null;
+    private hmacModule: any | null = null;
+    private aesModule: any | null = null;
+    private rsaModule: any | null = null;
+    private utils: any | null = null;
     private initialized = false;
 
     private constructor() {}
@@ -77,7 +79,34 @@ export class CryptoBridge {
         }
 
         try {
-            await init_crypto_module();
+            // Platform-specific loading
+            if (isBrowser) {
+                // Browser environment
+                const module = await import('../core/crypto/pkg/web/crypto');
+                CryptoModule = module.CryptoModule;
+                HashModule = module.HashModule;
+                HmacModule = module.HmacModule;
+                AesModule = module.AesModule;
+                RsaModule = module.RsaModule;
+                CryptoUtils = module.CryptoUtils;
+                RsaKeyPairWrapper = module.RsaKeyPairWrapper;
+                init_crypto_module = module.init_crypto_module || module.default;
+            } else {
+                // Node.js environment
+                const module = require('../core/crypto/pkg/node/crypto');
+                CryptoModule = module.CryptoModule;
+                HashModule = module.HashModule;
+                HmacModule = module.HmacModule;
+                AesModule = module.AesModule;
+                RsaModule = module.RsaModule;
+                CryptoUtils = module.CryptoUtils;
+                RsaKeyPairWrapper = module.RsaKeyPairWrapper;
+                init_crypto_module = module.init_crypto_module || module.default;
+            }
+            
+            if (init_crypto_module) {
+                await init_crypto_module();
+            }
             
             this.cryptoModule = new CryptoModule();
             this.hashModule = new HashModule();
@@ -88,7 +117,7 @@ export class CryptoBridge {
             
             this.initialized = true;
             console.log('WASM Crypto Module initialized successfully');
-        } catch (error) {
+        } catch (error: unknown) {
             throw new WASMError(
                 `Failed to initialize crypto module: ${error}`,
                 'INIT_ERROR'

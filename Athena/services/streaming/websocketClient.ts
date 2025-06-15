@@ -94,7 +94,7 @@ export class WebSocketClient {
           }
         }, 10000);
 
-      } catch (error) {
+      } catch (error: unknown) {
         this.connection.status = 'error';
         reject(error);
       }
@@ -139,7 +139,7 @@ export class WebSocketClient {
       this.connection.bytesTransferred += data.length;
       this.connection.lastActivity = Date.now();
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to send WebSocket message:', error);
       throw error;
     }
@@ -172,12 +172,12 @@ export class WebSocketClient {
       for (const handler of this.messageHandlers.values()) {
         try {
           handler(message);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error('Message handler error:', error);
         }
       }
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to parse WebSocket message:', error);
     }
   }
@@ -197,7 +197,7 @@ export class WebSocketClient {
         
         try {
           this.ws.send(JSON.stringify(heartbeat));
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error('Heartbeat failed:', error);
         }
       }

@@ -1,4 +1,10 @@
-import { PatternMatcher as WasmPatternMatcher, StreamingScanner, Stats } from '../core/pattern-matcher/pkg-web/pattern_matcher';
+// Dynamic imports - will be loaded based on platform
+let WasmPatternMatcher: any;
+let StreamingScanner: any;
+let Stats: any;
+
+declare const window: any;
+const isBrowser = typeof window !== 'undefined';
 
 export interface PatternMatch {
   rule_id: string;
@@ -57,7 +63,7 @@ export type Condition =
   | { type: 'PatternRef'; pattern_id: string };
 
 export class PatternMatcherBridge {
-  private matcher?: WasmPatternMatcher;
+  private matcher?: any;
   private initialized = false;
   private wasmModule: any;
 
@@ -65,19 +71,28 @@ export class PatternMatcherBridge {
     if (this.initialized) return;
 
     try {
-      // Dynamic import for better code splitting
-      const wasmModule = await import('../core/pattern-matcher/pkg-web/pattern_matcher');
+      // Platform-specific loading
+      let wasmModule: any;
+      if (isBrowser) {
+        // Browser environment
+        wasmModule = await import('../core/pattern-matcher/pkg-web/pattern_matcher');
+        await wasmModule.default();
+      } else {
+        // Node.js environment - pattern-matcher doesn't have pkg-node yet, use pkg
+        wasmModule = require('../core/pattern-matcher/pkg/pattern_matcher');
+      }
+      
       this.wasmModule = wasmModule;
+      WasmPatternMatcher = wasmModule.PatternMatcher;
+      StreamingScanner = wasmModule.StreamingScanner;
+      Stats = wasmModule.Stats;
       
-      // Initialize WASM module
-      await wasmModule.default();
-      
-      this.matcher = new wasmModule.PatternMatcher();
+      this.matcher = new WasmPatternMatcher();
       await this.matcher.load_default_rules();
       
       this.initialized = true;
       console.log('PatternMatcher WASM module initialized successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to initialize PatternMatcher WASM module:', error);
       throw new Error(`PatternMatcher initialization failed: ${error}`);
     }
@@ -92,7 +107,7 @@ export class PatternMatcherBridge {
       const uint8Array = new Uint8Array(data);
       const result = await this.matcher!.scan(uint8Array);
       return result as ScanResult;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Pattern scanning failed:', error);
       throw new Error(`Scan failed: ${error}`);
     }
@@ -106,7 +121,7 @@ export class PatternMatcherBridge {
     try {
       const ruleId = await this.matcher!.add_rule_text(ruleText);
       return ruleId;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to add rule:', error);
       throw new Error(`Add rule failed: ${error}`);
     }
@@ -185,7 +200,7 @@ export class PatternMatcherBridge {
     return 'all of them';
   }
 
-  async scanStreaming(stream: ReadableStream<Uint8Array>, chunkSize: number = 1024 * 1024): AsyncIterable<ScanResult> {
+  async *scanStreaming(stream: ReadableStream<Uint8Array>, chunkSize: number = 1024 * 1024): AsyncGenerator<ScanResult> {
     if (!this.initialized) {
       await this.initialize();
     }

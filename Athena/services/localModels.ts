@@ -29,7 +29,7 @@ export const initLocalModelsDirectory = async (): Promise<void> => {
     
     // Initialize local models from store
     await initLocalModelsFromStore();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error initializing local models directory:', error);
     throw new Error(`Failed to initialize local models directory: ${(error as Error).message}`);
   }
@@ -56,7 +56,7 @@ export const initLocalModelsFromStore = async (): Promise<void> => {
     console.log('Local models initialization ready');
     
     return;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error initializing local models from store:', error);
   }
 };
@@ -118,7 +118,7 @@ export const saveLocalModelFromAIModel = async (model: any): Promise<void> => {
     
     await saveLocalModelsConfig([...existingConfigs, newConfig]);
     console.log(`Added local model ${model.name} to config`);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error saving local model from AIModel:', error);
   }
 };
@@ -138,7 +138,7 @@ export const getLocalModelsConfig = async (): Promise<LocalModelConfig[]> => {
     
     const configJson = await FileSystem.readAsStringAsync(LOCAL_MODELS_CONFIG);
     return JSON.parse(configJson);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting local models config:', error);
     return [];
   }
@@ -152,7 +152,7 @@ export const saveLocalModelsConfig = async (config: LocalModelConfig[]): Promise
   try {
     await initLocalModelsDirectory();
     await FileSystem.writeAsStringAsync(LOCAL_MODELS_CONFIG, JSON.stringify(config, null, 2));
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error saving local models config:', error);
     throw new Error(`Failed to save local models config: ${(error as Error).message}`);
   }
@@ -170,7 +170,7 @@ export const addLocalModel = async (config: Omit<LocalModelConfig, 'id'>): Promi
     
     await saveLocalModelsConfig([...models, newModel]);
     return newModel;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error adding local model:', error);
     throw new Error(`Failed to add local model: ${(error as Error).message}`);
   }
@@ -186,7 +186,7 @@ export const removeLocalModel = async (id: string): Promise<void> => {
     const filteredModels = models.filter(model => model.id !== id);
     
     await saveLocalModelsConfig(filteredModels);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error removing local model:', error);
     throw new Error(`Failed to remove local model: ${(error as Error).message}`);
   }
@@ -204,7 +204,7 @@ export const isLocalModelRunning = async (config: LocalModelConfig): Promise<boo
     
     const response = await client.get('/v1/models');
     return response.status === 200;
-  } catch (error) {
+  } catch (error: unknown) {
     return false;
   }
 };
@@ -239,7 +239,7 @@ const makeLocalModelRequest = async (
       () => client.post('/v1/chat/completions', requestData),
       'Local model request error'
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Local model request error:', error);
     throw new Error(`Local model request failed: ${(error as Error).message}`);
   }
@@ -296,7 +296,7 @@ export const deobfuscateCode = async (
       deobfuscatedCode: deobfuscatedCodeMatch ? deobfuscatedCodeMatch[1].trim() : '',
       analysisReport: analysisMatch ? analysisMatch[1].trim() : content,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Local model deobfuscation error:', error);
     throw new Error(`Failed to deobfuscate code: ${(error as Error).message}`);
   }
@@ -372,7 +372,7 @@ export const analyzeVulnerabilities = async (
         analysisReport: content,
       };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Local model vulnerability analysis error:', error);
     throw new Error(`Failed to analyze vulnerabilities: ${(error as Error).message}`);
   }

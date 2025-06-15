@@ -53,7 +53,7 @@ export class CircuitBreaker {
       const result = await operation();
       this.onSuccess();
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       this.onFailure();
       throw error;
     }

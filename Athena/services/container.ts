@@ -648,7 +648,7 @@ export const getSystemResources = async (): Promise<{
   try {
     const fileInfo = await FileSystem.getFreeDiskStorageAsync();
     availableDiskSpace = Math.floor(fileInfo / (1024 * 1024));
-  } catch (error) {
+  } catch (error: unknown) {
     console.warn('Error getting disk space:', error);
   }
   
@@ -821,7 +821,7 @@ export const createContainer = async (
       architecture: finalConfig.architecture,
       ...response.container,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Container creation error:', error);
     throw error;
   }
@@ -907,7 +907,7 @@ export const getContainerStatus = async (containerId: string): Promise<'creating
     );
     
     return response.status;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Container status error:', error);
     throw error;
   }
@@ -940,7 +940,7 @@ export const executeCommand = async (
       output: response.output || '',
       exitCode: response.exitCode || 0,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Container exec error:', error);
     throw error;
   }
@@ -963,7 +963,7 @@ export const removeContainer = async (containerId: string): Promise<boolean> => 
     );
     
     return response.success || false;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Container removal error:', error);
     throw error;
   }
@@ -986,7 +986,7 @@ export const getContainerLogs = async (containerId: string): Promise<string> => 
     );
     
     return response.logs || '';
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Container logs error:', error);
     throw error;
   }
@@ -1016,7 +1016,7 @@ export const getContainerFile = async (
     );
     
     return response.content || '';
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Container file error:', error);
     throw error;
   }
@@ -1050,7 +1050,7 @@ export const runMalwareAnalysis = async (
       networkActivity: response.networkActivity || [],
       fileActivity: response.fileActivity || [],
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Malware analysis error:', error);
     throw error;
   }
@@ -1110,7 +1110,7 @@ export const createWindowsContainer = async (
     
     console.log(`Windows container created successfully: ${container.id}`);
     return container;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error creating Windows container: ${error}`);
     throw error;
   }
@@ -1178,7 +1178,7 @@ export const createLinuxContainer = async (
     
     console.log(`Linux container created successfully: ${container.id}`);
     return container;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error creating Linux container: ${error}`);
     throw error;
   }
@@ -1240,7 +1240,7 @@ export const createMacOSContainer = async (
     
     console.log(`macOS container created successfully: ${container.id}`);
     return container;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error creating macOS container: ${error}`);
     throw error;
   }

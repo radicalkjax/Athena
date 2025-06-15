@@ -115,7 +115,7 @@ export function useStreamingAnalysis(options?: UseStreamingAnalysisOptions) {
         streaming
       );
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to start streaming analysis', { error });
       
       // Ensure we clean up state

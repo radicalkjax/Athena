@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alerts
+  namespace: monitoring
+data:
+  athena-alerts.yaml: |
+    groups:
+    - name: athena-api
+      interval: 30s
+      rules:
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{job="athena",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="athena"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: athena
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="athena"}[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: athena
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s"
+
+      - alert: LowCacheHitRate
+        expr: (sum(rate(cache_hits_total[5m])) / (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m])))) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: athena
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+    - name: athena-wasm
+      interval: 30s
+      rules:
+      - alert: WASMHighMemoryUsage
+        expr: sum(wasm_module_memory_bytes{job="athena"}) > 2147483648  # 2GB
+        for: 5m
+        labels:
+          severity: warning
+          service: athena
+        annotations:
+          summary: "WASM modules using high memory"
+          description: "Total WASM memory usage is {{ $value | humanize }}"
+
+      - alert: WASMModuleLoadSlow
+        expr: histogram_quantile(0.95, sum(rate(wasm_module_load_duration_bucket[5m])) by (le)) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: athena
+        annotations:
+          summary: "WASM module load time high"
+          description: "95th percentile load time is {{ $value }}s"
+
+    - name: athena-infrastructure
+      interval: 30s
+      rules:
+      - alert: PodNotReady
+        expr: kube_pod_status_ready{namespace="athena",condition="false"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          service: athena
+        annotations:
+          summary: "Pod not ready"
+          description: "Pod {{ $labels.pod }} is not ready"
+
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{namespace="athena",container="athena"}[5m]) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: athena
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }} cores"
+
+      - alert: HighMemoryUsage
+        expr: container_memory_usage_bytes{namespace="athena",container="athena"} / container_spec_memory_limit_bytes{namespace="athena",container="athena"} > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: athena
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} of limit"
+
+    - name: athena-slos
+      interval: 30s
+      rules:
+      - alert: SLOViolationAvailability
+        expr: (1 - (sum(rate(http_requests_total{job="athena",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="athena"}[5m])))) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          service: athena
+          slo: availability
+        annotations:
+          summary: "SLO violation - Availability below 99.9%"
+          description: "Current availability is {{ $value | humanizePercentage }}"
+
+      - alert: SLOViolationLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="athena"}[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          service: athena
+          slo: latency
+        annotations:
+          summary: "SLO violation - p95 latency above 500ms"
+          description: "Current p95 latency is {{ $value }}s"

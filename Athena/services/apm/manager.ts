@@ -123,7 +123,7 @@ export class APMManager {
       const result = await operation();
       span.status = 'ok';
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       span.status = 'error';
       span.error = error as Error;
       throw error;

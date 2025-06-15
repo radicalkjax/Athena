@@ -102,7 +102,7 @@ export class AIServiceManager {
         } else {
           this.updateProviderHealth(name, false, responseTime);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         this.updateProviderHealth(name, false, 0);
       }
     }
@@ -162,7 +162,7 @@ export class AIServiceManager {
         provider.health.failureCount = 0;
         logger.info(`Provider ${providerName} recovered successfully`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Recovery failed for provider ${providerName}:`, error);
     }
   }
@@ -264,7 +264,7 @@ export class AIServiceManager {
         
         span.status = 'ok';
         return result;
-      } catch (error) {
+      } catch (error: unknown) {
         lastError = error as Error;
         logger.error(`Provider ${provider.name} failed:`, error);
         this.updateProviderHealth(provider.name, false, 0);
@@ -281,7 +281,7 @@ export class AIServiceManager {
     span.status = 'error';
     span.error = lastError || new Error('All AI providers failed');
     throw lastError || new Error('All AI providers failed');
-    } catch (error) {
+    } catch (error: unknown) {
       span.status = 'error';
       span.error = error as Error;
       throw error;

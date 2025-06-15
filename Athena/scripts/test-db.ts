@@ -171,7 +171,7 @@ const testDatabase = async () => {
     
     console.log('\nDatabase test completed successfully');
     process.exit(0);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error testing database:', error);
     process.exit(1);
   }

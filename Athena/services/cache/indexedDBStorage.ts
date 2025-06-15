@@ -82,7 +82,7 @@ export class IndexedDBCacheStorage implements CacheStorage {
         
         request.onerror = () => reject(request.error);
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('IndexedDB get error:', error);
       return null;
     }
@@ -97,7 +97,7 @@ export class IndexedDBCacheStorage implements CacheStorage {
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('IndexedDB set error:', error);
     }
   }
@@ -111,7 +111,7 @@ export class IndexedDBCacheStorage implements CacheStorage {
         request.onsuccess = () => resolve(true);
         request.onerror = () => reject(request.error);
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('IndexedDB delete error:', error);
       return false;
     }
@@ -126,7 +126,7 @@ export class IndexedDBCacheStorage implements CacheStorage {
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('IndexedDB clear error:', error);
     }
   }
@@ -140,7 +140,7 @@ export class IndexedDBCacheStorage implements CacheStorage {
         request.onsuccess = () => resolve(request.result as string[]);
         request.onerror = () => reject(request.error);
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('IndexedDB getKeys error:', error);
       return [];
     }
@@ -166,7 +166,7 @@ export class IndexedDBCacheStorage implements CacheStorage {
         
         request.onerror = () => reject(request.error);
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('IndexedDB getSize error:', error);
       return 0;
     }
@@ -192,7 +192,7 @@ export class IndexedDBCacheStorage implements CacheStorage {
         
         request.onerror = () => reject(request.error);
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('IndexedDB getAllEntries error:', error);
       return [];
     }

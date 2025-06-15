@@ -41,4 +41,11 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Transpiled JS files in app directory
+app/**/*.js
+app/*.js
+
+# React Native distribution directory
+react-native-dist/
+
 app-example

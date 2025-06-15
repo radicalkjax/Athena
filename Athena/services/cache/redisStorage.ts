@@ -66,7 +66,7 @@ export class RedisCacheStorage implements CacheStorage {
       }
 
       return entry;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis get error:', error);
       
       // Fallback to local storage on error
@@ -95,7 +95,7 @@ export class RedisCacheStorage implements CacheStorage {
       if (this.localFallback) {
         await this.localFallback.set(key, value);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis set error:', error);
       
       // Still update local fallback on Redis error
@@ -116,7 +116,7 @@ export class RedisCacheStorage implements CacheStorage {
       if (this.localFallback) {
         await this.localFallback.delete(key);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis delete error:', error);
       
       // Still delete from local fallback on Redis error
@@ -142,7 +142,7 @@ export class RedisCacheStorage implements CacheStorage {
       if (this.localFallback) {
         await this.localFallback.clear();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis clear error:', error);
       
       // Still clear local fallback on Redis error
@@ -165,7 +165,7 @@ export class RedisCacheStorage implements CacheStorage {
       
       // Remove prefix from keys
       return redisKeys.map(key => key.slice(this.keyPrefix.length));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis keys error:', error);
       
       // Fallback to local storage on error
@@ -190,7 +190,7 @@ export class RedisCacheStorage implements CacheStorage {
       const pattern = `${this.keyPrefix}*`;
       const keys = await this.redis.keys(pattern);
       return keys.length;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis size error:', error);
       
       // Fallback to local storage on error
@@ -220,7 +220,7 @@ export class RedisCacheStorage implements CacheStorage {
       if (localEntry) {
         await this.set(key, localEntry);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis sync error:', error);
     }
   }
@@ -242,7 +242,7 @@ export class RedisCacheStorage implements CacheStorage {
       }
       
       logger.info(`Synced ${localKeys.length} entries to Redis`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Redis sync all error:', error);
     }
   }
@@ -268,7 +268,7 @@ export class RedisCacheStorage implements CacheStorage {
         if (memoryMatch) {
           stats.memoryUsage = parseInt(memoryMatch[1], 10);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Failed to get Redis memory info:', error);
       }
     }

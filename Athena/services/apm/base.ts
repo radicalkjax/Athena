@@ -142,7 +142,7 @@ export abstract class BaseAPMProvider implements APMProvider {
     try {
       await this.send(metricsToSend, spansToSend);
       logger.debug(`APM flush: ${metricsToSend.length} metrics, ${spansToSend.length} spans`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('APM flush error:', error);
       // Re-add metrics on failure (with limit to prevent memory issues)
       if (this.metrics.length + metricsToSend.length < this.config.maxBatchSize * 2) {

@@ -65,7 +65,7 @@ describe('Advanced Sandbox Features', () => {
       // Try to execute while paused (should fail or queue)
       try {
         await instance.execute(new TextEncoder().encode('console.log("test");'));
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(WASMError);
       }
       

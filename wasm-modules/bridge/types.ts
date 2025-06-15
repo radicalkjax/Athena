@@ -122,9 +122,12 @@ export interface IAnalysisEngine {
 // ============= Error Types =============
 
 export class WASMError extends Error {
-  constructor(message: string, public code: WASMErrorCode) {
+  constructor(message: string, public code: WASMErrorCode, public cause?: any) {
     super(message);
     this.name = 'WASMError';
+    if (cause) {
+      this.cause = cause;
+    }
   }
 }
 

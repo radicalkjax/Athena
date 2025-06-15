@@ -3,13 +3,13 @@
  * Provides secure execution environments for malware analysis
  */
 
-import { Platform } from 'react-native';
 import {
   EngineConfig,
   PerformanceMetrics,
   MAX_FILE_SIZE,
   DEFAULT_TIMEOUT
 } from './types';
+import { isBrowser } from './wasm-error-codes';
 
 // WASMError class for sandbox-specific errors
 export class WASMError extends Error {
@@ -137,23 +137,22 @@ class SandboxBridge implements Sandbox {
 
     try {
       // Load WASM module
-      if (Platform.OS === 'web') {
-        this.wasmModule = await import('../core/sandbox/pkg/sandbox.js');
+      if (isBrowser) {
+        // Browser environment - sandbox doesn't have pkg-web yet, use pkg
+        this.wasmModule = await import('../core/sandbox/pkg/sandbox');
         await this.wasmModule.default();
       } else {
-        throw new WASMError(
-          WASMErrorCode.INITIALIZATION_FAILED,
-          'Sandbox module is only supported in web environments'
-        );
+        // Node.js environment
+        this.wasmModule = require('../core/sandbox/pkg/sandbox');
       }
 
       // Create sandbox manager
       this.manager = new this.wasmModule.SandboxManager();
       this.initialized = true;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.INITIALIZATION_FAILED,
-        `Failed to initialize sandbox module: ${error.message}`
+        `Failed to initialize sandbox module: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -178,10 +177,10 @@ class SandboxBridge implements Sandbox {
       this.instances.set(instanceId, instance);
       
       return instance;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to create sandbox instance: ${error.message}`
+        `Failed to create sandbox instance: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -209,12 +208,12 @@ class SandboxBridge implements Sandbox {
       const result = await this.wasmModule.sandbox_execute(code, policyJs);
 
       return this.parseExecutionResult(result);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof WASMError) throw error;
       
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Sandbox execution failed: ${error.message}`
+        `Sandbox execution failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -225,10 +224,10 @@ class SandboxBridge implements Sandbox {
     try {
       const result = await this.manager.execute(instanceId, code);
       return this.parseExecutionResult(result);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Instance execution failed: ${error.message}`
+        `Instance execution failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -239,10 +238,10 @@ class SandboxBridge implements Sandbox {
     try {
       const usage = this.manager.get_resource_usage(instanceId);
       return this.parseResourceUsage(usage);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to get resource usage: ${error.message}`
+        `Failed to get resource usage: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -253,10 +252,10 @@ class SandboxBridge implements Sandbox {
     try {
       this.manager.terminate_instance(instanceId);
       this.instances.delete(instanceId);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to terminate instance: ${error.message}`
+        `Failed to terminate instance: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -267,10 +266,10 @@ class SandboxBridge implements Sandbox {
     try {
       const instances = this.manager.list_instances();
       return instances.map((inst: any) => this.parseInstanceInfo(inst));
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to list instances: ${error.message}`
+        `Failed to list instances: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -281,10 +280,10 @@ class SandboxBridge implements Sandbox {
     try {
       this.manager.terminate_all();
       this.instances.clear();
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to terminate all instances: ${error.message}`
+        `Failed to terminate all instances: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -306,7 +305,7 @@ class SandboxBridge implements Sandbox {
     try {
       const policy = this.manager.get_default_policy();
       return this.parsePolicy(policy);
-    } catch (error) {
+    } catch (error: unknown) {
       // Return fallback defaults
       return this.getDefaultPolicy();
     }
@@ -317,10 +316,10 @@ class SandboxBridge implements Sandbox {
 
     try {
       this.manager.pause_instance(instanceId);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to pause instance: ${error.message}`
+        `Failed to pause instance: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -330,10 +329,10 @@ class SandboxBridge implements Sandbox {
 
     try {
       this.manager.resume_instance(instanceId);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to resume instance: ${error.message}`
+        `Failed to resume instance: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -344,10 +343,10 @@ class SandboxBridge implements Sandbox {
     try {
       const snapshot = this.manager.create_snapshot(instanceId);
       return this.parseSnapshot(snapshot);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to create snapshot: ${error.message}`
+        `Failed to create snapshot: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -357,10 +356,10 @@ class SandboxBridge implements Sandbox {
 
     try {
       this.manager.restore_snapshot(instanceId, snapshot);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to restore snapshot: ${error.message}`
+        `Failed to restore snapshot: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -370,20 +369,23 @@ class SandboxBridge implements Sandbox {
 
     try {
       return this.manager.get_all_instances_status();
-    } catch (error) {
+    } catch (error: unknown) {
       throw new WASMError(
         WASMErrorCode.EXECUTION_ERROR,
-        `Failed to get instances status: ${error.message}`
+        `Failed to get instances status: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   getPerformanceMetrics(): PerformanceMetrics {
     return {
-      executionTime: 0,
+      initializationTime: 0,
+      analysisTime: 0,
+      deobfuscationTime: 0,
+      patternScanTime: 0,
+      totalTime: 0,
       memoryUsed: 0,
-      peakMemory: 0,
-      gcTime: 0
+      throughput: 0
     };
   }
 

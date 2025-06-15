@@ -20,7 +20,7 @@ const mockSequelize = {
     try {
       const result = await callback(mockTransaction);
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   }),

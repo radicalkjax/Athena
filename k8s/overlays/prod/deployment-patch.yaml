@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: athena
+spec:
+  replicas: 5  # More replicas for production
+  template:
+    spec:
+      containers:
+      - name: athena
+        image: athena:v1.0.0  # Use specific version tag
+        imagePullPolicy: Always
+        env:
+        - name: NODE_ENV
+          value: "production"
+        # AI Provider secrets
+        - name: CLAUDE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: athena-ai-secrets
+              key: CLAUDE_API_KEY
+        - name: DEEPSEEK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: athena-ai-secrets
+              key: DEEPSEEK_API_KEY
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: athena-ai-secrets
+              key: OPENAI_API_KEY
+        # Redis password
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: athena-redis-secret
+              key: REDIS_PASSWORD
+        # App secrets
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: athena-app-secrets
+              key: JWT_SECRET
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: athena-app-secrets
+              key: SESSION_SECRET
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: athena-app-secrets
+              key: ENCRYPTION_KEY
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 3000m
+            memory: 6Gi

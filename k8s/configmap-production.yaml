@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: athena-config
+  namespace: athena
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  
+  # Redis Configuration
+  REDIS_HOST: "athena-redis"
+  REDIS_PORT: "6379"
+  REDIS_TTL: "3600"
+  
+  # CORS Configuration
+  CORS_ORIGIN: "https://athena.yourdomain.com"
+  CORS_CREDENTIALS: "true"
+  
+  # Rate Limiting
+  RATE_LIMIT_WINDOW: "60000"
+  RATE_LIMIT_MAX: "100"
+  
+  # Monitoring
+  METRICS_ENABLED: "true"
+  METRICS_PATH: "/metrics"
+  METRICS_PORT: "9090"
+  
+  # WASM Configuration
+  WASM_MEMORY_LIMIT: "512"
+  WASM_THREAD_POOL_SIZE: "4"
+  WASM_ENABLE_BULK_MEMORY: "true"
+  
+  # AI Provider Configuration
+  AI_PROVIDER_TIMEOUT: "30000"
+  AI_PROVIDER_RETRY_COUNT: "3"
+  AI_PROVIDER_CIRCUIT_BREAKER_THRESHOLD: "5"
+  
+  # Cache Configuration
+  CACHE_DEFAULT_TTL: "300"
+  CACHE_MAX_SIZE: "1000"
+  
+  # Security Headers
+  HSTS_ENABLED: "true"
+  HSTS_MAX_AGE: "31536000"
+  CSP_ENABLED: "true"

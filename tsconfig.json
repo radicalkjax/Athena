@@ -1,4 +1,43 @@
 {
-  "compilerOptions": {},
-  "extends": "expo/tsconfig.base"
+  "compilerOptions": {
+    "downlevelIteration": true,
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["node"]
+  },
+  "include": [
+    "services/**/*.ts",
+    "utils/**/*.ts",
+    "wasm-modules/bridge/**/*.ts",
+    "wasm-modules/ai-integration/**/*.ts",
+    "wasm-modules/performance/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "__tests__/**/*",
+    "__mocks__/**/*",
+    "tests/**/*",
+    "wasm-modules/tests/**/*",
+    "Athena/**/*",
+    "**/*.tsx"
+  ]
 }

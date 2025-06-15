@@ -391,7 +391,7 @@ export const safeApiCall = async <T extends object>(
     }
     
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     // Remove from active requests
     if (requestKey) {
       activeRequests.delete(requestKey);
