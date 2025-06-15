@@ -21,28 +21,28 @@ const CustomDefaultTheme = {
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '400',
+      fontWeight: '400' as const,
     },
     medium: {
       fontFamily: Platform.select({
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '500',
+      fontWeight: '500' as const,
     },
     bold: {
       fontFamily: Platform.select({
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '700',
+      fontWeight: '700' as const,
     },
     heavy: {
       fontFamily: Platform.select({
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '900',
+      fontWeight: '900' as const,
     },
   },
 };
@@ -55,28 +55,28 @@ const CustomDarkTheme = {
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '400',
+      fontWeight: '400' as const,
     },
     medium: {
       fontFamily: Platform.select({
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '500',
+      fontWeight: '500' as const,
     },
     bold: {
       fontFamily: Platform.select({
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '700',
+      fontWeight: '700' as const,
     },
     heavy: {
       fontFamily: Platform.select({
         web: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
         default: 'System',
       }),
-      fontWeight: '900',
+      fontWeight: '900' as const,
     },
   },
 };
@@ -100,6 +100,7 @@ export default function RootLayout() {
     <ErrorBoundary>
       <ThemeProvider value={colorScheme === 'dark' ? CustomDarkTheme : CustomDefaultTheme}>
         <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>

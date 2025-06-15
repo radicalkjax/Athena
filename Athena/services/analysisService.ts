@@ -16,10 +16,10 @@ import {
   WASMError,
   WASMErrorCode,
   isHighSeverity
-} from '../../wasm-modules/bridge';
-import { createFileProcessor, IFileProcessor } from '../../wasm-modules/bridge/file-processor-bridge';
-import { getPatternMatcher, PatternMatcherBridge } from '../../wasm-modules/bridge/pattern-matcher-bridge';
-import { DeobfuscatorBridge } from '../../wasm-modules/bridge/deobfuscator-bridge';
+} from './wasm-stubs';
+import { createFileProcessor, IFileProcessor } from './wasm-stubs';
+import { getPatternMatcher, PatternMatcherBridge } from './wasm-stubs';
+import { DeobfuscatorBridge } from './wasm-stubs';
 import { 
   initializeSandbox, 
   getSandbox, 
@@ -28,19 +28,19 @@ import {
   ExecutionPolicy,
   ExecutionResult,
   SecurityEvent
-} from '../../wasm-modules/bridge/sandbox-bridge';
+} from './wasm-stubs';
 import { 
   cryptoBridge,
   HashOptions,
   AesOptions
-} from '../../wasm-modules/bridge/crypto-bridge';
+} from './wasm-stubs';
 import { 
   getNetworkBridge,
   NetworkBridge,
   PacketAnalysis,
   NetworkAnomaly,
   TrafficPattern
-} from '../../wasm-modules/bridge/network-bridge';
+} from './wasm-stubs';
 
 // Type definitions
 interface DeobfuscationResult {

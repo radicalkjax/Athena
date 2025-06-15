@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { MalwareFile } from '@/types';
-import { createFileProcessor, type IFileProcessor, type ParsedFile, type FileValidation } from '../../wasm-modules/bridge/file-processor-bridge';
+import { createFileProcessor, type IFileProcessor, type ParsedFile, type FileValidation } from './wasm-stubs';
 
 /**
  * File Manager Service
@@ -70,8 +70,10 @@ async function validateFileWithWASM(uri: string, size: number): Promise<FileVali
     }
     const buffer = bytes.buffer;
 
+    // Convert ArrayBuffer to Uint8Array
+    const uint8Array = new Uint8Array(buffer);
     // Validate the file
-    const validation = await processor.validateFile(buffer);
+    const validation = await processor.validateFile(uint8Array);
     return validation;
   } catch (error: unknown) {
     console.error('WASM file validation failed:', error);
@@ -96,8 +98,10 @@ async function parseFileWithWASM(uri: string, formatHint?: string): Promise<Pars
     }
     const buffer = bytes.buffer;
 
+    // Convert ArrayBuffer to Uint8Array
+    const uint8Array = new Uint8Array(buffer);
     // Parse the file
-    const parsed = await processor.parseFile(buffer, formatHint);
+    const parsed = await processor.parseFile(uint8Array, formatHint);
     return parsed;
   } catch (error: unknown) {
     console.error('WASM file parsing failed:', error);

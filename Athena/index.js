@@ -1,10 +1,5 @@
 import { registerRootComponent } from 'expo';
-import { ExpoRoot } from 'expo-router';
+import App from './App';
 
-// This is the entry point for expo-router
-const App = () => {
-  const ctx = require.context('./app');
-  return <ExpoRoot context={ctx} />;
-};
-
+// Use the App component directly instead of expo-router
 registerRootComponent(App);

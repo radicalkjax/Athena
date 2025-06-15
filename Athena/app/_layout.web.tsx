@@ -48,19 +48,19 @@ const CustomDefaultTheme = {
   fonts: {
     regular: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '400',
+      fontWeight: '400' as const,
     },
     medium: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '500',
+      fontWeight: '500' as const,
     },
     bold: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '700',
+      fontWeight: '700' as const,
     },
     heavy: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '900',
+      fontWeight: '900' as const,
     },
   },
 };
@@ -70,19 +70,19 @@ const CustomDarkTheme = {
   fonts: {
     regular: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '400',
+      fontWeight: '400' as const,
     },
     medium: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '500',
+      fontWeight: '500' as const,
     },
     bold: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '700',
+      fontWeight: '700' as const,
     },
     heavy: {
       fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: '900',
+      fontWeight: '900' as const,
     },
   },
 };
@@ -104,6 +104,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? CustomDarkTheme : CustomDefaultTheme}>
       <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
