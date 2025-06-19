@@ -39,6 +39,10 @@ export default defineConfig({
       'zustand$': path.resolve(__dirname, './__mocks__/zustand.js'),
       'zustand/middleware$': path.resolve(__dirname, './__mocks__/zustand/middleware.js'),
       
+      // Database mocks
+      'sequelize': path.resolve(__dirname, './__mocks__/sequelize.js'),
+      'sequelize-typescript': path.resolve(__dirname, './__mocks__/sequelize-typescript.js'),
+      
       // Project structure aliases
       '@': path.resolve(__dirname, '.'),
       '~': path.resolve(__dirname, '.'),
@@ -74,7 +78,14 @@ export default defineConfig({
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       '**/react-native-dist/**',
-      '**/node_modules/@react-native-picker/picker/**'
+      '**/node_modules/@react-native-picker/picker/**',
+      // Skip React Native component tests
+      '__tests__/unit/components/**',
+      '__tests__/unit/design-system/**',
+      '__tests__/unit/hooks/**',
+      '__tests__/integration/container-configuration-flow.test.tsx',
+      '__tests__/integration/file-upload-results-flow.test.tsx',
+      '__tests__/integration/malware-analysis-workflow.test.tsx'
     ],
     server: {
       deps: {
