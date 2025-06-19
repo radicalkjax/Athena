@@ -77,7 +77,9 @@ export default defineConfig({
       
       // Mock WASM preprocessing pipeline in CI
       ...(process.env.CI ? {
-        './preprocessing/wasmPipeline': path.resolve(__dirname, './services/aiProviders/preprocessing/__mocks__/wasmPipeline.js')
+        './preprocessing/wasmPipeline': path.resolve(__dirname, './services/aiProviders/preprocessing/__mocks__/wasmPipeline.js'),
+        '../preprocessing/wasmPipeline': path.resolve(__dirname, './services/aiProviders/preprocessing/__mocks__/wasmPipeline.js'),
+        '../../preprocessing/wasmPipeline': path.resolve(__dirname, './services/aiProviders/preprocessing/__mocks__/wasmPipeline.js')
       } : {})
     }
   },

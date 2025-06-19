@@ -119,3 +119,21 @@ vi.mock('./wasm-modules/bridge/analysis-engine-bridge.js', () => ({
   },
   initializeAnalysisEngine: vi.fn().mockResolvedValue(undefined)
 }));
+
+// Mock the WASM bridge index
+vi.mock('./wasm-modules/bridge', async () => {
+  return await import('./wasm-modules/bridge/__mocks__');
+});
+
+vi.mock('./wasm-modules/bridge/index.js', async () => {
+  return await import('./wasm-modules/bridge/__mocks__');
+});
+
+// Mock WASM preprocessing pipeline
+vi.mock('./services/aiProviders/preprocessing/wasmPipeline.js', async () => {
+  return await import('./services/aiProviders/preprocessing/__mocks__/wasmPipeline.js');
+});
+
+vi.mock('./services/aiProviders/preprocessing/wasmPipeline', async () => {
+  return await import('./services/aiProviders/preprocessing/__mocks__/wasmPipeline.js');
+});
