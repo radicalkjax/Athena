@@ -1,3 +1,5 @@
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
+
 /**
  * Integration tests for AI Provider Service
  */
@@ -100,7 +102,7 @@ describe('AI Provider Integration Tests', () => {
 
   describe('Orchestration Strategies', () => {
     it('should route malware analysis to DeepSeek', async () => {
-      const mockAnalyze = jest.fn().mockResolvedValue({
+      const mockAnalyze = vi.fn().mockResolvedValue({
         id: 'test',
         verdict: 'malicious',
         confidence: 0.9
@@ -128,7 +130,7 @@ describe('AI Provider Integration Tests', () => {
       // Mock multiple providers
       let callCount = 0;
       ['claude', 'deepseek', 'openai'].forEach(provider => {
-        orchestrator.providers.get(provider).analyze = jest.fn()
+        orchestrator.providers.get(provider).analyze = vi.fn()
           .mockResolvedValue(mockResults[callCount++]);
       });
 
@@ -149,10 +151,10 @@ describe('AI Provider Integration Tests', () => {
   describe('Error Handling', () => {
     it('should fallback when primary provider fails', async () => {
       // Mock primary failure and fallback success
-      orchestrator.providers.get('claude').analyze = jest.fn()
+      orchestrator.providers.get('claude').analyze = vi.fn()
         .mockRejectedValue(new Error('Rate limited'));
       
-      orchestrator.providers.get('openai').analyze = jest.fn()
+      orchestrator.providers.get('openai').analyze = vi.fn()
         .mockResolvedValue({
           id: 'test',
           verdict: 'clean',
@@ -173,7 +175,7 @@ describe('AI Provider Integration Tests', () => {
     it('should handle preprocessing failure gracefully', async () => {
       // Mock preprocessing failure
       const originalPreprocess = wasmPreprocessor.preprocess;
-      wasmPreprocessor.preprocess = jest.fn()
+      wasmPreprocessor.preprocess = vi.fn()
         .mockRejectedValue(new Error('WASM error'));
 
       const result = await orchestrator.analyze({
@@ -197,7 +199,7 @@ describe('AI Provider Integration Tests', () => {
         confidence: 0.9
       };
 
-      orchestrator.analyze = jest.fn().mockResolvedValue(mockResult);
+      orchestrator.analyze = vi.fn().mockResolvedValue(mockResult);
 
       const result = await analyzeContent('Sample text for analysis', {
         analysisType: 'GENERAL_ANALYSIS',
@@ -218,7 +220,7 @@ describe('AI Provider Integration Tests', () => {
     it('should handle base64 encoded content', async () => {
       const base64Content = Buffer.from('test content').toString('base64');
       
-      orchestrator.analyze = jest.fn().mockResolvedValue({
+      orchestrator.analyze = vi.fn().mockResolvedValue({
         id: 'test',
         verdict: 'clean'
       });

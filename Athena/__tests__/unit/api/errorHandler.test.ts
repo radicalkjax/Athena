@@ -1,18 +1,19 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { APIErrorHandler, APIError } from '../../../services/api/errorHandler';
 import { logger } from '../../../shared/logging/logger';
 import { AxiosError } from 'axios';
 import { env } from '../../../shared/config/environment';
 
 // Mock logger
-jest.mock('../../../shared/logging/logger', () => ({
+vi.mock('../../../shared/logging/logger', () => ({
   logger: {
-    error: jest.fn(),
-    warn: jest.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
 // Mock environment
-jest.mock('../../../shared/config/environment', () => ({
+vi.mock('../../../shared/config/environment', () => ({
   env: {
     isWeb: false,
     isDev: false,
@@ -21,7 +22,7 @@ jest.mock('../../../shared/config/environment', () => ({
 
 describe('APIErrorHandler', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset environment
     (env as any).isWeb = false;
     (env as any).isDev = false;
@@ -151,11 +152,10 @@ describe('APIErrorHandler', () => {
     it('should detect CORS by cross-origin URL', () => {
       (env as any).isWeb = true;
       
-      // Mock window.location
-      Object.defineProperty(window, 'location', {
-        value: { origin: 'http://localhost:3000' },
-        writable: true,
-      });
+      // Mock window.location for Node environment
+      global.window = {
+        location: { origin: 'http://localhost:3000' }
+      } as any;
 
       const error: Partial<AxiosError> = {
         config: { url: 'https://api.openai.com/v1/chat', headers: {} } as any,
@@ -164,6 +164,9 @@ describe('APIErrorHandler', () => {
 
       const result = APIErrorHandler.handleError(error as AxiosError);
       expect(result.code).toBe('CORS_ERROR');
+      
+      // Clean up
+      delete (global as any).window;
     });
   });
 

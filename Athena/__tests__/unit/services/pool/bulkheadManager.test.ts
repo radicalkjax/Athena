@@ -1,27 +1,28 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { bulkheadManager } from '@/services/pool/bulkheadManager';
 import { Bulkhead, SemaphoreBulkhead } from '@/services/pool/bulkhead';
 
 // Mock dependencies
-jest.mock('@/services/apm/manager', () => ({
+vi.mock('@/services/apm/manager', () => ({
   apmManager: {
-    counter: jest.fn(),
-    gauge: jest.fn(),
-    histogram: jest.fn(),
+    counter: vi.fn(),
+    gauge: vi.fn(),
+    histogram: vi.fn(),
   },
 }));
 
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 describe('BulkheadManager', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     bulkheadManager.resetAll();
   });
   
@@ -66,7 +67,7 @@ describe('BulkheadManager', () => {
   
   describe('Task Execution', () => {
     it('should execute task through bulkhead', async () => {
-      const task = jest.fn().mockResolvedValue('result');
+      const task = vi.fn().mockResolvedValue('result');
       
       const result = await bulkheadManager.execute('test.service', task);
       
@@ -75,7 +76,7 @@ describe('BulkheadManager', () => {
     });
     
     it('should execute with semaphores', async () => {
-      const task = jest.fn().mockResolvedValue('result');
+      const task = vi.fn().mockResolvedValue('result');
       
       const result = await bulkheadManager.execute('test.service', task, {
         semaphores: ['global.cpu_intensive'],
@@ -86,7 +87,7 @@ describe('BulkheadManager', () => {
     });
     
     it('should release semaphores on error', async () => {
-      const task = jest.fn().mockRejectedValue(new Error('task error'));
+      const task = vi.fn().mockRejectedValue(new Error('task error'));
       const cpuSemaphore = bulkheadManager.getSemaphore('global.cpu_intensive');
       
       const initialStats = cpuSemaphore?.getStats();
@@ -105,7 +106,7 @@ describe('BulkheadManager', () => {
   
   describe('Specialized Execution Methods', () => {
     it('should execute CPU-intensive tasks', async () => {
-      const task = jest.fn().mockResolvedValue('cpu-result');
+      const task = vi.fn().mockResolvedValue('cpu-result');
       
       const result = await bulkheadManager.executeCpuIntensive('test.service', task);
       
@@ -113,7 +114,7 @@ describe('BulkheadManager', () => {
     });
     
     it('should execute memory-intensive tasks', async () => {
-      const task = jest.fn().mockResolvedValue('memory-result');
+      const task = vi.fn().mockResolvedValue('memory-result');
       
       const result = await bulkheadManager.executeMemoryIntensive('test.service', task);
       
@@ -121,7 +122,7 @@ describe('BulkheadManager', () => {
     });
     
     it('should execute AI tasks with global limit', async () => {
-      const task = jest.fn().mockResolvedValue('ai-result');
+      const task = vi.fn().mockResolvedValue('ai-result');
       
       const result = await bulkheadManager.executeAITask('claude', task);
       

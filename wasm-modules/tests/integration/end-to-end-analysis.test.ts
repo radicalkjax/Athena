@@ -1,4 +1,10 @@
-import { describe, test, expect, beforeAll } from '@jest/globals';
+import { describe, test, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
+
+// Mock the analysisService to use WASM stubs
+vi.mock('../../../Athena/services/analysisService', () => {
+  return import('../../../Athena/__mocks__/services/wasm-stubs');
+});
+
 import { analyzeWithWASM, getWASMStats } from '../../../Athena/services/analysisService';
 import { readFileSync } from 'fs';
 import { join } from 'path';

@@ -273,6 +273,10 @@ graph TB
 
 ## Component Structure
 
+### Frontend Launch Method
+
+The application uses a **direct navigation setup** instead of expo-router. For detailed information about the frontend launch methods and navigation setup, see [Frontend Launch Methods Documentation](./FRONTEND_LAUNCH_METHODS.md).
+
 ### Component Hierarchy
 
 ```mermaid
@@ -298,9 +302,10 @@ graph TB
   }
 }}%%
 graph TD
-    App[App Root]
+    App[App Root<br/>Direct Navigation]
     
-    App --> Navigation[Navigation Container]
+    App --> ErrorBoundary[Error Boundary]
+    ErrorBoundary --> Navigation[Navigation Container]
     Navigation --> TabNav[Tab Navigator]
     
     TabNav --> Home[Home Screen]

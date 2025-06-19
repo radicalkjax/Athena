@@ -1,11 +1,12 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { analysisEngine, initializeAnalysisEngine } from '../analysis-engine-bridge';
 
 // Mock the WASM module
-jest.mock('../../core/analysis-engine/pkg-web/athena_analysis_engine', () => ({
-  default: jest.fn().mockResolvedValue(undefined),
-  AnalysisEngine: jest.fn().mockImplementation(() => ({
-    get_version: jest.fn().mockReturnValue('0.1.0'),
-    analyze: jest.fn().mockResolvedValue({
+vi.mock('../../core/analysis-engine/pkg-web/athena_analysis_engine', () => ({
+  default: vi.fn().mockResolvedValue(undefined),
+  AnalysisEngine: vi.fn().mockImplementation(() => ({
+    get_version: vi.fn().mockReturnValue('0.1.0'),
+    analyze: vi.fn().mockResolvedValue({
       severity: 'low',
       threats: [],
       metadata: {
@@ -19,7 +20,7 @@ jest.mock('../../core/analysis-engine/pkg-web/athena_analysis_engine', () => ({
 
 describe('AnalysisEngineBridge', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should initialize the engine', async () => {
@@ -43,7 +44,11 @@ describe('AnalysisEngineBridge', () => {
   });
 
   it('should throw error if not initialized', () => {
-    const uninitializedEngine = new (require('../analysis-engine-bridge').AnalysisEngineBridge)();
-    expect(() => uninitializedEngine.getVersion()).toThrow('Analysis Engine not initialized');
+    // Since AnalysisEngineBridge class is not exported, we'll test the instance behavior
+    // Reset the engine state and test uninitialized behavior
+    const engine = require('../analysis-engine-bridge').analysisEngine;
+    // Reset internal state (this is a mock anyway, so we can simulate uninitialized state)
+    engine.initialized = false;
+    expect(() => engine.getVersion()).toThrow('Analysis Engine not initialized');
   });
 });

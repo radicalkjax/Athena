@@ -1,8 +1,9 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FeatureFlagsService } from '@/services/config/featureFlags';
 import { env } from '@/shared/config/environment';
 
 // Mock environment
-jest.mock('@/shared/config/environment', () => ({
+vi.mock('@/shared/config/environment', () => ({
   env: {
     isDev: true,
     redis: { enabled: true },
@@ -27,20 +28,20 @@ jest.mock('@/shared/config/environment', () => ({
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
       store[key] = value;
     }),
-    removeItem: jest.fn((key: string) => {
+    removeItem: vi.fn((key: string) => {
       delete store[key];
     }),
-    clear: jest.fn(() => {
+    clear: vi.fn(() => {
       store = {};
     }),
   };
 })();
 
-Object.defineProperty(window, 'localStorage', {
+Object.defineProperty(global, 'localStorage', {
   value: localStorageMock,
 });
 
@@ -49,9 +50,9 @@ describe('FeatureFlagsService', () => {
 
   beforeEach(() => {
     localStorageMock.clear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset any module-level state by clearing the module cache
-    jest.resetModules();
+    vi.resetModules();
     service = new FeatureFlagsService();
   });
 
@@ -144,7 +145,7 @@ describe('FeatureFlagsService', () => {
     });
 
     it('should not allow overrides in production mode', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
       
       // Clear any existing overrides from localStorage and reset the mock
       localStorageMock.clear();
@@ -207,7 +208,7 @@ describe('FeatureFlagsService', () => {
   describe('Error Handling', () => {
     it('should handle corrupted localStorage data gracefully', () => {
       localStorageMock.getItem.mockReturnValue('invalid json');
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
       
       const newService = new FeatureFlagsService();
       expect(newService.getOverrides()).toEqual({});
@@ -223,7 +224,7 @@ describe('FeatureFlagsService', () => {
       localStorageMock.setItem.mockImplementation(() => {
         throw new Error('Storage quota exceeded');
       });
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
       
       service.setOverride('enableAPM', true);
       expect(consoleSpy).toHaveBeenCalledWith(

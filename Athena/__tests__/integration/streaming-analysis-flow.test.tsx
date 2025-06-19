@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 /**
  * Integration test for streaming analysis flow
  * 
@@ -14,12 +15,12 @@ import { MalwareFile } from '@/types';
 import { aiServiceManager } from '@/services/ai/manager';
 
 // Mock the services
-jest.mock('@/services/ai/manager');
-jest.mock('@/shared/logging/logger');
-jest.mock('@/hooks', () => ({
-  useColorScheme: jest.fn().mockReturnValue('light'),
-  useThemeColor: jest.fn().mockReturnValue('#000000'),
-  useStreamingAnalysis: jest.requireActual('@/hooks').useStreamingAnalysis
+vi.mock('@/services/ai/manager');
+vi.mock('@/shared/logging/logger');
+vi.mock('@/hooks', () => ({
+  useColorScheme: vi.fn().mockReturnValue('light'),
+  useThemeColor: vi.fn().mockReturnValue('#000000'),
+  useStreamingAnalysis: vi.importActual('@/hooks').useStreamingAnalysis
 }));
 
 // Test component that uses streaming analysis
@@ -81,8 +82,8 @@ function TestStreamingComponent() {
 
 describe.skip('Streaming Analysis Integration', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
-    jest.clearAllMocks();
+    vi.useFakeTimers();
+    vi.clearAllMocks();
     
     // Reset store
     const store = useAppStore.getState();
@@ -106,8 +107,8 @@ describe.skip('Streaming Analysis Integration', () => {
   });
   
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers();
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
   
   it('should complete streaming analysis flow', async () => {
@@ -187,7 +188,7 @@ describe.skip('Streaming Analysis Integration', () => {
     });
     
     // Advance timers to trigger the first update
-    jest.advanceTimersByTime(10);
+    vi.advanceTimersByTime(10);
     
     // Check 10% progress
     await waitFor(() => {
@@ -196,7 +197,7 @@ describe.skip('Streaming Analysis Integration', () => {
     });
     
     // Advance timers to trigger the second update
-    jest.advanceTimersByTime(10);
+    vi.advanceTimersByTime(10);
     
     // Check 50% progress
     await waitFor(() => {
@@ -206,7 +207,7 @@ describe.skip('Streaming Analysis Integration', () => {
     });
     
     // Advance timers to trigger the third update
-    jest.advanceTimersByTime(10);
+    vi.advanceTimersByTime(10);
     
     // Check 90% progress
     await waitFor(() => {
@@ -215,7 +216,7 @@ describe.skip('Streaming Analysis Integration', () => {
     });
     
     // Advance timers to complete the analysis
-    jest.advanceTimersByTime(10);
+    vi.advanceTimersByTime(10);
     
     // Check completion
     await waitFor(() => {

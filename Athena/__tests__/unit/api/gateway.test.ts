@@ -1,10 +1,11 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { APIGateway, apiGateway, GatewayConfig, APIProvider } from '../../../services/api/gateway';
 import { env } from '../../../shared/config/environment';
 import { AxiosError } from 'axios';
 import * as apiClient from '../../../services/apiClient';
 
 // Mock dependencies
-jest.mock('../../../shared/config/environment', () => ({
+vi.mock('../../../shared/config/environment', () => ({
   env: {
     isWeb: false,
     isDev: false,
@@ -16,45 +17,48 @@ jest.mock('../../../shared/config/environment', () => ({
   },
 }));
 
-jest.mock('../../../config/proxy', () => ({
-  shouldUseProxy: jest.fn(() => false),
-  getProxiedUrl: jest.fn((provider: string) => `/api/proxy/${provider}`),
+vi.mock('@/config/proxy', () => ({
+  shouldUseProxy: vi.fn(() => false),
+  getProxiedUrl: vi.fn((provider: string) => `/api/proxy/${provider}`),
 }));
 
+// Import mocked functions after vi.mock
+import { shouldUseProxy, getProxiedUrl } from '@/config/proxy';
+
 // Mock apiClient module
-jest.mock('../../../services/apiClient', () => ({
-  createOpenAIClient: jest.fn(),
-  createClaudeClient: jest.fn(),
-  createDeepSeekClient: jest.fn(),
-  createLocalModelClient: jest.fn(),
-  createMetasploitClient: jest.fn(),
-  createContainerClient: jest.fn(),
+vi.mock('../../../services/apiClient', () => ({
+  createOpenAIClient: vi.fn(),
+  createClaudeClient: vi.fn(),
+  createDeepSeekClient: vi.fn(),
+  createLocalModelClient: vi.fn(),
+  createMetasploitClient: vi.fn(),
+  createContainerClient: vi.fn(),
 }));
 
 describe('APIGateway', () => {
   let mockAxiosInstance: {
-    request: jest.Mock;
-    get?: jest.Mock;
-    post?: jest.Mock;
+    request: any;
+    get?: any;
+    post?: any;
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock axios instance
     mockAxiosInstance = {
-      request: jest.fn(),
-      get: jest.fn(),
-      post: jest.fn(),
+      request: vi.fn(),
+      get: vi.fn(),
+      post: vi.fn(),
     };
 
     // Mock all create client functions to return our mock instance
-    (apiClient.createOpenAIClient as jest.Mock).mockReturnValue(mockAxiosInstance);
-    (apiClient.createClaudeClient as jest.Mock).mockReturnValue(mockAxiosInstance);
-    (apiClient.createDeepSeekClient as jest.Mock).mockReturnValue(mockAxiosInstance);
-    (apiClient.createLocalModelClient as jest.Mock).mockReturnValue(mockAxiosInstance);
-    (apiClient.createMetasploitClient as jest.Mock).mockReturnValue(mockAxiosInstance);
-    (apiClient.createContainerClient as jest.Mock).mockReturnValue(mockAxiosInstance);
+    (apiClient.createOpenAIClient as any).mockReturnValue(mockAxiosInstance);
+    (apiClient.createClaudeClient as any).mockReturnValue(mockAxiosInstance);
+    (apiClient.createDeepSeekClient as any).mockReturnValue(mockAxiosInstance);
+    (apiClient.createLocalModelClient as any).mockReturnValue(mockAxiosInstance);
+    (apiClient.createMetasploitClient as any).mockReturnValue(mockAxiosInstance);
+    (apiClient.createContainerClient as any).mockReturnValue(mockAxiosInstance);
 
     // Clear gateway cache
     apiGateway.clearCache();
@@ -104,8 +108,7 @@ describe('APIGateway', () => {
     });
 
     it('should use proxy URL when configured', () => {
-      const { shouldUseProxy, getProxiedUrl } = require('../../../config/proxy');
-      (shouldUseProxy as jest.Mock).mockReturnValue(true);
+      (shouldUseProxy as any).mockReturnValue(true);
 
       const config: GatewayConfig = {
         provider: 'deepseek',
@@ -276,7 +279,7 @@ describe('APIGateway', () => {
     });
 
     it('should expire cache after timeout', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       
       const mockResponse = { data: { test: 'data' } };
       mockAxiosInstance.request.mockResolvedValue(mockResponse);
@@ -287,7 +290,7 @@ describe('APIGateway', () => {
       await apiGateway.request(config, '/test', { cache: true });
       
       // Advance time past cache timeout (5 minutes)
-      jest.advanceTimersByTime(6 * 60 * 1000);
+      vi.advanceTimersByTime(6 * 60 * 1000);
       
       // Make same request again
       const result = await apiGateway.request(config, '/test', { cache: true });
@@ -296,15 +299,14 @@ describe('APIGateway', () => {
       expect(result.cached).toBe(false);
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
       
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 
   describe('provider-specific configurations', () => {
     it('should configure local model client correctly', () => {
       // Ensure proxy is not used
-      const { shouldUseProxy } = require('../../../config/proxy');
-      (shouldUseProxy as jest.Mock).mockReturnValue(false);
+      (shouldUseProxy as any).mockReturnValue(false);
       
       const config: GatewayConfig = { provider: 'local' };
       
@@ -317,8 +319,7 @@ describe('APIGateway', () => {
 
     it('should configure metasploit client correctly', () => {
       // Ensure proxy is not used
-      const { shouldUseProxy } = require('../../../config/proxy');
-      (shouldUseProxy as jest.Mock).mockReturnValue(false);
+      (shouldUseProxy as any).mockReturnValue(false);
       
       const config: GatewayConfig = {
         provider: 'metasploit',
@@ -335,8 +336,7 @@ describe('APIGateway', () => {
 
     it('should configure container client correctly', () => {
       // Ensure proxy is not used
-      const { shouldUseProxy } = require('../../../config/proxy');
-      (shouldUseProxy as jest.Mock).mockReturnValue(false);
+      (shouldUseProxy as any).mockReturnValue(false);
       
       const config: GatewayConfig = {
         provider: 'container',

@@ -1,6 +1,12 @@
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 /**
  * Integration tests for the WASM file-processor module
  */
+
+// Mock the file processor bridge
+vi.mock('../../bridge/file-processor-bridge', () => {
+  return import('../../bridge/__mocks__/file-processor-bridge');
+});
 
 import { createFileProcessor, type IFileProcessor } from '../../bridge/file-processor-bridge';
 import * as fs from 'fs';

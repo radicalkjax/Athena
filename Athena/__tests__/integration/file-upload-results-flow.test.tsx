@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 /**
  * Integration Test: File Upload to Results Display Flow
  * Tests the user journey from uploading a file to viewing analysis results
@@ -7,9 +8,9 @@
  */
 
 // Mock database before any imports
-jest.mock('@/config/database');
-jest.mock('@/models');
-jest.mock('@/services/container-db');
+vi.mock('@/config/database');
+vi.mock('@/models');
+vi.mock('@/services/container-db');
 
 import React from 'react';
 import { fireEvent, waitFor, within } from '@testing-library/react-native';
@@ -25,39 +26,39 @@ import { ThemedView } from '@/components/ThemedView';
 import { Button } from '@/design-system';
 
 // Mock dependencies
-jest.mock('@/services/fileManager');
-jest.mock('@/services/container-db');
-jest.mock('@/models');
-jest.mock('@/config/database');
-jest.mock('@/services/analysisService');
-jest.mock('@/services/openai');
-jest.mock('@/services/deepseek');
-jest.mock('@/services/claude');
-jest.mock('@/hooks', () => ({
-  useColorScheme: jest.fn().mockReturnValue('light'),
-  useThemeColor: jest.fn().mockReturnValue('#000000')
+vi.mock('@/services/fileManager');
+vi.mock('@/services/container-db');
+vi.mock('@/models');
+vi.mock('@/config/database');
+vi.mock('@/services/analysisService');
+vi.mock('@/services/openai');
+vi.mock('@/services/deepseek');
+vi.mock('@/services/claude');
+vi.mock('@/hooks', () => ({
+  useColorScheme: vi.fn().mockReturnValue('light'),
+  useThemeColor: vi.fn().mockReturnValue('#000000')
 }));
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(() => Promise.resolve(null)),
-  setItem: jest.fn(() => Promise.resolve()),
-  removeItem: jest.fn(() => Promise.resolve()),
-  clear: jest.fn(() => Promise.resolve()),
+vi.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: vi.fn(() => Promise.resolve(null)),
+  setItem: vi.fn(() => Promise.resolve()),
+  removeItem: vi.fn(() => Promise.resolve()),
+  clear: vi.fn(() => Promise.resolve()),
 }));
-jest.mock('@/components/ui/IconSymbol', () => {
+vi.mock('@/components/ui/IconSymbol', () => {
   const React = require('react');
   return {
     IconSymbol: ({ name, testID, ...props }: any) => 
       React.createElement('View', { testID: testID || `icon-${name}`, ...props })
   };
 });
-jest.mock('@expo/vector-icons', () => ({
+vi.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
   MaterialIcons: () => null
 }));
-jest.mock('react-icons/ai', () => ({
+vi.mock('react-icons/ai', () => ({
   AiFillAliwangwang: () => null
 }));
-jest.mock('react-icons/fa', () => ({
+vi.mock('react-icons/fa', () => ({
   FaTrash: () => null
 }));
 
@@ -144,14 +145,14 @@ const FileAnalysisFlow = () => {
 
 describe.skip('File Upload to Results Display Flow', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
-    jest.clearAllMocks();
+    vi.useFakeTimers();
+    vi.clearAllMocks();
     resetStores();
     
     // Setup service mocks with proper implementations
-    (fileManagerService as any).initFileSystem = jest.fn().mockResolvedValue(undefined);
-    (fileManagerService as any).listMalwareFiles = jest.fn().mockResolvedValue([]);
-    (fileManagerService as any).pickFile = jest.fn().mockResolvedValue({
+    (fileManagerService as any).initFileSystem = vi.fn().mockResolvedValue(undefined);
+    (fileManagerService as any).listMalwareFiles = vi.fn().mockResolvedValue([]);
+    (fileManagerService as any).pickFile = vi.fn().mockResolvedValue({
       id: 'test-file-123',
       name: 'malicious.exe',
       size: 2048576,
@@ -159,11 +160,11 @@ describe.skip('File Upload to Results Display Flow', () => {
       uri: 'file:///test/malicious.exe',
       content: 'MZ...'
     });
-    (fileManagerService as any).saveFile = jest.fn().mockResolvedValue(true);
-    (fileManagerService as any).deleteFile = jest.fn().mockResolvedValue(true);
+    (fileManagerService as any).saveFile = vi.fn().mockResolvedValue(true);
+    (fileManagerService as any).deleteFile = vi.fn().mockResolvedValue(true);
     
     // Set up analysis service mock with tracking
-    (analysisService as any).analyzeFile = jest.fn().mockImplementation(async (file, options) => {
+    (analysisService as any).analyzeFile = vi.fn().mockImplementation(async (file, options) => {
       console.error('UNEXPECTED: analyzeFile called before button press!');
       console.error('Call stack:', new Error().stack);
       // Simulate analysis delay
@@ -188,8 +189,8 @@ describe.skip('File Upload to Results Display Flow', () => {
   });
   
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers();
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   describe('Complete User Journey', () => {
@@ -310,7 +311,7 @@ describe.skip('File Upload to Results Display Flow', () => {
     });
 
     it('should display error when analysis fails', async () => {
-      (analysisService as any).analyzeFile = jest.fn().mockRejectedValueOnce(
+      (analysisService as any).analyzeFile = vi.fn().mockRejectedValueOnce(
         new Error('Analysis service unavailable')
       );
       

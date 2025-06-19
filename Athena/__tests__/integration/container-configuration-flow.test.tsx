@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 /**
  * Integration Test: Container Configuration and Deployment Flow
  * Tests the complete flow of configuring a container and deploying malware for analysis
@@ -8,9 +9,9 @@
  */
 
 // Mock database before any imports
-jest.mock('@/config/database');
-jest.mock('@/models');
-jest.mock('@/services/container-db');
+vi.mock('@/config/database');
+vi.mock('@/models');
+vi.mock('@/services/container-db');
 
 import React from 'react';
 import { fireEvent, waitFor, within } from '@testing-library/react-native';
@@ -26,23 +27,23 @@ import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/design-system';
 
 // Mock dependencies
-jest.mock('@/services/container', () => ({
-  ...jest.requireActual('@/services/container'),
-  createContainer: jest.fn(),
-  removeContainer: jest.fn(),
-  executeCommand: jest.fn(),
-  getResourcePreset: jest.fn((preset, os) => ({
+vi.mock('@/services/container', () => ({
+  ...vi.importActual('@/services/container'),
+  createContainer: vi.fn(),
+  removeContainer: vi.fn(),
+  executeCommand: vi.fn(),
+  getResourcePreset: vi.fn((preset, os) => ({
     cpu: 2,
     memory: 2048,
     diskSpace: 10240,
     networkSpeed: 100,
     ioOperations: 1000
   })),
-  getAvailableWindowsVersions: jest.fn(() => ['windows-10', 'windows-11']),
-  getAvailableLinuxVersions: jest.fn(() => ['ubuntu-20.04', 'ubuntu-22.04']),
-  getAvailableMacOSVersions: jest.fn(() => ['monterey', 'ventura']),
-  getAvailableLinuxDistributions: jest.fn(() => ['ubuntu', 'debian', 'centos']),
-  checkSystemRequirements: jest.fn(() => Promise.resolve({
+  getAvailableWindowsVersions: vi.fn(() => ['windows-10', 'windows-11']),
+  getAvailableLinuxVersions: vi.fn(() => ['ubuntu-20.04', 'ubuntu-22.04']),
+  getAvailableMacOSVersions: vi.fn(() => ['monterey', 'ventura']),
+  getAvailableLinuxDistributions: vi.fn(() => ['ubuntu', 'debian', 'centos']),
+  checkSystemRequirements: vi.fn(() => Promise.resolve({
     meetsRequirements: true,
     details: {
       cpu: { meets: true, available: 8, required: 2 },
@@ -51,29 +52,32 @@ jest.mock('@/services/container', () => ({
     }
   }))
 }));
-jest.mock('@/services/monitoring');
-jest.mock('@/services/fileManager');
-jest.mock('@/services/container-db');
-jest.mock('@/models');
-jest.mock('@/config/database');
-jest.mock('@/hooks', () => ({
-  useColorScheme: jest.fn().mockReturnValue('light'),
-  useThemeColor: jest.fn().mockReturnValue('#000000')
+vi.mock('@/services/monitoring');
+vi.mock('@/services/fileManager');
+vi.mock('@/services/container-db');
+vi.mock('@/models');
+vi.mock('@/config/database');
+vi.mock('@/hooks', () => ({
+  useColorScheme: vi.fn().mockReturnValue('light'),
+  useThemeColor: vi.fn().mockReturnValue('#000000')
 }));
-jest.mock('@expo/vector-icons', () => ({
+vi.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
   MaterialIcons: () => null,
   FontAwesome: () => null
 }));
-jest.mock('@react-native-picker/picker', () => {
+vi.mock('@react-native-picker/picker', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
   return {
-    Picker: ({ children, ...props }) => React.createElement(View, props, children),
+    Picker: (props) => {
+      const { children, ...rest } = props;
+      return React.createElement(View, rest, children);
+    },
     PickerItem: ({ label, value }) => React.createElement(Text, { value }, label)
   };
 });
-jest.mock('@react-native-community/slider', () => {
+vi.mock('@react-native-community/slider', () => {
   const React = require('react');
   const { View } = require('react-native');
   return ({ value, onValueChange, ...props }) => 
@@ -208,28 +212,28 @@ const ContainerDeploymentFlow = () => {
 
 describe.skip('Container Configuration and Deployment Flow', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     resetStores();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Setup service mocks
     Object.assign(containerService, {
       ...mockServices.containerService,
-      executeCommand: jest.fn().mockResolvedValue({ success: true, output: 'File uploaded' }),
-      removeContainer: jest.fn().mockResolvedValue(true)
+      executeCommand: vi.fn().mockResolvedValue({ success: true, output: 'File uploaded' }),
+      removeContainer: vi.fn().mockResolvedValue(true)
     });
     Object.assign(monitoringService, {
-      startContainerMonitoring: jest.fn().mockImplementation((containerId) => {
+      startContainerMonitoring: vi.fn().mockImplementation((containerId) => {
         // Return a mock interval
         return setInterval(() => {}, 1000);
       }),
-      stopContainerMonitoring: jest.fn()
+      stopContainerMonitoring: vi.fn()
     });
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers();
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   describe('Basic Container Configuration', () => {
@@ -469,7 +473,7 @@ describe.skip('Container Configuration and Deployment Flow', () => {
 
   describe('Error Handling', () => {
     it('should handle container creation failure', async () => {
-      (containerService as any).createContainer = jest.fn().mockRejectedValueOnce(
+      (containerService as any).createContainer = vi.fn().mockRejectedValueOnce(
         new Error('Insufficient resources')
       );
 
@@ -514,7 +518,7 @@ describe.skip('Container Configuration and Deployment Flow', () => {
         selectedMalwareId: 'malware-1'
       });
 
-      (containerService as any).executeCommand = jest.fn().mockRejectedValueOnce(
+      (containerService as any).executeCommand = vi.fn().mockRejectedValueOnce(
         new Error('Deployment failed')
       );
 
@@ -558,7 +562,7 @@ describe.skip('Container Configuration and Deployment Flow', () => {
       ];
 
       for (const preset of presets) {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         
         // Expand OS section
         const osSection = getByText('Operating System: Windows');

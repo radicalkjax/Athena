@@ -37,17 +37,30 @@ export {
 } from './shadows';
 export type { ShadowLevel, ComponentShadow } from './shadows';
 
+// Import for convenience token object
+import { colors as importedColors } from './colors';
+import { spacing as importedSpacing } from './spacing';
+import { 
+  fontFamilies as importedFontFamilies,
+  fontWeights as importedFontWeights,
+  fontSizes as importedFontSizes,
+  lineHeights as importedLineHeights,
+  letterSpacing as importedLetterSpacing,
+  textStyles as importedTextStyles
+} from './typography';
+import { shadows as importedShadows } from './shadows';
+
 // Convenience token object for easier imports
 export const tokens = {
-  colors: require('./colors').colors,
-  spacing: require('./spacing').spacing,
+  colors: importedColors,
+  spacing: importedSpacing,
   typography: {
-    fontFamilies: require('./typography').fontFamilies,
-    fontWeights: require('./typography').fontWeights,
-    fontSizes: require('./typography').fontSizes,
-    lineHeights: require('./typography').lineHeights,
-    letterSpacing: require('./typography').letterSpacing,
-    textStyles: require('./typography').textStyles,
+    fontFamilies: importedFontFamilies,
+    fontWeights: importedFontWeights,
+    fontSizes: importedFontSizes,
+    lineHeights: importedLineHeights,
+    letterSpacing: importedLetterSpacing,
+    textStyles: importedTextStyles,
   },
-  shadows: require('./shadows').shadows,
+  shadows: importedShadows,
 } as const;

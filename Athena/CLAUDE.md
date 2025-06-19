@@ -15,17 +15,24 @@ When testing hooks that import from the store (like `useAPIStore`), there can be
 ### Known Issues
 - The `@env` module from react-native-dotenv causes babel transform errors in tests
 - Always use `import { env } from '@/shared/config/environment'` instead of `@env`
-- **Local Models Service Tests**: The localModels.ts service causes JavaScript heap out of memory errors during Jest tests, even with minimal mocking. This appears to be related to how the service is structured with recursive initialization calls between `getLocalModelsConfig` and `initLocalModelsDirectory`. The service works fine in production but cannot be unit tested effectively.
+- **Local Models Service Tests**: The localModels.ts service causes JavaScript heap out of memory errors during tests, even with minimal mocking. This appears to be related to how the service is structured with recursive initialization calls between `getLocalModelsConfig` and `initLocalModelsDirectory`. The service works fine in production but cannot be unit tested effectively.
+- **Testing Framework**: The project has been migrated from Jest to Vitest for better performance and ESM support.
 
 ## Key Commands
 
 ### Running Tests
 ```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
 # Run specific test file
-npx jest path/to/test.test.ts --no-watchman
+npx vitest path/to/test.test.ts
 
 # Run all tests in a directory
-npx jest __tests__/unit/api/ --no-watchman
+npx vitest __tests__/unit/api/
 
 # Check circular dependencies
 npx madge --circular .

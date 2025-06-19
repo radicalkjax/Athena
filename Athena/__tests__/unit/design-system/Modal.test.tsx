@@ -1,13 +1,14 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Text, View } from 'react-native';
 import { Modal } from '../../../design-system/components/Modal';
 
 describe('Modal Component', () => {
-  const mockOnClose = jest.fn();
+  const mockOnClose = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Basic Rendering', () => {
@@ -159,7 +160,7 @@ describe('Modal Component', () => {
     });
 
     it('should not propagate backdrop press to modal content', () => {
-      const contentPress = jest.fn();
+      const contentPress = vi.fn();
       const { getByTestId } = render(
         <Modal visible={true} onClose={mockOnClose}>
           <TouchableOpacity onPress={contentPress} testID="content-button">
@@ -286,7 +287,7 @@ describe('Modal Component', () => {
 
   describe('Modal Props Forwarding', () => {
     it('should forward RNModal props', () => {
-      const onShow = jest.fn();
+      const onShow = vi.fn();
       const { UNSAFE_getByType } = render(
         <Modal 
           visible={true} 

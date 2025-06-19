@@ -87,10 +87,16 @@ function getOrchestrator() {
  */
 function analyzeContent(content, options) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         const orchestrator = getOrchestrator();
+        // Handle base64 encoding if specified in metadata
+        let processedContent = content;
+        if (((_b = (_a = options === null || options === void 0 ? void 0 : options.metadata) === null || _a === void 0 ? void 0 : _a.encoding) === 'base64') && typeof content === 'string') {
+            processedContent = Buffer.from(content, 'base64');
+        }
         const request = {
             id: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            content,
+            content: processedContent,
             analysisType: options === null || options === void 0 ? void 0 : options.analysisType,
             priority: (options === null || options === void 0 ? void 0 : options.priority) || 'normal',
             metadata: options === null || options === void 0 ? void 0 : options.metadata

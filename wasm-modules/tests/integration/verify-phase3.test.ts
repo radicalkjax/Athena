@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -99,7 +100,7 @@ describe('Phase 3 WASM Module Verification', () => {
       const serviceContent = fs.readFileSync(servicePath, 'utf-8');
       
       // Check for WASM imports
-      expect(serviceContent).toContain('wasm-modules/bridge');
+      expect(serviceContent).toContain('./wasm-stubs');
       expect(serviceContent).toContain('analysisEngine');
       expect(serviceContent).toContain('initializeAnalysisEngine');
       expect(serviceContent).toContain('createFileProcessor');

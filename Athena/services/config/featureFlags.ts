@@ -53,8 +53,8 @@ class FeatureFlagsService {
   private readonly storageKey = 'athena:feature-flags';
   
   constructor() {
-    // Load saved overrides from storage in browser environment
-    if (typeof window !== 'undefined' && window.localStorage) {
+    // Load saved overrides from storage
+    if (this.isStorageAvailable()) {
       try {
         const saved = localStorage.getItem(this.storageKey);
         if (saved) {
@@ -119,8 +119,9 @@ class FeatureFlagsService {
     
     // Check environment variables (for production)
     if (!env.isDev) {
-      const envKey = `FEATURE_${key.toUpperCase()}`;
-      const envValue = process.env[envKey];
+      const envVarName = `FEATURE_${key.toUpperCase()}`;
+      const envValue = process.env[envVarName];
+      
       if (envValue !== undefined) {
         return envValue === 'true';
       }
@@ -140,8 +141,9 @@ class FeatureFlagsService {
     
     // Check environment variables (for production)
     if (!env.isDev) {
-      const envKey = `FEATURE_${key.toUpperCase()}`;
-      const envValue = process.env[envKey];
+      const envVarName = `FEATURE_${key.toUpperCase()}`;
+      const envValue = process.env[envVarName];
+      
       if (envValue) {
         return envValue.split(',').map(s => s.trim());
       }
@@ -208,10 +210,21 @@ class FeatureFlagsService {
   }
   
   /**
+   * Check if localStorage is available
+   */
+  private isStorageAvailable(): boolean {
+    try {
+      return typeof localStorage !== 'undefined' && localStorage !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Save overrides to local storage
    */
   private saveOverrides(): void {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (this.isStorageAvailable()) {
       try {
         localStorage.setItem(this.storageKey, JSON.stringify(this.overrides));
       } catch (error: unknown) {

@@ -61,7 +61,7 @@ git clone https://github.com/yourusername/athena.git
 cd athena
 
 # Launch Athena Interactive CLI
-/scripts/athena
+./scripts/athena
 ```
 
 **That's it!** 🎉
@@ -114,7 +114,7 @@ sequenceDiagram
     participant Build
     participant Server
     
-    User->>Script: /scripts/athena
+    User->>Script: ./scripts/athena
     Script->>System: Check first-time setup
     
     alt First Time Setup
@@ -165,7 +165,7 @@ sequenceDiagram
     style Server fill:#e8f4d4,color:#333
 ```
 
-When you run `/scripts/athena` and select "Start Athena Web" for the first time, you'll see:
+When you run `./scripts/athena` and select "Start Athena Web" for the first time, you'll see:
 
 ```
 🔧 First time setup detected, running setup process...
@@ -260,7 +260,7 @@ flowchart TD
 **Most Common Workflow:**
 ```bash
 # Start the interactive CLI
-/scripts/athena
+./scripts/athena
 
 # Then select:
 # 1 - Start Athena Web (first time will auto-setup)

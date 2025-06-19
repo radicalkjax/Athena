@@ -1,4 +1,15 @@
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest';
+
+// Mock the deobfuscator bridge
+vi.mock('../../bridge/deobfuscator-bridge', () => {
+  return import('../../bridge/__mocks__/deobfuscator-bridge');
+});
+
+// Mock the types to include ObfuscationType
+vi.mock('../../bridge/types', () => {
+  return import('../../bridge/__mocks__/types');
+});
+
 import { DeobfuscatorBridge } from '../../bridge/deobfuscator-bridge';
 import { ObfuscationType } from '../../bridge/types';
 

@@ -1,21 +1,22 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Bulkhead, SemaphoreBulkhead } from '@/services/pool/bulkhead';
 
 // Mock APM manager
-jest.mock('@/services/apm/manager', () => ({
+vi.mock('@/services/apm/manager', () => ({
   apmManager: {
-    counter: jest.fn(),
-    gauge: jest.fn(),
-    histogram: jest.fn(),
+    counter: vi.fn(),
+    gauge: vi.fn(),
+    histogram: vi.fn(),
   },
 }));
 
 // Mock logger
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -23,7 +24,7 @@ describe('Bulkhead', () => {
   let bulkhead: Bulkhead;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     bulkhead = new Bulkhead({
       name: 'test-bulkhead',
       maxConcurrent: 2,
@@ -34,8 +35,8 @@ describe('Bulkhead', () => {
   
   describe('Basic Execution', () => {
     it('should execute tasks within concurrency limit', async () => {
-      const task1 = jest.fn().mockResolvedValue('result1');
-      const task2 = jest.fn().mockResolvedValue('result2');
+      const task1 = vi.fn().mockResolvedValue('result1');
+      const task2 = vi.fn().mockResolvedValue('result2');
       
       const results = await Promise.all([
         bulkhead.execute(task1),
@@ -49,7 +50,7 @@ describe('Bulkhead', () => {
     
     it('should queue tasks when at capacity', async () => {
       const slowTask = () => new Promise(resolve => setTimeout(() => resolve('slow'), 100));
-      const fastTask = jest.fn().mockResolvedValue('fast');
+      const fastTask = vi.fn().mockResolvedValue('fast');
       
       // Fill up concurrent capacity
       const promise1 = bulkhead.execute(slowTask);
@@ -171,7 +172,7 @@ describe('SemaphoreBulkhead', () => {
   let semaphore: SemaphoreBulkhead;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     semaphore = new SemaphoreBulkhead(2, 'test-semaphore');
   });
   
@@ -221,7 +222,7 @@ describe('SemaphoreBulkhead', () => {
   
   describe('withPermit Helper', () => {
     it('should execute function with permit', async () => {
-      const task = jest.fn().mockResolvedValue('result');
+      const task = vi.fn().mockResolvedValue('result');
       
       const result = await semaphore.withPermit(task);
       
@@ -234,7 +235,7 @@ describe('SemaphoreBulkhead', () => {
     });
     
     it('should release permit even on error', async () => {
-      const task = jest.fn().mockRejectedValue(new Error('task error'));
+      const task = vi.fn().mockRejectedValue(new Error('task error'));
       
       await expect(semaphore.withPermit(task)).rejects.toThrow('task error');
       

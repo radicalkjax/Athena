@@ -1,54 +1,55 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 /**
  * Tests for AI Service Manager
  */
 
 // Mock all dependencies before imports to prevent initialization issues
-jest.mock('@/services/cache/redisFactory', () => ({
-  getCacheManager: jest.fn().mockReturnValue({
-    get: jest.fn(),
-    set: jest.fn(),
-    delete: jest.fn()
+vi.mock('@/services/cache/redisFactory', () => ({
+  getCacheManager: vi.fn().mockReturnValue({
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn()
   })
 }));
 
-jest.mock('@/services/pool/aiClientPool', () => ({
+vi.mock('@/services/pool/aiClientPool', () => ({
   aiClientPool: {
-    acquire: jest.fn(),
-    release: jest.fn(),
-    clearPools: jest.fn().mockResolvedValue(undefined),
-    getPoolStats: jest.fn().mockReturnValue({})
+    acquire: vi.fn(),
+    release: vi.fn(),
+    clearPools: vi.fn().mockResolvedValue(undefined),
+    getPoolStats: vi.fn().mockReturnValue({})
   }
 }));
 
-jest.mock('@/services/pool/bulkheadManager', () => ({
+vi.mock('@/services/pool/bulkheadManager', () => ({
   bulkheadManager: {
-    getBulkhead: jest.fn().mockReturnValue({
-      execute: jest.fn(fn => fn())
+    getBulkhead: vi.fn().mockReturnValue({
+      execute: vi.fn(fn => fn())
     })
   }
 }));
 
-jest.mock('@/services/apm/manager', () => ({
+vi.mock('@/services/apm/manager', () => ({
   apmManager: {
-    startSpan: jest.fn(),
-    endSpan: jest.fn(),
-    recordMetric: jest.fn(),
-    recordAIProviderMetrics: jest.fn()
+    startSpan: vi.fn(),
+    endSpan: vi.fn(),
+    recordMetric: vi.fn(),
+    recordAIProviderMetrics: vi.fn()
   }
 }));
 
-jest.mock('@/services/config/featureFlags', () => ({
+vi.mock('@/services/config/featureFlags', () => ({
   featureFlags: {
-    isEnabled: jest.fn().mockReturnValue(false),
-    getCacheConfig: jest.fn().mockReturnValue({ ttl: 300 })
+    isEnabled: vi.fn().mockReturnValue(false),
+    getCacheConfig: vi.fn().mockReturnValue({ ttl: 300 })
   }
 }));
 
-jest.mock('@/services/ai/circuitBreakerFactory', () => ({
+vi.mock('@/services/ai/circuitBreakerFactory', () => ({
   circuitBreakerFactory: {
-    getBreaker: jest.fn().mockReturnValue({
-      execute: jest.fn(fn => fn()),
-      getState: jest.fn().mockReturnValue('closed')
+    getBreaker: vi.fn().mockReturnValue({
+      execute: vi.fn(fn => fn()),
+      getState: vi.fn().mockReturnValue('closed')
     })
   }
 }));
@@ -58,41 +59,41 @@ import { StreamingAnalysis } from '@/services/ai/types';
 import { logger } from '@/shared/logging/logger';
 
 // Mock dependencies
-jest.mock('@/services/claude', () => ({
+vi.mock('@/services/claude', () => ({
   claudeService: {
-    hasValidApiKey: jest.fn(),
-    deobfuscateCode: jest.fn(),
-    analyzeVulnerabilities: jest.fn(),
-    deobfuscateCodeStreaming: jest.fn(),
-    analyzeVulnerabilitiesStreaming: jest.fn()
+    hasValidApiKey: vi.fn(),
+    deobfuscateCode: vi.fn(),
+    analyzeVulnerabilities: vi.fn(),
+    deobfuscateCodeStreaming: vi.fn(),
+    analyzeVulnerabilitiesStreaming: vi.fn()
   }
 }));
 
-jest.mock('@/services/openai', () => ({
+vi.mock('@/services/openai', () => ({
   openAIService: {
-    hasValidApiKey: jest.fn(),
-    deobfuscateCode: jest.fn(),
-    analyzeVulnerabilities: jest.fn(),
-    deobfuscateCodeStreaming: jest.fn(),
-    analyzeVulnerabilitiesStreaming: jest.fn()
+    hasValidApiKey: vi.fn(),
+    deobfuscateCode: vi.fn(),
+    analyzeVulnerabilities: vi.fn(),
+    deobfuscateCodeStreaming: vi.fn(),
+    analyzeVulnerabilitiesStreaming: vi.fn()
   }
 }));
 
-jest.mock('@/services/deepseek', () => ({
+vi.mock('@/services/deepseek', () => ({
   deepSeekService: {
-    hasValidApiKey: jest.fn(),
-    deobfuscateCode: jest.fn(),
-    analyzeVulnerabilities: jest.fn(),
-    deobfuscateCodeStreaming: jest.fn(),
-    analyzeVulnerabilitiesStreaming: jest.fn()
+    hasValidApiKey: vi.fn(),
+    deobfuscateCode: vi.fn(),
+    analyzeVulnerabilities: vi.fn(),
+    deobfuscateCodeStreaming: vi.fn(),
+    analyzeVulnerabilitiesStreaming: vi.fn()
   }
 }));
 
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   }
 }));
 
@@ -107,15 +108,15 @@ describe.skip('AIServiceManager - skipped due to complex initialization with int
   
   // Mock timers to prevent hanging on intervals
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
   
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset singleton instance
     (AIServiceManager as any).instance = null;
     manager = AIServiceManager.getInstance();
@@ -196,10 +197,10 @@ describe.skip('AIServiceManager - skipped due to complex initialization with int
     
     it('should support streaming analysis', async () => {
       const streamingCallbacks: StreamingAnalysis = {
-        onProgress: jest.fn(),
-        onChunk: jest.fn(),
-        onComplete: jest.fn(),
-        onError: jest.fn()
+        onProgress: vi.fn(),
+        onChunk: vi.fn(),
+        onComplete: vi.fn(),
+        onError: vi.fn()
       };
       
       (claudeService.deobfuscateCodeStreaming as jest.Mock).mockImplementation(

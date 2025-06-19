@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createDeepSeekClient, safeApiCall, sanitizeRequestData } from '@/services/apiClient';
@@ -11,9 +12,9 @@ import {
 } from '@/services/deepseek';
 
 // Mock dependencies
-jest.mock('@react-native-async-storage/async-storage');
-jest.mock('@/services/apiClient');
-jest.mock('@/shared/config/environment', () => ({
+vi.mock('@react-native-async-storage/async-storage');
+vi.mock('@/services/apiClient');
+vi.mock('@/shared/config/environment', () => ({
   env: {
     api: {
       deepseek: {
@@ -25,7 +26,7 @@ jest.mock('@/shared/config/environment', () => ({
     }
   }
 }));
-jest.mock('expo-constants', () => ({
+vi.mock('expo-constants', () => ({
   default: {
     expoConfig: {
       extra: {}
@@ -37,11 +38,11 @@ describe('DeepSeekService', () => {
   let mockClient: Partial<AxiosInstance>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock axios client
     mockClient = {
-      post: jest.fn(),
+      post: vi.fn(),
       defaults: { baseURL: 'https://api.deepseek.com/v1' }
     };
     
@@ -61,61 +62,24 @@ describe('DeepSeekService', () => {
     });
 
     it('should use stored API key when not provided', async () => {
-      // Reset modules to clear any cached service instance
-      jest.resetModules();
+      // Set up AsyncStorage mock to return a stored key
+      const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+      mockAsyncStorage.getItem.mockImplementation((key: string) => {
+        if (key === 'athena_deepseek_api_key') return Promise.resolve('stored-key');
+        if (key === 'athena_deepseek_base_url') return Promise.resolve(null);
+        return Promise.resolve(null);
+      });
       
-      // Re-mock dependencies after reset
-      jest.doMock('@react-native-async-storage/async-storage', () => ({
-        getItem: jest.fn().mockImplementation((key: string) => {
-          if (key === 'athena_deepseek_api_key') return Promise.resolve('stored-key');
-          if (key === 'athena_deepseek_base_url') return Promise.resolve(null);
-          return Promise.resolve(null);
-        }),
-        setItem: jest.fn(),
-        removeItem: jest.fn()
-      }));
+      const client = await initDeepSeek();
       
-      jest.doMock('@/services/apiClient', () => ({
-        createDeepSeekClient: jest.fn().mockReturnValue(mockClient),
-        safeApiCall: jest.fn(),
-        sanitizeRequestData: jest.fn(data => data)
-      }));
-      
-      jest.doMock('@/shared/config/environment', () => ({
-        env: {
-          api: {
-            deepseek: {
-              key: '',
-              baseUrl: 'https://api.deepseek.com/v1'
-            },
-            openai: { key: '', baseUrl: '' },
-            claude: { key: '', baseUrl: '' }
-          }
-        }
-      }));
-      
-      jest.doMock('expo-constants', () => ({
-        default: {
-          expoConfig: {
-            extra: {}
-          }
-        }
-      }));
-
-      // Re-import after mocking
-      const { initDeepSeek: initDeepSeekFresh } = require('@/services/deepseek');
-      const { createDeepSeekClient: mockCreateClient } = require('@/services/apiClient');
-      
-      const client = await initDeepSeekFresh();
-      
-      // Verify it used the stored key
-      expect(mockCreateClient).toHaveBeenCalledWith('stored-key', 'https://api.deepseek.com/v1');
-      expect(client).toBe(mockClient);
+      // Verify it attempted to get the stored key and used it
+      expect(mockAsyncStorage.getItem).toHaveBeenCalledWith('athena_deepseek_api_key');
+      expect(createDeepSeekClient).toHaveBeenCalledWith('stored-key', 'https://api.deepseek.com/v1');
     });
 
     it.skip('should throw error when no API key is available - skipped due to module caching issues', async () => {
       jest.resetModules();
-      jest.doMock('@/shared/config/environment', () => ({
+      vi.doMock('@/shared/config/environment', () => ({
         env: {
           api: {
             deepseek: {
@@ -128,7 +92,7 @@ describe('DeepSeekService', () => {
         }
       }));
       
-      jest.doMock('expo-constants', () => ({
+      vi.doMock('expo-constants', () => ({
         default: {
           expoConfig: {
             extra: {}
@@ -136,7 +100,7 @@ describe('DeepSeekService', () => {
         }
       }));
       
-      const { initDeepSeek: initWithoutKey } = require('@/services/deepseek');
+      const { initDeepSeek: initWithoutKey } = await import('@/services/deepseek');
       
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
 
@@ -174,7 +138,7 @@ describe('DeepSeekService', () => {
 
     it.skip('should return false when no API key exists - skipped due to module caching issues', async () => {
       jest.resetModules();
-      jest.doMock('@/shared/config/environment', () => ({
+      vi.doMock('@/shared/config/environment', () => ({
         env: {
           api: {
             deepseek: {
@@ -187,7 +151,7 @@ describe('DeepSeekService', () => {
         }
       }));
       
-      jest.doMock('expo-constants', () => ({
+      vi.doMock('expo-constants', () => ({
         default: {
           expoConfig: {
             extra: {}
@@ -195,7 +159,7 @@ describe('DeepSeekService', () => {
         }
       }));
       
-      const { hasDeepSeekApiKey: hasKeyWithoutEnv } = require('@/services/deepseek');
+      const { hasDeepSeekApiKey: hasKeyWithoutEnv } = await import('@/services/deepseek');
       
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
 
@@ -414,7 +378,7 @@ describe('DeepSeekService', () => {
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
       
       jest.resetModules();
-      jest.doMock('@/shared/config/environment', () => ({
+      vi.doMock('@/shared/config/environment', () => ({
         env: {
           api: {
             deepseek: {
@@ -427,7 +391,7 @@ describe('DeepSeekService', () => {
         }
       }));
       
-      jest.doMock('expo-constants', () => ({
+      vi.doMock('expo-constants', () => ({
         default: {
           expoConfig: {
             extra: {}
@@ -435,7 +399,7 @@ describe('DeepSeekService', () => {
         }
       }));
 
-      const { deobfuscateCode: deobfuscateWithoutKey } = require('@/services/deepseek');
+      const { deobfuscateCode: deobfuscateWithoutKey } = await import('@/services/deepseek');
 
       await expect(deobfuscateWithoutKey('code')).rejects.toThrow('deepseek API key not found');
     });

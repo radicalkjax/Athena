@@ -39,6 +39,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.analysisEngine = void 0;
 exports.initializeAnalysisEngine = initializeAnalysisEngine;
+const isBrowser = typeof window !== 'undefined';
 class AnalysisEngineBridge {
     constructor() {
         this.isInitialized = false;
@@ -48,7 +49,7 @@ class AnalysisEngineBridge {
             return;
         try {
             // Check if we're in a browser environment
-            if (typeof window !== 'undefined') {
+            if (isBrowser) {
                 // Dynamic import for web
                 const wasm = await Promise.resolve().then(() => __importStar(require('../core/analysis-engine/pkg-web/athena_analysis_engine')));
                 await wasm.default();

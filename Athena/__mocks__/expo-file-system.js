@@ -1,7 +1,8 @@
 // Mock for expo-file-system
-/* global jest */
 const mockFileSystem = {
   documentDirectory: 'file:///test/',
+  cacheDirectory: 'file:///cache/',
+  bundleDirectory: 'file:///bundle/',
   
   // Enum for encoding types
   EncodingType: {
@@ -13,55 +14,37 @@ const mockFileSystem = {
   _initialized: false,
   _fileData: {},
   
-  getInfoAsync: jest.fn(),
-  makeDirectoryAsync: jest.fn(),
-  readAsStringAsync: jest.fn(),
-  writeAsStringAsync: jest.fn(),
-  readDirectoryAsync: jest.fn(),
-  copyAsync: jest.fn(),
-  deleteAsync: jest.fn(),
+  getInfoAsync: async (path) => {
+    if (path.includes('local_models/') && !mockFileSystem._initialized) {
+      return { exists: false };
+    }
+    return { exists: true, size: 1024, isDirectory: false };
+  },
+  makeDirectoryAsync: async () => {
+    mockFileSystem._initialized = true;
+    return undefined;
+  },
+  readAsStringAsync: async (path) => {
+    if (mockFileSystem._fileData[path]) {
+      return mockFileSystem._fileData[path];
+    }
+    if (path.includes('config.json')) {
+      return '[]';
+    }
+    return '';
+  },
+  writeAsStringAsync: async (path, content) => {
+    mockFileSystem._fileData[path] = content;
+    return undefined;
+  },
+  readDirectoryAsync: async () => [],
+  copyAsync: async () => undefined,
+  deleteAsync: async () => undefined,
   
   // Reset function for tests
   _reset: () => {
     mockFileSystem._initialized = false;
     mockFileSystem._fileData = {};
-    mockFileSystem.getInfoAsync.mockClear();
-    mockFileSystem.makeDirectoryAsync.mockClear();
-    mockFileSystem.readAsStringAsync.mockClear();
-    mockFileSystem.writeAsStringAsync.mockClear();
-    mockFileSystem.readDirectoryAsync.mockClear();
-    mockFileSystem.copyAsync.mockClear();
-    mockFileSystem.deleteAsync.mockClear();
-    
-    // Set up default mock implementations
-    mockFileSystem.getInfoAsync.mockImplementation((path) => {
-      // Prevent recursive initialization in tests
-      if (path.includes('local_models/') && !mockFileSystem._initialized) {
-        return Promise.resolve({ exists: false });
-      }
-      return Promise.resolve({ exists: true });
-    });
-    
-    mockFileSystem.makeDirectoryAsync.mockImplementation(() => {
-      mockFileSystem._initialized = true;
-      return Promise.resolve();
-    });
-    
-    mockFileSystem.readAsStringAsync.mockImplementation((path) => {
-      if (mockFileSystem._fileData[path]) {
-        return Promise.resolve(mockFileSystem._fileData[path]);
-      }
-      // Default return empty array for config.json
-      if (path.includes('config.json')) {
-        return Promise.resolve('[]');
-      }
-      return Promise.resolve('');
-    });
-    
-    mockFileSystem.writeAsStringAsync.mockImplementation((path, content) => {
-      mockFileSystem._fileData[path] = content;
-      return Promise.resolve();
-    });
   }
 };
 

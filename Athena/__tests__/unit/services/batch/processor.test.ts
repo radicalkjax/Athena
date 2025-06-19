@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 /**
  * Tests for batch processor
  */
@@ -7,20 +8,20 @@ import { BatchRequest } from '@/services/batch/types';
 import { aiServiceManager } from '@/services/ai/manager';
 
 // Mock AI service manager
-jest.mock('@/services/ai/manager', () => ({
+vi.mock('@/services/ai/manager', () => ({
   aiServiceManager: {
-    analyzeWithFailover: jest.fn(),
-    getCacheStats: jest.fn(),
+    analyzeWithFailover: vi.fn(),
+    getCacheStats: vi.fn(),
   },
 }));
 
 // Mock logger
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
@@ -28,7 +29,7 @@ describe('AnalysisBatchProcessor', () => {
   let processor: AnalysisBatchProcessor;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset singleton
     (AnalysisBatchProcessor as any).instance = undefined;
     processor = AnalysisBatchProcessor.getInstance({

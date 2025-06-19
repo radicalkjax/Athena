@@ -1,4 +1,15 @@
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest';
+
+// Mock the analysis engine bridge
+vi.mock('../../bridge', () => {
+  return import('../../bridge/__mocks__/analysis-engine-bridge-enhanced');
+});
+
+// Mock the types to include VulnerabilitySeverity
+vi.mock('../../bridge/types', () => {
+  return import('../../bridge/__mocks__/types');
+});
+
 import { analysisEngine } from '../../bridge';
 import { FileAnalysisResult, AnalysisError, VulnerabilitySeverity } from '../../bridge/types';
 import * as fs from 'fs/promises';

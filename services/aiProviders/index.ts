@@ -106,9 +106,15 @@ export async function analyzeContent(
 ) {
   const orchestrator = getOrchestrator();
   
+  // Handle base64 encoding if specified in metadata
+  let processedContent: string | ArrayBuffer | Buffer = content;
+  if (options?.metadata?.encoding === 'base64' && typeof content === 'string') {
+    processedContent = Buffer.from(content, 'base64');
+  }
+  
   const request = {
     id: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    content,
+    content: processedContent,
     analysisType: options?.analysisType,
     priority: options?.priority || 'normal',
     metadata: options?.metadata

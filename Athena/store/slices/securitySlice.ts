@@ -12,17 +12,23 @@ export const createSecuritySlice: SecuritySliceCreator = (set, get) => ({
   addMalwareSample: (sample) => {
     logger.info('Adding malware sample', { sampleId: sample.id, hash: sample.hash });
     
-    set((state) => ({
-      malwareSamples: [...state.malwareSamples, sample],
-    }));
-    
-    // Auto-generate security alert for new malware
-    get().addSecurityAlert({
-      type: 'malware_detected',
-      severity: 'high',
+    // Create security alert data first
+    const alert = {
+      type: 'malware_detected' as const,
+      severity: 'high' as const,
       message: `New malware sample added: ${sample.metadata.fileName}`,
       details: { sampleId: sample.id, hash: sample.hash },
-    });
+      id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+      timestamp: Date.now(),
+    };
+    
+    // Update both state and alerts atomically
+    set((state) => ({
+      malwareSamples: [...state.malwareSamples, sample],
+      securityAlerts: [alert, ...state.securityAlerts].slice(0, 100),
+    }));
+    
+    logger.warn('Security alert', alert);
   },
   
   removeMalwareSample: (id) => {
@@ -42,21 +48,23 @@ export const createSecuritySlice: SecuritySliceCreator = (set, get) => ({
   clearMalwareSamples: () => {
     logger.warn('Clearing all malware samples');
     
-    // Terminate all active sandbox sessions
-    const sessions = [...get().activeSandboxSessions];
-    sessions.forEach(session => {
-      get().endSandboxSession(session.id, 'terminated');
-    });
-    
-    set({
-      malwareSamples: [],
-    });
-    
-    get().addSecurityAlert({
-      type: 'suspicious_activity',
-      severity: 'medium',
+    // Create security alert data first
+    const alert = {
+      type: 'suspicious_activity' as const,
+      severity: 'medium' as const,
       message: 'All malware samples cleared',
-    });
+      id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now(),
+    };
+    
+    // Update state atomically - terminate sessions and clear samples
+    set((state) => ({
+      malwareSamples: [],
+      activeSandboxSessions: [], // Clear all sessions when clearing samples
+      securityAlerts: [alert, ...state.securityAlerts].slice(0, 100),
+    }));
+    
+    logger.warn('Security alert', alert);
   },
   
   // Security alert actions
@@ -86,7 +94,7 @@ export const createSecuritySlice: SecuritySliceCreator = (set, get) => ({
   
   // Sandbox session actions
   startSandboxSession: (sessionData) => {
-    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const session: SandboxSession = {
       ...sessionData,
       id: sessionId,
@@ -94,18 +102,25 @@ export const createSecuritySlice: SecuritySliceCreator = (set, get) => ({
       status: 'active',
     };
     
-    logger.info('Starting sandbox session', session);
-    
-    set((state) => ({
-      activeSandboxSessions: [...state.activeSandboxSessions, session],
-    }));
-    
-    get().addSecurityAlert({
-      type: 'suspicious_activity',
-      severity: 'low',
+    // Create security alert
+    const alert = {
+      type: 'suspicious_activity' as const,
+      severity: 'low' as const,
       message: `Sandbox session started for malware analysis`,
       details: { sessionId, malwareId: session.malwareId },
-    });
+      id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+      timestamp: Date.now(),
+    };
+    
+    logger.info('Starting sandbox session', session);
+    
+    // Update state atomically
+    set((state) => ({
+      activeSandboxSessions: [...state.activeSandboxSessions, session],
+      securityAlerts: [alert, ...state.securityAlerts].slice(0, 100),
+    }));
+    
+    logger.warn('Security alert', alert);
     
     return sessionId;
   },
@@ -113,42 +128,54 @@ export const createSecuritySlice: SecuritySliceCreator = (set, get) => ({
   endSandboxSession: (sessionId, status) => {
     logger.info('Ending sandbox session', { sessionId, status });
     
-    set((state) => ({
-      activeSandboxSessions: state.activeSandboxSessions.map(session =>
-        session.id === sessionId
-          ? { ...session, status, endTime: Date.now() }
-          : session
-      ).filter(session => session.status === 'active'),
-    }));
+    const currentState = get();
     
+    // Create alert if quarantined
+    const alerts = [...currentState.securityAlerts];
     if (status === 'quarantined') {
-      get().addSecurityAlert({
-        type: 'sandbox_breach',
-        severity: 'critical',
+      const alert = {
+        type: 'sandbox_breach' as const,
+        severity: 'critical' as const,
         message: `Sandbox session quarantined due to potential breach`,
         details: { sessionId },
-      });
+        id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        timestamp: Date.now(),
+      };
+      alerts.unshift(alert);
+      logger.warn('Security alert', alert);
     }
+    
+    // Remove the session from active sessions
+    set((state) => ({
+      activeSandboxSessions: state.activeSandboxSessions.filter(session => session.id !== sessionId),
+      securityAlerts: alerts.slice(0, 100),
+    }));
   },
   
   // Quarantine mode
   setQuarantineMode: (enabled) => {
     logger.warn('Quarantine mode changed', { enabled });
     
-    set({ isQuarantineMode: enabled });
-    
     if (enabled) {
-      // Terminate all active sessions when entering quarantine
-      const sessions = [...get().activeSandboxSessions];
-      sessions.forEach(session => {
-        get().endSandboxSession(session.id, 'quarantined');
-      });
-      
-      get().addSecurityAlert({
-        type: 'suspicious_activity',
-        severity: 'critical',
+      // Create alert for quarantine activation
+      const alert = {
+        type: 'suspicious_activity' as const,
+        severity: 'critical' as const,
         message: 'Quarantine mode activated - all sandbox sessions terminated',
-      });
+        id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        timestamp: Date.now(),
+      };
+      
+      // Terminate all sessions and enable quarantine atomically
+      set((state) => ({
+        isQuarantineMode: true,
+        activeSandboxSessions: [], // Clear all sessions
+        securityAlerts: [alert, ...state.securityAlerts].slice(0, 100),
+      }));
+      
+      logger.warn('Security alert', alert);
+    } else {
+      set({ isQuarantineMode: false });
     }
   },
 });

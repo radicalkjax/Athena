@@ -2,6 +2,7 @@
  * Tests for the cache manager
  */
 
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AnalysisCacheManager, resetCacheManager } from '@/services/cache/manager';
 import { CacheConfig } from '@/services/cache/types';
 
@@ -124,14 +125,14 @@ describe('AnalysisCacheManager', () => {
   
   describe('TTL and Expiration', () => {
     it('should expire entries after TTL', async () => {
-      jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       
       const key = 'test-key';
       const value = { deobfuscatedCode: 'test', analysisReport: 'report' };
       
       // Mock Date.now to return a specific time
       const startTime = Date.now();
-      jest.spyOn(Date, 'now').mockReturnValue(startTime);
+      vi.spyOn(Date, 'now').mockReturnValue(startTime);
       
       await cacheManager.set(key, value);
       
@@ -139,19 +140,19 @@ describe('AnalysisCacheManager', () => {
       expect(await cacheManager.get(key)).toEqual(value);
       
       // Advance Date.now past TTL
-      jest.spyOn(Date, 'now').mockReturnValue(startTime + 1100);
+      vi.spyOn(Date, 'now').mockReturnValue(startTime + 1100);
       
       // Should be expired
       expect(await cacheManager.get(key)).toBeNull();
       
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
     
     it('should prune expired entries', async () => {
       // Mock Date.now for consistent time
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const startTime = Date.now();
-      jest.spyOn(Date, 'now').mockReturnValue(startTime);
+      vi.spyOn(Date, 'now').mockReturnValue(startTime);
       
       // Create a custom memory storage mock to control the behavior
       const mockStorage = {
@@ -187,7 +188,7 @@ describe('AnalysisCacheManager', () => {
       await cacheManager.set('key3', { deobfuscatedCode: 'test3', analysisReport: 'report3' });
       
       // Advance time past TTL (1 second)
-      jest.spyOn(Date, 'now').mockReturnValue(startTime + 1100);
+      vi.spyOn(Date, 'now').mockReturnValue(startTime + 1100);
       
       // Prune should remove expired entries
       const pruned = await cacheManager.prune();
@@ -197,7 +198,7 @@ describe('AnalysisCacheManager', () => {
       expect(mockStorage.cache.size).toBe(0);
       
       // Restore Date.now
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
   

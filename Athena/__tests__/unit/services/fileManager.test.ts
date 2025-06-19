@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import {
@@ -16,19 +17,35 @@ import {
 import type { MalwareFile } from '@/types';
 
 // Mock expo modules
-jest.mock('expo-file-system');
-jest.mock('expo-document-picker');
+vi.mock('expo-file-system', () => ({
+  documentDirectory: 'file:///test/',
+  EncodingType: {
+    Base64: 'base64',
+    UTF8: 'utf8'
+  },
+  getInfoAsync: vi.fn(),
+  makeDirectoryAsync: vi.fn(),
+  readAsStringAsync: vi.fn(),
+  writeAsStringAsync: vi.fn(),
+  readDirectoryAsync: vi.fn(),
+  copyAsync: vi.fn(),
+  deleteAsync: vi.fn(),
+}));
+
+vi.mock('expo-document-picker', () => ({
+  getDocumentAsync: vi.fn(),
+}));
 
 describe('FileManager Service', () => {
   const mockDocumentDirectory = 'file:///test/';
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('initFileSystem', () => {
     it('should initialize file system when directory exists', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
       mockGetInfoAsync.mockResolvedValue({ exists: true, isDirectory: true } as any);
       
       await initFileSystem();
@@ -38,8 +55,8 @@ describe('FileManager Service', () => {
     });
 
     it('should create directory when it does not exist', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
-      const mockMakeDirectoryAsync = jest.mocked(FileSystem.makeDirectoryAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
+      const mockMakeDirectoryAsync = vi.mocked(FileSystem.makeDirectoryAsync);
       
       mockGetInfoAsync.mockResolvedValue({ exists: false, isDirectory: false } as any);
       mockMakeDirectoryAsync.mockResolvedValue(undefined);
@@ -51,7 +68,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when initialization fails', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
       mockGetInfoAsync.mockRejectedValue(new Error('File system error'));
       
       await expect(initFileSystem()).rejects.toThrow('Failed to initialize file system');
@@ -60,8 +77,8 @@ describe('FileManager Service', () => {
 
   describe('pickFile', () => {
     it('should return MalwareFile when file is picked successfully', async () => {
-      const mockGetDocumentAsync = jest.mocked(DocumentPicker.getDocumentAsync);
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockGetDocumentAsync = vi.mocked(DocumentPicker.getDocumentAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       
       const mockAsset = {
         name: 'test.js',
@@ -90,7 +107,7 @@ describe('FileManager Service', () => {
     });
 
     it('should return null when picker is canceled', async () => {
-      const mockGetDocumentAsync = jest.mocked(DocumentPicker.getDocumentAsync);
+      const mockGetDocumentAsync = vi.mocked(DocumentPicker.getDocumentAsync);
       
       mockGetDocumentAsync.mockResolvedValue({
         canceled: true,
@@ -103,11 +120,11 @@ describe('FileManager Service', () => {
     });
 
     it('should handle binary files without reading content', async () => {
-      const mockGetDocumentAsync = jest.mocked(DocumentPicker.getDocumentAsync);
+      const mockGetDocumentAsync = vi.mocked(DocumentPicker.getDocumentAsync);
       
       const mockAsset = {
         name: 'malware.exe',
-        size: 2048000, // 2MB
+        size: 2048000, // 2MB - larger than 1MB limit
         uri: 'file:///malware.exe',
         mimeType: 'application/x-msdownload'
       };
@@ -117,6 +134,9 @@ describe('FileManager Service', () => {
         assets: [mockAsset]
       } as any);
       
+      // Mock file reading for WASM validation
+      vi.mocked(FileSystem.readAsStringAsync).mockResolvedValue('mock-base64-content');
+      
       const result = await pickFile();
       
       expect(result).toMatchObject({
@@ -124,13 +144,18 @@ describe('FileManager Service', () => {
         size: 2048000,
         uri: 'file:///malware.exe',
         type: 'application/x-msdownload',
-        content: ''
+        content: '' // Binary files don't have content loaded
       });
-      expect(FileSystem.readAsStringAsync).not.toHaveBeenCalled();
+      
+      // readAsStringAsync is called for WASM validation but not for content
+      const readCalls = vi.mocked(FileSystem.readAsStringAsync).mock.calls;
+      // Should only be called for base64 reading in validateFileWithWASM, not for text content
+      expect(readCalls).toHaveLength(1);
+      expect(readCalls[0]).toEqual(['file:///malware.exe', { encoding: 'base64' }]);
     });
 
     it('should throw error when picker fails', async () => {
-      const mockGetDocumentAsync = jest.mocked(DocumentPicker.getDocumentAsync);
+      const mockGetDocumentAsync = vi.mocked(DocumentPicker.getDocumentAsync);
       mockGetDocumentAsync.mockRejectedValue(new Error('Picker error'));
       
       await expect(pickFile()).rejects.toThrow('Failed to pick file');
@@ -139,7 +164,7 @@ describe('FileManager Service', () => {
 
   describe('saveFile', () => {
     it('should save file to document directory', async () => {
-      const mockCopyAsync = jest.mocked(FileSystem.copyAsync);
+      const mockCopyAsync = vi.mocked(FileSystem.copyAsync);
       mockCopyAsync.mockResolvedValue(undefined);
       
       const fileInfo = {
@@ -159,7 +184,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when save fails', async () => {
-      const mockCopyAsync = jest.mocked(FileSystem.copyAsync);
+      const mockCopyAsync = vi.mocked(FileSystem.copyAsync);
       mockCopyAsync.mockRejectedValue(new Error('Copy error'));
       
       const fileInfo = {
@@ -175,7 +200,7 @@ describe('FileManager Service', () => {
 
   describe('readFileAsText', () => {
     it('should read file content as text', async () => {
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       mockReadAsStringAsync.mockResolvedValue('File content');
       
       const result = await readFileAsText('file:///test.txt');
@@ -185,7 +210,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when read fails', async () => {
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       mockReadAsStringAsync.mockRejectedValue(new Error('Read error'));
       
       await expect(readFileAsText('file:///test.txt')).rejects.toThrow('Failed to read file');
@@ -194,7 +219,7 @@ describe('FileManager Service', () => {
 
   describe('readFileAsBase64', () => {
     it('should read file content as base64', async () => {
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       mockReadAsStringAsync.mockResolvedValue('SGVsbG8gV29ybGQ=');
       
       const result = await readFileAsBase64('file:///test.txt');
@@ -207,7 +232,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when read fails', async () => {
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       mockReadAsStringAsync.mockRejectedValue(new Error('Read error'));
       
       await expect(readFileAsBase64('file:///test.txt')).rejects.toThrow('Failed to read file as base64');
@@ -223,7 +248,7 @@ describe('FileManager Service', () => {
         modificationTime: Date.now()
       };
       
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
       mockGetInfoAsync.mockResolvedValue(mockFileInfo as any);
       
       const result = await getFileInfo('file:///test.txt');
@@ -233,7 +258,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when get info fails', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
       mockGetInfoAsync.mockRejectedValue(new Error('Info error'));
       
       await expect(getFileInfo('file:///test.txt')).rejects.toThrow('Failed to get file info');
@@ -242,7 +267,7 @@ describe('FileManager Service', () => {
 
   describe('deleteFile', () => {
     it('should delete file successfully', async () => {
-      const mockDeleteAsync = jest.mocked(FileSystem.deleteAsync);
+      const mockDeleteAsync = vi.mocked(FileSystem.deleteAsync);
       mockDeleteAsync.mockResolvedValue(undefined);
       
       const result = await deleteFile('file:///test.txt');
@@ -252,7 +277,7 @@ describe('FileManager Service', () => {
     });
 
     it('should return false when delete fails', async () => {
-      const mockDeleteAsync = jest.mocked(FileSystem.deleteAsync);
+      const mockDeleteAsync = vi.mocked(FileSystem.deleteAsync);
       mockDeleteAsync.mockRejectedValue(new Error('Delete error'));
       
       const result = await deleteFile('file:///test.txt');
@@ -263,8 +288,8 @@ describe('FileManager Service', () => {
 
   describe('createMalwareFile', () => {
     it('should create MalwareFile from JavaScript file', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       
       mockGetInfoAsync.mockResolvedValue({
         exists: true,
@@ -288,8 +313,8 @@ describe('FileManager Service', () => {
     });
 
     it('should create MalwareFile from Python file', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       
       mockGetInfoAsync.mockResolvedValue({
         exists: true,
@@ -311,7 +336,7 @@ describe('FileManager Service', () => {
     });
 
     it('should create MalwareFile from binary file without content', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
       
       mockGetInfoAsync.mockResolvedValue({
         exists: true,
@@ -332,7 +357,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when file does not exist', async () => {
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
       mockGetInfoAsync.mockResolvedValue({ exists: false } as any);
       
       await expect(createMalwareFile('file:///missing.txt')).rejects.toThrow('Failed to create malware file object');
@@ -341,7 +366,7 @@ describe('FileManager Service', () => {
 
   describe('listFiles', () => {
     it('should list files in document directory', async () => {
-      const mockReadDirectoryAsync = jest.mocked(FileSystem.readDirectoryAsync);
+      const mockReadDirectoryAsync = vi.mocked(FileSystem.readDirectoryAsync);
       mockReadDirectoryAsync.mockResolvedValue(['file1.txt', 'file2.js', 'file3.exe']);
       
       const result = await listFiles();
@@ -351,7 +376,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when listing fails', async () => {
-      const mockReadDirectoryAsync = jest.mocked(FileSystem.readDirectoryAsync);
+      const mockReadDirectoryAsync = vi.mocked(FileSystem.readDirectoryAsync);
       mockReadDirectoryAsync.mockRejectedValue(new Error('Directory error'));
       
       await expect(listFiles()).rejects.toThrow('Failed to list files');
@@ -360,9 +385,9 @@ describe('FileManager Service', () => {
 
   describe('listMalwareFiles', () => {
     it('should list and create MalwareFile objects', async () => {
-      const mockReadDirectoryAsync = jest.mocked(FileSystem.readDirectoryAsync);
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
-      const mockReadAsStringAsync = jest.mocked(FileSystem.readAsStringAsync);
+      const mockReadDirectoryAsync = vi.mocked(FileSystem.readDirectoryAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
+      const mockReadAsStringAsync = vi.mocked(FileSystem.readAsStringAsync);
       
       mockReadDirectoryAsync.mockResolvedValue(['test.js', 'malware.exe']);
       
@@ -396,8 +421,8 @@ describe('FileManager Service', () => {
     });
 
     it('should handle errors for individual files gracefully', async () => {
-      const mockReadDirectoryAsync = jest.mocked(FileSystem.readDirectoryAsync);
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
+      const mockReadDirectoryAsync = vi.mocked(FileSystem.readDirectoryAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
       
       mockReadDirectoryAsync.mockResolvedValue(['good.txt', 'bad.txt']);
       
@@ -420,9 +445,9 @@ describe('FileManager Service', () => {
 
   describe('cleanupOldFiles', () => {
     it('should delete files older than specified days', async () => {
-      const mockReadDirectoryAsync = jest.mocked(FileSystem.readDirectoryAsync);
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
-      const mockDeleteAsync = jest.mocked(FileSystem.deleteAsync);
+      const mockReadDirectoryAsync = vi.mocked(FileSystem.readDirectoryAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
+      const mockDeleteAsync = vi.mocked(FileSystem.deleteAsync);
       
       const cutoffTime = Date.now() - (8 * 24 * 60 * 60 * 1000); // 8 days ago
       
@@ -450,9 +475,9 @@ describe('FileManager Service', () => {
     });
 
     it('should handle delete failures gracefully', async () => {
-      const mockReadDirectoryAsync = jest.mocked(FileSystem.readDirectoryAsync);
-      const mockGetInfoAsync = jest.mocked(FileSystem.getInfoAsync);
-      const mockDeleteAsync = jest.mocked(FileSystem.deleteAsync);
+      const mockReadDirectoryAsync = vi.mocked(FileSystem.readDirectoryAsync);
+      const mockGetInfoAsync = vi.mocked(FileSystem.getInfoAsync);
+      const mockDeleteAsync = vi.mocked(FileSystem.deleteAsync);
       
       const cutoffTime = Date.now() - (8 * 24 * 60 * 60 * 1000);
       
@@ -474,7 +499,7 @@ describe('FileManager Service', () => {
     });
 
     it('should throw error when cleanup fails completely', async () => {
-      const mockReadDirectoryAsync = jest.mocked(FileSystem.readDirectoryAsync);
+      const mockReadDirectoryAsync = vi.mocked(FileSystem.readDirectoryAsync);
       mockReadDirectoryAsync.mockRejectedValue(new Error('Directory error'));
       
       await expect(cleanupOldFiles()).rejects.toThrow('Failed to cleanup old files');

@@ -73,9 +73,9 @@ export async function analyzeMalwareStreaming(
     
     // Get file content
     let fileContent = malwareFile.content || '';
-    if (!fileContent && fileManagerService.readFile) {
+    if (!fileContent && fileManagerService.readFileAsText) {
       try {
-        fileContent = await fileManagerService.readFile(malwareFile.uri);
+        fileContent = await fileManagerService.readFileAsText(malwareFile.uri);
       } catch (error: unknown) {
         logger.error('Error reading file:', error);
       }
@@ -103,13 +103,6 @@ export async function analyzeMalwareStreaming(
         if (container?.id) {
           containerId = container.id;
           store.addContainer(container);
-          
-          // Upload malware to container
-          await containerDbService.uploadMalwareToContainer(
-            container.id,
-            malwareFile.name,
-            fileContent
-          );
           
           // Run analysis in container
           const containerResults = await containerDbService.runMalwareAnalysis(container.id);
@@ -185,9 +178,9 @@ export async function analyzeMalwareStreaming(
       });
       
       for (const vuln of vulnerabilityResult.vulnerabilities) {
-        if (vuln.cveId && metasploitService.searchMetasploitModule) {
+        if (vuln.cveId && metasploitService.searchVulnerabilityByCVE) {
           try {
-            const modules = await metasploitService.searchMetasploitModule(vuln.cveId);
+            const modules = await metasploitService.searchVulnerabilityByCVE(vuln.cveId);
             metasploitModules = metasploitModules.concat(modules);
           } catch (error: unknown) {
             logger.warn('Metasploit search error:', error);
@@ -197,11 +190,11 @@ export async function analyzeMalwareStreaming(
     }
     
     // Clean up container
-    if (containerId && containerDbService.stopContainer) {
+    if (containerId && containerDbService.removeContainer) {
       try {
-        await containerDbService.stopContainer(containerId);
+        await containerDbService.removeContainer(containerId);
       } catch (error: unknown) {
-        logger.error('Error stopping container:', error);
+        logger.error('Error removing container:', error);
       }
     }
     

@@ -3,7 +3,13 @@
  * Tests sandbox creation, execution, resource limits, and security policies
  */
 
-import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+
+// Mock the sandbox bridge
+vi.mock('../../bridge/sandbox-bridge', () => {
+  return import('../../bridge/__mocks__/sandbox-bridge');
+});
+
 import {
   initializeSandbox,
   getSandbox,

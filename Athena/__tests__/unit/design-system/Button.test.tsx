@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -13,7 +14,7 @@ describe('Button Component', () => {
   });
 
   it('should handle onPress event', () => {
-    const onPress = jest.fn();
+    const onPress = vi.fn();
     const { getByText } = render(
       <Button onPress={onPress}>Click Me</Button>
     );
@@ -43,7 +44,7 @@ describe('Button Component', () => {
   });
 
   it('should be disabled when disabled prop is true', () => {
-    const onPress = jest.fn();
+    const onPress = vi.fn();
     const { getByTestId } = render(
       <Button onPress={onPress} disabled testID="button">
         Disabled

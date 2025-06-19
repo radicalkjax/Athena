@@ -12,19 +12,17 @@ const mockDevice = {
   
   // Default mock values
   isDevice: true,
-  totalMemory: 4 * 1024 * 1024 * 1024, // 4GB
+  totalMemory: 8 * 1024 * 1024 * 1024, // 8GB
   osInternalBuildId: 'mock-build-id',
   
   // Mock functions
-  getDeviceTypeAsync: jest.fn().mockResolvedValue(1), // PHONE by default // eslint-disable-line no-undef
+  getDeviceTypeAsync: async () => 1, // PHONE by default
   
   // Reset function for tests
   _reset: () => {
     mockDevice.isDevice = true;
-    mockDevice.totalMemory = 4 * 1024 * 1024 * 1024;
+    mockDevice.totalMemory = 8 * 1024 * 1024 * 1024; // Keep consistent with initial value
     mockDevice.osInternalBuildId = 'mock-build-id';
-    mockDevice.getDeviceTypeAsync.mockClear();
-    mockDevice.getDeviceTypeAsync.mockResolvedValue(1);
   }
 };
 

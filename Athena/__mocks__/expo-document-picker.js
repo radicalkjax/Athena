@@ -1,11 +1,22 @@
 // Mock for expo-document-picker
-/* global jest */
 const mockDocumentPicker = {
-  getDocumentAsync: jest.fn(),
+  getDocumentAsync: async (options = {}) => ({
+    type: 'success',
+    uri: 'file:///mock/test.txt',
+    name: 'test.txt',
+    size: 1024,
+    mimeType: 'text/plain',
+  }),
+  
+  // Constants
+  DocumentPickerResult: {
+    SUCCESS: 'success',
+    CANCELLED: 'cancel',
+  },
   
   // Reset function for tests
   _reset: () => {
-    mockDocumentPicker.getDocumentAsync.mockClear();
+    // No-op for simple async functions
   }
 };
 

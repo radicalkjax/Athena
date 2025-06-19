@@ -2,6 +2,15 @@
 /**
  * Integration tests for AI Provider Service
  */
+
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
+
+// Mock WASM modules before imports
+vi.mock('../../../wasm-modules/bridge', async () => {
+    const mocks = await import('../../../wasm-modules/bridge/__mocks__');
+    return mocks;
+});
+
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -92,7 +101,7 @@ describe('AI Provider Integration Tests', () => {
     });
     describe('Orchestration Strategies', () => {
         it('should route malware analysis to DeepSeek', () => __awaiter(void 0, void 0, void 0, function* () {
-            const mockAnalyze = jest.fn().mockResolvedValue({
+            const mockAnalyze = vi.fn().mockResolvedValue({
                 id: 'test',
                 verdict: 'malicious',
                 confidence: 0.9
@@ -115,7 +124,7 @@ describe('AI Provider Integration Tests', () => {
             // Mock multiple providers
             let callCount = 0;
             ['claude', 'deepseek', 'openai'].forEach(provider => {
-                orchestrator.providers.get(provider).analyze = jest.fn()
+                orchestrator.providers.get(provider).analyze = vi.fn()
                     .mockResolvedValue(mockResults[callCount++]);
             });
             const result = yield orchestrator.analyze({
@@ -133,9 +142,9 @@ describe('AI Provider Integration Tests', () => {
     describe('Error Handling', () => {
         it('should fallback when primary provider fails', () => __awaiter(void 0, void 0, void 0, function* () {
             // Mock primary failure and fallback success
-            orchestrator.providers.get('claude').analyze = jest.fn()
+            orchestrator.providers.get('claude').analyze = vi.fn()
                 .mockRejectedValue(new Error('Rate limited'));
-            orchestrator.providers.get('openai').analyze = jest.fn()
+            orchestrator.providers.get('openai').analyze = vi.fn()
                 .mockResolvedValue({
                 id: 'test',
                 verdict: 'clean',
@@ -153,7 +162,7 @@ describe('AI Provider Integration Tests', () => {
         it('should handle preprocessing failure gracefully', () => __awaiter(void 0, void 0, void 0, function* () {
             // Mock preprocessing failure
             const originalPreprocess = wasmPipeline_1.wasmPreprocessor.preprocess;
-            wasmPipeline_1.wasmPreprocessor.preprocess = jest.fn()
+            wasmPipeline_1.wasmPreprocessor.preprocess = vi.fn()
                 .mockRejectedValue(new Error('WASM error'));
             const result = yield orchestrator.analyze({
                 id: 'test-preprocess-fail',
@@ -172,7 +181,7 @@ describe('AI Provider Integration Tests', () => {
                 verdict: 'clean',
                 confidence: 0.9
             };
-            orchestrator.analyze = jest.fn().mockResolvedValue(mockResult);
+            orchestrator.analyze = vi.fn().mockResolvedValue(mockResult);
             const result = yield (0, index_1.analyzeContent)('Sample text for analysis', {
                 analysisType: 'GENERAL_ANALYSIS',
                 priority: 'normal'
@@ -186,7 +195,7 @@ describe('AI Provider Integration Tests', () => {
         }));
         it('should handle base64 encoded content', () => __awaiter(void 0, void 0, void 0, function* () {
             const base64Content = Buffer.from('test content').toString('base64');
-            orchestrator.analyze = jest.fn().mockResolvedValue({
+            orchestrator.analyze = vi.fn().mockResolvedValue({
                 id: 'test',
                 verdict: 'clean'
             });

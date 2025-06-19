@@ -1,30 +1,31 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AdaptiveCircuitBreaker } from '@/services/ai/adaptiveCircuitBreaker';
 
 // Mock APM manager
-jest.mock('@/services/apm/manager', () => ({
+vi.mock('@/services/apm/manager', () => ({
   apmManager: {
-    recordCircuitBreakerEvent: jest.fn(),
-    recordMetric: jest.fn(),
-    histogram: jest.fn(),
-    counter: jest.fn(),
+    recordCircuitBreakerEvent: vi.fn(),
+    recordMetric: vi.fn(),
+    histogram: vi.fn(),
+    counter: vi.fn(),
   },
 }));
 
 // Mock logger
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 describe('AdaptiveCircuitBreaker', () => {
   let breaker: AdaptiveCircuitBreaker;
-  const mockOperation = jest.fn();
+  const mockOperation = vi.fn();
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     breaker = new AdaptiveCircuitBreaker('test-breaker', {
       failureThreshold: 3,
       successThreshold: 2,

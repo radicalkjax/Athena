@@ -39,6 +39,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createFileProcessor = createFileProcessor;
 const types_1 = require("./types");
+const wasm_error_codes_1 = require("./wasm-error-codes");
 class FileProcessorBridge {
     constructor(config = {}) {
         this.isInitialized = false;
@@ -72,7 +73,7 @@ class FileProcessorBridge {
         const startTime = performance.now();
         try {
             // Platform-specific loading
-            if (typeof window !== 'undefined') {
+            if (wasm_error_codes_1.isBrowser) {
                 await this.loadForWeb();
             }
             else {
@@ -89,7 +90,7 @@ class FileProcessorBridge {
             }
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to initialize File Processor', types_1.WASMErrorCode.INIT_FAILED, error);
+            throw new types_1.WASMError('Failed to initialize File Processor', wasm_error_codes_1.WASMErrorCode.INIT_FAILED, error);
         }
     }
     async loadForWeb() {
@@ -100,7 +101,7 @@ class FileProcessorBridge {
             this.wasmModule = module;
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to load WASM module for web', types_1.WASMErrorCode.LOAD_FAILED, error);
+            throw new types_1.WASMError('Failed to load WASM module for web', wasm_error_codes_1.WASMErrorCode.LOAD_FAILED, error);
         }
     }
     async loadForNode() {
@@ -110,23 +111,24 @@ class FileProcessorBridge {
             this.wasmModule = module;
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to load WASM module for Node.js', types_1.WASMErrorCode.LOAD_FAILED, error);
+            throw new types_1.WASMError('Failed to load WASM module for Node.js', wasm_error_codes_1.WASMErrorCode.LOAD_FAILED, error);
         }
     }
     ensureInitialized() {
         if (!this.isInitialized) {
-            throw new types_1.WASMError('File Processor not initialized. Call initialize() first.', types_1.WASMErrorCode.NOT_INITIALIZED);
+            throw new types_1.WASMError('File Processor not initialized. Call initialize() first.', wasm_error_codes_1.WASMErrorCode.NOT_INITIALIZED);
         }
     }
     validateBuffer(buffer) {
         if (!buffer || !(buffer instanceof ArrayBuffer)) {
-            throw new types_1.WASMError('Invalid buffer provided', types_1.WASMErrorCode.INVALID_INPUT);
+            throw new types_1.WASMError('Invalid buffer provided', wasm_error_codes_1.WASMErrorCode.INVALID_INPUT);
         }
         if (buffer.byteLength === 0) {
-            throw new types_1.WASMError('Empty buffer provided', types_1.WASMErrorCode.INVALID_INPUT);
+            throw new types_1.WASMError('Empty buffer provided', wasm_error_codes_1.WASMErrorCode.INVALID_INPUT);
         }
-        if (buffer.byteLength > this.config.maxFileSize) {
-            throw new types_1.WASMError(`File size ${buffer.byteLength} exceeds maximum allowed size ${this.config.maxFileSize}`, types_1.WASMErrorCode.SIZE_LIMIT_EXCEEDED);
+        const maxSize = this.config.maxFileSize || types_1.MAX_FILE_SIZE;
+        if (buffer.byteLength > maxSize) {
+            throw new types_1.WASMError(`File size ${buffer.byteLength} exceeds maximum allowed size ${maxSize}`, wasm_error_codes_1.WASMErrorCode.SIZE_LIMIT_EXCEEDED);
         }
     }
     async detectFormat(buffer, filename) {
@@ -135,7 +137,7 @@ class FileProcessorBridge {
         const startTime = performance.now();
         try {
             const uint8Array = new Uint8Array(buffer);
-            const resultJson = await this.withTimeout(() => this.processor.detectFormat(uint8Array, filename || null), this.config.timeout);
+            const resultJson = await this.withTimeout(() => this.processor.detectFormat(uint8Array, filename || null), this.config.timeout || types_1.DEFAULT_TIMEOUT);
             const result = JSON.parse(resultJson);
             // Get MIME type for the detected format
             const mimeType = this.getMimeType(resultJson);
@@ -147,7 +149,7 @@ class FileProcessorBridge {
             };
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to detect file format', types_1.WASMErrorCode.PROCESSING_FAILED, error);
+            throw new types_1.WASMError('Failed to detect file format', wasm_error_codes_1.WASMErrorCode.PROCESSING_FAILED, error);
         }
     }
     async parseFile(buffer, formatHint) {
@@ -156,13 +158,13 @@ class FileProcessorBridge {
         const startTime = performance.now();
         try {
             const uint8Array = new Uint8Array(buffer);
-            const resultJson = await this.withTimeout(() => this.processor.parseFile(uint8Array, formatHint || null), this.config.timeout);
+            const resultJson = await this.withTimeout(() => this.processor.parseFile(uint8Array, formatHint || null), this.config.timeout || types_1.DEFAULT_TIMEOUT);
             const result = JSON.parse(resultJson);
             this.performanceMetrics.lastOperationTime = performance.now() - startTime;
             return result;
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to parse file', types_1.WASMErrorCode.PROCESSING_FAILED, error);
+            throw new types_1.WASMError('Failed to parse file', wasm_error_codes_1.WASMErrorCode.PROCESSING_FAILED, error);
         }
     }
     async validateFile(buffer) {
@@ -171,13 +173,13 @@ class FileProcessorBridge {
         const startTime = performance.now();
         try {
             const uint8Array = new Uint8Array(buffer);
-            const resultJson = await this.withTimeout(() => this.processor.validateFile(uint8Array), this.config.timeout);
+            const resultJson = await this.withTimeout(() => this.processor.validateFile(uint8Array), this.config.timeout || types_1.DEFAULT_TIMEOUT);
             const result = JSON.parse(resultJson);
             this.performanceMetrics.lastOperationTime = performance.now() - startTime;
             return result;
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to validate file', types_1.WASMErrorCode.PROCESSING_FAILED, error);
+            throw new types_1.WASMError('Failed to validate file', wasm_error_codes_1.WASMErrorCode.PROCESSING_FAILED, error);
         }
     }
     async extractStrings(buffer, minLength) {
@@ -186,13 +188,13 @@ class FileProcessorBridge {
         const startTime = performance.now();
         try {
             const uint8Array = new Uint8Array(buffer);
-            const resultJson = await this.withTimeout(() => this.processor.extractStrings(uint8Array, minLength || this.config.minStringLength || null), this.config.timeout);
+            const resultJson = await this.withTimeout(() => this.processor.extractStrings(uint8Array, minLength || this.config.minStringLength || null), this.config.timeout || types_1.DEFAULT_TIMEOUT);
             const result = JSON.parse(resultJson);
             this.performanceMetrics.lastOperationTime = performance.now() - startTime;
             return result;
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to extract strings', types_1.WASMErrorCode.PROCESSING_FAILED, error);
+            throw new types_1.WASMError('Failed to extract strings', wasm_error_codes_1.WASMErrorCode.PROCESSING_FAILED, error);
         }
     }
     async extractMetadata(buffer) {
@@ -201,29 +203,29 @@ class FileProcessorBridge {
         const startTime = performance.now();
         try {
             const uint8Array = new Uint8Array(buffer);
-            const resultJson = await this.withTimeout(() => this.processor.extractMetadata(uint8Array), this.config.timeout);
+            const resultJson = await this.withTimeout(() => this.processor.extractMetadata(uint8Array), this.config.timeout || types_1.DEFAULT_TIMEOUT);
             const result = JSON.parse(resultJson);
             this.performanceMetrics.lastOperationTime = performance.now() - startTime;
             return result;
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to extract metadata', types_1.WASMErrorCode.PROCESSING_FAILED, error);
+            throw new types_1.WASMError('Failed to extract metadata', wasm_error_codes_1.WASMErrorCode.PROCESSING_FAILED, error);
         }
     }
     async extractSuspiciousPatterns(content) {
         this.ensureInitialized();
         if (!content || typeof content !== 'string') {
-            throw new types_1.WASMError('Invalid content provided', types_1.WASMErrorCode.INVALID_INPUT);
+            throw new types_1.WASMError('Invalid content provided', wasm_error_codes_1.WASMErrorCode.INVALID_INPUT);
         }
         const startTime = performance.now();
         try {
-            const resultJson = await this.withTimeout(() => this.processor.extractSuspiciousPatterns(content), this.config.timeout);
+            const resultJson = await this.withTimeout(() => this.processor.extractSuspiciousPatterns(content), this.config.timeout || types_1.DEFAULT_TIMEOUT);
             const result = JSON.parse(resultJson);
             this.performanceMetrics.lastOperationTime = performance.now() - startTime;
             return result;
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to extract suspicious patterns', types_1.WASMErrorCode.PROCESSING_FAILED, error);
+            throw new types_1.WASMError('Failed to extract suspicious patterns', wasm_error_codes_1.WASMErrorCode.PROCESSING_FAILED, error);
         }
     }
     async isTextFile(buffer) {
@@ -234,7 +236,7 @@ class FileProcessorBridge {
             return this.processor.isTextFile(uint8Array);
         }
         catch (error) {
-            throw new types_1.WASMError('Failed to check if file is text', types_1.WASMErrorCode.PROCESSING_FAILED, error);
+            throw new types_1.WASMError('Failed to check if file is text', wasm_error_codes_1.WASMErrorCode.PROCESSING_FAILED, error);
         }
     }
     getMimeType(format) {
@@ -250,7 +252,7 @@ class FileProcessorBridge {
     async withTimeout(operation, timeout) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new types_1.WASMError('Operation timed out', types_1.WASMErrorCode.TIMEOUT));
+                reject(new types_1.WASMError('Operation timed out', wasm_error_codes_1.WASMErrorCode.TIMEOUT));
             }, timeout);
             try {
                 const result = operation();
@@ -273,11 +275,11 @@ class FileProcessorBridge {
     }
     getPerformanceMetrics() {
         return {
-            initTime: this.performanceMetrics.initTime || 0,
-            lastOperationTime: this.performanceMetrics.lastOperationTime || 0,
-            totalOperations: 0, // TODO: Track operations
-            averageOperationTime: 0, // TODO: Calculate average
-            peakMemoryUsage: 0 // TODO: Track memory
+            initializationTime: this.performanceMetrics.initTime || 0,
+            analysisTime: this.performanceMetrics.lastOperationTime || 0,
+            totalTime: (this.performanceMetrics.initTime || 0) + (this.performanceMetrics.lastOperationTime || 0),
+            memoryUsed: 0, // TODO: Track memory usage
+            throughput: 0 // TODO: Calculate throughput
         };
     }
 }
@@ -285,3 +287,4 @@ class FileProcessorBridge {
 function createFileProcessor(config) {
     return new FileProcessorBridge(config);
 }
+// Types are already exported as interfaces above

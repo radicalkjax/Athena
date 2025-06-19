@@ -38,10 +38,9 @@ The foundation of Athena's idea and research comes from this research paper by K
 - [📐 Architecture Documentation](./docs/ARCHITECTURE.md)
 - [🔌 API Integration](./docs/API_INTEGRATION.md)
 - [🔒 Container Isolation](./docs/CONTAINER_ISOLATION.md)
-- [💾 Database Setup](./Athena/docs/DATABASE_SETUP.md)
-- [📊 Container Monitoring](./Athena/docs/CONTAINER_MONITORING.md)
-- [🎨 Font Configuration](./docs/FONT_CONFIGURATION.md)
 - [🔧 Troubleshooting Guide](./docs/TROUBLESHOOTING.md)
+- [📊 Container Monitoring](./docs/components/CONTAINER_MONITORING.md)
+- [🎨 Font Configuration](./docs/FONT_CONFIGURATION.md)
 
 **Component Documentation:**
 - [AIModelSelector](./docs/components/AI_MODEL_SELECTOR.md)
@@ -49,7 +48,7 @@ The foundation of Athena's idea and research comes from this research paper by K
 - [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md)
 - [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md)
 - [FileUploader](./docs/components/FILE_UPLOADER.md)
-- [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md)
+- [ContainerMonitoring](./docs/components/CONTAINER_MONITORING.md)
 
 </td>
 </tr>
@@ -131,7 +130,7 @@ Before you begin, ensure you have the following installed:
 
 2. **Launch Interactive CLI** (recommended):
    ```bash
-   /scripts/athena
+   ./scripts/athena
    ```
    
    The beautiful interactive CLI will:
@@ -195,7 +194,7 @@ PGADMIN_PORT=5050
 ```
 
 3. You can use the provided `.env.example` file as a template
-4. For database setup, see the [Database Setup Documentation](./Athena/docs/DATABASE_SETUP.md)
+4. The database is configured using the environment variables above
 
 ## 📖 User Guide
 
@@ -337,7 +336,8 @@ Athena comes with comprehensive documentation to help you understand and use the
 
 ### 🏗️ Technical Documentation
 - **[📐 Architecture](./docs/ARCHITECTURE.md)** - System design and component overview
-- **[⚡ WASM Architecture](./docs/WASM-ARCHITECTURE-COMPLETE.md)** - WebAssembly modules and integration
+- **[⚡ WASM Architecture](./docs/WASM_ARCHITECTURE.md)** - WebAssembly modules and integration
+- **[🤖 Ensemble Architecture](./docs/ENSEMBLE_ARCHITECTURE.md)** - Multi-agent ensemble approach
 - **[🔌 API Integration](./docs/API_INTEGRATION.md)** - AI provider integration patterns
 - **[🛡️ Container Isolation](./docs/CONTAINER_ISOLATION.md)** - Security and sandboxing
 - **[⚡ Performance](./docs/performance/)** - Optimization, caching, and monitoring
@@ -350,7 +350,7 @@ Athena comes with comprehensive documentation to help you understand and use the
 - [AnalysisResults](./docs/components/ANALYSIS_RESULTS.md) - Documentation for the analysis results component
 - [ContainerConfigSelector](./docs/components/CONTAINER_CONFIG_SELECTOR.md) - Documentation for the container configuration component
 - [FileUploader](./docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
-- [ContainerMonitoring](./Athena/docs/components/CONTAINER_MONITORING.md) - Documentation for the container monitoring component
+- [ContainerMonitoring](./docs/components/CONTAINER_MONITORING.md) - Documentation for the container monitoring component
 
 ## 📱 Screenshots
 

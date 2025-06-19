@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   createContainerMonitoring,
   getContainerMonitoringByContainerId,
@@ -16,24 +17,24 @@ import * as containerService from '@/services/container';
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock dependencies
-jest.mock('uuid');
-jest.mock('@/services/container');
-jest.mock('@/models', () => ({
+vi.mock('uuid');
+vi.mock('@/services/container');
+vi.mock('@/models', () => ({
   ContainerMonitoring: {
-    create: jest.fn(),
-    findAll: jest.fn()
+    create: vi.fn(),
+    findAll: vi.fn()
   },
   NetworkActivity: {
-    create: jest.fn(),
-    findAll: jest.fn()
+    create: vi.fn(),
+    findAll: vi.fn()
   },
   FileActivity: {
-    create: jest.fn(),
-    findAll: jest.fn()
+    create: vi.fn(),
+    findAll: vi.fn()
   },
   ProcessActivity: {
-    create: jest.fn(),
-    findAll: jest.fn()
+    create: vi.fn(),
+    findAll: vi.fn()
   }
 }));
 
@@ -45,7 +46,7 @@ const mockContainerService = containerService as jest.Mocked<typeof containerSer
 
 describe('Monitoring Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUuidv4.mockReturnValue('test-uuid');
   });
 
@@ -335,14 +336,14 @@ describe('Monitoring Service', () => {
     let mockInterval: NodeJS.Timeout;
 
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       mockInterval = {} as NodeJS.Timeout;
-      jest.spyOn(global, 'setInterval').mockReturnValue(mockInterval);
-      jest.spyOn(global, 'clearInterval');
+      vi.spyOn(global, 'setInterval').mockReturnValue(mockInterval);
+      vi.spyOn(global, 'clearInterval');
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should start monitoring interval', async () => {
@@ -387,7 +388,7 @@ describe('Monitoring Service', () => {
     it('should clear monitoring interval', () => {
       // Mock clearInterval
       const originalClearInterval = global.clearInterval;
-      global.clearInterval = jest.fn();
+      global.clearInterval = vi.fn();
       
       const mockInterval = {} as NodeJS.Timeout;
       stopContainerMonitoring(mockInterval);

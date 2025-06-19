@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { TouchableOpacity } from 'react-native';
@@ -8,27 +9,27 @@ import { MalwareFile } from '@/types';
 import { formatFileSize } from '@/utils/helpers';
 
 // Mock dependencies
-jest.mock('@/services/fileManager');
-jest.mock('@/store');
-jest.mock('@/hooks', () => ({
-  useColorScheme: jest.fn().mockReturnValue('light'),
-  useThemeColor: jest.fn().mockReturnValue('#000000')
+vi.mock('@/services/fileManager');
+vi.mock('@/store');
+vi.mock('@/hooks', () => ({
+  useColorScheme: vi.fn().mockReturnValue('light'),
+  useThemeColor: vi.fn().mockReturnValue('#000000')
 }));
-jest.mock('@/utils/helpers', () => ({
-  formatFileSize: jest.fn((size: number) => `${size} bytes`),
-  truncateString: jest.fn((str: string, len: number) => str.length > len ? str.substring(0, len) + '...' : str)
+vi.mock('@/utils/helpers', () => ({
+  formatFileSize: vi.fn((size: number) => `${size} bytes`),
+  truncateString: vi.fn((str: string, len: number) => str.length > len ? str.substring(0, len) + '...' : str)
 }));
 
 // Mock react-icons
-jest.mock('react-icons/ai', () => ({
+vi.mock('react-icons/ai', () => ({
   AiFillAliwangwang: () => null
 }));
-jest.mock('react-icons/fa', () => ({
+vi.mock('react-icons/fa', () => ({
   FaTrash: () => null
 }));
 
 // Mock IconSymbol component
-jest.mock('@/components/ui/IconSymbol', () => {
+vi.mock('@/components/ui/IconSymbol', () => {
   const mockReact = require('react');
   return {
     IconSymbol: ({ name, testID, ...props }: any) => 
@@ -37,21 +38,21 @@ jest.mock('@/components/ui/IconSymbol', () => {
 });
 
 // Mock expo vector icons (used by IconSymbol)
-jest.mock('@expo/vector-icons/MaterialIcons', () => 'MaterialIcons');
+vi.mock('@expo/vector-icons/MaterialIcons', () => 'MaterialIcons');
 
 const mockFileManagerService = fileManagerService as jest.Mocked<typeof fileManagerService>;
 
 describe('FileUploader', () => {
-  const mockOnFileSelect = jest.fn();
-  const mockSelectMalwareFile = jest.fn();
-  const mockAddMalwareFile = jest.fn();
-  const mockRemoveMalwareFile = jest.fn();
+  const mockOnFileSelect = vi.fn();
+  const mockSelectMalwareFile = vi.fn();
+  const mockAddMalwareFile = vi.fn();
+  const mockRemoveMalwareFile = vi.fn();
   
   afterEach(async () => {
     // Clear all timers to prevent Jest environment tear down errors
-    jest.clearAllTimers();
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.clearAllTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     // Wait a bit to ensure all async operations complete
     await new Promise(resolve => setImmediate(resolve));
   });
@@ -84,8 +85,8 @@ describe('FileUploader', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
     
     // Mock store implementation
     (useAppStore as unknown as jest.Mock).mockImplementation((selector) => {
@@ -325,14 +326,14 @@ describe('FileUploader', () => {
     beforeEach(() => {
       // Mock as web environment
       (global as any).document = { 
-        createElement: jest.fn()
+        createElement: vi.fn()
       };
-      (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
-      (global as any).URL = { createObjectURL: jest.fn().mockReturnValue('blob:test'), revokeObjectURL: jest.fn() };
+      (global as any).window = { addEventListener: vi.fn(), removeEventListener: vi.fn() };
+      (global as any).URL = { createObjectURL: vi.fn().mockReturnValue('blob:test'), revokeObjectURL: vi.fn() };
       
       // Mock FileReader
-      (global as any).FileReader = jest.fn().mockImplementation(() => ({
-        readAsText: jest.fn(function(this: any) {
+      (global as any).FileReader = vi.fn().mockImplementation(() => ({
+        readAsText: vi.fn(function(this: any) {
           // Simulate async read
           setTimeout(() => {
             this.result = 'file content';
@@ -348,12 +349,12 @@ describe('FileUploader', () => {
       mockFileInput = {
         type: '',
         accept: '',
-        click: jest.fn(),
-        addEventListener: jest.fn(),
+        click: vi.fn(),
+        addEventListener: vi.fn(),
         onchange: null
       };
       
-      mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue(mockFileInput);
+      mockCreateElement = vi.spyOn(document, 'createElement').mockReturnValue(mockFileInput);
     });
 
     afterEach(() => {

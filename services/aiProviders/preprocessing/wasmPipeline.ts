@@ -85,7 +85,12 @@ export class WASMPreprocessingPipeline {
       });
       
       // Get network bridge for URL/domain analysis
-      this.networkBridge = getNetworkBridge();
+      try {
+        this.networkBridge = getNetworkBridge();
+      } catch (bridgeError) {
+        logger.warn('Failed to initialize network bridge, URL sanitization will be limited', { error: bridgeError });
+        // Continue without network bridge - URLs will be marked as invalid
+      }
       
       this.initialized = true;
       logger.info('WASM preprocessing pipeline initialized');
@@ -413,27 +418,7 @@ export class WASMPreprocessingPipeline {
       try {
         const urlObj = new URL(url);
         
-        // Check against known malicious domains
-        const maliciousCheck = await this.networkBridge!.analyzeDomain(urlObj.hostname);
-        
-        if (maliciousCheck.isMalicious) {
-          sanitized = sanitized.replace(url, '[MALICIOUS URL REMOVED]');
-          modified = true;
-          threats.push({
-            type: 'malicious_url',
-            severity: 'high',
-            description: `Malicious URL detected: ${urlObj.hostname}`
-          });
-        } else if (maliciousCheck.suspicious) {
-          // Keep but warn
-          threats.push({
-            type: 'suspicious_url',
-            severity: 'medium',
-            description: `Suspicious URL: ${urlObj.hostname}`
-          });
-        }
-        
-        // Check for URL shorteners
+        // Check for URL shorteners first (doesn't require network bridge)
         const shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'short.link'];
         if (shorteners.some(s => urlObj.hostname.includes(s))) {
           sanitized = sanitized.replace(url, '[URL SHORTENER REMOVED]');
@@ -443,6 +428,55 @@ export class WASMPreprocessingPipeline {
             severity: 'medium',
             description: 'URL shortener detected and removed'
           });
+          continue; // Skip to next URL
+        }
+        
+        // Check against known malicious domains if network bridge is available
+        if (this.networkBridge) {
+          try {
+            const maliciousCheck = await this.networkBridge.analyzeDomain(urlObj.hostname);
+            
+            if (maliciousCheck.isMalicious) {
+              sanitized = sanitized.replace(url, '[MALICIOUS URL REMOVED]');
+              modified = true;
+              threats.push({
+                type: 'malicious_url',
+                severity: 'high',
+                description: `Malicious URL detected: ${urlObj.hostname}`
+              });
+            } else if (maliciousCheck.suspicious) {
+              // Keep but warn
+              threats.push({
+                type: 'suspicious_url',
+                severity: 'medium',
+                description: `Suspicious URL: ${urlObj.hostname}`
+              });
+            }
+          } catch (bridgeError) {
+            // If network bridge fails, fall back to basic check
+            const knownMaliciousDomains = ['malicious.example.com', 'evil.com', 'phishing.net'];
+            if (knownMaliciousDomains.some(domain => urlObj.hostname.includes(domain))) {
+              sanitized = sanitized.replace(url, '[MALICIOUS URL REMOVED]');
+              modified = true;
+              threats.push({
+                type: 'malicious_url',
+                severity: 'high',
+                description: `Known malicious URL detected: ${urlObj.hostname}`
+              });
+            }
+          }
+        } else {
+          // Fallback: Basic malicious domain check without network bridge
+          const knownMaliciousDomains = ['malicious.example.com', 'evil.com', 'phishing.net'];
+          if (knownMaliciousDomains.some(domain => urlObj.hostname.includes(domain))) {
+            sanitized = sanitized.replace(url, '[MALICIOUS URL REMOVED]');
+            modified = true;
+            threats.push({
+              type: 'malicious_url',
+              severity: 'high',
+              description: `Known malicious URL detected: ${urlObj.hostname}`
+            });
+          }
         }
         
       } catch (e) {

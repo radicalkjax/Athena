@@ -4,7 +4,7 @@
 
 - Node.js 18+ installed
 - All dependencies installed (`npm install`)
-- Understanding of Jest and React Testing Library
+- Understanding of Vitest and React Testing Library
 
 ## Running Tests
 
@@ -17,34 +17,34 @@ npm test
 ### Run Specific Test File
 ```bash
 # Run a specific test file
-npx jest __tests__/unit/services/fileManager.test.ts --no-watch
+npx vitest __tests__/unit/services/fileManager.test.ts
 
 # Run recently fixed tests
-npx jest __tests__/unit/components/FileUploader.test.tsx --no-watch
-npx jest __tests__/unit/hooks/useStreamingAnalysis.test.tsx --no-watch
-npx jest __tests__/unit/services/config/featureFlags.test.ts --no-watch
+npx vitest __tests__/unit/components/FileUploader.test.tsx
+npx vitest __tests__/unit/hooks/useStreamingAnalysis.test.tsx
+npx vitest __tests__/unit/services/config/featureFlags.test.ts
 ```
 
 ### Run Tests by Directory
 ```bash
 # Run only unit tests (excluding integration)
-npm test -- --no-watch __tests__/unit/
+npx vitest __tests__/unit/
 
 # Run only component tests
-npm test -- --no-watch __tests__/unit/components/
+npx vitest __tests__/unit/components/
 
 # Run only service tests
-npm test -- --no-watch __tests__/unit/services/
+npx vitest __tests__/unit/services/
 ```
 
 ### Run Tests in Watch Mode
 ```bash
-npm test -- --watch
+npm run test:watch
 ```
 
-### Run Tests with Coverage
+### Run Tests with UI
 ```bash
-npm run test:coverage
+npx vitest --ui
 ```
 
 ### Handling Test Timeouts

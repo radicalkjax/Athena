@@ -1,6 +1,17 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react-native';
-import { useSecurityStore } from '../../../store/securityStore';
+import { useSecurityStore, resetSecurityStore } from '../../../store/securityStore';
 import { MalwareSample, SecurityAlert, SandboxSession } from '../../../store/types/security';
+
+// Mock logger to prevent any logging errors
+vi.mock('@/shared/logging/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 // Mock data
 const mockMalwareSample: MalwareSample = {
@@ -34,13 +45,8 @@ const mockSandboxSession: Omit<SandboxSession, 'id' | 'startTime' | 'status'> = 
 
 describe('Security Store', () => {
   beforeEach(() => {
-    // Reset store before each test
-    const { result } = renderHook(() => useSecurityStore());
-    act(() => {
-      result.current.clearMalwareSamples();
-      result.current.clearSecurityAlerts();
-      result.current.setQuarantineMode(false);
-    });
+    // Reset mock store before each test
+    resetSecurityStore();
   });
 
   describe('Malware Management', () => {

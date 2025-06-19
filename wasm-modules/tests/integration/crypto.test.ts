@@ -1,4 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+
+// Mock the crypto bridge to avoid loading real WASM modules
+vi.mock('../../bridge/crypto-bridge', () => {
+  return import('../../bridge/__mocks__/crypto-bridge');
+});
+
 import { cryptoBridge } from '../../bridge/crypto-bridge';
 
 describe('WASM Crypto Module Integration Tests', () => {

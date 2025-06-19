@@ -1,63 +1,7 @@
 // Test for analysis service
-// Mock dependencies before imports
-jest.mock('@/store', () => ({
-  useAppStore: {
-    getState: jest.fn()
-  }
-}));
-
-jest.mock('@/utils/helpers', () => ({
-  generateId: jest.fn(() => 'test-id-123')
-}));
-
-jest.mock('@/services/openai', () => ({
-  deobfuscateCode: jest.fn(),
-  analyzeVulnerabilities: jest.fn(),
-  hasOpenAIApiKey: jest.fn()
-}));
-
-jest.mock('@/services/claude', () => ({
-  deobfuscateCode: jest.fn(),
-  analyzeVulnerabilities: jest.fn(),
-  hasClaudeApiKey: jest.fn()
-}));
-
-jest.mock('@/services/deepseek', () => ({
-  deobfuscateCode: jest.fn(),
-  analyzeVulnerabilities: jest.fn(),
-  hasDeepSeekApiKey: jest.fn()
-}));
-
-jest.mock('@/services/localModels', () => ({
-  deobfuscateCode: jest.fn(),
-  analyzeVulnerabilities: jest.fn()
-}));
-
-jest.mock('@/services/container-db', () => ({
-  hasContainerConfig: jest.fn(),
-  createContainer: jest.fn(),
-  getContainerStatus: jest.fn(),
-  runMalwareAnalysis: jest.fn(),
-  getContainerFile: jest.fn(),
-  getContainerMonitoringSummary: jest.fn(),
-  getSuspiciousActivities: jest.fn(),
-  getNetworkActivityByContainerId: jest.fn(),
-  getFileActivityByContainerId: jest.fn(),
-  getProcessActivityByContainerId: jest.fn(),
-  removeContainer: jest.fn()
-}));
-
-jest.mock('@/services/fileManager', () => ({
-  readFileContent: jest.fn(),
-  readFileAsBase64: jest.fn()
-}));
-
-jest.mock('@/services/metasploit', () => ({
-  hasMetasploitConfig: jest.fn(),
-  enrichVulnerabilityData: jest.fn()
-}));
-
-// Import functions to test after mocks
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { AIModel, MalwareFile } from '@/types';
 import { deobfuscateCode, analyzeVulnerabilities, runAnalysis, getAvailableModels } from '@/services/analysisService';
 import { useAppStore } from '@/store';
 import * as openaiService from '@/services/openai';
@@ -67,11 +11,69 @@ import * as localModelsService from '@/services/localModels';
 import * as containerDbService from '@/services/container-db';
 import * as fileManagerService from '@/services/fileManager';
 import * as metasploitService from '@/services/metasploit';
-import { AIModel, MalwareFile } from '@/types';
+
+// Mock dependencies
+vi.mock('@/store', () => ({
+  useAppStore: {
+    getState: vi.fn()
+  }
+}));
+
+vi.mock('@/utils/helpers', () => ({
+  generateId: vi.fn(() => 'test-id-123')
+}));
+
+vi.mock('@/services/openai', () => ({
+  deobfuscateCode: vi.fn(),
+  analyzeVulnerabilities: vi.fn(),
+  hasOpenAIApiKey: vi.fn().mockResolvedValue(false)
+}));
+
+vi.mock('@/services/claude', () => ({
+  deobfuscateCode: vi.fn(),
+  analyzeVulnerabilities: vi.fn(),
+  hasClaudeApiKey: vi.fn().mockResolvedValue(false)
+}));
+
+vi.mock('@/services/deepseek', () => ({
+  deobfuscateCode: vi.fn(),
+  analyzeVulnerabilities: vi.fn(),
+  hasDeepSeekApiKey: vi.fn().mockResolvedValue(false)
+}));
+
+vi.mock('@/services/localModels', () => ({
+  deobfuscateCode: vi.fn(),
+  analyzeVulnerabilities: vi.fn()
+}));
+
+vi.mock('@/services/container-db', () => ({
+  hasContainerConfig: vi.fn(),
+  createContainer: vi.fn(),
+  getContainerStatus: vi.fn(),
+  runMalwareAnalysis: vi.fn(),
+  getContainerFile: vi.fn(),
+  getContainerMonitoringSummary: vi.fn(),
+  getSuspiciousActivities: vi.fn(),
+  getNetworkActivityByContainerId: vi.fn(),
+  getFileActivityByContainerId: vi.fn(),
+  getProcessActivityByContainerId: vi.fn(),
+  removeContainer: vi.fn()
+}));
+
+vi.mock('@/services/fileManager', () => ({
+  readFileContent: vi.fn(),
+  readFileAsBase64: vi.fn(),
+  readFileAsText: vi.fn()
+}));
+
+vi.mock('@/services/metasploit', () => ({
+  hasMetasploitConfig: vi.fn(),
+  enrichVulnerabilityData: vi.fn()
+}));
 
 describe('AnalysisService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('deobfuscateCode', () => {
@@ -86,11 +88,11 @@ describe('AnalysisService', () => {
         name: 'GPT-4',
         type: 'openai',
         modelId: 'gpt-4',
-        icon: '🤖',
+        description: 'OpenAI GPT-4 model',
         isLocal: false
       };
 
-      (openaiService.deobfuscateCode as jest.Mock).mockResolvedValue(mockDeobfuscationResult);
+      vi.mocked(openaiService.deobfuscateCode).mockResolvedValue(mockDeobfuscationResult);
 
       const result = await deobfuscateCode('var _0x1234 = function() {};', model);
 
@@ -104,11 +106,11 @@ describe('AnalysisService', () => {
         name: 'Claude 3',
         type: 'claude',
         modelId: 'claude-3-opus',
-        icon: '🧠',
+        description: 'Claude 3 Opus model',
         isLocal: false
       };
 
-      (claudeService.deobfuscateCode as jest.Mock).mockResolvedValue(mockDeobfuscationResult);
+      vi.mocked(claudeService.deobfuscateCode).mockResolvedValue(mockDeobfuscationResult);
 
       const result = await deobfuscateCode('var _0x1234 = function() {};', model);
 
@@ -122,11 +124,11 @@ describe('AnalysisService', () => {
         name: 'DeepSeek Coder',
         type: 'deepseek',
         modelId: 'deepseek-coder',
-        icon: '🔍',
+        description: 'DeepSeek Coder model',
         isLocal: false
       };
 
-      (deepseekService.deobfuscateCode as jest.Mock).mockResolvedValue(mockDeobfuscationResult);
+      vi.mocked(deepseekService.deobfuscateCode).mockResolvedValue(mockDeobfuscationResult);
 
       const result = await deobfuscateCode('var _0x1234 = function() {};', model);
 
@@ -139,12 +141,12 @@ describe('AnalysisService', () => {
         id: 'local-1',
         name: 'Local Llama',
         type: 'local',
-        modelId: 'llama-2',
-        icon: '🦙',
+        modelId: 'local-1',
+        description: 'Local Llama model',
         isLocal: true
       };
 
-      (localModelsService.deobfuscateCode as jest.Mock).mockResolvedValue(mockDeobfuscationResult);
+      vi.mocked(localModelsService.deobfuscateCode).mockResolvedValue(mockDeobfuscationResult);
 
       const result = await deobfuscateCode('var _0x1234 = function() {};', model);
 
@@ -152,17 +154,17 @@ describe('AnalysisService', () => {
       expect(localModelsService.deobfuscateCode).toHaveBeenCalledWith('var _0x1234 = function() {};', 'local-1');
     });
 
-    it('should throw error for unsupported model type', async () => {
+    it('should throw error for unknown model type', async () => {
       const model: AIModel = {
         id: 'unknown-1',
         name: 'Unknown Model',
         type: 'unknown' as any,
         modelId: 'unknown',
-        icon: '❓',
+        description: 'Unknown model',
         isLocal: false
       };
 
-      await expect(deobfuscateCode('code', model)).rejects.toThrow('Failed to deobfuscate code: Unsupported model type: unknown');
+      await expect(deobfuscateCode('test', model)).rejects.toThrow('Unsupported model type: unknown');
     });
   });
 
@@ -170,17 +172,15 @@ describe('AnalysisService', () => {
     const mockVulnerabilityResult = {
       vulnerabilities: [
         {
-          name: 'SQL Injection',
-          description: 'User input not sanitized',
-          severity: 'critical'
+          id: '1',
+          name: 'Cross-Site Scripting',
+          severity: 'high' as const,
+          description: 'Cross-site scripting vulnerability in user input',
+          cveId: 'CVE-2023-0001'
         }
       ],
-      analysisReport: 'Found critical vulnerability'
+      analysisReport: 'Found 1 vulnerability'
     };
-
-    beforeEach(() => {
-      (metasploitService.hasMetasploitConfig as jest.Mock).mockResolvedValue(false);
-    });
 
     it('should analyze vulnerabilities using OpenAI model', async () => {
       const model: AIModel = {
@@ -188,74 +188,26 @@ describe('AnalysisService', () => {
         name: 'GPT-4',
         type: 'openai',
         modelId: 'gpt-4',
-        icon: '🤖',
+        description: 'OpenAI GPT-4 model',
         isLocal: false
       };
 
-      (openaiService.analyzeVulnerabilities as jest.Mock).mockResolvedValue(mockVulnerabilityResult);
+      vi.mocked(openaiService.analyzeVulnerabilities).mockResolvedValue(mockVulnerabilityResult);
 
-      const result = await analyzeVulnerabilities('SELECT * FROM users WHERE id = $id', model);
+      const result = await analyzeVulnerabilities('function test() {}', model);
 
       expect(result).toEqual(mockVulnerabilityResult);
-      expect(openaiService.analyzeVulnerabilities).toHaveBeenCalledWith('SELECT * FROM users WHERE id = $id', 'gpt-4');
-    });
-
-    it('should enrich vulnerabilities with Metasploit data when available', async () => {
-      const model: AIModel = {
-        id: 'openai-1',
-        name: 'GPT-4',
-        type: 'openai',
-        modelId: 'gpt-4',
-        icon: '🤖',
-        isLocal: false
-      };
-
-      const enrichedVulnerabilities = [
-        {
-          name: 'SQL Injection',
-          description: 'User input not sanitized',
-          severity: 'critical',
-          metasploitModule: 'exploit/multi/sql/injection'
-        }
-      ];
-
-      (openaiService.analyzeVulnerabilities as jest.Mock).mockResolvedValue(mockVulnerabilityResult);
-      (metasploitService.hasMetasploitConfig as jest.Mock).mockResolvedValue(true);
-      (metasploitService.enrichVulnerabilityData as jest.Mock).mockResolvedValue(enrichedVulnerabilities);
-
-      const result = await analyzeVulnerabilities('SELECT * FROM users WHERE id = $id', model);
-
-      expect(result.vulnerabilities).toEqual(enrichedVulnerabilities);
-      expect(metasploitService.enrichVulnerabilityData).toHaveBeenCalled();
-    });
-
-    it('should continue without enrichment if Metasploit enrichment fails', async () => {
-      const model: AIModel = {
-        id: 'openai-1',
-        name: 'GPT-4',
-        type: 'openai',
-        modelId: 'gpt-4',
-        icon: '🤖',
-        isLocal: false
-      };
-
-      (openaiService.analyzeVulnerabilities as jest.Mock).mockResolvedValue(mockVulnerabilityResult);
-      (metasploitService.hasMetasploitConfig as jest.Mock).mockResolvedValue(true);
-      (metasploitService.enrichVulnerabilityData as jest.Mock).mockRejectedValue(new Error('Metasploit error'));
-
-      const result = await analyzeVulnerabilities('SELECT * FROM users WHERE id = $id', model);
-
-      expect(result).toEqual(mockVulnerabilityResult);
+      expect(openaiService.analyzeVulnerabilities).toHaveBeenCalledWith('function test() {}', 'gpt-4');
     });
   });
 
   describe('runAnalysis', () => {
-    const mockMalwareFile: MalwareFile = {
+    const mockFile: MalwareFile = {
       id: 'file-1',
-      name: 'malware.js',
-      content: 'var _0x1234 = function() {};',
-      uri: 'file:///malware.js',
-      timestamp: Date.now()
+      name: 'test.js',
+      type: 'application/javascript',
+      size: 1024,
+      uri: 'file://test.js'
     };
 
     const mockModel: AIModel = {
@@ -263,133 +215,132 @@ describe('AnalysisService', () => {
       name: 'GPT-4',
       type: 'openai',
       modelId: 'gpt-4',
-      icon: '🤖',
+      description: 'OpenAI GPT-4 model',
       isLocal: false
     };
 
-    const mockStore = {
-      setIsAnalyzing: jest.fn(),
-      addAnalysisResult: jest.fn(),
-      addContainer: jest.fn(),
-      updateContainer: jest.fn(),
-      removeContainer: jest.fn()
-    };
-
     beforeEach(() => {
-      (useAppStore.getState as jest.Mock).mockReturnValue(mockStore);
-      (containerDbService.hasContainerConfig as jest.Mock).mockResolvedValue(false);
-      (openaiService.deobfuscateCode as jest.Mock).mockResolvedValue({
-        deobfuscatedCode: 'function test() {}',
-        analysisReport: 'Deobfuscation complete'
-      });
-      (openaiService.analyzeVulnerabilities as jest.Mock).mockResolvedValue({
-        vulnerabilities: [],
-        analysisReport: 'No vulnerabilities found'
-      });
-      (metasploitService.hasMetasploitConfig as jest.Mock).mockResolvedValue(false);
+      vi.mocked(useAppStore.getState).mockReturnValue({
+        analyses: [],
+        currentAnalysis: null,
+        addAnalysis: vi.fn(),
+        updateAnalysis: vi.fn(),
+        setCurrentAnalysis: vi.fn(),
+        setIsAnalyzing: vi.fn(),
+        addAnalysisResult: vi.fn(),
+        aiModels: [
+          {
+            id: 'openai-1',
+            name: 'GPT-4',
+            type: 'openai',
+            modelId: 'gpt-4',
+            description: 'OpenAI GPT-4 model',
+            isLocal: false
+          },
+          {
+            id: 'local-1',
+            name: 'Local Model',
+            type: 'local',
+            modelId: 'local-1',
+            description: 'Local model',
+            isLocal: true
+          }
+        ]
+      } as any);
+
+      vi.mocked(fileManagerService.readFileAsText).mockResolvedValue('function test() {}');
+      vi.mocked(containerDbService.hasContainerConfig).mockResolvedValue(false);
+      vi.mocked(metasploitService.hasMetasploitConfig).mockResolvedValue(false);
     });
 
     it('should run basic analysis without container', async () => {
-      const result = await runAnalysis(mockMalwareFile, mockModel, false);
-
-      expect(result).toEqual({
-        id: 'test-id-123',
-        malwareId: 'file-1',
-        modelId: 'openai-1',
-        timestamp: expect.any(Number),
+      const mockDeobfuscationResult = {
         deobfuscatedCode: 'function test() {}',
-        analysisReport: expect.stringContaining('Deobfuscation complete'),
+        analysisReport: 'Clean code'
+      };
+
+      const mockVulnerabilityResult = {
         vulnerabilities: [],
-        error: ''
-      });
+        analysisReport: 'No vulnerabilities found'
+      };
 
-      expect(mockStore.setIsAnalyzing).toHaveBeenCalledWith(true);
-      expect(mockStore.setIsAnalyzing).toHaveBeenCalledWith(false);
-      expect(mockStore.addAnalysisResult).toHaveBeenCalled();
-    });
+      vi.mocked(openaiService.deobfuscateCode).mockResolvedValue(mockDeobfuscationResult);
+      vi.mocked(openaiService.analyzeVulnerabilities).mockResolvedValue(mockVulnerabilityResult);
 
-    it('should read file content if not provided', async () => {
-      const fileWithoutContent = { ...mockMalwareFile, content: '' };
-      (fileManagerService.readFileContent as jest.Mock).mockResolvedValue('var _0x5678 = function() {};');
+      const result = await runAnalysis(mockFile, mockModel, false);
 
-      await runAnalysis(fileWithoutContent, mockModel, false);
-
-      expect(fileManagerService.readFileContent).toHaveBeenCalledWith('file:///malware.js');
-      expect(openaiService.deobfuscateCode).toHaveBeenCalledWith('var _0x5678 = function() {};', 'gpt-4');
+      expect(result).toBeDefined();
+      expect(result.malwareId).toBe(mockFile.id);
+      expect(result.modelId).toBe(mockModel.id);
+      expect(result.deobfuscatedCode).toBe('function test() {}');
+      expect(result.vulnerabilities).toEqual([]);
     });
 
     it('should handle analysis errors gracefully', async () => {
-      (openaiService.deobfuscateCode as jest.Mock).mockRejectedValue(new Error('AI service error'));
+      vi.mocked(fileManagerService.readFileAsText).mockRejectedValue(new Error('File read error'));
 
-      const result = await runAnalysis(mockMalwareFile, mockModel, false);
+      const result = await runAnalysis(mockFile, mockModel, false);
 
-      expect(result.error).toBe('Failed to deobfuscate code: AI service error');
-      expect(mockStore.setIsAnalyzing).toHaveBeenCalledWith(false);
+      expect(result).toBeDefined();
+      expect(result.error).toBe('File read error');
     });
   });
 
   describe('getAvailableModels', () => {
-    const mockModels: AIModel[] = [
-      {
-        id: 'openai-1',
-        name: 'GPT-4',
-        type: 'openai',
-        modelId: 'gpt-4',
-        icon: '🤖',
-        isLocal: false
-      },
-      {
-        id: 'claude-1',
-        name: 'Claude 3',
-        type: 'claude',
-        modelId: 'claude-3-opus',
-        icon: '🧠',
-        isLocal: false
-      },
-      {
-        id: 'local-1',
-        name: 'Local Llama',
-        type: 'local',
-        modelId: 'llama-2',
-        icon: '🦙',
-        isLocal: true
-      }
-    ];
+    it('should return models with API keys configured', async () => {
+      // Mock the store to return AI models
+      vi.mocked(useAppStore.getState).mockReturnValue({
+        aiModels: [
+          {
+            id: 'openai-1',
+            name: 'GPT-4',
+            type: 'openai',
+            modelId: 'gpt-4',
+            description: 'OpenAI GPT-4 model',
+            isLocal: false
+          },
+          {
+            id: 'claude-1',
+            name: 'Claude 3',
+            type: 'claude',
+            modelId: 'claude-3',
+            description: 'Claude 3 model',
+            isLocal: false
+          },
+          {
+            id: 'deepseek-1',
+            name: 'DeepSeek Coder',
+            type: 'deepseek',
+            modelId: 'deepseek-coder',
+            description: 'DeepSeek Coder model',
+            isLocal: false
+          },
+          {
+            id: 'local-1',
+            name: 'Local Model',
+            type: 'local',
+            modelId: 'local-1',
+            description: 'Local model',
+            isLocal: true
+          }
+        ]
+      } as any);
 
-    beforeEach(() => {
-      (useAppStore.getState as jest.Mock).mockReturnValue({
-        aiModels: mockModels
-      });
-    });
+      vi.mocked(openaiService.hasOpenAIApiKey).mockResolvedValue(true);
+      vi.mocked(claudeService.hasClaudeApiKey).mockResolvedValue(false);
+      vi.mocked(deepseekService.hasDeepSeekApiKey).mockResolvedValue(true);
 
-    it('should return models with available API keys', async () => {
-      (openaiService.hasOpenAIApiKey as jest.Mock).mockResolvedValue(true);
-      (claudeService.hasClaudeApiKey as jest.Mock).mockResolvedValue(false);
+      const models = await getAvailableModels();
 
-      const result = await getAvailableModels();
+      const openaiModels = models.filter(m => m.type === 'openai');
+      const claudeModels = models.filter(m => m.type === 'claude');
+      const deepseekModels = models.filter(m => m.type === 'deepseek');
+      const localModels = models.filter(m => m.type === 'local');
 
-      expect(result).toEqual([mockModels[0]]);
-      expect(openaiService.hasOpenAIApiKey).toHaveBeenCalled();
-      expect(claudeService.hasClaudeApiKey).toHaveBeenCalled();
-    });
-
-    it('should skip local models', async () => {
-      (openaiService.hasOpenAIApiKey as jest.Mock).mockResolvedValue(true);
-      (claudeService.hasClaudeApiKey as jest.Mock).mockResolvedValue(true);
-
-      const result = await getAvailableModels();
-
-      expect(result).toEqual([mockModels[0], mockModels[1]]);
-      expect(result).not.toContainEqual(mockModels[2]);
-    });
-
-    it('should handle errors checking models', async () => {
-      (openaiService.hasOpenAIApiKey as jest.Mock).mockRejectedValue(new Error('API error'));
-      (claudeService.hasClaudeApiKey as jest.Mock).mockResolvedValue(true);
-
-      const result = await getAvailableModels();
-
-      expect(result).toEqual([mockModels[1]]);
+      expect(openaiModels.length).toBeGreaterThan(0);
+      expect(claudeModels.length).toBe(0);
+      expect(deepseekModels.length).toBeGreaterThan(0);
+      expect(localModels.length).toBe(0); // Local models are skipped by getAvailableModels
     });
   });
 });

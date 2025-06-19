@@ -1,0 +1,1751 @@
+
+> athena@1.0.0 test
+> vitest
+
+
+ RUN  v3.2.3 /workspaces/Athena
+
+9:15:00 PM [vite] (ssr) warning: Duplicate member "generateAESKey" in class body
+249|    });
+250|  
+251|    generateAESKey = vi.fn().mockImplementation((size: number): Uint8Array => {
+   |    ^
+252|      const key = new Uint8Array(size / 8);
+253|      // Generate pseudo-random but unique keys for testing
+
+  Plugin: vite:esbuild
+  File: /workspaces/Athena/wasm-modules/bridge/__mocks__/crypto-bridge.ts
+ ❯ wasm-modules/tests/integration/sandbox.test.ts (26 tests | 2 failed) 233ms
+   ✓ Sandbox Integration Tests > Module Initialization > should initialize sandbox module successfully 3ms
+   ✓ Sandbox Integration Tests > Module Initialization > should throw error when accessing sandbox before initialization 3ms
+   ✓ Sandbox Integration Tests > Sandbox Creation and Management > should create a sandbox instance with default policy 1ms
+   ✓ Sandbox Integration Tests > Sandbox Creation and Management > should create a sandbox instance with custom policy 1ms
+   ✓ Sandbox Integration Tests > Sandbox Creation and Management > should list active sandbox instances 1ms
+   ✓ Sandbox Integration Tests > Sandbox Creation and Management > should terminate all instances 1ms
+   ✓ Sandbox Integration Tests > Code Execution > should execute simple code successfully 3ms
+   ✓ Sandbox Integration Tests > Code Execution > should handle code with errors 1ms
+   ✓ Sandbox Integration Tests > Code Execution > should execute code with output 1ms
+   ✓ Sandbox Integration Tests > Resource Limits > should enforce memory limits 1ms
+   ✓ Sandbox Integration Tests > Resource Limits > should enforce CPU time limits 1ms
+   ✓ Sandbox Integration Tests > Resource Limits > should track resource usage 1ms
+   ✓ Sandbox Integration Tests > Security Policies > should block network access by default 1ms
+   ✓ Sandbox Integration Tests > Security Policies > should block file system access by default 0ms
+   ✓ Sandbox Integration Tests > Security Policies > should allow only whitelisted syscalls 3ms
+   ✓ Sandbox Integration Tests > Security Policies > should log all security events 1ms
+   ✓ Sandbox Integration Tests > Malware Analysis Scenarios > should safely analyze code with infinite loops 1ms
+   × Sandbox Integration Tests > Malware Analysis Scenarios > should detect memory exhaustion attempts 33ms
+     → expected true to be false // Object.is equality
+   ✓ Sandbox Integration Tests > Malware Analysis Scenarios > should analyze code with multiple security violations 1ms
+   ✓ Sandbox Integration Tests > Error Handling > should handle invalid code gracefully 0ms
+   ✓ Sandbox Integration Tests > Error Handling > should reject empty code 0ms
+   ✓ Sandbox Integration Tests > Error Handling > should reject oversized code 165ms
+   ✓ Sandbox Integration Tests > Performance > should create sandbox instances quickly 0ms
+   ✓ Sandbox Integration Tests > Performance > should execute code with minimal overhead 2ms
+   ✓ Sandbox Integration Tests > Performance > should handle concurrent executions 0ms
+   × Sandbox Security Event Analysis > should categorize security events correctly 3ms
+     → expected 'critical' to be 'low' // Object.is equality
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts (23 tests | 13 failed) 86ms
+   × Metasploit Service > initMetasploit > should initialize with provided API key and URL 50ms
+     → expected "spy" to be called with arguments: [ 'test-api-key', …(1) ][90m
+
+Number of calls: [1m0[22m
+[39m
+   × Metasploit Service > initMetasploit > should initialize with stored API key and URL 6ms
+     → expected "spy" to be called with arguments: [ 'test-api-key', …(1) ][90m
+
+Number of calls: [1m0[22m
+[39m
+   ✓ Metasploit Service > initMetasploit > should throw error when API key is missing 3ms
+   ✓ Metasploit Service > initMetasploit > should throw error when API URL is missing 1ms
+   ✓ Metasploit Service > saveMetasploitConfig > should save API key and URL to secure storage 1ms
+   ✓ Metasploit Service > hasMetasploitConfig > should return true when both API key and URL are stored 0ms
+   ✓ Metasploit Service > hasMetasploitConfig > should return false when API key is missing 0ms
+   ✓ Metasploit Service > hasMetasploitConfig > should return false when API URL is missing 0ms
+   ✓ Metasploit Service > deleteMetasploitConfig > should delete API key and URL from secure storage 1ms
+   × Metasploit Service > searchModules > should search for modules successfully 1ms
+     → Cannot read properties of undefined (reading 'modules')
+   × Metasploit Service > searchModules > should return empty array when no modules found 0ms
+     → Cannot read properties of undefined (reading 'modules')
+   × Metasploit Service > searchModules > should handle search error 5ms
+     → expected [Function] to throw error including 'Search failed' but got 'Cannot read properties of undefined (…'
+   × Metasploit Service > getModuleDetails > should get module details successfully 1ms
+     → Cannot read properties of undefined (reading 'module')
+   × Metasploit Service > getModuleDetails > should return empty object when module not found 0ms
+     → Cannot read properties of undefined (reading 'module')
+   × Metasploit Service > searchVulnerabilityByCVE > should search vulnerabilities by CVE successfully 1ms
+     → Cannot read properties of undefined (reading 'vulnerabilities')
+   × Metasploit Service > searchVulnerabilityByCVE > should return empty array when no vulnerabilities found 1ms
+     → Cannot read properties of undefined (reading 'vulnerabilities')
+   × Metasploit Service > getVulnerabilityDetails > should get vulnerability details successfully 1ms
+     → Cannot read properties of undefined (reading 'vulnerability')
+   × Metasploit Service > findRelatedModules > should find related modules successfully 1ms
+     → Cannot read properties of undefined (reading 'modules')
+   × Metasploit Service > enrichVulnerabilityData > should enrich vulnerability data with Metasploit information 9ms
+     → expected { name: 'EternalBlue', …(1) } to deeply equal { name: 'EternalBlue', …(4) }
+   ✓ Metasploit Service > enrichVulnerabilityData > should handle vulnerabilities without CVE IDs 1ms
+   ✓ Metasploit Service > enrichVulnerabilityData > should handle vulnerabilities not found in Metasploit 1ms
+   ✓ Metasploit Service > enrichVulnerabilityData > should handle enrichment errors gracefully 1ms
+   × Metasploit Service > enrichVulnerabilityData > should handle mixed vulnerabilities 1ms
+     → expected undefined to be '1' // Object.is equality
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx (18 tests | 12 failed) 44ms
+   ✓ AnalysisOptionsPanel Component > Default Options > should render with default options 4ms
+   ✓ AnalysisOptionsPanel Component > Default Options > should use standard resource preset by default 1ms
+   × AnalysisOptionsPanel Component > Default Options > should have deep analysis disabled by default 8ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Default Options > should have save results enabled by default 1ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Initial Options > should use provided initial options 2ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Initial Options > should merge initial options with defaults 1ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Option Changes > should handle deep analysis toggle 1ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Option Changes > should handle save results toggle 1ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Option Changes > should handle container config changes 6ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m
+   × AnalysisOptionsPanel Component > Option Changes > should update all options when multiple changes occur 1ms
+     → UNSAFE_getAllByType is not a function
+   ✓ AnalysisOptionsPanel Component > UI Elements > should display all section titles 1ms
+   ✓ AnalysisOptionsPanel Component > UI Elements > should display all option descriptions 2ms
+   ✓ AnalysisOptionsPanel Component > UI Elements > should render container config selector 1ms
+   × AnalysisOptionsPanel Component > UI Elements > should apply correct switch colors 3ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Callback Behavior > should call onOptionsChange with complete options object 2ms
+     → UNSAFE_getAllByType is not a function
+   × AnalysisOptionsPanel Component > Callback Behavior > should preserve existing options when changing single option 2ms
+     → UNSAFE_getAllByType is not a function
+   ✓ AnalysisOptionsPanel Component > Container Config Integration > should pass initial config to ContainerConfigSelector 2ms
+   × AnalysisOptionsPanel Component > Container Config Integration > should update options when container config changes 2ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx (24 tests | 15 failed) 56ms
+   ✓ Modal Component > Basic Rendering > should render when visible is true 4ms
+   × Modal Component > Basic Rendering > should not render when visible is false 13ms
+     → expected { type: 'MockElement', …(3) } to be null
+   ✓ Modal Component > Basic Rendering > should render with title 1ms
+   ✓ Modal Component > Basic Rendering > should render close button by default 1ms
+   × Modal Component > Basic Rendering > should hide close button when showCloseButton is false 3ms
+     → expected { type: 'MockElement', …(3) } to be null
+   × Modal Component > Sizes > should apply small size styles 1ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   × Modal Component > Sizes > should apply medium size styles by default 1ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   × Modal Component > Sizes > should apply large size styles 1ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   × Modal Component > Sizes > should apply fullscreen size styles 5ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   × Modal Component > Interactions > should call onClose when close button is pressed 2ms
+     → expected "spy" to be called 1 times, but got 0 times
+   ✓ Modal Component > Interactions > should have closeOnBackdropPress enabled by default 1ms
+   ✓ Modal Component > Interactions > should respect closeOnBackdropPress prop 1ms
+   × Modal Component > Interactions > should not propagate backdrop press to modal content 1ms
+     → expected "spy" to be called 1 times, but got 0 times
+   × Modal Component > Interactions > should call onRequestClose when hardware back is pressed 2ms
+     → modal.props.onRequestClose is not a function
+   × Modal Component > Custom Styles > should apply custom style to modal container 2ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   × Modal Component > Custom Styles > should apply custom backdrop style 1ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   × Modal Component > Custom Styles > should apply custom content style 1ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   ✓ Modal Component > Header Rendering > should render header when title is provided 1ms
+   ✓ Modal Component > Header Rendering > should render header when only close button is shown 2ms
+   × Modal Component > Header Rendering > should not render header when no title and showCloseButton is false 2ms
+     → UNSAFE_getByType(...).findAllByType is not a function
+   ✓ Modal Component > Modal Props Forwarding > should forward RNModal props 2ms
+   × Modal Component > Modal Props Forwarding > should always set transparent to true 2ms
+     → expected undefined to be true // Object.is equality
+   × Modal Component > Modal Props Forwarding > should use fade animation by default 2ms
+     → expected undefined to be 'fade' // Object.is equality
+   ✓ Modal Component > Keyboard Avoiding Behavior > should render with appropriate platform behavior 2ms
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx (23 tests | 14 failed) 77ms
+   ✓ Toast Component > Basic Rendering > should render when visible is true 6ms
+   × Toast Component > Basic Rendering > should not render when visible is false 16ms
+     → expected { type: 'MockElement', …(3) } to be null
+   ✓ Toast Component > Basic Rendering > should render with custom message 1ms
+   × Toast Component > Toast Types > should apply success type styling 3ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Toast Types > should apply error type styling 3ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Toast Types > should apply warning type styling 2ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Toast Types > should apply info type styling by default 2ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Toast Types > should apply info type styling explicitly 2ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Toast Positions > should position at bottom by default 5ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Toast Positions > should position at top when specified 3ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Toast Positions > should position at center when specified 3ms
+     → expected {} to deeply equal ArrayContaining{…}
+   × Toast Component > Auto Dismiss > should auto dismiss after default duration 5ms
+     → expected "spy" to be called 1 times, but got 0 times
+   × Toast Component > Auto Dismiss > should auto dismiss after custom duration 2ms
+     → expected "spy" to be called 1 times, but got 0 times
+   ✓ Toast Component > Auto Dismiss > should not auto dismiss when duration is 0 2ms
+   × Toast Component > Auto Dismiss > should clear timer when component unmounts 5ms
+     → expected "clearTimeout" to be called at least once
+   ✓ Toast Component > Visibility Changes > should animate in when becoming visible 1ms
+   × Toast Component > Visibility Changes > should animate out when becoming invisible 2ms
+     → expected { type: 'MockElement', …(3) } to be null
+   × Toast Component > Visibility Changes > should handle rapid visibility changes 2ms
+     → expected { type: 'MockElement', …(3) } to be null
+   ✓ Toast Component > Animation Configuration > should use native driver on mobile platforms 1ms
+   ✓ Toast Component > Animation Configuration > should not use native driver on web 1ms
+   ✓ Toast Component > Edge Cases > should handle empty message 2ms
+   ✓ Toast Component > Edge Cases > should handle very long message 1ms
+   ✓ Toast Component > Edge Cases > should handle undefined onDismiss callback 1ms
+ ❯ Athena/__tests__/unit/services/ai/base.test.ts (24 tests | 24 failed) 39ms
+   × BaseAIService > init > should initialize with provided API key and base URL 19ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > init > should use environment API key when provided in constructor 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > init > should retrieve API key from AsyncStorage when not provided 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > init > should use expo constants as fallback for API key 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > init > should throw error when no API key is found 0ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > init > should retrieve base URL from AsyncStorage 0ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > saveApiKey > should save API key to AsyncStorage and memory cache 0ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > saveApiKey > should handle AsyncStorage errors gracefully 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > hasApiKey > should return true when API key is in memory cache 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > hasApiKey > should return true when API key is in environment variable 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > hasApiKey > should return true when API key is in expo constants 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > hasApiKey > should return true when API key is in AsyncStorage 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > hasApiKey > should return false when no API key is found 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > deleteApiKey > should clear API key from AsyncStorage and memory cache 0ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > deleteApiKey > should handle AsyncStorage errors gracefully 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > deobfuscateCode > should deobfuscate code successfully 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > deobfuscateCode > should handle response without proper format 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > deobfuscateCode > should use custom model ID when provided 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > deobfuscateCode > should throw error when deobfuscation fails 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > analyzeVulnerabilities > should analyze vulnerabilities successfully with JSON response 0ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > analyzeVulnerabilities > should handle invalid JSON response gracefully 0ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > analyzeVulnerabilities > should extract JSON without markdown code blocks 3ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > analyzeVulnerabilities > should use custom model ID when provided 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+   × BaseAIService > analyzeVulnerabilities > should throw error when vulnerability analysis fails 1ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx (19 tests | 14 failed) 89ms
+   ✓ FileUploader > Initial Rendering > should render file list when files exist 7ms
+   ✓ FileUploader > Initial Rendering > should render empty state when no files 2ms
+   × FileUploader > Initial Rendering > should show upload button 26ms
+     → expected "initFileSystem" to be called at least once
+   × FileUploader > File Loading > should initialize file system on mount (native) 3ms
+     → expected "initFileSystem" to be called at least once
+   ✓ FileUploader > File Loading > should not load files from filesystem on web 2ms
+   × FileUploader > File Loading > should handle selected file on mount 4ms
+     → expected "spy" to be called with arguments: [ { id: 'file1', …(5) } ][90m
+
+Number of calls: [1m0[22m
+[39m
+   × FileUploader > File Selection > should handle file selection 3ms
+     → expected "spy" to be called with arguments: [ 'file1' ][90m
+
+Number of calls: [1m0[22m
+[39m
+   × FileUploader > File Selection > should show selected file styling 8ms
+     → expected false to be true // Object.is equality
+   × FileUploader > File Upload (Native) > should handle successful file upload 3ms
+     → expected "initFileSystem" to be called at least once
+   × FileUploader > File Upload (Native) > should handle cancelled file picker 6ms
+     → expected "initFileSystem" to be called at least once
+   × FileUploader > File Upload (Native) > should handle upload error 2ms
+     → expected "initFileSystem" to be called at least once
+   × FileUploader > File Upload (Web) > should handle web file upload 3ms
+     → expected "spy" to be called at least once
+   × FileUploader > File Deletion > should handle file deletion 2ms
+     → UNSAFE_getAllByType is not a function
+   ✓ FileUploader > File Deletion > should clear selection when deleting selected file 1ms
+   × FileUploader > Progress and Loading States > should show loading state during upload 3ms
+     → expected "initFileSystem" to be called at least once
+   × FileUploader > Progress and Loading States > should display upload progress 3ms
+     → expected "initFileSystem" to be called at least once
+   × FileUploader > Error Handling > should display error message on failure 3ms
+     → expected "initFileSystem" to be called at least once
+   × FileUploader > File Display > should format file sizes correctly 3ms
+     → expected "spy" to be called with arguments: [ 1024 ][90m
+
+Number of calls: [1m0[22m
+[39m
+   ✓ FileUploader > File Display > should show appropriate file icons 2ms
+ ✓ Athena/__tests__/unit/api/hooks.simple.test.tsx (2 tests) 967ms
+   ✓ API Hooks - Simple Tests > Hook existence > should export all required hooks  965ms
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx (20 tests | 5 failed) 61ms
+   ✓ AIModelSelector Component > Loading State > should show loading state initially 3ms
+   ✓ AIModelSelector Component > Empty State > should show empty state when no models are available 2ms
+   ✓ AIModelSelector Component > Error State > should handle loading errors gracefully 1ms
+   ✓ AIModelSelector Component > Model Loading from Environment > should load OpenAI models when enabled in environment 2ms
+   ✓ AIModelSelector Component > Model Loading from Environment > should load Claude models when enabled in environment 2ms
+   ✓ AIModelSelector Component > Model Loading from Environment > should load DeepSeek models when enabled in environment 2ms
+   ✓ AIModelSelector Component > Model Loading from Service > should load OpenAI models when API key exists 1ms
+   ✓ AIModelSelector Component > Model Loading from Service > should load Claude models when API key exists 1ms
+   ✓ AIModelSelector Component > Model Loading from Service > should load DeepSeek models when API key exists 2ms
+   ✓ AIModelSelector Component > Model Loading from Service > should load multiple model types when multiple API keys exist 2ms
+   × AIModelSelector Component > Fallback to Analysis Service > should use analysis service when no direct API keys are found 17ms
+     → expected "getAvailableModels" to be called at least once
+   × AIModelSelector Component > Model Selection > should auto-select first model when none selected 3ms
+     → expected "spy" to be called with arguments: [ 'openai-1' ][90m
+
+Number of calls: [1m0[22m
+[39m
+   × AIModelSelector Component > Model Selection > should maintain selected model if available 7ms
+     → expected "spy" to be called with arguments: [ { id: 'claude-1', …(5) } ][90m
+
+Number of calls: [1m0[22m
+[39m
+   × AIModelSelector Component > Model Selection > should handle model selection on press 3ms
+     → expected "spy" to be called with arguments: [ 'claude-1' ][90m
+
+Number of calls: [1m0[22m
+[39m
+   ✓ AIModelSelector Component > Model Selection > should show selected state for current model 1ms
+   × AIModelSelector Component > Refresh Functionality > should reload models when called 3ms
+     → expected "hasOpenAIApiKey" to be called 1 times, but got 0 times
+   ✓ AIModelSelector Component > Model Display > should display model descriptions 2ms
+   ✓ AIModelSelector Component > Model Display > should display local model description correctly 1ms
+   ✓ AIModelSelector Component > Error Handling > should handle service check errors gracefully 1ms
+   ✓ AIModelSelector Component > Error Handling > should handle analysis service errors 1ms
+ ❯ wasm-modules/tests/integration/phase3-complete.test.ts (10 tests | 1 failed) 930ms
+   × Phase 3 Complete Integration Tests > End-to-End Security Analysis > should analyze a malicious JavaScript file with all modules 18ms
+     → expected false to be true // Object.is equality
+   ✓ Phase 3 Complete Integration Tests > End-to-End Security Analysis > should analyze a ransomware sample across all modules 2ms
+   ✓ Phase 3 Complete Integration Tests > End-to-End Security Analysis > should detect and analyze a botnet C2 communication 2ms
+   ✓ Phase 3 Complete Integration Tests > Performance Benchmarks > should process large files efficiently 3ms
+   ✓ Phase 3 Complete Integration Tests > Performance Benchmarks > should handle concurrent module operations 10ms
+   ✓ Phase 3 Complete Integration Tests > Cross-Module Integration > should share analysis context between modules 1ms
+   ✓ Phase 3 Complete Integration Tests > Security Hardening Verification > should handle malformed inputs safely  887ms
+   ✓ Phase 3 Complete Integration Tests > Security Hardening Verification > should enforce resource limits 1ms
+   ✓ Phase 3 Complete Integration Tests > Security Hardening Verification > should use secure random generation 2ms
+   ✓ Phase 3 Module Status > should verify all 7 WASM modules are functional 1ms
+ ✓ Athena/__tests__/unit/services/pool/bulkheadManager.test.ts (18 tests) 1162ms
+   ✓ BulkheadManager > Statistics and Health > should identify saturated bulkheads  1043ms
+ ✓ wasm-modules/tests/integration/file-processor.test.ts (18 tests) 109ms
+ ✓ Athena/__tests__/unit/services/pool/bulkhead.test.ts (13 tests) 1621ms
+   ✓ Bulkhead > Queue Timeout > should timeout queued tasks  1001ms
+ ✓ wasm-modules/tests/integration/crypto.test.ts (34 tests) 506ms
+   ✓ WASM Crypto Module Integration Tests > Performance Tests > should encrypt/decrypt efficiently  451ms
+ ✓ wasm-modules/tests/integration/react-native-bridge.test.ts (13 tests) 199ms
+ ✓ wasm-modules/tests/integration/end-to-end-analysis.test.ts (10 tests) 94ms
+ ✓ wasm-modules/tests/integration/pattern-matcher.test.ts (10 tests) 79ms
+ ✓ Athena/__tests__/unit/services/claude.test.ts (18 tests) 122ms
+ ✓ Athena/__tests__/unit/services/openai.test.ts (20 tests) 120ms
+ ✓ Athena/__tests__/unit/services/batch/processor.test.ts (7 tests | 1 skipped) 762ms
+ ✓ wasm-modules/tests/integration/analysis-engine.test.ts (15 tests) 58ms
+ ✓ Athena/__tests__/unit/services/fileManager.test.ts (28 tests) 39ms
+ ✓ wasm-modules/tests/integration/bridge.test.ts (14 tests) 59ms
+ ✓ services/aiProviders/tests/integration.test.js (11 tests) 45ms
+ ✓ Athena/__tests__/unit/services/ai/adaptiveCircuitBreaker.test.ts (12 tests | 1 skipped) 2942ms
+   ✓ AdaptiveCircuitBreaker > Adaptive Thresholds > should open based on response time threshold  2513ms
+ ✓ Athena/__tests__/unit/design-system/Input.test.tsx (27 tests) 47ms
+ ✓ Athena/__tests__/unit/services/config/featureFlags.test.ts (17 tests) 23ms
+ ✓ Athena/__tests__/unit/store/securityStore.test.ts (13 tests) 28ms
+ ✓ Athena/__tests__/unit/api/gateway.test.ts (16 tests) 37ms
+ ✓ services/aiProviders/tests/integration.test.ts (11 tests) 56ms
+ ✓ Athena/__tests__/unit/services/analysisService.test.ts (9 tests) 20ms
+ ✓ Athena/__tests__/unit/services/container.test.ts (46 tests | 1 skipped) 53ms
+ ✓ Athena/__tests__/unit/services/ai/circuitBreaker.test.ts (9 tests) 24ms
+ ✓ wasm-modules/bridge/__tests__/analysis-engine-bridge.test.ts (3 tests) 25ms
+ ✓ Athena/__tests__/unit/api/errorHandler.test.ts (17 tests) 18ms
+ ✓ wasm-modules/tests/integration/network.test.ts (13 tests) 19ms
+ ✓ Athena/__tests__/unit/services/monitoring.test.ts (16 tests) 30ms
+ ✓ Athena/__tests__/unit/services/apm/manager.test.ts (11 tests) 21ms
+ ✓ Athena/__tests__/unit/design-system/Card.test.tsx (8 tests) 22ms
+ ✓ Athena/__tests__/unit/services/ai/circuitBreakerFactory.test.ts (14 tests) 22ms
+ ✓ wasm-modules/tests/integration/deobfuscator.test.ts (14 tests) 25ms
+ ✓ Athena/__tests__/unit/services/cache/manager.test.ts (11 tests) 22ms
+ ✓ Athena/__tests__/unit/services/deepseek.test.ts (20 tests | 3 skipped) 33ms
+ ✓ Athena/__tests__/unit/design-system/Button.test.tsx (9 tests) 20ms
+ ✓ wasm-modules/tests/integration/sandbox-advanced.test.ts (10 tests) 26ms
+ ✓ wasm-modules/tests/integration/verify-phase3.test.ts (7 tests) 12ms
+ ✓ Athena/__tests__/unit/services/cache/redisStorage.test.ts (10 tests) 14ms
+ ↓ Athena/__tests__/unit/services/localModels.test.ts (12 tests | 12 skipped)
+ ↓ Athena/__tests__/unit/services/ai/manager.test.ts (7 tests | 7 skipped)
+ ↓ Athena/__tests__/integration/isolated.test.tsx (1 test | 1 skipped)
+ ✓ Athena/__tests__/unit/components/ContainerConfigSelector.test.tsx (7 tests) 13ms
+ ↓ Athena/__tests__/integration/basic-flow.test.tsx (1 test | 1 skipped)
+ ↓ Athena/__tests__/integration/clean-flow.test.tsx (1 test | 1 skipped)
+ ↓ Athena/__tests__/integration/streaming-analysis-flow.test.tsx (3 tests | 3 skipped)
+ ↓ Athena/__tests__/integration/file-upload-simple.test.tsx (1 test | 1 skipped)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  Athena/__tests__/integration/file-upload-results-flow.test.tsx [ Athena/__tests__/integration/file-upload-results-flow.test.tsx ]
+ FAIL  Athena/__tests__/integration/malware-analysis-workflow.test.tsx [ Athena/__tests__/integration/malware-analysis-workflow.test.tsx ]
+TypeError: Cannot read properties of undefined (reading 'type')
+ ❯ Athena/node_modules/sequelize/src/model.js:1045:21
+ ❯ Athena/node_modules/lodash/lodash.js:13469:38
+ ❯ Athena/node_modules/lodash/lodash.js:4967:15
+ ❯ baseForOwn Athena/node_modules/lodash/lodash.js:3032:24
+ ❯ Function.mapValues Athena/node_modules/lodash/lodash.js:13468:7
+ ❯ Function.init Athena/node_modules/sequelize/src/model.js:1042:28
+ ❯ Athena/models/container.model.ts:79:13
+     77| // Initialize Container model only if sequelize is properly initialized
+     78| if (sequelize && typeof sequelize.define === 'function') {
+     79|   Container.init(containerAttributes, {
+       |             ^
+     80|     sequelize,
+     81|     modelName: 'Container',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/102]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 100 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  wasm-modules/tests/integration/phase3-complete.test.ts > Phase 3 Complete Integration Tests > End-to-End Security Analysis > should analyze a malicious JavaScript file with all modules
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ wasm-modules/tests/integration/phase3-complete.test.ts:137:37
+    135|       await initializeSandbox();
+    136|       const sandboxResult = await executeInSandbox(new TextEncoder().e…
+    137|       expect(sandboxResult.success).toBe(true);
+       |                                     ^
+    138|       expect(sandboxResult.networkAttempts).toBeGreaterThan(0);
+    139|       expect(sandboxResult.suspiciousBehaviors).toContainEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/102]⎯
+
+ FAIL  wasm-modules/tests/integration/sandbox.test.ts > Sandbox Integration Tests > Malware Analysis Scenarios > should detect memory exhaustion attempts
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ wasm-modules/tests/integration/sandbox.test.ts:315:30
+    313|       const result = await executeInSandbox(maliciousCode);
+    314|       
+    315|       expect(result.success).toBe(false);
+       |                              ^
+    316|       expect(result.securityEvents.some(e => 
+    317|         e.eventType === 'resource_limit' && e.severity === 'high'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/102]⎯
+
+ FAIL  wasm-modules/tests/integration/sandbox.test.ts > Sandbox Security Event Analysis > should categorize security events correctly
+AssertionError: expected 'critical' to be 'low' // Object.is equality
+
+Expected: [32m"low"[39m
+Received: [31m"critical"[39m
+
+ ❯ wasm-modules/tests/integration/sandbox.test.ts:460:32
+    458|       expect(event).toBeDefined();
+    459|       if (event) {
+    460|         expect(event.severity).toBe(testCase.expectedSeverity);
+       |                                ^
+    461|       }
+    462|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AIModelSelector.test.tsx > AIModelSelector Component > Fallback to Analysis Service > should use analysis service when no direct API keys are found
+AssertionError: expected "getAvailableModels" to be called at least once
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:264:52
+    262| 
+    263|       await waitFor(() => {
+    264|         expect(analysisService.getAvailableModels).toHaveBeenCalled();
+       |                                                    ^
+    265|         expect(getByText('GPT-4')).toBeTruthy();
+    266|       });
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:263:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AIModelSelector.test.tsx > AIModelSelector Component > Model Selection > should auto-select first model when none selected
+AssertionError: expected "spy" to be called with arguments: [ 'openai-1' ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:282:35
+    280| 
+    281|       await waitFor(() => {
+    282|         expect(mockSelectAIModel).toHaveBeenCalledWith('openai-1');
+       |                                   ^
+    283|         expect(mockOnModelSelect).toHaveBeenCalledWith(mockModels[0]);
+    284|       });
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:281:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AIModelSelector.test.tsx > AIModelSelector Component > Model Selection > should maintain selected model if available
+AssertionError: expected "spy" to be called with arguments: [ { id: 'claude-1', …(5) } ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:299:35
+    297|       await waitFor(() => {
+    298|         expect(mockSelectAIModel).not.toHaveBeenCalled();
+    299|         expect(mockOnModelSelect).toHaveBeenCalledWith(mockModels[1]);
+       |                                   ^
+    300|       });
+    301|     });
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:297:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AIModelSelector.test.tsx > AIModelSelector Component > Model Selection > should handle model selection on press
+AssertionError: expected "spy" to be called with arguments: [ 'claude-1' ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:314:33
+    312|       fireEvent.press(getByText('Claude 3'));
+    313| 
+    314|       expect(mockSelectAIModel).toHaveBeenCalledWith('claude-1');
+       |                                 ^
+    315|       expect(mockOnModelSelect).toHaveBeenCalledWith(mockModels[1]);
+    316|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AIModelSelector.test.tsx > AIModelSelector Component > Refresh Functionality > should reload models when called
+AssertionError: expected "hasOpenAIApiKey" to be called 1 times, but got 0 times
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:344:47
+    342| 
+    343|       await waitFor(() => {
+    344|         expect(openaiService.hasOpenAIApiKey).toHaveBeenCalledTimes(1);
+       |                                               ^
+    345|       });
+    346|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx:343:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Default Options > should have deep analysis disabled by default
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:89:24
+     87|       );
+     88| 
+     89|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+     90|       const deepAnalysisSwitch = switches[0];
+     91|       expect(deepAnalysisSwitch.props.value).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Default Options > should have save results enabled by default
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:99:24
+     97|       );
+     98| 
+     99|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    100|       const saveResultsSwitch = switches[1];
+    101|       expect(saveResultsSwitch.props.value).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Initial Options > should use provided initial options
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:119:24
+    117|       );
+    118| 
+    119|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    120|       expect(switches[0].props.value).toBe(true); // Deep analysis
+    121|       expect(switches[1].props.value).toBe(false); // Save results
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Initial Options > should merge initial options with defaults
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:137:24
+    135|       );
+    136| 
+    137|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    138|       expect(switches[0].props.value).toBe(true); // Deep analysis (fr…
+    139|       expect(switches[1].props.value).toBe(true); // Save results (fro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Option Changes > should handle deep analysis toggle
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:149:24
+    147|       );
+    148| 
+    149|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    150|       const deepAnalysisSwitch = switches[0];
+    151| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Option Changes > should handle save results toggle
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:167:24
+    165|       );
+    166| 
+    167|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    168|       const saveResultsSwitch = switches[1];
+    169| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Option Changes > should handle container config changes
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:188:35
+    186|       fireEvent.press(changeConfigButton);
+    187| 
+    188|       expect(mockOnOptionsChange).toHaveBeenCalledWith(
+       |                                   ^
+    189|         expect.objectContaining({
+    190|           containerConfig: expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Option Changes > should update all options when multiple changes occur
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:202:24
+    200|       );
+    201| 
+    202|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    203|       
+    204|       // Toggle deep analysis
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > UI Elements > should apply correct switch colors
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:264:24
+    262|       );
+    263| 
+    264|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    265|       
+    266|       switches.forEach(switchComponent => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Callback Behavior > should call onOptionsChange with complete options object
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:282:24
+    280|       );
+    281| 
+    282|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    283|       fireEvent(switches[0], 'onValueChange', true);
+    284| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Callback Behavior > should preserve existing options when changing single option
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:308:24
+    306|       );
+    307| 
+    308|       const switches = UNSAFE_getAllByType(Switch);
+       |                        ^
+    309|       fireEvent(switches[0], 'onValueChange', true);
+    310| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx > AnalysisOptionsPanel Component > Container Config Integration > should update options when container config changes
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx:350:35
+    348|       fireEvent.press(changeButton);
+    349| 
+    350|       expect(mockOnOptionsChange).toHaveBeenCalledWith(
+       |                                   ^
+    351|         expect.objectContaining({
+    352|           containerConfig: expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > Initial Rendering > should show upload button
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:136:55
+    134|       // Wait for loading to complete
+    135|       await waitFor(() => {
+    136|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    137|       });
+    138|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:135:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Loading > should initialize file system on mount (native)
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:155:55
+    153|       
+    154|       await waitFor(() => {
+    155|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    156|       });
+    157|     });
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:154:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Loading > should handle selected file on mount
+AssertionError: expected "spy" to be called with arguments: [ { id: 'file1', …(5) } ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:182:34
+    180|       
+    181|       await waitFor(() => {
+    182|         expect(mockOnFileSelect).toHaveBeenCalledWith(mockMalwareFiles…
+       |                                  ^
+    183|       });
+    184|     });
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:181:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Selection > should handle file selection
+AssertionError: expected "spy" to be called with arguments: [ 'file1' ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:195:37
+    193|       fireEvent.press(getByText('test-malware.exe'));
+    194|       
+    195|       expect(mockSelectMalwareFile).toHaveBeenCalledWith('file1');
+       |                                     ^
+    196|       expect(mockOnFileSelect).toHaveBeenCalledWith(mockMalwareFiles[0…
+    197|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Selection > should show selected file styling
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:219:29
+    217|       );
+    218|       
+    219|       expect(hasWhiteColor).toBe(true);
+       |                             ^
+    220|     });
+    221|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Upload (Native) > should handle successful file upload
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:251:55
+    249|       // Wait for loading to complete
+    250|       await waitFor(() => {
+    251|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    252|       });
+    253|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:250:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Upload (Native) > should handle cancelled file picker
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:279:55
+    277|       // Wait for loading to complete
+    278|       await waitFor(() => {
+    279|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    280|       });
+    281|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:278:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Upload (Native) > should handle upload error
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:304:55
+    302|       // Wait for loading to complete
+    303|       await waitFor(() => {
+    304|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    305|       });
+    306|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:303:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Upload (Web) > should handle web file upload
+AssertionError: expected "spy" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:383:37
+    381|       // Simulate file selection
+    382|       await waitFor(() => {
+    383|         expect(mockFileInput.click).toHaveBeenCalled();
+       |                                     ^
+    384|       });
+    385|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:382:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Deletion > should handle file deletion
+TypeError: UNSAFE_getAllByType is not a function
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:409:26
+    407|       
+    408|       // Find delete buttons by TouchableOpacity components
+    409|       const touchables = UNSAFE_getAllByType(TouchableOpacity);
+       |                          ^
+    410|       // Filter for delete buttons (ones with onPress that calls handl…
+    411|       const deleteButtons = touchables.filter(t => 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > Progress and Loading States > should show loading state during upload
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:444:55
+    442|       // Wait for initial loading to complete
+    443|       await waitFor(() => {
+    444|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    445|       });
+    446|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:443:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > Progress and Loading States > should display upload progress
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:480:55
+    478|       // Wait for initial loading to complete
+    479|       await waitFor(() => {
+    480|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    481|       });
+    482|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:479:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > Error Handling > should display error message on failure
+AssertionError: expected "initFileSystem" to be called at least once
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:500:55
+    498|       // Wait for the error to be logged (error is handled internally)
+    499|       await waitFor(() => {
+    500|         expect(mockFileManagerService.initFileSystem).toHaveBeenCalled…
+       |                                                       ^
+    501|       });
+    502|       
+ ❯ Module.<anonymous> Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:499:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/102]⎯
+
+ FAIL  Athena/__tests__/unit/components/FileUploader.test.tsx > FileUploader > File Display > should format file sizes correctly
+AssertionError: expected "spy" to be called with arguments: [ 1024 ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx:518:30
+    516|       
+    517|       // Check that formatFileSize was called
+    518|       expect(formatFileSize).toHaveBeenCalledWith(1024);
+       |                              ^
+    519|       expect(formatFileSize).toHaveBeenCalledWith(512);
+    520|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Basic Rendering > should not render when visible is false
+AssertionError: expected { type: 'MockElement', …(3) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "_testingLibraryElement": true,
+  "children": "Modal Content",
+  "props": {
+    "children": "Modal Content",
+    "disabled": undefined,
+    "onPress": undefined,
+    "style": {},
+    "testID": "Modal Content",
+  },
+  "type": "MockElement",
+}
+
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:30:44
+     28|         </Modal>
+     29|       );
+     30|       expect(queryByText('Modal Content')).toBeNull();
+       |                                            ^
+     31|     });
+     32| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Basic Rendering > should hide close button when showCloseButton is false
+AssertionError: expected { type: 'MockElement', …(3) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "_testingLibraryElement": true,
+  "children": "✕",
+  "props": {
+    "children": "✕",
+    "disabled": undefined,
+    "onPress": undefined,
+    "style": {},
+    "testID": "✕",
+  },
+  "type": "MockElement",
+}
+
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:57:32
+     55|         </Modal>
+     56|       );
+     57|       expect(queryByText('✕')).toBeNull();
+       |                                ^
+     58|     });
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Sizes > should apply small size styles
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:70:44
+     68|       
+     69|       // Find the modal container View (third nested View)
+     70|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+     71|       const modalContainer = views.find(view => 
+     72|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Sizes > should apply medium size styles by default
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:86:44
+     84|       );
+     85|       
+     86|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+     87|       const modalContainer = views.find(view => 
+     88|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Sizes > should apply large size styles
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:102:44
+    100|       );
+    101|       
+    102|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+    103|       const modalContainer = views.find(view => 
+    104|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Sizes > should apply fullscreen size styles
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:118:44
+    116|       );
+    117|       
+    118|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+    119|       const modalContainer = views.find(view => 
+    120|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Interactions > should call onClose when close button is pressed
+AssertionError: expected "spy" to be called 1 times, but got 0 times
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:137:27
+    135|       
+    136|       fireEvent.press(getByText('✕'));
+    137|       expect(mockOnClose).toHaveBeenCalledTimes(1);
+       |                           ^
+    138|     });
+    139| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Interactions > should not propagate backdrop press to modal content
+AssertionError: expected "spy" to be called 1 times, but got 0 times
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:174:28
+    172|       // Press the content button
+    173|       fireEvent.press(getByTestId('content-button'));
+    174|       expect(contentPress).toHaveBeenCalledTimes(1);
+       |                            ^
+    175|       expect(mockOnClose).not.toHaveBeenCalled();
+    176|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Interactions > should call onRequestClose when hardware back is pressed
+TypeError: modal.props.onRequestClose is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:189:19
+    187|       
+    188|       // Simulate hardware back button press
+    189|       modal.props.onRequestClose();
+       |                   ^
+    190|       expect(mockOnClose).toHaveBeenCalledTimes(1);
+    191|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Custom Styles > should apply custom style to modal container
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:203:44
+    201|       );
+    202|       
+    203|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+    204|       const modalContainer = views.find(view => 
+    205|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Custom Styles > should apply custom backdrop style
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:220:44
+    218|       );
+    219|       
+    220|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+    221|       const backdrop = views.find(view => 
+    222|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Custom Styles > should apply custom content style
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:237:44
+    235|       );
+    236|       
+    237|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+    238|       const content = views.find(view => 
+    239|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Header Rendering > should not render header when no title and showCloseButton is false
+TypeError: UNSAFE_getByType(...).findAllByType is not a function
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:278:44
+    276|       
+    277|       // Check header is not rendered
+    278|       const views = UNSAFE_getByType(View).findAllByType(View);
+       |                                            ^
+    279|       const header = views.find(view => 
+    280|         view.props.style && Array.isArray(view.props.style) && 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Modal Props Forwarding > should always set transparent to true
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:317:39
+    315|       
+    316|       const modal = UNSAFE_getByType('Modal' as any);
+    317|       expect(modal.props.transparent).toBe(true);
+       |                                       ^
+    318|     });
+    319| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Modal.test.tsx > Modal Component > Modal Props Forwarding > should use fade animation by default
+AssertionError: expected undefined to be 'fade' // Object.is equality
+
+[32m- Expected:[39m 
+"fade"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx:328:41
+    326|       
+    327|       const modal = UNSAFE_getByType('Modal' as any);
+    328|       expect(modal.props.animationType).toBe('fade');
+       |                                         ^
+    329|     });
+    330|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Basic Rendering > should not render when visible is false
+AssertionError: expected { type: 'MockElement', …(3) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "_testingLibraryElement": true,
+  "children": "Test message",
+  "props": {
+    "children": "Test message",
+    "disabled": undefined,
+    "onPress": undefined,
+    "style": {},
+    "testID": "Test message",
+  },
+  "type": "MockElement",
+}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:52:43
+     50|         <Toast visible={false} message="Test message" />
+     51|       );
+     52|       expect(queryByText('Test message')).toBeNull();
+       |                                           ^
+     53|     });
+     54| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Types > should apply success type styling
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "backgroundColor": "#4caf50",
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:70:40
+     68|       
+     69|       const animatedView = UNSAFE_getByType(Animated.View);
+     70|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+     71|         expect.arrayContaining([
+     72|           expect.objectContaining({ 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Types > should apply error type styling
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "backgroundColor": "#f44336",
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:85:40
+     83|       
+     84|       const animatedView = UNSAFE_getByType(Animated.View);
+     85|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+     86|         expect.arrayContaining([
+     87|           expect.objectContaining({ 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Types > should apply warning type styling
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "backgroundColor": "#ff9800",
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:100:40
+     98|       
+     99|       const animatedView = UNSAFE_getByType(Animated.View);
+    100|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+    101|         expect.arrayContaining([
+    102|           expect.objectContaining({ 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Types > should apply info type styling by default
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "backgroundColor": "#2196f3",
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:115:40
+    113|       
+    114|       const animatedView = UNSAFE_getByType(Animated.View);
+    115|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+    116|         expect.arrayContaining([
+    117|           expect.objectContaining({ 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Types > should apply info type styling explicitly
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "backgroundColor": "#2196f3",
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:130:40
+    128|       
+    129|       const animatedView = UNSAFE_getByType(Animated.View);
+    130|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+    131|         expect.arrayContaining([
+    132|           expect.objectContaining({ 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Positions > should position at bottom by default
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "bottom": 24,
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:147:40
+    145|       
+    146|       const animatedView = UNSAFE_getByType(Animated.View);
+    147|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+    148|         expect.arrayContaining([
+    149|           expect.objectContaining({ bottom: 24 }) // spacing.xxl = 24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Positions > should position at top when specified
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "top": 24,
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:160:40
+    158|       
+    159|       const animatedView = UNSAFE_getByType(Animated.View);
+    160|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+    161|         expect.arrayContaining([
+    162|           expect.objectContaining({ top: 24 }) // spacing.xxl = 24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Toast Positions > should position at center when specified
+AssertionError: expected {} to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  ObjectContaining {
+    "top": "50%",
+    "transform": [
+      {
+        "translateY": -50,
+      },
+    ],
+  },
+]
+
+[31m+ Received:[39m 
+{}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:173:40
+    171|       
+    172|       const animatedView = UNSAFE_getByType(Animated.View);
+    173|       expect(animatedView.props.style).toEqual(
+       |                                        ^
+    174|         expect.arrayContaining([
+    175|           expect.objectContaining({ 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Auto Dismiss > should auto dismiss after default duration
+AssertionError: expected "spy" to be called 1 times, but got 0 times
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:196:31
+    194| 
+    195|       await waitFor(() => {
+    196|         expect(mockOnDismiss).toHaveBeenCalledTimes(1);
+       |                               ^
+    197|       });
+    198|     });
+ ❯ Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:195:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Auto Dismiss > should auto dismiss after custom duration
+AssertionError: expected "spy" to be called 1 times, but got 0 times
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:217:31
+    215| 
+    216|       await waitFor(() => {
+    217|         expect(mockOnDismiss).toHaveBeenCalledTimes(1);
+       |                               ^
+    218|       });
+    219|     });
+ ❯ Athena/__mocks__/@testing-library/react-native.js:178:18
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:216:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Auto Dismiss > should clear timer when component unmounts
+AssertionError: expected "clearTimeout" to be called at least once
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:242:31
+    240|       unmount();
+    241| 
+    242|       expect(clearTimeoutSpy).toHaveBeenCalled();
+       |                               ^
+    243|       clearTimeoutSpy.mockRestore();
+    244|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Visibility Changes > should animate out when becoming invisible
+AssertionError: expected { type: 'MockElement', …(3) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "_testingLibraryElement": true,
+  "children": "Animate out",
+  "props": {
+    "children": "Animate out",
+    "disabled": undefined,
+    "onPress": undefined,
+    "style": {},
+    "testID": "Animate out",
+  },
+  "type": "MockElement",
+}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:266:42
+    264| 
+    265|       // Toast should still return null immediately when visible is fa…
+    266|       expect(queryByText('Animate out')).toBeNull();
+       |                                          ^
+    267|     });
+    268| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/102]⎯
+
+ FAIL  Athena/__tests__/unit/design-system/Toast.test.tsx > Toast Component > Visibility Changes > should handle rapid visibility changes
+AssertionError: expected { type: 'MockElement', …(3) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "_testingLibraryElement": true,
+  "children": "Rapid changes",
+  "props": {
+    "children": "Rapid changes",
+    "disabled": undefined,
+    "onPress": undefined,
+    "style": {},
+    "testID": "Rapid changes",
+  },
+  "type": "MockElement",
+}
+
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx:279:44
+    277| 
+    278|       rerender(<Toast visible={false} message="Rapid changes" />);
+    279|       expect(queryByText('Rapid changes')).toBeNull();
+       |                                            ^
+    280| 
+    281|       rerender(<Toast visible={true} message="Rapid changes" />);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > initMetasploit > should initialize with provided API key and URL
+AssertionError: expected "spy" to be called with arguments: [ 'test-api-key', …(1) ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:48:38
+     46|       const client = await initMetasploit(mockApiKey, mockApiUrl);
+     47|       
+     48|       expect(createMetasploitClient).toHaveBeenCalledWith(mockApiKey, …
+       |                                      ^
+     49|       expect(client).toBe(mockClient);
+     50|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > initMetasploit > should initialize with stored API key and URL
+AssertionError: expected "spy" to be called with arguments: [ 'test-api-key', …(1) ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:63:38
+     61|       expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith('athen…
+     62|       expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith('athen…
+     63|       expect(createMetasploitClient).toHaveBeenCalledWith(mockApiKey, …
+       |                                      ^
+     64|       expect(client).toBe(mockClient);
+     65|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > searchModules > should search for modules successfully
+TypeError: Cannot read properties of undefined (reading 'modules')
+ ❯ Module.searchModules Athena/services/metasploit.ts:77:21
+     75|     );
+     76|     
+     77|     return response.modules || [];
+       |                     ^
+     78|   } catch (error: unknown) {
+     79|     console.error('Metasploit module search error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:150:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > searchModules > should return empty array when no modules found
+TypeError: Cannot read properties of undefined (reading 'modules')
+ ❯ Module.searchModules Athena/services/metasploit.ts:77:21
+     75|     );
+     76|     
+     77|     return response.modules || [];
+       |                     ^
+     78|   } catch (error: unknown) {
+     79|     console.error('Metasploit module search error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:159:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > searchModules > should handle search error
+AssertionError: expected [Function] to throw error including 'Search failed' but got 'Cannot read properties of undefined (…'
+
+Expected: [32m"Search failed"[39m
+Received: [31m"Cannot read properties of undefined (reading 'modules')"[39m
+
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:169:7
+    167|       safeApiCall.mockImplementation(() => { throw error; });
+    168| 
+    169|       await expect(searchModules('test')).rejects.toThrow('Search fail…
+       |       ^
+    170|     });
+    171|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > getModuleDetails > should get module details successfully
+TypeError: Cannot read properties of undefined (reading 'module')
+ ❯ Module.getModuleDetails Athena/services/metasploit.ts:102:21
+    100|     );
+    101|     
+    102|     return response.module || {};
+       |                     ^
+    103|   } catch (error: unknown) {
+    104|     console.error('Metasploit module details error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:191:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > getModuleDetails > should return empty object when module not found
+TypeError: Cannot read properties of undefined (reading 'module')
+ ❯ Module.getModuleDetails Athena/services/metasploit.ts:102:21
+    100|     );
+    101|     
+    102|     return response.module || {};
+       |                     ^
+    103|   } catch (error: unknown) {
+    104|     console.error('Metasploit module details error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:200:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > searchVulnerabilityByCVE > should search vulnerabilities by CVE successfully
+TypeError: Cannot read properties of undefined (reading 'vulnerabilities')
+ ❯ Module.searchVulnerabilityByCVE Athena/services/metasploit.ts:125:21
+    123|     );
+    124|     
+    125|     return response.vulnerabilities || [];
+       |                     ^
+    126|   } catch (error: unknown) {
+    127|     console.error('Metasploit vulnerability search error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:221:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > searchVulnerabilityByCVE > should return empty array when no vulnerabilities found
+TypeError: Cannot read properties of undefined (reading 'vulnerabilities')
+ ❯ Module.searchVulnerabilityByCVE Athena/services/metasploit.ts:125:21
+    123|     );
+    124|     
+    125|     return response.vulnerabilities || [];
+       |                     ^
+    126|   } catch (error: unknown) {
+    127|     console.error('Metasploit vulnerability search error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:230:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > getVulnerabilityDetails > should get vulnerability details successfully
+TypeError: Cannot read properties of undefined (reading 'vulnerability')
+ ❯ Module.getVulnerabilityDetails Athena/services/metasploit.ts:148:21
+    146|     );
+    147|     
+    148|     return response.vulnerability || {};
+       |                     ^
+    149|   } catch (error: unknown) {
+    150|     console.error('Metasploit vulnerability details error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:254:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > findRelatedModules > should find related modules successfully
+TypeError: Cannot read properties of undefined (reading 'modules')
+ ❯ Module.findRelatedModules Athena/services/metasploit.ts:171:21
+    169|     );
+    170|     
+    171|     return response.modules || [];
+       |                     ^
+    172|   } catch (error: unknown) {
+    173|     console.error('Metasploit related modules error:', error);
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:276:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > enrichVulnerabilityData > should enrich vulnerability data with Metasploit information
+AssertionError: expected { name: 'EternalBlue', …(1) } to deeply equal { name: 'EternalBlue', …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "cveId": "CVE-2017-0144",[22m
+[32m-   "metasploitDescription": "EternalBlue SMB vulnerability",[39m
+[32m-   "metasploitId": "1",[39m
+[32m-   "metasploitModules": [[39m
+[32m-     {[39m
+[32m-       "description": "EternalBlue exploit",[39m
+[32m-       "name": "exploit/windows/smb/ms17_010_eternalblue",[39m
+[32m-       "type": "exploit",[39m
+[32m-     },[39m
+[32m-   ],[39m
+[2m    "name": "EternalBlue",[22m
+[2m  }[22m
+
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:315:25
+    313| 
+    314|       expect(result).toHaveLength(1);
+    315|       expect(result[0]).toEqual({
+       |                         ^
+    316|         name: 'EternalBlue',
+    317|         cveId: 'CVE-2017-0144',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/metasploit.test.ts > Metasploit Service > enrichVulnerabilityData > should handle mixed vulnerabilities
+AssertionError: expected undefined to be '1' // Object.is equality
+
+[32m- Expected:[39m 
+"1"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts:385:38
+    383| 
+    384|       expect(result).toHaveLength(3);
+    385|       expect(result[0].metasploitId).toBe('1');
+       |                                      ^
+    386|       expect(result[1]).toEqual(vulnerabilities[1]);
+    387|       expect(result[2]).toEqual(vulnerabilities[2]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/102]⎯
+
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > init > should initialize with provided API key and base URL
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > init > should use environment API key when provided in constructor
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > init > should retrieve API key from AsyncStorage when not provided
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > init > should use expo constants as fallback for API key
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > init > should throw error when no API key is found
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > init > should retrieve base URL from AsyncStorage
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > saveApiKey > should save API key to AsyncStorage and memory cache
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > saveApiKey > should handle AsyncStorage errors gracefully
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > hasApiKey > should return true when API key is in memory cache
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > hasApiKey > should return true when API key is in environment variable
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > hasApiKey > should return true when API key is in expo constants
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > hasApiKey > should return true when API key is in AsyncStorage
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > hasApiKey > should return false when no API key is found
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > deleteApiKey > should clear API key from AsyncStorage and memory cache
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > deleteApiKey > should handle AsyncStorage errors gracefully
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > deobfuscateCode > should deobfuscate code successfully
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > deobfuscateCode > should handle response without proper format
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > deobfuscateCode > should use custom model ID when provided
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > deobfuscateCode > should throw error when deobfuscation fails
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > analyzeVulnerabilities > should analyze vulnerabilities successfully with JSON response
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > analyzeVulnerabilities > should handle invalid JSON response gracefully
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > analyzeVulnerabilities > should extract JSON without markdown code blocks
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > analyzeVulnerabilities > should use custom model ID when provided
+ FAIL  Athena/__tests__/unit/services/ai/base.test.ts > BaseAIService > analyzeVulnerabilities > should throw error when vulnerability analysis fails
+Error: [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi[33m.[39m[34mmock[39m([35mimport[39m([32m"expo-constants"[39m)[33m,[39m [35masync[39m (importOriginal) [33m=>[39m {
+  [35mconst[39m actual [33m=[39m [35mawait[39m [34mimportOriginal[39m()
+  [35mreturn[39m {
+    [33m...[39mactual[33m,[39m
+    [90m// your mocked methods[39m
+  }
+})
+
+ ❯ Athena/__tests__/unit/services/ai/base.test.ts:64:5
+     62|     vi.clearAllMocks();
+     63|     // Reset Constants to avoid test pollution
+     64|     Constants.manifest = { extra: {} };
+       |     ^
+     65|     service = new TestAIService(testProvider);
+     66|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/102]⎯
+
+
+ Test Files  11 failed | 39 passed | 7 skipped (57)
+      Tests  100 failed | 642 passed | 32 skipped (774)
+   Start at  21:14:57
+   Duration  9.75s (transform 7.96s, setup 5.23s, collect 22.07s, tests 11.11s, environment 18ms, prepare 46.48s)
+

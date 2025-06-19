@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { render, waitFor, act } from '@testing-library/react-native';
 import { Animated, Platform } from 'react-native';
@@ -24,16 +25,16 @@ afterAll(() => {
 });
 
 describe('Toast Component', () => {
-  const mockOnDismiss = jest.fn();
+  const mockOnDismiss = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   describe('Basic Rendering', () => {
@@ -188,7 +189,7 @@ describe('Toast Component', () => {
 
       // Fast-forward time by default duration (3000ms)
       act(() => {
-        jest.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(3000);
       });
 
       await waitFor(() => {
@@ -203,13 +204,13 @@ describe('Toast Component', () => {
 
       // Should not dismiss before duration
       act(() => {
-        jest.advanceTimersByTime(4000);
+        vi.advanceTimersByTime(4000);
       });
       expect(mockOnDismiss).not.toHaveBeenCalled();
 
       // Should dismiss after duration
       act(() => {
-        jest.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(1000);
       });
 
       await waitFor(() => {
@@ -223,14 +224,14 @@ describe('Toast Component', () => {
       );
 
       act(() => {
-        jest.advanceTimersByTime(10000);
+        vi.advanceTimersByTime(10000);
       });
 
       expect(mockOnDismiss).not.toHaveBeenCalled();
     });
 
     it('should clear timer when component unmounts', () => {
-      const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+      const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
       
       const { unmount } = render(
         <Toast visible={true} message="Test" onDismiss={mockOnDismiss} />
@@ -340,7 +341,7 @@ describe('Toast Component', () => {
 
       // Should not throw error when auto-dismissing without callback
       act(() => {
-        jest.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(3000);
       });
 
       // No error should occur

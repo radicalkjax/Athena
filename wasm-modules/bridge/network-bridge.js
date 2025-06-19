@@ -39,6 +39,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NetworkBridge = exports.WASMError = void 0;
 exports.getNetworkBridge = getNetworkBridge;
+const isBrowser = typeof window !== 'undefined';
 class WASMError extends Error {
     constructor(message) {
         super(message);
@@ -63,7 +64,7 @@ class NetworkBridge {
         try {
             // Platform-specific loading
             let wasmModule;
-            if (typeof window !== 'undefined') {
+            if (isBrowser) {
                 // Browser environment - network doesn't have pkg-web yet, use pkg
                 wasmModule = await Promise.resolve().then(() => __importStar(require('../core/network/pkg/network')));
                 await wasmModule.default();
@@ -223,12 +224,7 @@ class NetworkBridge {
     // Analyze a single packet with extended result format
     async analyzePacketExtended(packet) {
         try {
-            const result = await this.analyzePacket(packet);
-            if (!result.success) {
-                throw new Error(result.error || 'Packet analysis failed');
-            }
-            // Convert the result to expected format
-            const analysis = result.data;
+            const analysis = await this.analyzePacket(packet);
             return {
                 ...analysis,
                 ethernetInfo: analysis.source_ip ? {
@@ -320,6 +316,67 @@ class NetworkBridge {
         }
         catch (error) {
             throw new WASMError(`Risk score calculation error: ${error}`);
+        }
+    }
+    // Domain analysis for security checks
+    async analyzeDomain(domain) {
+        this.ensureInitialized();
+        try {
+            // For now, implement a basic domain analysis
+            // In production, this would call the WASM module's domain analysis function
+            const maliciousDomains = [
+                'malicious.com', 'phishing.net', 'badsite.org', 'evil.com',
+                'malware-download.net', 'cryptolocker.biz', 'ransomware.org'
+            ];
+            const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf'];
+            const suspiciousPatterns = [
+                /[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/, // IP addresses
+                /[a-z0-9]{32,}/, // Long random strings
+                /(paypal|amazon|google|microsoft|apple).*\.(tk|ml|ga|cf)/, // Phishing patterns
+                /[0-9]+-[0-9]+-[0-9]+/, // Multiple hyphens with numbers
+            ];
+            const domainLower = domain.toLowerCase();
+            // Check if explicitly malicious
+            const isMalicious = maliciousDomains.some(mal => domainLower.includes(mal));
+            // Check if suspicious
+            let suspicious = false;
+            let risk_score = 0;
+            // Check TLD
+            if (suspiciousTLDs.some(tld => domainLower.endsWith(tld))) {
+                suspicious = true;
+                risk_score += 30;
+            }
+            // Check patterns
+            for (const pattern of suspiciousPatterns) {
+                if (pattern.test(domainLower)) {
+                    suspicious = true;
+                    risk_score += 20;
+                }
+            }
+            // Check domain length
+            if (domain.length > 50) {
+                suspicious = true;
+                risk_score += 10;
+            }
+            // Check for homograph attacks (simplified)
+            if (/[а-я]/.test(domain)) { // Cyrillic characters
+                suspicious = true;
+                risk_score += 40;
+            }
+            if (isMalicious) {
+                risk_score = 100;
+            }
+            return {
+                isMalicious,
+                suspicious: suspicious || isMalicious,
+                risk_score: Math.min(100, risk_score),
+                details: isMalicious ? 'Known malicious domain' :
+                    suspicious ? 'Domain exhibits suspicious characteristics' :
+                        'Domain appears safe'
+            };
+        }
+        catch (error) {
+            throw new WASMError(`Domain analysis error: ${error}`);
         }
     }
     // Utility method to convert hex string to Uint8Array

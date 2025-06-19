@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { View, Text } from 'react-native';

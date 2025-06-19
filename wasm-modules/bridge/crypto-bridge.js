@@ -43,6 +43,7 @@ let RsaModule;
 let CryptoUtils;
 let RsaKeyPairWrapper;
 let init_crypto_module;
+const isBrowser = typeof window !== 'undefined';
 class WASMError extends Error {
     constructor(message, code) {
         super(message);
@@ -73,9 +74,9 @@ class CryptoBridge {
         }
         try {
             // Platform-specific loading
-            if (typeof window !== 'undefined') {
-                // Browser environment - crypto doesn't have pkg-web yet, use pkg
-                const module = await Promise.resolve().then(() => __importStar(require('../core/crypto/pkg/crypto')));
+            if (isBrowser) {
+                // Browser environment
+                const module = await Promise.resolve().then(() => __importStar(require('../core/crypto/pkg/web/crypto')));
                 CryptoModule = module.CryptoModule;
                 HashModule = module.HashModule;
                 HmacModule = module.HmacModule;
@@ -86,8 +87,8 @@ class CryptoBridge {
                 init_crypto_module = module.init_crypto_module || module.default;
             }
             else {
-                // Node.js environment - crypto doesn't have pkg-node yet, use pkg
-                const module = require('../core/crypto/pkg/crypto');
+                // Node.js environment
+                const module = require('../core/crypto/pkg/node/crypto');
                 CryptoModule = module.CryptoModule;
                 HashModule = module.HashModule;
                 HmacModule = module.HmacModule;

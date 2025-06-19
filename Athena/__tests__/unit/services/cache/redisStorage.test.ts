@@ -1,30 +1,33 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import IORedis from 'ioredis';
 import { RedisCacheStorage } from '@/services/cache/redisStorage';
 import { MemoryCacheStorage } from '@/services/cache/memoryStorage';
 import { CacheEntry } from '@/services/cache/types';
 
 // Mock ioredis
-jest.mock('ioredis', () => {
+vi.mock('ioredis', () => {
   const mockRedis = {
-    on: jest.fn(),
-    get: jest.fn(),
-    set: jest.fn(),
-    setex: jest.fn(),
-    del: jest.fn(),
-    keys: jest.fn(),
-    info: jest.fn(),
-    quit: jest.fn(),
+    on: vi.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
+    setex: vi.fn(),
+    del: vi.fn(),
+    keys: vi.fn(),
+    info: vi.fn(),
+    quit: vi.fn(),
   };
 
-  return jest.fn(() => mockRedis);
+  return {
+    default: vi.fn(() => mockRedis)
+  };
 });
 
 // Mock logger
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -33,7 +36,7 @@ describe('RedisCacheStorage', () => {
   let mockRedis: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockRedis = new IORedis();
     redisStorage = new RedisCacheStorage({
       redis: mockRedis,

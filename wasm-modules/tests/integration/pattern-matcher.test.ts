@@ -1,4 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+
+// Mock the pattern matcher bridge
+vi.mock('../../bridge/pattern-matcher-bridge', () => {
+  return import('../../bridge/__mocks__/pattern-matcher-bridge');
+});
+
 import { PatternMatcherBridge, getPatternMatcher, matchedDataToString } from '../../bridge/pattern-matcher-bridge';
 
 describe('PatternMatcher WASM Integration Tests', () => {

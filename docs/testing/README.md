@@ -28,13 +28,13 @@ This directory contains comprehensive testing documentation for the Athena proje
 npm test
 
 # Run specific test file
-npx jest path/to/test.test.ts --no-watchman
-
-# Run tests with coverage
-npm run test:coverage
+npx vitest path/to/test.test.ts
 
 # Run tests in watch mode
-npm test -- --watch
+npm run test:watch
+
+# Run tests with UI
+npx vitest --ui
 
 # Check for circular dependencies
 npx madge --circular .
@@ -96,7 +96,7 @@ graph TB
     end
     
     subgraph "Test Infrastructure"
-        JEST[Jest<br/>━━━━━━━━<br/>• Test Runner<br/>• Assertions<br/>• Coverage]
+        VITEST[Vitest<br/>━━━━━━━━<br/>• Test Runner<br/>• Assertions<br/>• Coverage]
         RTL[React Testing Library<br/>━━━━━━━━<br/>• Component Rendering<br/>• User Events<br/>• Queries]
         MOCK[Mock System<br/>━━━━━━━━<br/>• Module Mocks<br/>• API Mocks<br/>• Store Mocks]
     end

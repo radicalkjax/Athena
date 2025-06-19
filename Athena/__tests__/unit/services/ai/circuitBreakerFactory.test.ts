@@ -1,36 +1,37 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { circuitBreakerFactory } from '@/services/ai/circuitBreakerFactory';
 import { AdaptiveCircuitBreaker } from '@/services/ai/adaptiveCircuitBreaker';
 import { CircuitBreaker } from '@/services/ai/circuitBreaker';
 
 // Mock APM manager
-jest.mock('@/services/apm/manager', () => ({
+vi.mock('@/services/apm/manager', () => ({
   apmManager: {
-    recordCircuitBreakerEvent: jest.fn(),
-    recordMetric: jest.fn(),
-    histogram: jest.fn(),
-    counter: jest.fn(),
+    recordCircuitBreakerEvent: vi.fn(),
+    recordMetric: vi.fn(),
+    histogram: vi.fn(),
+    counter: vi.fn(),
   },
 }));
 
 // Mock logger
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock feature flags
-jest.mock('@/services/config/featureFlags', () => ({
+vi.mock('@/services/config/featureFlags', () => ({
   featureFlags: {
-    isEnabled: jest.fn((flag) => true), // Enable all features by default for tests
+    isEnabled: vi.fn((flag) => true), // Enable all features by default for tests
   },
 }));
 
 describe('CircuitBreakerFactory', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset the factory state
     circuitBreakerFactory.resetAll();
   });
@@ -60,7 +61,7 @@ describe('CircuitBreakerFactory', () => {
   
   describe('Execute Method', () => {
     it('should execute operations through circuit breaker', async () => {
-      const mockOperation = jest.fn().mockResolvedValue('result');
+      const mockOperation = vi.fn().mockResolvedValue('result');
       
       const result = await circuitBreakerFactory.execute(
         'ai.openai.analyze',
@@ -72,7 +73,7 @@ describe('CircuitBreakerFactory', () => {
     });
     
     it('should handle circuit breaker failures', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('fail'));
+      const mockOperation = vi.fn().mockRejectedValue(new Error('fail'));
       
       // Open the circuit
       for (let i = 0; i < 5; i++) {
@@ -137,7 +138,7 @@ describe('CircuitBreakerFactory', () => {
     });
     
     it('should track unhealthy breakers', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('fail'));
+      const mockOperation = vi.fn().mockRejectedValue(new Error('fail'));
       
       // Open one circuit
       for (let i = 0; i < 5; i++) {
@@ -155,7 +156,7 @@ describe('CircuitBreakerFactory', () => {
   
   describe('Reset Operations', () => {
     it('should reset specific breaker', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('fail'));
+      const mockOperation = vi.fn().mockRejectedValue(new Error('fail'));
       
       // Open circuit
       for (let i = 0; i < 3; i++) {
@@ -172,7 +173,7 @@ describe('CircuitBreakerFactory', () => {
     });
     
     it('should reset all breakers', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('fail'));
+      const mockOperation = vi.fn().mockRejectedValue(new Error('fail'));
       
       // Open multiple circuits
       for (const endpoint of ['ai.claude.analyze', 'ai.openai.analyze']) {

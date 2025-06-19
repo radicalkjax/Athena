@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { create } from 'zustand';
@@ -34,8 +35,8 @@ const createTestStore = () => create((set) => ({
 }));
 
 // Mock services
-jest.mock('@/services/fileManager');
-jest.mock('@/services/analysisService');
+vi.mock('@/services/fileManager');
+vi.mock('@/services/analysisService');
 
 // Test component
 const TestFlow = ({ store }) => {
@@ -95,16 +96,16 @@ describe.skip('Clean Flow Test', () => {
   let testStore;
   
   beforeEach(() => {
-    jest.useFakeTimers();
-    jest.clearAllMocks();
+    vi.useFakeTimers();
+    vi.clearAllMocks();
     
     // Create fresh store for each test
     testStore = createTestStore();
     
     // Mock services
-    (fileManagerService as any).initFileSystem = jest.fn().mockResolvedValue(undefined);
-    (fileManagerService as any).listMalwareFiles = jest.fn().mockResolvedValue([]);
-    (fileManagerService as any).pickFile = jest.fn().mockResolvedValue({
+    (fileManagerService as any).initFileSystem = vi.fn().mockResolvedValue(undefined);
+    (fileManagerService as any).listMalwareFiles = vi.fn().mockResolvedValue([]);
+    (fileManagerService as any).pickFile = vi.fn().mockResolvedValue({
       id: 'test-123',
       name: 'malware.exe',
       size: 2048576,
@@ -113,7 +114,7 @@ describe.skip('Clean Flow Test', () => {
       content: 'test'
     });
     
-    (analysisService as any).analyzeFile = jest.fn().mockImplementation(async () => {
+    (analysisService as any).analyzeFile = vi.fn().mockImplementation(async () => {
       await new Promise(resolve => setTimeout(resolve, 200));
       return {
         id: 'result-1',
@@ -133,7 +134,7 @@ describe.skip('Clean Flow Test', () => {
   });
   
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
   
   it('should complete the flow correctly', async () => {
@@ -168,7 +169,7 @@ describe.skip('Clean Flow Test', () => {
     expect(getByText('Analyzing...')).toBeTruthy();
     
     // Advance timers
-    jest.advanceTimersByTime(200);
+    vi.advanceTimersByTime(200);
     
     // Wait for results
     await waitFor(() => {

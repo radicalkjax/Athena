@@ -1,20 +1,21 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { APMManager } from '@/services/apm/manager';
 import { ConsoleAPMProvider } from '@/services/apm/console';
 import { env } from '@/shared/config/environment';
 
 // Mock dependencies
-jest.mock('@/shared/logging/logger', () => ({
+vi.mock('@/shared/logging/logger', () => ({
   logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
-jest.mock('@/services/monitoring/memoryProfiler', () => ({
+vi.mock('@/services/monitoring/memoryProfiler', () => ({
   memoryProfiler: {
-    getMemoryStats: jest.fn(() => ({
+    getMemoryStats: vi.fn(() => ({
       current: {
         heapUsed: 100 * 1024 * 1024,
         heapTotal: 200 * 1024 * 1024,
@@ -24,9 +25,9 @@ jest.mock('@/services/monitoring/memoryProfiler', () => ({
   },
 }));
 
-jest.mock('@/services/cache/redisFactory', () => ({
-  getCacheManager: jest.fn(() => ({
-    getStats: jest.fn(() => ({
+vi.mock('@/services/cache/redisFactory', () => ({
+  getCacheManager: vi.fn(() => ({
+    getStats: vi.fn(() => ({
       currentSize: 50 * 1024 * 1024,
       entryCount: 100,
       hitRate: 0.85,
@@ -41,7 +42,7 @@ describe('APMManager', () => {
   let apmManager: APMManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Get fresh instance
     apmManager = APMManager.getInstance();
   });
@@ -76,7 +77,7 @@ describe('APMManager', () => {
     });
 
     it('should track spans with timing', async () => {
-      const operation = jest.fn().mockResolvedValue('result');
+      const operation = vi.fn().mockResolvedValue('result');
       
       const result = await apmManager.withSpan(
         'test.operation',
@@ -90,7 +91,7 @@ describe('APMManager', () => {
 
     it('should handle span errors', async () => {
       const error = new Error('Test error');
-      const operation = jest.fn().mockRejectedValue(error);
+      const operation = vi.fn().mockRejectedValue(error);
       
       await expect(
         apmManager.withSpan('test.operation', operation)

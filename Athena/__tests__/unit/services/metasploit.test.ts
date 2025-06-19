@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as SecureStore from 'expo-secure-store';
 import {
   initMetasploit,
@@ -13,35 +14,42 @@ import {
 } from '../../../services/metasploit';
 
 // Mock dependencies
-jest.mock('expo-secure-store');
-jest.mock('../../../services/apiClient', () => ({
-  createMetasploitClient: jest.fn(),
-  safeApiCall: jest.fn(),
-  sanitizeRequestData: jest.fn((data) => data)
-}));
+vi.mock('expo-secure-store');
+vi.mock('../../../services/apiClient');
 
-const mockSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
-const { createMetasploitClient, safeApiCall } = require('../../../services/apiClient');
+const mockSecureStore = SecureStore as any;
+
+// Import the mocked functions
+import { createMetasploitClient, safeApiCall, sanitizeRequestData } from '../../../services/apiClient';
+
+// Cast to mocked functions
+const mockCreateMetasploitClient = createMetasploitClient as vi.MockedFunction<typeof createMetasploitClient>;
+const mockSafeApiCall = safeApiCall as vi.MockedFunction<typeof safeApiCall>;
+const mockSanitizeRequestData = sanitizeRequestData as vi.MockedFunction<typeof sanitizeRequestData>;
 
 describe('Metasploit Service', () => {
   const mockApiKey = 'test-api-key';
   const mockApiUrl = 'https://metasploit.example.com';
   const mockClient = {
-    get: jest.fn(),
-    post: jest.fn()
+    get: vi.fn(),
+    post: vi.fn()
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    createMetasploitClient.mockReturnValue(mockClient);
-    safeApiCall.mockImplementation((fn) => fn());
+    vi.clearAllMocks();
+    mockCreateMetasploitClient.mockReturnValue(mockClient);
+    mockSafeApiCall.mockImplementation(async (fn: any) => {
+      const result = await fn();
+      return result.data || result; // Extract data property if it exists
+    });
+    mockSanitizeRequestData.mockImplementation((data) => data); // Return data as-is
   });
 
   describe('initMetasploit', () => {
     it('should initialize with provided API key and URL', async () => {
       const client = await initMetasploit(mockApiKey, mockApiUrl);
       
-      expect(createMetasploitClient).toHaveBeenCalledWith(mockApiKey, mockApiUrl);
+      expect(mockCreateMetasploitClient).toHaveBeenCalledWith(mockApiKey, mockApiUrl);
       expect(client).toBe(mockClient);
     });
 
@@ -56,7 +64,7 @@ describe('Metasploit Service', () => {
       
       expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith('athena_metasploit_api_key');
       expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith('athena_metasploit_api_url');
-      expect(createMetasploitClient).toHaveBeenCalledWith(mockApiKey, mockApiUrl);
+      expect(mockCreateMetasploitClient).toHaveBeenCalledWith(mockApiKey, mockApiUrl);
       expect(client).toBe(mockClient);
     });
 
@@ -141,7 +149,7 @@ describe('Metasploit Service', () => {
         { name: 'exploit/windows/smb/ms17_010_eternalblue', type: 'exploit' },
         { name: 'auxiliary/scanner/smb/smb_version', type: 'auxiliary' }
       ];
-      mockClient.get.mockResolvedValue({ modules: mockModules });
+      mockClient.get.mockResolvedValue({ data: { modules: mockModules } });
 
       const result = await searchModules('smb');
 
@@ -150,7 +158,7 @@ describe('Metasploit Service', () => {
     });
 
     it('should return empty array when no modules found', async () => {
-      mockClient.get.mockResolvedValue({});
+      mockClient.get.mockResolvedValue({ data: {} });
 
       const result = await searchModules('nonexistent');
 
@@ -160,7 +168,7 @@ describe('Metasploit Service', () => {
     it('should handle search error', async () => {
       const error = new Error('Search failed');
       mockClient.get.mockRejectedValue(error);
-      safeApiCall.mockImplementation(() => { throw error; });
+      mockSafeApiCall.mockImplementation(() => { throw error; });
 
       await expect(searchModules('test')).rejects.toThrow('Search failed');
     });
@@ -182,7 +190,7 @@ describe('Metasploit Service', () => {
         author: ['shadowbrokers'],
         references: ['CVE-2017-0144']
       };
-      mockClient.get.mockResolvedValue({ module: mockModule });
+      mockClient.get.mockResolvedValue({ data: { module: mockModule } });
 
       const result = await getModuleDetails('exploit', 'windows/smb/ms17_010_eternalblue');
 
@@ -191,7 +199,7 @@ describe('Metasploit Service', () => {
     });
 
     it('should return empty object when module not found', async () => {
-      mockClient.get.mockResolvedValue({});
+      mockClient.get.mockResolvedValue({ data: {} });
 
       const result = await getModuleDetails('exploit', 'nonexistent');
 
@@ -212,7 +220,7 @@ describe('Metasploit Service', () => {
       const mockVulnerabilities = [
         { id: '1', cve: 'CVE-2017-0144', description: 'EternalBlue vulnerability' }
       ];
-      mockClient.get.mockResolvedValue({ vulnerabilities: mockVulnerabilities });
+      mockClient.get.mockResolvedValue({ data: { vulnerabilities: mockVulnerabilities } });
 
       const result = await searchVulnerabilityByCVE('CVE-2017-0144');
 
@@ -221,7 +229,7 @@ describe('Metasploit Service', () => {
     });
 
     it('should return empty array when no vulnerabilities found', async () => {
-      mockClient.get.mockResolvedValue({});
+      mockClient.get.mockResolvedValue({ data: {} });
 
       const result = await searchVulnerabilityByCVE('CVE-9999-9999');
 
@@ -245,7 +253,7 @@ describe('Metasploit Service', () => {
         description: 'EternalBlue vulnerability',
         cvss: 9.8
       };
-      mockClient.get.mockResolvedValue({ vulnerability: mockVulnerability });
+      mockClient.get.mockResolvedValue({ data: { vulnerability: mockVulnerability } });
 
       const result = await getVulnerabilityDetails('1');
 
@@ -267,7 +275,7 @@ describe('Metasploit Service', () => {
       const mockModules = [
         { name: 'exploit/windows/smb/ms17_010_eternalblue', type: 'exploit' }
       ];
-      mockClient.get.mockResolvedValue({ modules: mockModules });
+      mockClient.get.mockResolvedValue({ data: { modules: mockModules } });
 
       const result = await findRelatedModules('1');
 
@@ -339,7 +347,7 @@ describe('Metasploit Service', () => {
         { name: 'Unknown', cveId: 'CVE-9999-9999' }
       ];
 
-      mockClient.get.mockResolvedValue({});
+      mockClient.get.mockResolvedValue({ data: {} });
 
       const result = await enrichVulnerabilityData(vulnerabilities);
 

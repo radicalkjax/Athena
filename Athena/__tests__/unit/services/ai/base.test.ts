@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { AxiosInstance } from 'axios';
@@ -7,16 +8,18 @@ import { sanitizeString } from '@/utils/helpers';
 import { safeApiCall, sanitizeRequestData } from '@/services/apiClient';
 
 // Mock dependencies
-jest.mock('@react-native-async-storage/async-storage');
-jest.mock('expo-constants', () => ({
-  manifest: { extra: {} }
+vi.mock('@react-native-async-storage/async-storage');
+vi.mock('expo-constants', () => ({
+  default: {
+    manifest: { extra: {} }
+  }
 }));
-jest.mock('@/utils/helpers', () => ({
-  sanitizeString: jest.fn((str: string) => str)
+vi.mock('@/utils/helpers', () => ({
+  sanitizeString: vi.fn((str: string) => str)
 }));
-jest.mock('@/services/apiClient', () => ({
-  safeApiCall: jest.fn(),
-  sanitizeRequestData: jest.fn((data: any) => data)
+vi.mock('@/services/apiClient', () => ({
+  safeApiCall: vi.fn(),
+  sanitizeRequestData: vi.fn((data: any) => data)
 }));
 
 // Create a concrete test implementation of BaseAIService
@@ -24,7 +27,7 @@ class TestAIService extends BaseAIService {
   protected getClient(apiKey: string, baseUrl: string): AxiosInstance {
     return { 
       defaults: { baseURL: baseUrl },
-      interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } }
+      interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } }
     } as any;
   }
 
@@ -58,7 +61,7 @@ describe('BaseAIService', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset Constants to avoid test pollution
     Constants.manifest = { extra: {} };
     service = new TestAIService(testProvider);
@@ -224,7 +227,7 @@ describe('BaseAIService', () => {
   describe('deobfuscateCode', () => {
     beforeEach(() => {
       // Mock the init method to return a client
-      jest.spyOn(service, 'init').mockResolvedValue({
+      vi.spyOn(service, 'init').mockResolvedValue({
         defaults: { baseURL: 'https://api.test.com' }
       } as any);
     });
@@ -239,7 +242,7 @@ describe('BaseAIService', () => {
         }]
       };
 
-      jest.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
 
       const result = await service.deobfuscateCode(obfuscatedCode);
 
@@ -260,7 +263,7 @@ describe('BaseAIService', () => {
         }]
       };
 
-      jest.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
 
       const result = await service.deobfuscateCode(obfuscatedCode);
 
@@ -273,7 +276,7 @@ describe('BaseAIService', () => {
     it('should use custom model ID when provided', async () => {
       const obfuscatedCode = 'var _0x1234 = function() {};';
       const customModel = 'claude-3-haiku-20240307';
-      const makeRequestSpy = jest.spyOn(service as any, 'makeRequest');
+      const makeRequestSpy = vi.spyOn(service as any, 'makeRequest');
 
       await service.deobfuscateCode(obfuscatedCode, customModel);
 
@@ -285,7 +288,7 @@ describe('BaseAIService', () => {
     });
 
     it('should throw error when deobfuscation fails', async () => {
-      jest.spyOn(service, 'init').mockRejectedValue(new Error('API error'));
+      vi.spyOn(service, 'init').mockRejectedValue(new Error('API error'));
 
       await expect(service.deobfuscateCode('code')).rejects.toThrow(
         'Failed to deobfuscate code: API error'
@@ -296,7 +299,7 @@ describe('BaseAIService', () => {
   describe('analyzeVulnerabilities', () => {
     beforeEach(() => {
       // Mock the init method to return a client
-      jest.spyOn(service, 'init').mockResolvedValue({
+      vi.spyOn(service, 'init').mockResolvedValue({
         defaults: { baseURL: 'https://api.test.com' }
       } as any);
     });
@@ -311,7 +314,7 @@ describe('BaseAIService', () => {
         }]
       };
 
-      jest.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
 
       const result = await service.analyzeVulnerabilities(code);
 
@@ -336,7 +339,7 @@ describe('BaseAIService', () => {
         }]
       };
 
-      jest.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
 
       const result = await service.analyzeVulnerabilities(code);
 
@@ -356,7 +359,7 @@ describe('BaseAIService', () => {
         }]
       };
 
-      jest.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(service as any, 'makeRequest').mockResolvedValue(mockResponse);
 
       const result = await service.analyzeVulnerabilities(code);
 
@@ -369,7 +372,7 @@ describe('BaseAIService', () => {
     it('should use custom model ID when provided', async () => {
       const code = 'eval(userInput);';
       const customModel = 'claude-3-haiku-20240307';
-      const makeRequestSpy = jest.spyOn(service as any, 'makeRequest');
+      const makeRequestSpy = vi.spyOn(service as any, 'makeRequest');
 
       await service.analyzeVulnerabilities(code, customModel);
 
@@ -381,7 +384,7 @@ describe('BaseAIService', () => {
     });
 
     it('should throw error when vulnerability analysis fails', async () => {
-      jest.spyOn(service, 'init').mockRejectedValue(new Error('API error'));
+      vi.spyOn(service, 'init').mockRejectedValue(new Error('API error'));
 
       await expect(service.analyzeVulnerabilities('code')).rejects.toThrow(
         'Failed to analyze vulnerabilities: API error'

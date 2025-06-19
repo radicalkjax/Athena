@@ -1,3 +1,25 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// Mock dependencies BEFORE importing anything else
+vi.mock('@/store', () => ({
+  useAppStore: vi.fn()
+}));
+
+vi.mock('@/services/ai/manager', () => ({
+  aiServiceManager: {
+    analyzeWithFailover: vi.fn(),
+    getProviderStatus: vi.fn(),
+    getCircuitBreakerStatus: vi.fn()
+  }
+}));
+
+vi.mock('@/shared/logging/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn()
+  }
+}));
+
 /**
  * Tests for useStreamingAnalysis hook
  */
@@ -8,25 +30,7 @@ import { aiServiceManager } from '@/services/ai/manager';
 import { useAppStore } from '@/store';
 import { MalwareFile } from '@/types';
 
-// Mock dependencies
-jest.mock('@/services/ai/manager', () => ({
-  aiServiceManager: {
-    analyzeWithFailover: jest.fn(),
-    getProviderStatus: jest.fn(),
-    getCircuitBreakerStatus: jest.fn()
-  }
-}));
-
-jest.mock('@/store', () => ({
-  useAppStore: jest.fn()
-}));
-
-jest.mock('@/shared/logging/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    error: jest.fn()
-  }
-}));
+// Note: Mocks are defined above imports to ensure proper hoisting
 
 describe('useStreamingAnalysis', () => {
   const mockFile: MalwareFile = {
@@ -39,62 +43,100 @@ describe('useStreamingAnalysis', () => {
   };
   
   const mockStoreMethods = {
-    startStreamingAnalysis: jest.fn(),
-    setAnalysisProgress: jest.fn(),
-    addAnalysisResult: jest.fn(),
-    setIsAnalyzing: jest.fn(),
-    clearAnalysisProgress: jest.fn()
+    startStreamingAnalysis: vi.fn(),
+    setAnalysisProgress: vi.fn(),
+    addAnalysisResult: vi.fn(),
+    setIsAnalyzing: vi.fn(),
+    clearAnalysisProgress: vi.fn()
   };
   
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useAppStore as jest.Mock).mockReturnValue(mockStoreMethods);
+    vi.clearAllMocks();
+    vi.mocked(useAppStore).mockImplementation(() => mockStoreMethods);
     
-    (aiServiceManager.getProviderStatus as jest.Mock).mockReturnValue(new Map([
-      ['claude', { status: 'healthy' }],
-      ['openai', { status: 'healthy' }]
+    vi.mocked(aiServiceManager.getProviderStatus).mockReturnValue(new Map([
+      ['claude', { 
+        status: 'healthy',
+        lastCheck: Date.now(),
+        failureCount: 0,
+        successRate: 1.0,
+        averageResponseTime: 100
+      }],
+      ['openai', { 
+        status: 'healthy',
+        lastCheck: Date.now(),
+        failureCount: 0,
+        successRate: 1.0,
+        averageResponseTime: 120
+      }]
     ]));
     
-    (aiServiceManager.getCircuitBreakerStatus as jest.Mock).mockReturnValue(new Map([
-      ['claude', { state: 'closed' }],
-      ['openai', { state: 'closed' }]
+    vi.mocked(aiServiceManager.getCircuitBreakerStatus).mockReturnValue(new Map([
+      ['claude', { state: 'closed', failures: 0, lastFailure: null }],
+      ['openai', { state: 'closed', failures: 0, lastFailure: null }]
     ]));
   });
   
+  describe('import', () => {
+    it('should import the hook successfully', () => {
+      expect(useStreamingAnalysis).toBeDefined();
+      expect(typeof useStreamingAnalysis).toBe('function');
+    });
+  });
+
   describe('analyze', () => {
+    it('should return expected interface', () => {
+      const { result } = renderHook(() => useStreamingAnalysis());
+      
+      expect(result.current).toBeDefined();
+      expect(typeof result.current.analyze).toBe('function');
+      expect(typeof result.current.cancel).toBe('function');
+      expect(typeof result.current.getProviderStatus).toBe('function');
+    });
+
     it('should perform streaming analysis successfully', async () => {
       const mockResult = {
         deobfuscatedCode: 'clean code',
         analysisReport: 'No issues found'
       };
       
-      (aiServiceManager.analyzeWithFailover as jest.Mock).mockImplementation(
-        async (code, type, streaming) => {
+      vi.mocked(aiServiceManager.analyzeWithFailover).mockImplementation(
+        async (_code, _type, streaming) => {
           // Simulate streaming callbacks
-          streaming.onProgress(25);
-          streaming.onChunk({
-            type: 'progress',
-            data: { stage: 'initializing', progress: 25 },
-            timestamp: Date.now()
-          });
-          
-          streaming.onProgress(50);
-          streaming.onChunk({
-            type: 'progress',
-            data: { stage: 'analyzing', progress: 50 },
-            timestamp: Date.now()
-          });
-          
-          streaming.onComplete(mockResult);
+          if (streaming) {
+            streaming.onProgress?.(25);
+            streaming.onChunk?.({
+              type: 'progress',
+              data: { stage: 'initializing', progress: 25 },
+              timestamp: Date.now()
+            });
+            
+            streaming.onProgress?.(50);
+            streaming.onChunk?.({
+              type: 'progress',
+              data: { stage: 'analyzing', progress: 50 },
+              timestamp: Date.now()
+            });
+            
+            streaming.onComplete?.(mockResult);
+          }
           return mockResult;
         }
       );
       
-      const onComplete = jest.fn();
-      const { result } = renderHook(() => useStreamingAnalysis({ onComplete }));
+      const onComplete = vi.fn();
+      const { result } = renderHook(() => {
+        // Debug: Check what useAppStore returns inside the hook
+        const store = useAppStore();
+        console.log('Store inside hook:', Object.keys(store || {}));
+        return useStreamingAnalysis({ onComplete });
+      });
+      
+      // Debug: Check what the hook returns
+      console.log('Hook result:', result.current);
       
       await act(async () => {
-        await result.current.analyze(mockFile, 'deobfuscate');
+        await result.current?.analyze?.(mockFile, 'deobfuscate');
       });
       
       expect(mockStoreMethods.startStreamingAnalysis).toHaveBeenCalledWith(
@@ -130,9 +172,9 @@ describe('useStreamingAnalysis', () => {
     it('should handle analysis errors', async () => {
       const error = new Error('Analysis failed');
       
-      (aiServiceManager.analyzeWithFailover as jest.Mock).mockRejectedValue(error);
+      vi.mocked(aiServiceManager.analyzeWithFailover).mockRejectedValue(error);
       
-      const onError = jest.fn();
+      const onError = vi.fn();
       const { result } = renderHook(() => useStreamingAnalysis({ onError }));
       
       await act(async () => {
@@ -147,14 +189,16 @@ describe('useStreamingAnalysis', () => {
     it('should handle streaming errors', async () => {
       const error = new Error('Stream error');
       
-      (aiServiceManager.analyzeWithFailover as jest.Mock).mockImplementation(
-        async (code, type, streaming) => {
-          streaming.onError(error);
+      vi.mocked(aiServiceManager.analyzeWithFailover).mockImplementation(
+        async (_code, _type, streaming) => {
+          if (streaming) {
+            streaming.onError?.(error);
+          }
           throw error;
         }
       );
       
-      const onError = jest.fn();
+      const onError = vi.fn();
       const { result } = renderHook(() => useStreamingAnalysis({ onError }));
       
       await act(async () => {

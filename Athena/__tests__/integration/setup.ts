@@ -35,9 +35,11 @@ export const renderWithProviders = (
 };
 
 // Mock services with realistic delays
+import { vi } from 'vitest';
+
 export const mockServices = {
   fileManager: {
-    pickFile: jest.fn().mockImplementation(async () => {
+    pickFile: vi.fn().mockImplementation(async () => {
       // Simulate file picker delay
       await new Promise(resolve => setTimeout(resolve, 100));
       return {
@@ -49,12 +51,12 @@ export const mockServices = {
         content: 'MZ... (binary content)'
       };
     }),
-    saveFile: jest.fn().mockResolvedValue(true),
-    deleteFile: jest.fn().mockResolvedValue(true),
+    saveFile: vi.fn().mockResolvedValue(true),
+    deleteFile: vi.fn().mockResolvedValue(true),
   },
   
   analysisService: {
-    analyzeFile: jest.fn().mockImplementation(async (file, options) => {
+    analyzeFile: vi.fn().mockImplementation(async (file, options) => {
       // Simulate analysis delay
       await new Promise(resolve => setTimeout(resolve, 500));
       return {
@@ -77,7 +79,7 @@ export const mockServices = {
   },
   
   containerService: {
-    createContainer: jest.fn().mockImplementation(async (config) => {
+    createContainer: vi.fn().mockImplementation(async (config) => {
       // Simulate container creation delay
       await new Promise(resolve => setTimeout(resolve, 300));
       return {
@@ -92,7 +94,7 @@ export const mockServices = {
       };
     }),
     
-    deployFile: jest.fn().mockImplementation(async (containerId, file) => {
+    deployFile: vi.fn().mockImplementation(async (containerId, file) => {
       await new Promise(resolve => setTimeout(resolve, 200));
       return {
         success: true,
@@ -105,25 +107,25 @@ export const mockServices = {
   
   aiServices: {
     openai: {
-      analyzeVulnerabilities: jest.fn().mockResolvedValue({
+      analyzeVulnerabilities: vi.fn().mockResolvedValue({
         vulnerabilities: ['SQL Injection', 'XSS'],
         riskScore: 7,
         recommendations: ['Sanitize inputs', 'Use parameterized queries']
       }),
-      deobfuscateCode: jest.fn().mockResolvedValue({
+      deobfuscateCode: vi.fn().mockResolvedValue({
         deobfuscated: 'function maliciousCode() { /* deobfuscated */ }',
         techniques: ['String encoding', 'Control flow flattening']
       })
     },
     deepseek: {
-      analyzeVulnerabilities: jest.fn().mockResolvedValue({
+      analyzeVulnerabilities: vi.fn().mockResolvedValue({
         vulnerabilities: ['Command Injection'],
         riskScore: 6,
         recommendations: ['Validate user input']
       })
     },
     claude: {
-      analyzeVulnerabilities: jest.fn().mockResolvedValue({
+      analyzeVulnerabilities: vi.fn().mockResolvedValue({
         vulnerabilities: ['Path Traversal'],
         riskScore: 5,
         recommendations: ['Use safe path functions']

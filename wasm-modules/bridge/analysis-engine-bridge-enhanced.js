@@ -41,6 +41,7 @@ exports.AnalysisEngineBridge = exports.analysisEngine = void 0;
 exports.initializeAnalysisEngine = initializeAnalysisEngine;
 exports.createAnalysisEngine = createAnalysisEngine;
 const types_1 = require("./types");
+const wasm_error_codes_1 = require("./wasm-error-codes");
 const type_marshaling_1 = require("./type-marshaling");
 class AnalysisEngineBridge {
     constructor(config = {}) {
@@ -71,7 +72,7 @@ class AnalysisEngineBridge {
         const startTime = performance.now();
         try {
             this.log('info', 'Initializing WASM Analysis Engine...');
-            if (typeof window !== 'undefined') {
+            if (wasm_error_codes_1.isBrowser) {
                 // Dynamic import for web
                 this.wasmModule = await Promise.resolve().then(() => __importStar(require('../core/analysis-engine/pkg-web/athena_analysis_engine')));
                 await this.wasmModule.default();
@@ -88,7 +89,7 @@ class AnalysisEngineBridge {
         }
         catch (error) {
             this.log('error', 'Failed to initialize WASM Analysis Engine:', error);
-            throw new types_1.WASMError(`WASM initialization failed: ${error.message}`, types_1.WASMErrorCode.InitializationFailed);
+            throw new types_1.WASMError(`WASM initialization failed: ${error instanceof Error ? error.message : String(error)}`, types_1.WASMErrorCode.InitializationFailed);
         }
         finally {
             this.initPromise = undefined;
@@ -207,7 +208,7 @@ class AnalysisEngineBridge {
                     threats: [{
                             threat_type: 'AnalysisError',
                             confidence: 1.0,
-                            description: `Failed to analyze file: ${error.message}`,
+                            description: `Failed to analyze file: ${error instanceof Error ? error.message : String(error)}`,
                             indicators: []
                         }],
                     metadata: {
@@ -259,7 +260,10 @@ class AnalysisEngineBridge {
     }
     log(level, ...args) {
         if (this.shouldLog(level)) {
-            console[level]('[WASM Analysis Engine]', ...args);
+            const consoleMethod = console[level];
+            if (typeof consoleMethod === 'function') {
+                consoleMethod('[WASM Analysis Engine]', ...args);
+            }
         }
     }
     shouldLog(level) {

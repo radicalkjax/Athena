@@ -57,8 +57,11 @@ flowchart LR
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [**ARCHITECTURE.md**](./ARCHITECTURE.md) | System architecture overview | Developers |
+| [**WASM_ARCHITECTURE.md**](./WASM_ARCHITECTURE.md) | WebAssembly modules architecture | Developers |
+| [**ENSEMBLE_ARCHITECTURE.md**](./ENSEMBLE_ARCHITECTURE.md) | Multi-agent ensemble approach | Developers |
 | [**API_INTEGRATION.md**](./API_INTEGRATION.md) | API integration patterns | Developers |
 | [**CONTAINER_ISOLATION.md**](./CONTAINER_ISOLATION.md) | Security and isolation | DevOps/Security |
+| [**FRONTEND_LAUNCH_METHODS.md**](./FRONTEND_LAUNCH_METHODS.md) | Frontend navigation setup | Developers |
 
 ### 🔧 Technical Guides
 | Document | Purpose | Audience |
@@ -260,10 +263,12 @@ flowchart TD
 - **Container Setup**: [CONTAINER_ISOLATION.md](./CONTAINER_ISOLATION.md)
 - **Dependency Issues**: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#dependency-issues)
 - **Error Messages**: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+- **Frontend Navigation**: [FRONTEND_LAUNCH_METHODS.md](./FRONTEND_LAUNCH_METHODS.md)
 - **Performance Issues**: [performance/](./performance/)
 - **React Navigation v7**: [modernization/REACT_NAVIGATION_V7_UPGRADE.md](./modernization/REACT_NAVIGATION_V7_UPGRADE.md)
 - **Testing**: [testing/](./testing/)
 - **UI Components**: [components/](./components/)
+- **WASM Integration**: [WASM-ARCHITECTURE-COMPLETE.md](./WASM-ARCHITECTURE-COMPLETE.md)
 
 ## 📱 Interactive CLI Reference
 

@@ -1,5 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { NetworkBridge } from '../../bridge/network-bridge.js';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+
+// Mock the network bridge
+vi.mock('../../bridge/network-bridge', () => {
+  return import('../../bridge/__mocks__/network-bridge');
+});
+
+import { NetworkBridge } from '../../bridge/network-bridge';
 import type { 
   PacketAnalysisResult, 
   ProtocolInfo, 

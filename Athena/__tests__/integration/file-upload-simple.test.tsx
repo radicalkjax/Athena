@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders, resetStores } from './setup';
@@ -5,7 +6,7 @@ import { FileUploader } from '@/components/FileUploader';
 import { useAppStore } from '@/store';
 import * as fileManagerService from '@/services/fileManager';
 
-jest.mock('@/services/fileManager');
+vi.mock('@/services/fileManager');
 
 const TestWrapper = () => {
   const { analysisResults } = useAppStore();
@@ -22,14 +23,14 @@ const TestWrapper = () => {
 
 describe.skip('Simple File Upload Test', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     resetStores();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock file manager
-    (fileManagerService as any).initFileSystem = jest.fn().mockResolvedValue(undefined);
-    (fileManagerService as any).listMalwareFiles = jest.fn().mockResolvedValue([]);
-    (fileManagerService as any).pickFile = jest.fn().mockResolvedValue({
+    (fileManagerService as any).initFileSystem = vi.fn().mockResolvedValue(undefined);
+    (fileManagerService as any).listMalwareFiles = vi.fn().mockResolvedValue([]);
+    (fileManagerService as any).pickFile = vi.fn().mockResolvedValue({
       id: 'test-123',
       name: 'test.exe',
       size: 1024,
@@ -40,7 +41,7 @@ describe.skip('Simple File Upload Test', () => {
   });
   
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
   
   it('should not have analysis results after file upload', async () => {

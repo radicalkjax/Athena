@@ -1,21 +1,22 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 // Test for local models service - minimal approach to avoid memory issues
 // Mock dependencies before imports
-jest.mock('expo-file-system', () => ({
+vi.mock('expo-file-system', () => ({
   documentDirectory: 'file:///test/',
-  getInfoAsync: jest.fn(() => Promise.resolve({ exists: false })),
-  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
-  readAsStringAsync: jest.fn(() => Promise.resolve('[]')),
-  writeAsStringAsync: jest.fn(() => Promise.resolve())
+  getInfoAsync: vi.fn(() => Promise.resolve({ exists: false })),
+  makeDirectoryAsync: vi.fn(() => Promise.resolve()),
+  readAsStringAsync: vi.fn(() => Promise.resolve('[]')),
+  writeAsStringAsync: vi.fn(() => Promise.resolve())
 }));
 
-jest.mock('@/services/apiClient', () => ({
-  createLocalModelClient: jest.fn(),
-  safeApiCall: jest.fn(),
-  sanitizeRequestData: jest.fn((data) => data)
+vi.mock('@/services/apiClient', () => ({
+  createLocalModelClient: vi.fn(),
+  safeApiCall: vi.fn(),
+  sanitizeRequestData: vi.fn((data) => data)
 }));
 
-jest.mock('@/utils/helpers', () => ({
-  sanitizeString: jest.fn((str) => str)
+vi.mock('@/utils/helpers', () => ({
+  sanitizeString: vi.fn((str) => str)
 }));
 
 // Import after mocks
@@ -25,13 +26,13 @@ import { createLocalModelClient, safeApiCall } from '@/services/apiClient';
 
 describe.skip('LocalModelsService - Core Functions - skipped due to memory issues', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('isLocalModelRunning', () => {
     it('should return true if model is running', async () => {
       const mockClient = {
-        get: jest.fn().mockResolvedValue({ status: 200 })
+        get: vi.fn().mockResolvedValue({ status: 200 })
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -53,7 +54,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should return false if model is not running', async () => {
       const mockClient = {
-        get: jest.fn().mockRejectedValue(new Error('Connection refused'))
+        get: vi.fn().mockRejectedValue(new Error('Connection refused'))
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -92,7 +93,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should deobfuscate code using local model', async () => {
       const mockClient = {
-        get: jest.fn().mockResolvedValue({ status: 200 })
+        get: vi.fn().mockResolvedValue({ status: 200 })
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -126,7 +127,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should throw error if model is not running', async () => {
       const mockClient = {
-        get: jest.fn().mockRejectedValue(new Error('Connection refused'))
+        get: vi.fn().mockRejectedValue(new Error('Connection refused'))
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -136,7 +137,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should handle response without proper sections', async () => {
       const mockClient = {
-        get: jest.fn().mockResolvedValue({ status: 200 })
+        get: vi.fn().mockResolvedValue({ status: 200 })
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -178,7 +179,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should analyze vulnerabilities using local model', async () => {
       const mockClient = {
-        get: jest.fn().mockResolvedValue({ status: 200 })
+        get: vi.fn().mockResolvedValue({ status: 200 })
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -216,7 +217,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should handle JSON wrapped in markdown code blocks', async () => {
       const mockClient = {
-        get: jest.fn().mockResolvedValue({ status: 200 })
+        get: vi.fn().mockResolvedValue({ status: 200 })
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -239,7 +240,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should handle invalid JSON response', async () => {
       const mockClient = {
-        get: jest.fn().mockResolvedValue({ status: 200 })
+        get: vi.fn().mockResolvedValue({ status: 200 })
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -267,7 +268,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should throw error if model is not running', async () => {
       const mockClient = {
-        get: jest.fn().mockRejectedValue(new Error('Connection refused'))
+        get: vi.fn().mockRejectedValue(new Error('Connection refused'))
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 
@@ -277,7 +278,7 @@ describe.skip('LocalModelsService - Core Functions - skipped due to memory issue
 
     it('should handle empty response', async () => {
       const mockClient = {
-        get: jest.fn().mockResolvedValue({ status: 200 })
+        get: vi.fn().mockResolvedValue({ status: 200 })
       };
       (createLocalModelClient as jest.Mock).mockReturnValue(mockClient);
 

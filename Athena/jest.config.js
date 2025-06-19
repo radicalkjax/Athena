@@ -9,7 +9,8 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
     '^~/(.*)$': '<rootDir>/$1',
     '^@env$': '<rootDir>/__mocks__/@env.js',
-    '^@/design-system$': '<rootDir>/__mocks__/design-system.js'
+    '^@/design-system$': '<rootDir>/__mocks__/design-system.js',
+    '^@/services/wasm-stubs$': '<rootDir>/__mocks__/services/wasm-stubs.ts'
   },
   collectCoverageFrom: [
     'components/**/*.{ts,tsx}',
@@ -34,6 +35,10 @@ module.exports = {
   testMatch: [
     '**/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)',
     '**/*.(test|spec).(ts|tsx|js|jsx)'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/react-native-dist/'
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   verbose: true

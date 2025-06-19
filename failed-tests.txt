@@ -1,0 +1,36 @@
+ ❯ Athena/__tests__/unit/services/metasploit.test.ts (23 tests | 13 failed) 44ms
+   × Metasploit Service > initMetasploit > should initialize with provided API key and URL 19ms
+     → expected "spy" to be called with arguments: [ 'test-api-key', …(1) ][90m
+
+ ❯ wasm-modules/tests/integration/sandbox.test.ts (26 tests | 2 failed) 200ms
+   ✓ Sandbox Integration Tests > Module Initialization > should initialize sandbox module successfully 2ms
+   ✓ Sandbox Integration Tests > Module Initialization > should throw error when accessing sandbox before initialization 2ms
+   ✓ Sandbox Integration Tests > Sandbox Creation and Management > should create a sandbox instance with default policy 1ms
+ ❯ Athena/__tests__/unit/components/AnalysisOptionsPanel.test.tsx (18 tests | 12 failed) 56ms
+   ✓ AnalysisOptionsPanel Component > Default Options > should render with default options 3ms
+   ✓ AnalysisOptionsPanel Component > Default Options > should use standard resource preset by default 2ms
+   × AnalysisOptionsPanel Component > Default Options > should have deep analysis disabled by default 8ms
+ ❯ Athena/__tests__/unit/design-system/Modal.test.tsx (24 tests | 15 failed) 63ms
+   ✓ Modal Component > Basic Rendering > should render when visible is true 3ms
+   × Modal Component > Basic Rendering > should not render when visible is false 13ms
+     → expected { type: 'MockElement', …(3) } to be null
+ ❯ Athena/__tests__/unit/design-system/Toast.test.tsx (23 tests | 14 failed) 107ms
+   ✓ Toast Component > Basic Rendering > should render when visible is true 5ms
+   × Toast Component > Basic Rendering > should not render when visible is false 15ms
+     → expected { type: 'MockElement', …(3) } to be null
+ ❯ Athena/__tests__/unit/services/ai/base.test.ts (24 tests | 24 failed) 49ms
+   × BaseAIService > init > should initialize with provided API key and base URL 20ms
+     → [vitest] No "default" export is defined on the "expo-constants" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+ ❯ Athena/__tests__/unit/components/FileUploader.test.tsx (19 tests | 14 failed) 96ms
+   ✓ FileUploader > Initial Rendering > should render file list when files exist 8ms
+   ✓ FileUploader > Initial Rendering > should render empty state when no files 2ms
+   × FileUploader > Initial Rendering > should show upload button 25ms
+ ❯ Athena/__tests__/unit/components/AIModelSelector.test.tsx (20 tests | 5 failed) 73ms
+   ✓ AIModelSelector Component > Loading State > should show loading state initially 3ms
+   ✓ AIModelSelector Component > Empty State > should show empty state when no models are available 2ms
+   ✓ AIModelSelector Component > Error State > should handle loading errors gracefully 1ms
+ ❯ wasm-modules/tests/integration/phase3-complete.test.ts (10 tests | 1 failed) 984ms
+   × Phase 3 Complete Integration Tests > End-to-End Security Analysis > should analyze a malicious JavaScript file with all modules 30ms
+     → expected false to be true // Object.is equality
+   ✓ Phase 3 Complete Integration Tests > End-to-End Security Analysis > should analyze a ransomware sample across all modules 2ms

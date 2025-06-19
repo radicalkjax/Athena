@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   initContainerService,
   saveContainerConfig,
@@ -36,17 +37,17 @@ import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
 // Mock dependencies
-jest.mock('@/services/apiClient');
-jest.mock('expo-secure-store');
-jest.mock('expo-device');
-jest.mock('expo-file-system', () => ({
-  getFreeDiskStorageAsync: jest.fn()
+vi.mock('@/services/apiClient');
+vi.mock('expo-secure-store');
+vi.mock('expo-device');
+vi.mock('expo-file-system', () => ({
+  getFreeDiskStorageAsync: vi.fn()
 }));
-jest.mock('react-native', () => ({
+vi.mock('react-native', () => ({
   Platform: { OS: 'ios' }
 }));
-jest.mock('@/utils/helpers', () => ({
-  generateId: jest.fn().mockReturnValue('test-container-id')
+vi.mock('@/utils/helpers', () => ({
+  generateId: vi.fn().mockReturnValue('test-container-id')
 }));
 
 const mockSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
@@ -58,13 +59,13 @@ const mockSanitizeRequestData = sanitizeRequestData as jest.MockedFunction<typeo
 
 describe('Container Service', () => {
   const mockClient = {
-    post: jest.fn(),
-    get: jest.fn(),
-    delete: jest.fn()
+    post: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn()
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockCreateContainerClient.mockReturnValue(mockClient as any);
     mockSanitizeRequestData.mockImplementation((data) => data);
     // Make mockSafeApiCall call the function and return its result
@@ -213,7 +214,7 @@ describe('Container Service', () => {
     });
 
     it('should fallback to default for unsupported configuration', () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
       const config = getWindowsContainerConfig('invalid' as any, 'windows-95' as any);
       
       expect(consoleWarnSpy).toHaveBeenCalled();
@@ -584,6 +585,13 @@ describe('Container Service', () => {
 
   describe('OS-Specific Container Creation', () => {
     beforeEach(() => {
+      // Reset Device.totalMemory to sufficient amount for these tests
+      Object.defineProperty(mockDevice, 'totalMemory', {
+        value: 8 * 1024 * 1024 * 1024, // 8GB
+        writable: true,
+        configurable: true
+      });
+      
       mockSecureStore.getItemAsync
         .mockResolvedValueOnce('test-api-key')
         .mockResolvedValueOnce('https://api.container.test');
@@ -636,7 +644,7 @@ describe('Container Service', () => {
     });
 
     it('should handle invalid Windows configuration', async () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
       
       await createWindowsContainer(
         'malware-id',

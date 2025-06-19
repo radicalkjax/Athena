@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { View } from 'react-native';
@@ -62,12 +63,12 @@ const SimpleFlow = () => {
 
 describe.skip('Basic Flow Test', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     resetStores();
   });
   
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
   
   it('should show proper flow', async () => {
@@ -92,7 +93,7 @@ describe.skip('Basic Flow Test', () => {
     expect(getByText('Analyzing...')).toBeTruthy();
     
     // Advance timers
-    jest.advanceTimersByTime(100);
+    vi.advanceTimersByTime(100);
     
     // Should show results
     await waitFor(() => {

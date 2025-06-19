@@ -1,7 +1,8 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock dependencies first
-jest.mock('../../../services/container', () => ({
-  getResourcePreset: jest.fn(() => ({
+vi.mock('../../../services/container', () => ({
+  getResourcePreset: vi.fn(() => ({
     cpu: 2,
     memory: 4096,
     diskSpace: 10240,
@@ -16,11 +17,11 @@ import { Switch } from 'react-native';
 import AnalysisOptionsPanel, { AnalysisOptions } from '../../../components/AnalysisOptionsPanel';
 import { ContainerConfig } from '../../../types';
 
-jest.mock('../../../hooks', () => ({
-  useThemeColor: jest.fn(() => '#4A90E2')
+vi.mock('../../../hooks', () => ({
+  useThemeColor: vi.fn(() => '#4A90E2')
 }));
 
-jest.mock('../../../components/ContainerConfigSelector', () => {
+vi.mock('../../../components/ContainerConfigSelector', () => {
   const React = require('react');
   return {
     __esModule: true,
@@ -40,7 +41,7 @@ jest.mock('../../../components/ContainerConfigSelector', () => {
   };
 });
 
-jest.mock('../../../design-system', () => ({
+vi.mock('../../../design-system', () => ({
   Card: ({ children, style }: any) => {
     const { View } = require('react-native');
     return require('react').createElement(View, { style }, children);
@@ -52,10 +53,10 @@ jest.mock('../../../design-system', () => ({
 }));
 
 describe('AnalysisOptionsPanel Component', () => {
-  const mockOnOptionsChange = jest.fn();
+  const mockOnOptionsChange = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Default Options', () => {

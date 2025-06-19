@@ -1,14 +1,13 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
-import { Provider } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 
-// Mock store setup
+// Mock store setup for Zustand
 export const createMockStore = (initialState?: any) => ({
   getState: () => initialState || {},
-  dispatch: jest.fn(),
+  setState: jest.fn(),
   subscribe: jest.fn(),
-  replaceReducer: jest.fn(),
+  destroy: jest.fn(),
 });
 
 // Custom render function
@@ -25,7 +24,7 @@ export const customRender = (
     ...renderOptions
   }: CustomRenderOptions = {}
 ) => {
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  const Wrapper = ({ children }: { children: ReactNode }) => (
     <NavigationContainer>
       {children}
     </NavigationContainer>
@@ -36,4 +35,3 @@ export const customRender = (
 
 // Re-export everything
 export * from '@testing-library/react-native';
-export { customRender as render };
