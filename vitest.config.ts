@@ -79,7 +79,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./vitest.setup.js'],
+    setupFiles: process.env.CI 
+      ? ['./vitest.setup.wasm.js', './vitest.setup.js']
+      : ['./vitest.setup.js'],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',

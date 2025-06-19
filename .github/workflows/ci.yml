@@ -65,10 +65,7 @@ jobs:
       continue-on-error: true
     
     - name: Run root tests
-      run: npm test
-      env:
-        CI: true
-        NODE_ENV: test
+      run: ./scripts/test-ci.sh
         
   test-athena:
     needs: validate-build
@@ -103,10 +100,7 @@ jobs:
     
     - name: Run Athena tests
       working-directory: ./Athena
-      run: npm test
-      env:
-        CI: true
-        NODE_ENV: test
+      run: ../scripts/test-ci.sh
     
     - name: Upload coverage
       uses: codecov/codecov-action@v4

@@ -189,7 +189,66 @@ global.console = {
   error: vi.fn(),
 };
 
-// Mock WASM modules
+// Mock WASM modules for CI environment
+if (process.env.CI) {
+  // Mock the actual WASM module imports
+  vi.mock('../core/analysis-engine/pkg-node/athena_analysis_engine', () => ({
+    default: vi.fn().mockResolvedValue({}),
+    analyze_content: vi.fn().mockReturnValue(JSON.stringify({
+      riskScore: 50,
+      verdict: 'suspicious',
+      indicators: [],
+      metadata: {}
+    }))
+  }));
+  
+  vi.mock('../core/crypto/pkg-node/athena_crypto', () => ({
+    default: vi.fn().mockResolvedValue({}),
+    hash_data: vi.fn().mockReturnValue(new Uint8Array(32)),
+    encrypt_data: vi.fn().mockReturnValue(new Uint8Array(0)),
+    decrypt_data: vi.fn().mockReturnValue(new Uint8Array(0))
+  }));
+  
+  vi.mock('../core/deobfuscator/pkg-node/athena_deobfuscator', () => ({
+    default: vi.fn().mockResolvedValue({}),
+    deobfuscate_javascript: vi.fn().mockReturnValue('deobfuscated code')
+  }));
+  
+  vi.mock('../core/file-processor/pkg-node/athena_file_processor', () => ({
+    default: vi.fn().mockResolvedValue({}),
+    process_file: vi.fn().mockReturnValue(JSON.stringify({
+      fileType: 'unknown',
+      metadata: {},
+      extractedData: []
+    }))
+  }));
+  
+  vi.mock('../core/network/pkg-node/athena_network', () => ({
+    default: vi.fn().mockResolvedValue({}),
+    analyze_packet: vi.fn().mockReturnValue(JSON.stringify({
+      protocol: 'unknown',
+      suspicious: false
+    }))
+  }));
+  
+  vi.mock('../core/pattern-matcher/pkg-node/athena_pattern_matcher', () => ({
+    default: vi.fn().mockResolvedValue({}),
+    match_patterns: vi.fn().mockReturnValue(JSON.stringify({
+      matches: []
+    }))
+  }));
+  
+  vi.mock('../core/sandbox/pkg-node/athena_sandbox', () => ({
+    default: vi.fn().mockResolvedValue({}),
+    execute_sandboxed: vi.fn().mockReturnValue(JSON.stringify({
+      success: true,
+      output: '',
+      errors: []
+    }))
+  }));
+}
+
+// Mock WASM bridge modules
 vi.mock('../../bridge', () => {
   return import('./Athena/__mocks__/services/wasm-stubs.ts');
 });

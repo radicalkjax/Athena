@@ -18,6 +18,23 @@ vi.mock('../../core/analysis-engine/pkg-web/athena_analysis_engine', () => ({
   }))
 }), { virtual: true });
 
+// Also mock the node version for CI
+vi.mock('../../core/analysis-engine/pkg-node/athena_analysis_engine', () => ({
+  default: vi.fn().mockResolvedValue(undefined),
+  AnalysisEngine: vi.fn().mockImplementation(() => ({
+    get_version: vi.fn().mockReturnValue('0.1.0'),
+    analyze: vi.fn().mockResolvedValue({
+      severity: 'low',
+      threats: [],
+      metadata: {
+        file_hash: 'test-hash',
+        analysis_time_ms: 100,
+        engine_version: '0.1.0'
+      }
+    })
+  }))
+}), { virtual: true });
+
 describe('AnalysisEngineBridge', () => {
   beforeEach(() => {
     vi.clearAllMocks();
