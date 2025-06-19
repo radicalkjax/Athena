@@ -47,6 +47,19 @@ jobs:
     - name: Install root dependencies
       run: npm ci
     
+    - name: Setup test environment
+      run: |
+        echo "Setting up CI test environment..."
+        # Ensure mock directories exist
+        mkdir -p wasm-modules/bridge/__mocks__
+        # Verify TypeScript CI config
+        if [ -f "Athena/tsconfig.ci.json" ]; then
+          echo "✅ TypeScript CI config found"
+        else
+          echo "❌ TypeScript CI config missing"
+          exit 1
+        fi
+    
     - name: Run root linter
       run: npm run lint
       continue-on-error: true
@@ -55,6 +68,7 @@ jobs:
       run: npm test
       env:
         CI: true
+        NODE_ENV: test
         
   test-athena:
     needs: validate-build
@@ -92,6 +106,7 @@ jobs:
       run: npm test
       env:
         CI: true
+        NODE_ENV: test
     
     - name: Upload coverage
       uses: codecov/codecov-action@v4
