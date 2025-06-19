@@ -119,7 +119,12 @@ export default defineConfig({
       'wasm-modules/tests/integration/phase3-complete.test.ts',
       'wasm-modules/tests/integration/react-native-bridge.test.ts',
       // Skip all WASM integration tests in CI as they require built WASM modules
-      ...(process.env.CI ? ['wasm-modules/tests/integration/*.test.ts'] : [])
+      ...(process.env.CI ? [
+        'wasm-modules/tests/integration/*.test.ts',
+        // Skip AI provider integration tests in CI due to WASM dependencies
+        'services/aiProviders/tests/integration.test.js',
+        'services/aiProviders/tests/integration.test.ts'
+      ] : [])
     ],
     server: {
       deps: {
