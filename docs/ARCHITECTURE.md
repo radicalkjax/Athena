@@ -23,7 +23,20 @@
 
 ## Overview
 
-Athena is an enterprise-grade malware analysis platform built with React Native and Expo, providing cross-platform support for iOS, Android, and web. The platform features high-performance WebAssembly modules for security analysis, advanced resilience patterns, distributed caching, and comprehensive monitoring for production-ready deployments.
+Athena is an enterprise-grade malware analysis platform with multiple deployment options:
+
+### React Native/Expo Version
+The original platform built with React Native and Expo, providing cross-platform support for iOS, Android, and web. Features high-performance WebAssembly modules for security analysis, advanced resilience patterns, distributed caching, and comprehensive monitoring for production-ready deployments.
+
+### Tauri 2.0 Version (NEW)
+A high-performance native application built with Tauri 2.0, offering:
+- **Native Desktop Apps**: Windows, macOS (✅ verified), Linux
+- **Mobile Apps**: iOS and Android with enforced landscape orientation
+- **Rust Backend**: Native performance for intensive operations
+- **SolidJS Frontend**: Reactive UI with minimal overhead
+- **Single Codebase**: Unified development across all platforms
+
+See [`athena-v2/docs/ARCHITECTURE.md`](../athena-v2/docs/ARCHITECTURE.md) for Tauri-specific architecture details.
 
 ### Key Features
 

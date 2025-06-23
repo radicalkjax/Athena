@@ -1,0 +1,212 @@
+.wasm-runtime {
+  padding: 2rem;
+  background: rgba(17, 17, 17, 0.8);
+  border-radius: 12px;
+  color: #fff;
+}
+
+.wasm-runtime h2 {
+  margin-bottom: 1.5rem;
+  color: #ff6b9d;
+  font-size: 1.8rem;
+}
+
+.runtime-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 157, 0.3);
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.status-value.active {
+  color: #66ff66;
+}
+
+.status-value.inactive {
+  color: #ff6666;
+}
+
+.error-message {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 102, 102, 0.1);
+  border: 1px solid rgba(255, 102, 102, 0.3);
+  border-radius: 8px;
+  color: #ff6666;
+}
+
+.runtime-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff6b9d, #c44569);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 107, 157, 0.5);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 107, 157, 0.2);
+}
+
+.modules-section {
+  margin-top: 2rem;
+}
+
+.modules-section h3 {
+  margin-bottom: 1rem;
+  color: #ff6b9d;
+  font-size: 1.4rem;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.module-card {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.module-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 107, 157, 0.5);
+  transform: translateY(-2px);
+}
+
+.module-card.selected {
+  background: rgba(255, 107, 157, 0.2);
+  border-color: #ff6b9d;
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.module-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.module-status {
+  font-size: 1.2rem;
+}
+
+.module-status.loaded {
+  color: #66ff66;
+}
+
+.module-status.unloaded {
+  color: #ff6666;
+}
+
+.module-info {
+  margin-bottom: 1rem;
+}
+
+.module-info p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-danger {
+  background: rgba(255, 102, 102, 0.2);
+  color: #ff6666;
+  border: 1px solid rgba(255, 102, 102, 0.5);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(255, 102, 102, 0.3);
+  border-color: #ff6666;
+}
+
+.module-details {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  border-radius: 8px;
+}
+
+.module-details h3 {
+  margin-bottom: 1rem;
+  color: #ff6b9d;
+  font-size: 1.2rem;
+}
+
+.details-content {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.details-content p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}

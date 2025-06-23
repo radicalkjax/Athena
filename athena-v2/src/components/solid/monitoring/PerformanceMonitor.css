@@ -1,0 +1,205 @@
+.performance-monitor {
+  background: rgba(17, 17, 17, 0.9);
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: #fff;
+}
+
+.monitor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.monitor-header h3 {
+  margin: 0;
+  color: #ff6b9d;
+  font-size: 1.4rem;
+}
+
+.monitor-toggle {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 107, 157, 0.5);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.monitor-toggle.active {
+  background: rgba(255, 107, 157, 0.3);
+  border-color: #ff6b9d;
+}
+
+.monitor-toggle:hover {
+  background: rgba(255, 107, 157, 0.2);
+}
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 107, 157, 0.3);
+  transform: translateY(-2px);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.metric-title {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-icon {
+  font-size: 1.2rem;
+}
+
+.metric-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fps-value,
+.memory-value,
+.primary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-unit {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.fps-bar,
+.memory-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.fps-fill,
+.memory-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 2px;
+}
+
+.memory-details {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.metric-average {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.trend-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.trend-icon.trend-up {
+  color: #ff6666;
+}
+
+.trend-icon.trend-down {
+  color: #66ff66;
+}
+
+.trend-icon.trend-stable {
+  color: #ffaa66;
+}
+
+.custom-metric .metric-value {
+  margin-bottom: 0.25rem;
+}
+
+.performance-tips {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 157, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.performance-tips h4 {
+  margin: 0 0 0.75rem 0;
+  color: #ff6b9d;
+  font-size: 1.1rem;
+}
+
+.performance-tips ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.performance-tips li {
+  position: relative;
+  margin-bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+}
+
+.performance-tips li:last-child {
+  margin-bottom: 0;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.monitor-toggle.active {
+  animation: pulse 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .performance-grid {
+    grid-template-columns: 1fr;
+  }
+}

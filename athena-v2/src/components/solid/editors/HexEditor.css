@@ -1,0 +1,163 @@
+.hex-editor {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  border-radius: 8px;
+  overflow: auto;
+  height: 600px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.1);
+}
+
+.hex-header {
+  display: flex;
+  background-color: #2a2a2a;
+  border-bottom: 2px solid #ff6b9d;
+  padding: 8px 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: bold;
+}
+
+.hex-offset-header,
+.hex-ascii-header {
+  padding: 0 12px;
+  color: #ff6b9d;
+}
+
+.hex-offset-header {
+  width: 100px;
+}
+
+.hex-ascii-header {
+  width: 200px;
+  border-left: 1px solid #444;
+}
+
+.hex-data-header {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+}
+
+.hex-col-header {
+  width: 28px;
+  text-align: center;
+  color: #ff6b9d;
+}
+
+.hex-body {
+  position: relative;
+}
+
+.hex-row {
+  display: flex;
+  height: 24px;
+  line-height: 24px;
+  border-bottom: 1px solid #333;
+  transition: background-color 0.1s;
+}
+
+.hex-row:hover {
+  background-color: rgba(255, 107, 157, 0.1);
+}
+
+.hex-offset {
+  width: 100px;
+  padding: 0 12px;
+  color: #888;
+  background-color: #252525;
+}
+
+.hex-data {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+}
+
+.hex-byte {
+  width: 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.1s;
+  border-radius: 3px;
+}
+
+.hex-byte:hover:not(.empty) {
+  background-color: rgba(255, 107, 157, 0.2);
+}
+
+.hex-byte.selected {
+  background-color: rgba(255, 107, 157, 0.3);
+  color: #ff6b9d;
+  font-weight: bold;
+}
+
+.hex-byte.editing {
+  background-color: #ff6b9d;
+  color: #1a1a1a;
+}
+
+.hex-byte.empty {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.hex-edit-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-align: center;
+  font-family: inherit;
+  font-size: inherit;
+  color: #1a1a1a;
+  font-weight: bold;
+}
+
+.hex-ascii {
+  width: 200px;
+  display: flex;
+  padding: 0 12px;
+  border-left: 1px solid #444;
+  font-family: monospace;
+}
+
+.hex-ascii-char {
+  width: 12px;
+  text-align: center;
+  color: #66d9ef;
+}
+
+.hex-status {
+  position: sticky;
+  bottom: 0;
+  background-color: #2a2a2a;
+  border-top: 2px solid #ff6b9d;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #ff6b9d;
+  min-height: 32px;
+}
+
+/* Scrollbar styling */
+.hex-editor::-webkit-scrollbar {
+  width: 12px;
+}
+
+.hex-editor::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.hex-editor::-webkit-scrollbar-thumb {
+  background: #ff6b9d;
+  border-radius: 6px;
+}
+
+.hex-editor::-webkit-scrollbar-thumb:hover {
+  background: #ff8fb3;
+}

@@ -58,7 +58,17 @@ The foundation of Athena's idea and research comes from this research paper by K
 
 > **IMPORTANT DISCLAIMER:** The containerization and analysis components described in this documentation are still being designed and developed. Their current implementation and documentation are not reflective of what the final design could be. This documentation represents a conceptual overview and may change significantly as development progresses.
 
-Athena is built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms. It leverages the power of AI models like OpenAI's GPT-4, Claude 3 Opus, and DeepSeek Coder to analyze malicious code, deobfuscate it, and identify potential vulnerabilities.
+Athena offers two deployment options:
+
+### 1. React Native/Expo Version
+Built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms. It leverages the power of AI models like OpenAI's GPT-4, Claude 3 Opus, and DeepSeek Coder to analyze malicious code, deobfuscate it, and identify potential vulnerabilities.
+
+### 2. Tauri 2.0 Version (NEW) ✨
+A high-performance native application located in the `athena-v2/` directory:
+- **Desktop**: Windows, macOS (✅ verified), Linux
+- **Mobile**: iOS and Android with landscape orientation
+- **Built with**: Rust backend + SolidJS frontend
+- **Launch**: Use `./scripts/athena` → Option 11
 
 The application is designed with security in mind, providing isolated container execution for safer analysis of potentially harmful code. It also integrates with the Metasploit database to provide additional context about identified vulnerabilities.
 

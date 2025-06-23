@@ -76,17 +76,18 @@ show_menu() {
     echo -e "${TRANS_WHITE}${BOLD}Platform Options:${NC}"
     echo -e "  ${GREEN}9${NC}) 🐳 Docker Compose ${DIM}(Advanced)${NC}"
     echo -e "  ${GREEN}10${NC}) ☸️  Kubernetes Deploy"
+    echo -e "  ${GREEN}11${NC}) 🚀 Tauri 2.0 App ${DIM}(Desktop/Mobile)${NC}"
     echo
     echo -e "${TRANS_WHITE}${BOLD}Maintenance:${NC}"
-    echo -e "  ${GREEN}11${NC}) ${TOOL} Run Setup"
-    echo -e "  ${GREEN}12${NC}) 🧹 Clean Build Files"
-    echo -e "  ${GREEN}13${NC}) ${SHIELD} Security Audit"
-    echo -e "  ${GREEN}14${NC}) 🗄️  Database Setup"
+    echo -e "  ${GREEN}12${NC}) ${TOOL} Run Setup"
+    echo -e "  ${GREEN}13${NC}) 🧹 Clean Build Files"
+    echo -e "  ${GREEN}14${NC}) ${SHIELD} Security Audit"
+    echo -e "  ${GREEN}15${NC}) 🗄️  Database Setup"
     echo
     echo -e "${TRANS_WHITE}${BOLD}Testing:${NC}"
-    echo -e "  ${GREEN}15${NC}) 🧪 Run All Tests"
-    echo -e "  ${GREEN}16${NC}) 💪 Run Stress Test"
-    echo -e "  ${GREEN}17${NC}) 📊 Run Load Tests"
+    echo -e "  ${GREEN}16${NC}) 🧪 Run All Tests"
+    echo -e "  ${GREEN}17${NC}) 💪 Run Stress Test"
+    echo -e "  ${GREEN}18${NC}) 📊 Run Load Tests"
     echo
     echo -e "${DIM}Type 'h' for help, 'q' to quit${NC}"
     echo
@@ -305,6 +306,268 @@ run_all_tests() {
     read
 }
 
+# Launch Tauri 2.0 app
+launch_tauri_app() {
+    echo -e "\n${TRANS_BLUE}${ROCKET} ${BOLD}Tauri 2.0 Application${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${TRANS_WHITE}${SPARKLES} Select Target Platform ${SPARKLES}${NC}\n"
+    
+    # Platform verification flags
+    local MACOS_VERIFIED="${GREEN}${CHECK_MARK} Verified${NC}"
+    local WINDOWS_VERIFIED="${YELLOW}${WARNING_SIGN} Unverified${NC}"
+    local LINUX_VERIFIED="${YELLOW}${WARNING_SIGN} Unverified${NC}"
+    local IOS_VERIFIED="${YELLOW}${WARNING_SIGN} Unverified${NC}"
+    local ANDROID_VERIFIED="${YELLOW}${WARNING_SIGN} Unverified${NC}"
+    local WEB_VERIFIED="${GREEN}${CHECK_MARK} Verified${NC}"
+    
+    echo -e "${TRANS_WHITE}${BOLD}Desktop Platforms:${NC}"
+    echo -e "  ${GREEN}1${NC}) 🍎 macOS ${MACOS_VERIFIED}"
+    echo -e "  ${GREEN}2${NC}) 🪟 Windows ${WINDOWS_VERIFIED}"
+    echo -e "  ${GREEN}3${NC}) 🐧 Linux ${LINUX_VERIFIED}"
+    echo
+    echo -e "${TRANS_WHITE}${BOLD}Mobile Platforms:${NC}"
+    echo -e "  ${GREEN}4${NC}) 📱 iOS ${IOS_VERIFIED} ${DIM}(Landscape mode)${NC}"
+    echo -e "  ${GREEN}5${NC}) 🤖 Android ${ANDROID_VERIFIED} ${DIM}(Landscape mode)${NC}"
+    echo
+    echo -e "${TRANS_WHITE}${BOLD}Web Platform:${NC}"
+    echo -e "  ${GREEN}6${NC}) 🌐 Web Browser ${WEB_VERIFIED} ${DIM}(No Tauri APIs)${NC}"
+    echo
+    echo -e "  ${GREEN}b${NC}) ← Back to main menu"
+    echo
+    
+    echo -e -n "${TRANS_BLUE}Select platform: ${NC}"
+    read platform_choice
+    
+    case $platform_choice in
+        1)
+            launch_tauri_macos
+            ;;
+        2)
+            launch_tauri_windows
+            ;;
+        3)
+            launch_tauri_linux
+            ;;
+        4)
+            launch_tauri_ios
+            ;;
+        5)
+            launch_tauri_android
+            ;;
+        6)
+            launch_tauri_web
+            ;;
+        b|B)
+            return
+            ;;
+        *)
+            echo -e "${RED}Invalid option. Please try again.${NC}"
+            sleep 1
+            launch_tauri_app
+            ;;
+    esac
+}
+
+# Launch Tauri for macOS
+launch_tauri_macos() {
+    echo -e "\n${TRANS_BLUE}🍎 ${BOLD}Launching Tauri 2.0 for macOS${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}${CHECK_MARK} This platform is verified and tested${NC}\n"
+    
+    # Check prerequisites
+    if ! command -v cargo &> /dev/null; then
+        echo -e "${RED}${CROSS_MARK} Rust/Cargo is required but not installed${NC}"
+        echo -e "${YELLOW}${WARNING_SIGN} Please install Rust: https://rustup.rs${NC}"
+        echo -e "${DIM}Press Enter to continue...${NC}"
+        read
+        return 1
+    fi
+    
+    # Navigate to Tauri project
+    if [ ! -d "athena-v2" ]; then
+        echo -e "${RED}${CROSS_MARK} athena-v2 directory not found${NC}"
+        echo -e "${DIM}Press Enter to continue...${NC}"
+        read
+        return 1
+    fi
+    
+    cd athena-v2
+    
+    # Install dependencies if needed
+    if [ ! -d "node_modules" ]; then
+        echo -e "${YELLOW}${PACKAGE} Installing dependencies...${NC}"
+        npm install
+    fi
+    
+    echo -e "${CYAN}${SPARKLES} Starting Tauri development server...${NC}"
+    echo -e "${YELLOW}The app will open in a new window${NC}\n"
+    
+    npm run tauri:dev
+    
+    cd ..
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
+# Launch Tauri for Windows
+launch_tauri_windows() {
+    echo -e "\n${TRANS_BLUE}🪟 ${BOLD}Launching Tauri 2.0 for Windows${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}${WARNING_SIGN} This platform is not yet verified${NC}"
+    echo -e "${CYAN}Prerequisites:${NC}"
+    echo -e "  • Visual Studio 2022 with C++ tools"
+    echo -e "  • WebView2 (usually pre-installed)"
+    echo -e "  • Rust toolchain\n"
+    
+    echo -e -n "${TRANS_BLUE}Continue anyway? (y/N): ${NC}"
+    read confirm
+    
+    if [[ $confirm != "y" && $confirm != "Y" ]]; then
+        return
+    fi
+    
+    cd athena-v2
+    
+    echo -e "${CYAN}${SPARKLES} Building for Windows...${NC}"
+    npm run tauri:build:windows
+    
+    cd ..
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
+# Launch Tauri for Linux
+launch_tauri_linux() {
+    echo -e "\n${TRANS_BLUE}🐧 ${BOLD}Launching Tauri 2.0 for Linux${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}${WARNING_SIGN} This platform is not yet verified${NC}"
+    echo -e "${CYAN}Required packages:${NC}"
+    echo -e "  • libwebkit2gtk-4.1-dev"
+    echo -e "  • libgtk-3-dev"
+    echo -e "  • libayatana-appindicator3-dev\n"
+    
+    echo -e -n "${TRANS_BLUE}Continue anyway? (y/N): ${NC}"
+    read confirm
+    
+    if [[ $confirm != "y" && $confirm != "Y" ]]; then
+        return
+    fi
+    
+    cd athena-v2
+    
+    echo -e "${CYAN}${SPARKLES} Starting Tauri for Linux...${NC}"
+    npm run tauri:dev
+    
+    cd ..
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
+# Launch Tauri for iOS
+launch_tauri_ios() {
+    echo -e "\n${TRANS_BLUE}📱 ${BOLD}Launching Tauri 2.0 for iOS${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}${WARNING_SIGN} This platform is not yet verified${NC}"
+    echo -e "${CYAN}Requirements:${NC}"
+    echo -e "  • macOS with Xcode 14+"
+    echo -e "  • iOS Simulator or device"
+    echo -e "  • Apple Developer account (for device)\n"
+    echo -e "${GREEN}${CHECK_MARK} Landscape orientation enforced${NC}\n"
+    
+    echo -e -n "${TRANS_BLUE}Continue anyway? (y/N): ${NC}"
+    read confirm
+    
+    if [[ $confirm != "y" && $confirm != "Y" ]]; then
+        return
+    fi
+    
+    cd athena-v2
+    
+    echo -e "${CYAN}${SPARKLES} Initializing iOS project...${NC}"
+    npm run tauri:ios init
+    
+    echo -e "${CYAN}${SPARKLES} Starting iOS development...${NC}"
+    npm run tauri:ios:dev
+    
+    cd ..
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
+# Launch Tauri for Android
+launch_tauri_android() {
+    echo -e "\n${TRANS_BLUE}🤖 ${BOLD}Launching Tauri 2.0 for Android${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}${WARNING_SIGN} This platform is not yet verified${NC}"
+    echo -e "${CYAN}Requirements:${NC}"
+    echo -e "  • Android Studio with SDK 24+"
+    echo -e "  • Java 17+"
+    echo -e "  • Android NDK"
+    echo -e "  • ANDROID_HOME environment variable\n"
+    echo -e "${GREEN}${CHECK_MARK} Landscape orientation enforced${NC}\n"
+    
+    echo -e -n "${TRANS_BLUE}Continue anyway? (y/N): ${NC}"
+    read confirm
+    
+    if [[ $confirm != "y" && $confirm != "Y" ]]; then
+        return
+    fi
+    
+    cd athena-v2
+    
+    echo -e "${CYAN}${SPARKLES} Initializing Android project...${NC}"
+    npm run tauri:android init
+    
+    echo -e "${CYAN}${SPARKLES} Starting Android development...${NC}"
+    npm run tauri:android:dev
+    
+    cd ..
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
+# Launch Tauri for Web
+launch_tauri_web() {
+    echo -e "\n${TRANS_BLUE}🌐 ${BOLD}Launching Tauri 2.0 Web Version${NC}"
+    echo -e "${TRANS_PINK}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}${CHECK_MARK} This platform is verified and tested${NC}"
+    echo -e "${YELLOW}${WARNING_SIGN} Note: Tauri-specific features will be limited${NC}\n"
+    
+    echo -e "${CYAN}Features available in web mode:${NC}"
+    echo -e "  ${GREEN}✓${NC} File upload and analysis"
+    echo -e "  ${GREEN}✓${NC} SHA-256 hash calculation"
+    echo -e "  ${GREEN}✓${NC} UI components and visualization"
+    echo -e "  ${YELLOW}✗${NC} Native file system access"
+    echo -e "  ${YELLOW}✗${NC} System monitoring"
+    echo -e "  ${YELLOW}✗${NC} Advanced Rust-based analysis\n"
+    
+    # Navigate to Tauri project
+    if [ ! -d "athena-v2" ]; then
+        echo -e "${RED}${CROSS_MARK} athena-v2 directory not found${NC}"
+        echo -e "${DIM}Press Enter to continue...${NC}"
+        read
+        return 1
+    fi
+    
+    cd athena-v2
+    
+    # Install dependencies if needed
+    if [ ! -d "node_modules" ]; then
+        echo -e "${YELLOW}${PACKAGE} Installing dependencies...${NC}"
+        npm install
+    fi
+    
+    echo -e "${CYAN}${SPARKLES} Starting web development server...${NC}"
+    echo -e "${YELLOW}The app will open in your default browser${NC}"
+    echo -e "${GREEN}Access from other devices: http://[your-ip]:5173${NC}\n"
+    
+    npm run web:dev
+    
+    cd ..
+    echo -e "${DIM}Press Enter to continue...${NC}"
+    read
+}
+
 # Main execution loop
 main() {
     print_banner
@@ -367,37 +630,40 @@ main() {
                 sleep 2
                 ;;
             11)
+                launch_tauri_app
+                ;;
+            12)
                 echo -e "\n${TOOL} Running Setup..."
                 ./scripts/run.sh setup
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;
-            12)
+            13)
                 echo -e "\n🧹 Cleaning Build Files..."
                 ./scripts/run.sh clean
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;
-            13)
+            14)
                 run_security_audit
                 ;;
-            14)
+            15)
                 echo -e "\n🗄️  Setting up Database..."
                 cd Athena && ./scripts/setup-db.sh
                 cd ..
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;
-            15)
+            16)
                 run_all_tests
                 ;;
-            16)
+            17)
                 echo -e "\n💪 Running Stress Test..."
                 ./scripts/run-stress-test.sh
                 echo -e "${DIM}Press Enter to continue...${NC}"
                 read
                 ;;
-            17)
+            18)
                 echo -e "\n📊 Running Load Tests..."
                 ./scripts/run-load-test.sh
                 echo -e "${DIM}Press Enter to continue...${NC}"

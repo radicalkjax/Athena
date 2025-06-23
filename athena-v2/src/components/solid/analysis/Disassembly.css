@@ -1,0 +1,188 @@
+/* Disassembly specific styles */
+
+/* Assembly view styling */
+.assembly-view {
+  background: var(--code-bg);
+  border-radius: 8px;
+  padding: 15px;
+  min-height: 500px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+}
+
+/* Function list styling */
+.function-item {
+  background: var(--panel-bg);
+  border: 1px solid var(--accent-bg);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.function-item:hover {
+  border-color: var(--barbie-pink);
+  transform: translateX(4px);
+}
+
+.function-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.function-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.function-address {
+  color: var(--barbie-accent);
+  font-size: 0.85rem;
+}
+
+.function-details {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.function-size {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.function-type {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.function-type.entry {
+  background: rgba(78, 205, 196, 0.2);
+  color: var(--success-color);
+}
+
+.function-type.suspicious {
+  background: rgba(255, 107, 107, 0.2);
+  color: var(--danger-color);
+}
+
+.function-type.anti-debug {
+  background: rgba(255, 217, 61, 0.2);
+  color: var(--warning-color);
+}
+
+.function-type.network {
+  background: rgba(116, 185, 255, 0.2);
+  color: var(--info-color);
+}
+
+/* View toggle buttons */
+.view-toggle {
+  display: flex;
+  gap: 10px;
+}
+
+.view-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-btn.active {
+  background: linear-gradient(135deg, var(--barbie-pink) 0%, var(--barbie-accent) 100%);
+  color: white;
+}
+
+.view-btn:not(.active) {
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-bg);
+}
+
+.view-btn:not(.active):hover {
+  border-color: var(--barbie-pink);
+}
+
+/* Assembly instruction styling */
+.instruction-line {
+  display: flex;
+  padding: 4px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.instruction-line:hover {
+  background: rgba(255, 107, 157, 0.1);
+}
+
+.instruction-address {
+  color: var(--barbie-accent);
+  min-width: 100px;
+  margin-right: 20px;
+}
+
+.instruction-bytes {
+  color: var(--text-secondary);
+  min-width: 150px;
+  margin-right: 20px;
+}
+
+.instruction-mnemonic {
+  color: var(--barbie-pink);
+  font-weight: 600;
+  min-width: 80px;
+  margin-right: 10px;
+}
+
+.instruction-operands {
+  color: var(--text-primary);
+}
+
+/* CFG styling */
+.cfg-container {
+  background: var(--code-bg);
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 500px;
+  position: relative;
+}
+
+.cfg-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.cfg-btn {
+  padding: 6px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--accent-bg);
+  border-radius: 4px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.cfg-btn:hover {
+  border-color: var(--barbie-pink);
+  color: var(--barbie-pink);
+}

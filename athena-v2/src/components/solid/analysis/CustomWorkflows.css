@@ -1,0 +1,460 @@
+.custom-workflows {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.workflows-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.workflows-header h2 {
+  color: var(--barbie-pink);
+  margin-bottom: 10px;
+}
+
+.workflows-header p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.workflows-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.workflows-sidebar {
+  width: 300px;
+  background: var(--secondary-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 15px;
+  background: var(--accent-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h3 {
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.create-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--barbie-pink);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-btn:hover {
+  background: var(--barbie-accent);
+}
+
+.workflows-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.workflow-item {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.workflow-item:hover {
+  border-color: var(--barbie-pink);
+  transform: translateX(2px);
+}
+
+.workflow-item.active {
+  border-color: var(--barbie-pink);
+  background: var(--accent-bg);
+}
+
+.workflow-info h4 {
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.workflow-info p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.workflow-date {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.delete-btn:hover {
+  color: var(--danger-color);
+}
+
+.create-workflow-modal {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel-bg);
+  border: 2px solid var(--barbie-pink);
+  border-radius: 8px;
+  padding: 20px;
+  width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.create-workflow-modal h4 {
+  color: var(--barbie-pink);
+  margin-bottom: 15px;
+}
+
+.workflow-input, .workflow-textarea {
+  width: 100%;
+  padding: 8px;
+  background: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.workflow-textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--barbie-pink);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--barbie-accent);
+}
+
+.btn-secondary {
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--accent-bg);
+}
+
+.workflow-canvas {
+  flex: 1;
+  background: var(--primary-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas-header {
+  padding: 15px 20px;
+  background: var(--secondary-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.canvas-header h3 {
+  color: var(--text-primary);
+}
+
+.canvas-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background: var(--accent-bg);
+  border-color: var(--barbie-pink);
+}
+
+.canvas-area {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 60px);
+  background-image: 
+    linear-gradient(rgba(255, 107, 157, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 107, 157, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+  user-select: none;
+}
+
+.connections-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.empty-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.workflow-node {
+  position: absolute;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: move;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 150px;
+  z-index: 2;
+}
+
+.node-delete-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.workflow-node:hover .node-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.node-delete-btn:hover {
+  transform: scale(1.1);
+  background: #ff4444;
+}
+
+.workflow-node:hover {
+  border-color: var(--barbie-pink);
+  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+}
+
+.workflow-node.input {
+  border-color: #74b9ff;
+}
+
+.workflow-node.analysis {
+  border-color: #a6e3a1;
+}
+
+.workflow-node.condition {
+  border-color: #f9e2af;
+}
+
+.workflow-node.output {
+  border-color: #cba6f7;
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.node-icon {
+  font-size: 1.2rem;
+}
+
+.node-name {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.node-ports {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 -20px;
+}
+
+.input-port, .output-port {
+  width: 12px;
+  height: 12px;
+  background: var(--barbie-pink);
+  border-radius: 50%;
+  border: 2px solid var(--panel-bg);
+  cursor: crosshair;
+  transition: all 0.2s;
+  pointer-events: all;
+  position: relative;
+  z-index: 3;
+}
+
+.input-port:hover, .output-port:hover {
+  transform: scale(1.3);
+  background: var(--barbie-accent);
+  box-shadow: 0 0 8px var(--barbie-pink);
+}
+
+.port-connecting {
+  animation: pulse 0.8s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 107, 157, 0.7);
+  }
+  70% {
+    transform: scale(1.3);
+    box-shadow: 0 0 0 10px rgba(255, 107, 157, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 107, 157, 0);
+  }
+}
+
+.input-port {
+  margin-left: -6px;
+}
+
+.output-port {
+  margin-right: -6px;
+}
+
+.node-palette {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  background: var(--panel-bg);
+  border: 2px solid var(--barbie-pink);
+  border-radius: 8px;
+  padding: 20px;
+  width: 250px;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.node-palette h4 {
+  color: var(--barbie-pink);
+  margin-bottom: 15px;
+}
+
+.node-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.category h5 {
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.node-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.node-option:hover {
+  background: var(--accent-bg);
+  border-color: var(--barbie-pink);
+  transform: translateX(2px);
+}
+
+.no-workflow-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+}

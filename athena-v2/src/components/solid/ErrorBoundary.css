@@ -1,0 +1,224 @@
+.error-boundary-fallback,
+.wasm-error-fallback,
+.analysis-error-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+  background: rgba(17, 17, 17, 0.95);
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  border-radius: 12px;
+  color: #fff;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.error-boundary-fallback h2,
+.wasm-error-fallback h2,
+.analysis-error-fallback h2 {
+  margin: 0 0 1rem 0;
+  color: #ff6b9d;
+  font-size: 1.8rem;
+}
+
+.error-message {
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-error-reset,
+.btn-error-details {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-error-reset {
+  background: linear-gradient(135deg, #ff6b9d, #c44569);
+  color: white;
+}
+
+.btn-error-reset:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+}
+
+.btn-error-details {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 107, 157, 0.5);
+}
+
+.btn-error-details:hover {
+  background: rgba(255, 107, 157, 0.2);
+}
+
+.error-details {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.error-details h3 {
+  margin: 0 0 1rem 0;
+  color: #ff6b9d;
+  font-size: 1.2rem;
+}
+
+.error-details pre {
+  margin: 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #ff6666;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* WASM Error Specific */
+.wasm-error-fallback {
+  background: rgba(17, 17, 17, 0.95);
+  border-color: rgba(255, 170, 102, 0.3);
+}
+
+.wasm-error-fallback .error-icon {
+  filter: grayscale(50%);
+}
+
+.error-hint {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 170, 102, 0.1);
+  border: 1px solid rgba(255, 170, 102, 0.3);
+  border-radius: 8px;
+  text-align: left;
+  max-width: 500px;
+}
+
+.error-hint p {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Analysis Error Specific */
+.analysis-error-fallback {
+  background: rgba(17, 17, 17, 0.95);
+  border-color: rgba(102, 170, 255, 0.3);
+}
+
+.error-suggestions {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(102, 170, 255, 0.1);
+  border: 1px solid rgba(102, 170, 255, 0.3);
+  border-radius: 8px;
+  text-align: left;
+  max-width: 500px;
+}
+
+.error-suggestions h3 {
+  margin: 0 0 0.75rem 0;
+  color: #66aaff;
+  font-size: 1.1rem;
+}
+
+.error-suggestions ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.error-suggestions li {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .error-boundary-fallback,
+  .wasm-error-fallback,
+  .analysis-error-fallback {
+    min-height: 300px;
+    padding: 1.5rem;
+  }
+
+  .error-icon {
+    font-size: 3rem;
+  }
+
+  .error-actions {
+    flex-direction: column;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .btn-error-reset,
+  .btn-error-details {
+    width: 100%;
+  }
+
+  .error-details {
+    padding: 1rem;
+  }
+
+  .error-details pre {
+    font-size: 0.75rem;
+  }
+}

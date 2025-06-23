@@ -1,0 +1,345 @@
+/* Network Analysis specific styles */
+
+/* Override the main analysis grid to use full height */
+.content-panel .analysis-grid {
+  height: calc(100vh - 180px) !important;
+  min-height: calc(100vh - 180px) !important;
+}
+
+/* Network statistics styling */
+.network-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+/* Network traffic container wrapper - force full height */
+.network-traffic-container-wrapper {
+  height: calc(100vh - 280px);
+  min-height: calc(100vh - 280px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Override scrollable panel to use full height */
+.analysis-grid .scrollable-panel:first-child {
+  height: calc(100vh - 280px);
+  min-height: calc(100vh - 280px);
+}
+
+.analysis-grid .scrollable-panel:first-child .panel-content {
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* Connection list styling */
+.connection-item {
+  padding: 12px;
+  border-bottom: 1px solid var(--accent-bg);
+  transition: background 0.2s ease;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.connection-item:hover {
+  background: rgba(255, 107, 157, 0.05);
+}
+
+.connection-item:last-child {
+  border-bottom: none;
+}
+
+.connection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.connection-ip {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.connection-count {
+  color: var(--barbie-pink);
+  font-size: 0.9rem;
+}
+
+.connection-type {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* Threat indicators */
+.threat-indicators {
+  background: var(--panel-bg);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.threat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.threat-item {
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.threat-item.critical {
+  color: var(--danger-color);
+}
+
+.threat-item.warning {
+  color: var(--warning-color);
+}
+
+.threat-item.info {
+  color: var(--info-color);
+}
+
+/* Packet analysis */
+.packet-analysis {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.packet-header {
+  background: var(--code-bg);
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.packet-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.packet-field {
+  display: flex;
+  gap: 8px;
+}
+
+.packet-label {
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+
+.packet-value {
+  color: var(--barbie-accent);
+  font-weight: 600;
+}
+
+/* Network traffic visualization */
+.network-traffic-container {
+  background: var(--code-bg);
+  border-radius: 8px;
+  padding: 15px;
+  min-height: 400px;
+  position: relative;
+}
+
+
+.traffic-legend {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 107, 157, 0.1);
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  backdrop-filter: blur(10px);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  color: var(--text-primary);
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Traffic packet styling */
+.traffic-packet {
+  position: relative;
+  padding: 8px 12px;
+  margin: 4px 0;
+  background: rgba(255, 107, 157, 0.05);
+  border-left: 3px solid var(--barbie-pink);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.traffic-packet:hover {
+  background: rgba(255, 107, 157, 0.1);
+  transform: translateX(4px);
+}
+
+.traffic-packet.suspicious {
+  border-left-color: var(--danger-color);
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.traffic-packet.suspicious:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+/* Packet info styling */
+.packet-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.packet-protocol {
+  font-weight: 600;
+  color: var(--barbie-accent);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.packet-size {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* Traffic stats */
+.traffic-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(255, 107, 157, 0.05);
+  border-radius: 6px;
+}
+
+.traffic-stat {
+  text-align: center;
+}
+
+.traffic-stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--barbie-pink);
+}
+
+.traffic-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Export options */
+.export-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-export-pcap {
+  background: linear-gradient(135deg, var(--barbie-pink) 0%, var(--barbie-accent) 100%);
+  color: white;
+  border: 2px solid #000;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.btn-export-pcap:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 157, 0.4), 0 0 0 2px #000;
+}
+
+/* Loading spinner */
+.network-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--secondary-bg);
+  border-top-color: var(--barbie-pink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Enhanced refresh button styling */
+.btn-secondary {
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--barbie-pink);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 107, 157, 0.1);
+  border-color: var(--barbie-accent);
+  transform: translateY(-2px);
+}
+
+/* Network traffic grid animation */
+.network-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(255, 107, 157, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 107, 157, 0.1) 1px, transparent 1px);
+  background-size: 30px 30px;
+  animation: gridMove 10s linear infinite;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes gridMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(30px, 30px);
+  }
+}

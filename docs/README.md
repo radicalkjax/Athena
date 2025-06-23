@@ -279,11 +279,29 @@ The new Athena CLI (`/scripts/athena`) provides a beautiful interactive menu:
 ```
 
 **Main Options:**
-- **🚀 Option 1**: Start Athena Web (most common)
+- **🚀 Option 1**: Launch Complete Athena (Docker Compose)
 - **🔑 Option 2**: Check API Keys  
 - **📦 Option 3**: Update Everything
-- **🔧 Option 7**: Run Setup
-- **🧪 Option 11**: Run All Tests
+- **🌐 Option 4-8**: Frontend/Mobile Options
+- **🐳 Option 9-10**: Docker/Kubernetes
+- **✨ Option 11**: Launch Tauri 2.0 App (NEW - Cross-platform desktop/mobile)
+- **🔧 Option 12**: Run Setup
+- **🧪 Option 16**: Run All Tests
+
+### 🆕 Tauri 2.0 Application
+
+Athena now includes a high-performance **Tauri 2.0** version for desktop and mobile platforms:
+
+- **Desktop**: Windows, macOS (✅ verified), Linux
+- **Mobile**: iOS, Android (landscape mode enforced)
+- **Documentation**: See [`athena-v2/README.md`](../athena-v2/README.md) for details
+
+To launch the Tauri app:
+```bash
+./scripts/athena
+# Select option 11
+# Choose your platform
+```
 
 ---
 

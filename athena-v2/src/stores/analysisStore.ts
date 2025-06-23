@@ -3,12 +3,14 @@ import { createStore } from 'solid-js/store';
 export interface AnalysisFile {
   id: string;
   name: string;
+  path: string;
   size: number;
   hash: string;
   type: string;
   uploadedAt: Date;
   status: 'pending' | 'analyzing' | 'completed' | 'error';
   results?: AnalysisResults;
+  fileData?: Uint8Array;
 }
 
 export interface AnalysisResults {
@@ -23,20 +25,60 @@ export interface AnalysisResults {
   };
 }
 
+export interface AnalysisProgress {
+  staticAnalysis?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    progress: number;
+    result?: any;
+  };
+  dynamicAnalysis?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    progress: number;
+    result?: any;
+  };
+  networkAnalysis?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    progress: number;
+    result?: any;
+  };
+  behavioralAnalysis?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    progress: number;
+    result?: any;
+  };
+  aiAnalysis?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    progress: number;
+    result?: any;
+  };
+}
+
 interface AnalysisStore {
   files: AnalysisFile[];
   activeFileId: string | null;
   isAnalyzing: boolean;
+  uploadedFile?: AnalysisFile;
+  currentFile?: AnalysisFile;
+  analysisProgress?: AnalysisProgress;
 }
 
 const [store, setStore] = createStore<AnalysisStore>({
   files: [],
   activeFileId: null,
   isAnalyzing: false,
+  uploadedFile: undefined,
 });
 
 export const analysisStore = {
   state: store,
+  
+  get currentFile() {
+    return store.currentFile;
+  },
+  
+  get analysisProgress() {
+    return store.analysisProgress;
+  },
   
   addFile(file: Omit<AnalysisFile, 'id' | 'uploadedAt' | 'status'>) {
     const newFile: AnalysisFile = {
@@ -46,11 +88,17 @@ export const analysisStore = {
       status: 'pending',
     };
     setStore('files', files => [...files, newFile]);
+    setStore('uploadedFile', newFile);
+    setStore('currentFile', newFile);
     return newFile.id;
   },
   
   setActiveFile(fileId: string) {
     setStore('activeFileId', fileId);
+    const file = store.files.find(f => f.id === fileId);
+    if (file) {
+      setStore('currentFile', file);
+    }
   },
   
   updateFileStatus(fileId: string, status: AnalysisFile['status']) {
@@ -70,5 +118,9 @@ export const analysisStore = {
     this.setAnalysisResults(fileId, results);
     this.updateFileStatus(fileId, 'completed');
     setStore('isAnalyzing', false);
+  },
+  
+  updateProgress(progress: Partial<AnalysisProgress>) {
+    setStore('analysisProgress', prev => ({ ...prev, ...progress }));
   },
 };

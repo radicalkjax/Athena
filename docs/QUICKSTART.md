@@ -67,9 +67,10 @@ cd athena
 **That's it!** 🎉
 
 The interactive CLI will present you with a beautiful menu where you can:
-- 🚀 Start Athena Web (Option 1) - Most common choice
+- 🚀 Launch Complete Athena (Option 1) - Docker Compose stack
 - 🔑 Check API Keys (Option 2) - Setup your AI providers
 - 📦 Update Everything (Option 3) - Keep Athena current
+- ✨ **NEW: Launch Tauri 2.0 App (Option 11)** - Native desktop/mobile app
 
 The script will automatically:
 - ✅ Check your system requirements

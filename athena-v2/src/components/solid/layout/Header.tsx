@@ -1,5 +1,6 @@
 import { Component, createSignal, onMount } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
+import logoImg from '../../../assets/images/logo.png';
 
 interface SystemStatus {
   platform: string;
@@ -26,19 +27,20 @@ export const Header: Component = () => {
   return (
     <header class="header">
       <div class="logo-section">
-        <div class="logo">A</div>
-        <h1 class="app-title">Athena Platform</h1>
+        <div class="logo">
+          <img src={logoImg} alt="Athena Platform Logo" />
+        </div>
+        <div>
+          <h1 class="logo-text">
+            Athena Platform<span class="logo-separator">:</span>
+            <span class="platform-subtitle">AI-Powered Malware Analysis</span>
+          </h1>
+        </div>
       </div>
       
-      <div class="header-status">
-        <span class="status-item">
-          <span class="status-icon">💻</span>
-          {systemStatus().platform || 'Loading...'}
-        </span>
-        <span class="status-item">
-          <span class="status-icon">📊</span>
-          v{systemStatus().version}
-        </span>
+      <div class="status-indicator" role="status" aria-live="polite">
+        <div class="status-dot" aria-hidden="true"></div>
+        <span>AI Providers Ready • WASM Runtime Online • 6 Models Active</span>
       </div>
     </header>
   );
