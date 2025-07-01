@@ -1,0 +1,1 @@
+/Users/radicalkjax/Athena/athena-v2/wasm-modules/analysis-engine/target/wasm32-unknown-unknown/release/analysis_engine.wasm: /Users/radicalkjax/Athena/athena-v2/wasm-modules/analysis-engine/src/lib.rs

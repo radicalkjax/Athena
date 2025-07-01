@@ -1,20 +1,64 @@
-import { Component, createSignal, Show } from 'solid-js';
+import { Component, createSignal, Show, onMount, createEffect } from 'solid-js';
 import { advancedAnalysis } from '../../../services/advancedAnalysis';
 import { analysisStore } from '../../../stores/analysisStore';
 import type { YaraMatch } from '../../../types/analysis';
 import AnalysisPanel from '../shared/AnalysisPanel';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import './YaraScanner.css';
 
 const YaraScanner: Component = () => {
   const [showRuleEditor] = createSignal(true);
   const [testResults, setTestResults] = createSignal<any>(null);
+  const [scanResults, setScanResults] = createSignal<any[]>([]);
+  const [isScanning, setIsScanning] = createSignal(false);
+  const [scannerInitialized, setScannerInitialized] = createSignal(false);
+  const [rulesLoaded, setRulesLoaded] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
 
+  // Initialize YARA scanner on mount
+  onMount(async () => {
+    try {
+      await invokeCommand('initialize_yara_scanner');
+      setScannerInitialized(true);
+      
+      // Load default rules
+      await invokeCommand('load_default_yara_rules');
+      setRulesLoaded(true);
+    } catch (err) {
+      setError(`Failed to initialize YARA scanner: ${err}`);
+    }
+  });
+
+  // Watch for file changes to scan
+  createEffect(async () => {
+    const files = analysisStore.files();
+    if (files.length > 0 && scannerInitialized() && rulesLoaded()) {
+      const latestFile = files[files.length - 1];
+      if (latestFile.path) {
+        await scanFile(latestFile.path);
+      }
+    }
+  });
+
+  const scanFile = async (filePath: string) => {
+    setIsScanning(true);
+    setError(null);
+    
+    try {
+      const results = await invokeCommand('scan_file_with_yara', { filePath });
+      setScanResults(results.matches || []);
+    } catch (err) {
+      setError(`YARA scan failed: ${err}`);
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   const testRule = () => {
     // Simulate rule testing
     setTestResults({
       compilation: 'Success',
-      matches: 247,
+      matches: scanResults().length,
       falsePositives: 2,
       performance: '12ms avg',
       coverage: {
@@ -115,20 +159,28 @@ const YaraScanner: Component = () => {
           </h3>
           
           <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem;">
-            <strong>Family-Specific Rules:</strong><br />
-            ✅ Dridex Banking Trojan<br />
-            ✅ Emotet Loader<br />
-            ✅ TrickBot Modular<br />
-            ⏳ QakBot Banking<br />
-            ⏳ IcedID Stealer<br /><br />
+            <strong>Scanner Status:</strong><br />
+            {scannerInitialized() ? '✅ Scanner Initialized' : '⏳ Initializing...'}<br />
+            {rulesLoaded() ? '✅ Rules Loaded' : '⏳ Loading Rules...'}<br />
+            {isScanning() ? '⏳ Scanning in progress...' : '✅ Ready to scan'}<br /><br />
             
-            <strong>Generic Rules:</strong><br />
-            ✅ Packed Executables<br />
-            ✅ Anti-VM Techniques<br />
-            ✅ Process Injection<br />
-            ✅ Persistence Mechanisms<br />
-            ✅ Network Communication
+            <strong>Scan Results:</strong><br />
+            {scanResults().length > 0 ? (
+              scanResults().map(match => (
+                <div>
+                  ✅ {match.rule_name} - {match.severity}<br />
+                </div>
+              ))
+            ) : (
+              <span style="color: var(--text-secondary)">No matches found</span>
+            )}
           </div>
+          
+          <Show when={error()}>
+            <div style="color: var(--danger-color); margin: 10px 0;">
+              {error()}
+            </div>
+          </Show>
           
           <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
             🛠️ Rule Actions

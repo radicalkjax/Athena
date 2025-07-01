@@ -14,12 +14,14 @@ export interface AIProviderConfig {
 export interface AIAnalysisRequest {
   fileHash: string;
   fileName: string;
+  filePath?: string;
   fileSize: number;
   fileType: string;
   fileContent?: ArrayBuffer;
-  analysisType: 'static' | 'dynamic' | 'behavioral' | 'comprehensive';
+  content?: string; // For enhanced requests with previous analysis
+  analysisType?: 'static' | 'dynamic' | 'behavioral' | 'comprehensive';
   providers: AIProvider[];
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export interface AIAnalysisResult {

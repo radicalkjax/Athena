@@ -1,4 +1,8 @@
 pub mod file_ops;
+pub mod file_analysis;
+pub mod wasm_file_bridge;
+pub mod yara_scanner_simple;
+pub mod yara_rules;
 pub mod system;
 pub mod network;
 pub mod system_monitor;

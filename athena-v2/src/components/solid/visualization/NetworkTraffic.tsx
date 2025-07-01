@@ -1,5 +1,6 @@
-import { Component, createSignal, onMount, onCleanup, For, Show } from 'solid-js';
+import { Component, createSignal, onMount, onCleanup, For, Show, createEffect } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import { useRealtimeData, useAnimatedValue, realtimeService } from '../../../services/realtimeService';
 import './NetworkTraffic.css';
 
 interface NetworkPacket {
@@ -47,9 +48,11 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
   const [isCapturing, setIsCapturing] = createSignal(false);
   const [filter, setFilter] = createSignal('');
   const [protocolFilter, setProtocolFilter] = createSignal<string>('All');
+  const [useRealData, setUseRealData] = createSignal(true);
   
   let intervalId: number | null = null;
   let packetsInLastSecond: NetworkPacket[] = [];
+  let realtimeSubscription: any = null;
 
   const protocolColors: Record<string, string> = {
     TCP: '#ff6b9d',
@@ -107,18 +110,54 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
   const startCapture = () => {
     setIsCapturing(true);
     
-    intervalId = setInterval(() => {
-      const newPacket = generateMockPacket();
-      packetsInLastSecond.push(newPacket);
-      
-      setPackets(prev => {
-        const updated = [...prev, newPacket];
-        // Keep only last 1000 packets for performance
-        return updated.slice(-1000);
+    if (useRealData()) {
+      // Subscribe to real-time network data
+      realtimeSubscription = realtimeService.subscribe('network', (data: NetworkPacket[] | NetworkPacket) => {
+        const packets = Array.isArray(data) ? data : [data];
+        
+        packets.forEach(packet => {
+          packetsInLastSecond.push(packet);
+          
+          setPackets(prev => {
+            const updated = [...prev, packet];
+            // Keep only last 1000 packets for performance
+            return updated.slice(-1000);
+          });
+        });
+        
+        updateStats();
       });
       
-      updateStats();
-    }, 100) as unknown as number; // Generate 10 packets per second
+      // Also subscribe to network-stream events for streaming data
+      realtimeService.subscribe('network-stream', (streamData: any) => {
+        if (streamData.packets) {
+          streamData.packets.forEach((packet: NetworkPacket) => {
+            packetsInLastSecond.push(packet);
+            
+            setPackets(prev => {
+              const updated = [...prev, packet];
+              return updated.slice(-1000);
+            });
+          });
+          
+          updateStats();
+        }
+      });
+    } else {
+      // Fall back to mock data generation
+      intervalId = setInterval(() => {
+        const newPacket = generateMockPacket();
+        packetsInLastSecond.push(newPacket);
+        
+        setPackets(prev => {
+          const updated = [...prev, newPacket];
+          // Keep only last 1000 packets for performance
+          return updated.slice(-1000);
+        });
+        
+        updateStats();
+      }, 100) as unknown as number; // Generate 10 packets per second
+    }
   };
 
   const stopCapture = () => {
@@ -126,6 +165,10 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
     if (intervalId) {
       clearInterval(intervalId);
       intervalId = null;
+    }
+    if (realtimeSubscription) {
+      realtimeSubscription.unsubscribe();
+      realtimeSubscription = null;
     }
   };
 
@@ -147,9 +190,9 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
     const filterText = filter().toLowerCase();
     if (filterText) {
       result = result.filter(p => 
-        p.source.ip.includes(filterText) ||
-        p.destination.ip.includes(filterText) ||
-        p.protocol.toLowerCase().includes(filterText)
+        p.source?.ip?.includes(filterText) ||
+        p.destination?.ip?.includes(filterText) ||
+        p.protocol?.toLowerCase().includes(filterText)
       );
     }
     
@@ -163,13 +206,14 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
 
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
+    const time = date.toLocaleTimeString('en-US', { 
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
-      fractionalSecondDigits: 3
+      second: '2-digit'
     });
+    const ms = date.getMilliseconds().toString().padStart(3, '0');
+    return `${time}.${ms}`;
   };
 
   const formatBytes = (bytes: number) => {
@@ -186,10 +230,16 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
   onMount(() => {
     // Auto-start capture for demo
     startCapture();
+    
+    // Check if real-time network data is available
+    realtimeService.subscribe('network', () => {
+      setUseRealData(true);
+    });
   });
 
   onCleanup(() => {
     stopCapture();
+    realtimeService.cleanup();
   });
 
   return (
@@ -232,6 +282,26 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
           </div>
           
           <div style="display: flex; gap: 24px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; color: #888;">Data Source:</span>
+              <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                <input
+                  type="checkbox"
+                  checked={useRealData()}
+                  onChange={(e) => {
+                    setUseRealData(e.currentTarget.checked);
+                    if (isCapturing()) {
+                      stopCapture();
+                      startCapture();
+                    }
+                  }}
+                  style="cursor: pointer;"
+                />
+                <span style={`font-size: 12px; font-weight: 600; color: ${useRealData() ? '#48dbfb' : '#feca57'};`}>
+                  {useRealData() ? 'Live' : 'Mock'}
+                </span>
+              </label>
+            </div>
             <div style="display: flex; flex-direction: column; align-items: center;">
               <span style="font-size: 12px; color: #888; text-transform: uppercase;">Packets:</span>
               <span style="font-size: 18px; font-weight: 600; color: #ff6b9d;">{stats.totalPackets}</span>
@@ -312,8 +382,8 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
                     {packet.protocol}
                   </span>
                 </div>
-                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.source.ip}:{packet.source.port}</div>
-                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.destination.ip}:{packet.destination.port}</div>
+                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.source?.ip || 'Unknown'}:{packet.source?.port || '???'}</div>
+                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.destination?.ip || 'Unknown'}:{packet.destination?.port || '???'}</div>
                 <div style="width: 80px; text-align: right; color: #74b9ff;">{packet.size} B</div>
                 <div style="width: 100px; text-align: center;">
                   <span style={`display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; ${packet.direction === 'inbound' ? 'background-color: rgba(116, 185, 255, 0.2); color: #74b9ff;' : 'background-color: rgba(255, 107, 157, 0.2); color: #ff6b9d;'}`}>

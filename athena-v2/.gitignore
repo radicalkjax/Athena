@@ -26,3 +26,32 @@ dist-ssr
 # Tauri
 src-tauri/target/
 src-tauri/WixTools/
+
+# Build outputs
+dist-web/
+public/wasm/
+
+# Test files
+test-*.js
+test-sample.txt
+
+# Performance reports
+performance-report.md
+
+# Documentation temporary files
+docs/handoff-session-*.md
+docs/agent-*.md
+
+# Vite temporary files
+*.timestamp-*.mjs
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Temporary and cache files
+.cache/
+tmp/
+temp/

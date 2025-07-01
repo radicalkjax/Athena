@@ -55,14 +55,6 @@ const DynamicAnalysis: Component = () => {
     'Update endpoint detection rules'
   ]);
 
-  const getColorForEventType = (type: string): string => {
-    switch(type) {
-      case 'success': return 'var(--success-color)';
-      case 'warning': return 'var(--warning-color)';
-      case 'danger': return 'var(--danger-color)';
-      default: return 'var(--text-primary)';
-    }
-  };
 
   const behaviorContent = behaviorEvents().map(event => 
     `<div class="console-line ${event.type}">${event.symbol} ${event.description}</div>`

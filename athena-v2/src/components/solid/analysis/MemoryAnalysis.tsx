@@ -1,7 +1,8 @@
-import { Component, createSignal, Show, For, onMount } from 'solid-js';
+import { Component, createSignal, Show, For, onMount, createEffect } from 'solid-js';
 import { analysisStore } from '../../../stores/analysisStore';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { StatCard } from '../shared/StatCard';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import './MemoryAnalysis.css';
 
 interface MemoryProcess {
@@ -54,11 +55,45 @@ const MemoryAnalysis: Component = () => {
   const [activeView, setActiveView] = createSignal<'processes' | 'strings' | 'regions' | 'artifacts'>('processes');
   const [filterSuspicious] = createSignal(false);
   const [searchTerm] = createSignal('');
+  const [systemInfo, setSystemInfo] = createSignal<any>(null);
+  const [cpuInfo, setCpuInfo] = createSignal<any>(null);
+  const [memoryInfo, setMemoryInfo] = createSignal<any>(null);
+  const [refreshInterval, setRefreshInterval] = createSignal<number | null>(null);
 
-  onMount(() => {
-    // Mock data for demonstration
-    if (analysisStore.currentFile) {
-      generateMockMemoryDump();
+  onMount(async () => {
+    // Get initial system status
+    await fetchSystemStatus();
+    
+    // Set up refresh interval
+    const interval = setInterval(fetchSystemStatus, 2000);
+    setRefreshInterval(interval);
+    
+    return () => {
+      if (refreshInterval()) clearInterval(refreshInterval()!);
+    };
+  });
+
+  const fetchSystemStatus = async () => {
+    try {
+      const [status, cpu, memory] = await Promise.all([
+        invokeCommand('get_system_status'),
+        invokeCommand('get_cpu_info'),
+        invokeCommand('get_memory_info')
+      ]);
+      
+      setSystemInfo(status);
+      setCpuInfo(cpu);
+      setMemoryInfo(memory);
+    } catch (err) {
+      console.error('Failed to fetch system status:', err);
+    }
+  };
+
+  // Watch for file changes to update memory view
+  createEffect(() => {
+    const files = analysisStore.files();
+    if (files.length > 0 && files[files.length - 1].analysisResult) {
+      updateMemoryDataFromAnalysis(files[files.length - 1].analysisResult);
     }
   });
 
@@ -175,11 +210,50 @@ const MemoryAnalysis: Component = () => {
   const analyzeMemory = async () => {
     setIsAnalyzing(true);
     
-    // Simulate analysis
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    generateMockMemoryDump();
-    
-    setIsAnalyzing(false);
+    try {
+      // For now, use mock data with real system info overlay
+      generateMockMemoryDump();
+      
+      // In future, this would use analyze_file_with_wasm or similar
+      const currentFile = analysisStore.currentFile;
+      if (currentFile?.path) {
+        const result = await invokeCommand('analyze_file_with_wasm', { filePath: currentFile.path });
+        updateMemoryDataFromAnalysis(result);
+      }
+    } catch (err) {
+      console.error('Memory analysis failed:', err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const updateMemoryDataFromAnalysis = (result: any) => {
+    // Extract memory-relevant data from analysis
+    if (result.strings) {
+      const suspiciousStrings = result.strings.suspicious || [];
+      // Update memory dump strings
+      setMemoryDump(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          strings: suspiciousStrings.slice(0, 20).map((str: string, idx: number) => ({
+            offset: 0x00400000 + idx * 0x1000,
+            value: str,
+            encoding: 'UTF-8',
+            context: categorizeString(str)
+          }))
+        };
+      });
+    }
+  };
+
+  const categorizeString = (str: string): string => {
+    if (str.match(/https?:\/\//i)) return 'Network communication';
+    if (str.match(/SELECT|INSERT|UPDATE|DELETE/i)) return 'Database query';
+    if (str.match(/cmd\.exe|powershell|bash/i)) return 'Command execution';
+    if (str.match(/[A-Z]:\\|\\\\|\//)) return 'File path';
+    if (str.match(/HKLM|HKCU|Software/)) return 'Registry key';
+    return 'Data';
   };
 
   const formatBytes = (bytes: number): string => {
@@ -452,27 +526,52 @@ const MemoryAnalysis: Component = () => {
         
         <div class="ensemble-results">
           <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
-            📊 Memory Statistics
+            📊 System Statistics
           </h3>
           
           <div class="stats-overview">
             <StatCard 
               label="Total Memory"
-              value="8.2 GB"
+              value={memoryInfo() ? `${(memoryInfo().total / 1024 / 1024 / 1024).toFixed(1)} GB` : '0 GB'}
             />
             <StatCard 
-              label="Processes"
-              value={memoryDump() ? memoryDump()!.processes.length.toString() : '0'}
+              label="Used Memory"
+              value={memoryInfo() ? `${(memoryInfo().used / 1024 / 1024 / 1024).toFixed(1)} GB` : '0 GB'}
             />
             <StatCard 
-              label="Injected Modules"
-              value={memoryDump() ? memoryDump()!.processes.filter(p => p.injected).length.toString() : '0'}
+              label="CPU Usage"
+              value={cpuInfo() ? `${cpuInfo().usage.toFixed(1)}%` : '0%'}
             />
             <StatCard 
-              label="Rootkit Hooks"
-              value="17"
+              label="System Uptime"
+              value={systemInfo() ? formatUptime(systemInfo().uptime) : '0s'}
             />
           </div>
+          
+          <Show when={memoryDump()}>
+            <h3 style="color: var(--barbie-pink); margin: 15px 0;">
+              🧠 Analysis Statistics
+            </h3>
+            
+            <div class="stats-overview">
+              <StatCard 
+                label="Processes"
+                value={memoryDump()!.processes.length.toString()}
+              />
+              <StatCard 
+                label="Injected"
+                value={memoryDump()!.processes.filter(p => p.injected).length.toString()}
+              />
+              <StatCard 
+                label="Suspicious"
+                value={memoryDump()!.processes.filter(p => p.suspicious).length.toString()}
+              />
+              <StatCard 
+                label="Artifacts"
+                value={(memoryDump()!.artifacts.urls.length + memoryDump()!.artifacts.files.length).toString()}
+              />
+            </div>
+          </Show>
           
           <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
             🛠️ Memory Tools
@@ -489,6 +588,16 @@ const MemoryAnalysis: Component = () => {
       </div>
     </div>
   );
+};
+
+const formatUptime = (seconds: number): string => {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 };
 
 export default MemoryAnalysis;

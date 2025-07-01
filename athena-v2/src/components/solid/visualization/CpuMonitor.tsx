@@ -1,7 +1,7 @@
-import { createSignal, onCleanup, onMount, For } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
+import { createSignal, onCleanup, For, createEffect } from 'solid-js';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { StatCard } from '../shared/StatCard';
+import { useRealtimeData, useAnimatedValue } from '../../services/realtimeService';
 
 interface CpuInfo {
   usage: number;
@@ -16,19 +16,18 @@ interface CoreInfo {
 }
 
 export default function CpuMonitor() {
-  const [cpuData, setCpuData] = createSignal<CpuInfo | null>(null);
+  const cpuData = useRealtimeData<CpuInfo | null>('cpu', null);
   const [history, setHistory] = createSignal<number[]>([]);
-  const [error, setError] = createSignal<string>('');
   
-  let intervalId: number;
+  const animatedUsage = useAnimatedValue(() => cpuData()?.usage || 0, 500);
+  const animatedFrequency = useAnimatedValue(() => cpuData()?.frequency || 0, 500);
+  
   const MAX_HISTORY_POINTS = 60;
 
-  const updateCpuInfo = async () => {
-    try {
-      const data = await invoke<CpuInfo>('get_cpu_info');
-      setCpuData(data);
-      
-      // Update history for graph
+  // Update history whenever cpuData changes
+  createEffect(() => {
+    const data = cpuData();
+    if (data) {
       setHistory(prev => {
         const newHistory = [...prev, data.usage];
         if (newHistory.length > MAX_HISTORY_POINTS) {
@@ -36,20 +35,11 @@ export default function CpuMonitor() {
         }
         return newHistory;
       });
-      
-      setError('');
-    } catch (err) {
-      setError(`Failed to get CPU info: ${err}`);
     }
-  };
-
-  onMount(() => {
-    updateCpuInfo();
-    intervalId = window.setInterval(updateCpuInfo, 1000);
   });
 
   onCleanup(() => {
-    if (intervalId) clearInterval(intervalId);
+    // Cleanup handled by realtimeService
   });
 
   const formatFrequency = (freq: number) => {
@@ -95,9 +85,11 @@ export default function CpuMonitor() {
           fill="none"
           stroke="#ff6b9d"
           stroke-width="2"
+          style="transition: d 0.3s ease-out;"
         />
         <path
           d={`${pathData} L ${(points.length - 1) * step} ${height} L 0 ${height} Z`}
+          style="transition: d 0.3s ease-out;"
           fill="url(#cpuGradient)"
         />
       </svg>
@@ -108,20 +100,16 @@ export default function CpuMonitor() {
     <AnalysisPanel title="CPU Monitor" icon="💻">
       <div class="content-panel">
       
-      {error() && (
-        <div class="error-message">{error()}</div>
-      )}
-      
         {cpuData() && (
           <>
             <div class="analysis-grid" style="margin-bottom: 20px;">
               <StatCard
                 label="CPU Usage"
-                value={`${cpuData()!.usage.toFixed(1)}%`}
+                value={`${animatedUsage().toFixed(1)}%`}
               />
               <StatCard
                 label="Frequency"
-                value={formatFrequency(cpuData()!.frequency)}
+                value={formatFrequency(animatedFrequency())}
               />
             </div>
 
@@ -151,7 +139,8 @@ export default function CpuMonitor() {
                               width: `${core.usage}%`,
                               height: '100%',
                               background: getUsageColor(core.usage),
-                              transition: 'width 0.3s ease'
+                              transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                              'box-shadow': `0 0 10px ${getUsageColor(core.usage)}40`
                             }}
                           />
                         </div>

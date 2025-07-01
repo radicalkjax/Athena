@@ -25,7 +25,7 @@ export const FileUploadArea: Component = () => {
   const [isUploading, setIsUploading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [uploadProgress, setUploadProgress] = createSignal<UploadProgress | null>(null);
-  const [currentFilePath, setCurrentFilePath] = createSignal<string>('');
+  const [, setCurrentFilePath] = createSignal<string>('');
   
   let unlistenProgress: (() => void) | null = null;
   
@@ -35,7 +35,7 @@ export const FileUploadArea: Component = () => {
       try {
         // @ts-ignore - Tauri API
         const { listen } = window.__TAURI__.event;
-        unlistenProgress = await listen<UploadProgress>('upload-progress', (event) => {
+        unlistenProgress = await listen('upload-progress', (event: any) => {
           setUploadProgress(event.payload);
           
           if (event.payload.status === 'completed') {
@@ -124,7 +124,17 @@ export const FileUploadArea: Component = () => {
     setError(null);
     
     try {
-      const metadata = await invokeCommand<FileMetadata>('upload_file', { path: filePath });
+      // Analyze the file using the backend command
+      const analysisResult = await invokeCommand('analyze_file', { filePath });
+      
+      // Extract metadata from analysis result
+      const metadata: FileMetadata = {
+        name: filePath.split('/').pop() || filePath,
+        size: analysisResult.size,
+        mime_type: analysisResult.format.mime_type || 'application/octet-stream',
+        hash: analysisResult.hashes.sha256
+      };
+      
       setUploadedFile(metadata);
       
       // Allocate memory for the file
@@ -143,21 +153,33 @@ export const FileUploadArea: Component = () => {
         throw new Error('Insufficient memory to load file');
       }
       
-      // Read file data for analysis
-      const fileData = await invokeCommand<number[]>('read_file_binary', { path: filePath });
-      const fileBytes = new Uint8Array(fileData);
-      
-      // Add to analysis store
+      // Add to analysis store with full analysis results
       analysisStore.addFile({
         name: metadata.name,
         path: filePath,
         size: metadata.size,
         hash: metadata.hash,
         type: metadata.mime_type,
-        fileData: fileBytes
+        analysisResult: analysisResult
       });
+      
+      // Trigger analysis completed event
+      window.dispatchEvent(new CustomEvent('file-analyzed', { 
+        detail: { filePath, result: analysisResult } 
+      }));
+      
+      // Start comprehensive analysis via coordinator
+      try {
+        const { analysisCoordinator } = await import('../../../services/analysisCoordinator');
+        const currentFile = analysisStore.state.files.find(f => f.hash === metadata.hash);
+        if (currentFile) {
+          analysisCoordinator.analyzeFile(currentFile);
+        }
+      } catch (err) {
+        console.log('Analysis coordinator not available:', err);
+      }
     } catch (err) {
-      setError(`Failed to upload file: ${err}`);
+      setError(`Failed to analyze file: ${err}`);
     } finally {
       setIsUploading(false);
     }

@@ -24,6 +24,32 @@ wasmtime = "26.0"
 wasmtime-wasi = "26.0"
 wasm-bindgen = "0.2"
 anyhow = "1.0"
+reqwest = { version = "0.11", features = ["json"] }
+async-trait = "0.1"
+base64 = "0.21"
+chrono = "0.4"
+# Binary parsing
+goblin = "0.8"
+object = { version = "0.36", features = ["all"] }
+# YARA scanning
+yara-x = "0.11"
+# Additional utilities
+byteorder = "1.5"
+memmap2 = "0.9"
+# Hashing
+md5 = "0.7"
+sha1 = "0.10"
+# Additional dependencies
+lazy_static = "1.5"
+# Export formats
+printpdf = "0.7"
+xlsxwriter = "0.6"
+# Compression
+flate2 = "1.0"
+# Encryption
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.8"
 
 [features]
 default = ["custom-protocol"]

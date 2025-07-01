@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod ai_providers;
 use commands::system_monitor::SystemMonitor;
 use commands::wasm_runtime::WasmRuntime;
 use std::sync::{Arc, Mutex};
@@ -44,6 +45,18 @@ fn main() {
             commands::advanced_analysis::analyze_behavior,
             commands::advanced_analysis::run_yara_scan,
             commands::advanced_analysis::get_threat_intelligence,
+            commands::file_analysis::analyze_file,
+            commands::wasm_file_bridge::analyze_file_with_wasm,
+            commands::wasm_file_bridge::load_wasm_security_modules,
+            commands::yara_scanner_simple::initialize_yara_scanner,
+            commands::yara_scanner_simple::load_yara_rules,
+            commands::yara_scanner_simple::load_default_yara_rules,
+            commands::yara_scanner_simple::scan_file_with_yara,
+            commands::yara_scanner_simple::get_yara_rule_sets,
+            commands::file_analysis::generate_pdf_report,
+            commands::file_analysis::generate_excel_report,
+            commands::file_analysis::encrypt_export_data,
+            commands::file_analysis::compress_export_data,
         ])
         .setup(|_app| {
             #[cfg(debug_assertions)]

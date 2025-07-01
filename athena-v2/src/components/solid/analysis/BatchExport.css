@@ -1,0 +1,385 @@
+.batch-export-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.batch-export-container {
+  background: var(--secondary-bg);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(255, 107, 157, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.batch-export-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.batch-export-header h2 {
+  margin: 0;
+  color: var(--barbie-pink);
+  font-size: 24px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: rgba(255, 107, 157, 0.2);
+  color: var(--barbie-pink);
+}
+
+.batch-export-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.export-section {
+  margin-bottom: 32px;
+}
+
+.export-section h3 {
+  color: var(--barbie-pink);
+  margin: 0 0 16px 0;
+  font-size: 18px;
+}
+
+.selection-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.selection-controls button {
+  padding: 8px 16px;
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.selection-controls button:hover {
+  background: rgba(255, 107, 157, 0.2);
+  border-color: var(--barbie-pink);
+}
+
+.selection-count {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.file-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--panel-bg);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-item:hover {
+  background: rgba(255, 107, 157, 0.1);
+}
+
+.file-item.selected {
+  background: rgba(255, 107, 157, 0.2);
+}
+
+.file-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.file-meta {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.option-group {
+  margin-bottom: 16px;
+}
+
+.option-group label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.option-group select,
+.option-group input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.option-group select:focus,
+.option-group input[type="text"]:focus {
+  border-color: var(--barbie-pink);
+  box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.2);
+}
+
+.option-group small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.password-input {
+  display: flex;
+  gap: 8px;
+}
+
+.password-input input {
+  flex: 1;
+}
+
+.toggle-password {
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.toggle-password:hover {
+  background: rgba(255, 107, 157, 0.2);
+  border-color: var(--barbie-pink);
+}
+
+.export-progress {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--panel-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--barbie-gradient);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  display: block;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.batch-export-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid var(--border-color);
+}
+
+.cancel-button,
+.export-button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-button {
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--text-secondary);
+}
+
+.export-button {
+  background: var(--barbie-gradient);
+  color: white;
+}
+
+.export-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+}
+
+.cancel-button:disabled,
+.export-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Scrollbar styling */
+.file-list::-webkit-scrollbar,
+.batch-export-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.file-list::-webkit-scrollbar-track,
+.batch-export-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.file-list::-webkit-scrollbar-thumb,
+.batch-export-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.file-list::-webkit-scrollbar-thumb:hover,
+.batch-export-content::-webkit-scrollbar-thumb:hover {
+  background: var(--barbie-pink);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .batch-export-container {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .batch-export-header {
+    padding: 16px;
+  }
+  
+  .batch-export-content {
+    padding: 16px;
+  }
+  
+  .selection-controls {
+    flex-wrap: wrap;
+  }
+  
+  .selection-count {
+    width: 100%;
+    margin-top: 8px;
+    margin-left: 0;
+  }
+}

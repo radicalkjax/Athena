@@ -1,277 +1,445 @@
-import { v4 as uuidv4 } from 'uuid';
+import { analysisStore } from '../stores/analysisStore';
 import { aiService } from './aiService';
-import type { 
-  AIProvider, 
-  AIAnalysisRequest, 
-  AIAnalysisResult, 
-  EnsembleAnalysisResult 
-} from '../types/ai';
+import { memoryManager } from './memoryManager';
+import { invokeCommand } from '../utils/tauriCompat';
+import { progressTracker } from './progressTracker';
+import type { AnalysisFile } from '../stores/analysisStore';
+import type { AIAnalysisRequest } from '../types/ai';
 
-interface ConsensusConfig {
-  minAgreement: number; // Minimum percentage of providers that must agree
-  weightedVoting: boolean; // Whether to weight votes by confidence
-  requiredProviders: number; // Minimum number of providers needed
+interface AnalysisTask {
+  id: string;
+  fileId: string;
+  type: 'static' | 'dynamic' | 'ai' | 'yara' | 'wasm';
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  startTime?: number;
+  endTime?: number;
+  result?: any;
+  error?: Error;
+}
+
+interface BulkheadConfig {
+  maxConcurrent: number;
+  queueSize: number;
+  timeout: number;
 }
 
 class AnalysisCoordinator {
-  private activeAnalyses: Map<string, EnsembleAnalysisResult> = new Map();
-  private consensusConfig: ConsensusConfig = {
-    minAgreement: 0.7, // 70% agreement threshold
-    weightedVoting: true,
-    requiredProviders: 3
-  };
+  private tasks: Map<string, AnalysisTask> = new Map();
+  private queues: Map<string, AnalysisTask[]> = new Map();
+  private activeCount: Map<string, number> = new Map();
+  private bulkheads: Map<string, BulkheadConfig> = new Map();
+  private cancellationTokens: Map<string, AbortController> = new Map();
 
-  async coordinateAnalysis(request: AIAnalysisRequest): Promise<EnsembleAnalysisResult> {
-    const analysisId = uuidv4();
-    
-    // Run analysis with all requested providers in parallel
-    const results = await aiService.analyzeWithMultipleProviders(request);
-    
-    // Filter out failed results
-    const successfulResults = results.filter(r => !r.error);
-    
-    if (successfulResults.length < this.consensusConfig.requiredProviders) {
-      throw new Error(
-        `Insufficient providers available. Required: ${this.consensusConfig.requiredProviders}, Available: ${successfulResults.length}`
-      );
+  constructor() {
+    this.initializeBulkheads();
+  }
+
+  private initializeBulkheads() {
+    // Configure bulkheads for different analysis types
+    this.bulkheads.set('static', {
+      maxConcurrent: 3,
+      queueSize: 10,
+      timeout: 30000 // 30s
+    });
+
+    this.bulkheads.set('dynamic', {
+      maxConcurrent: 1, // Sandbox analysis is resource intensive
+      queueSize: 5,
+      timeout: 300000 // 5m
+    });
+
+    this.bulkheads.set('ai', {
+      maxConcurrent: 2, // Rate limit AI providers
+      queueSize: 20,
+      timeout: 60000 // 1m
+    });
+
+    this.bulkheads.set('yara', {
+      maxConcurrent: 2,
+      queueSize: 10,
+      timeout: 45000 // 45s
+    });
+
+    this.bulkheads.set('wasm', {
+      maxConcurrent: 2,
+      queueSize: 10,
+      timeout: 60000 // 1m
+    });
+
+    // Initialize queues and counters
+    for (const [type] of this.bulkheads) {
+      this.queues.set(type, []);
+      this.activeCount.set(type, 0);
     }
-
-    // Build consensus result
-    const consensusResult = this.buildConsensus(successfulResults);
-    
-    // Identify disagreements
-    const disagreements = this.identifyDisagreements(successfulResults, consensusResult);
-    
-    const ensembleResult: EnsembleAnalysisResult = {
-      id: analysisId,
-      fileHash: request.fileHash,
-      timestamp: Date.now(),
-      providers: successfulResults.map(r => r.provider),
-      individualResults: results,
-      consensusResult,
-      disagreements
-    };
-
-    this.activeAnalyses.set(analysisId, ensembleResult);
-    
-    return ensembleResult;
   }
 
-  private buildConsensus(results: AIAnalysisResult[]): EnsembleAnalysisResult['consensusResult'] {
-    // Calculate weighted threat level
-    const threatLevel = this.calculateConsensusThreatLevel(results);
+  async analyzeFile(file: AnalysisFile): Promise<void> {
+    // Start all analysis types
+    const analysisTypes = ['static', 'yara', 'wasm', 'ai'] as const;
     
-    // Calculate overall confidence
-    const confidence = this.calculateConsensusConfidence(results);
-    
-    // Determine malware family and type
-    const { malwareFamily, malwareType } = this.determineMalwareClassification(results);
-    
-    // Aggregate signatures and behaviors
-    const aggregatedSignatures = this.aggregateUniqueValues(results, 'signatures');
-    const aggregatedBehaviors = this.aggregateUniqueValues(results, 'behaviors');
-    
-    // Aggregate IOCs
-    const aggregatedIocs = {
-      domains: this.aggregateUniqueValues(results, 'iocs.domains'),
-      ips: this.aggregateUniqueValues(results, 'iocs.ips'),
-      files: this.aggregateUniqueValues(results, 'iocs.files'),
-      registry: this.aggregateUniqueValues(results, 'iocs.registry'),
-      processes: this.aggregateUniqueValues(results, 'iocs.processes')
-    };
-    
-    // Generate summary
-    const summary = this.generateConsensusSummary(
-      threatLevel, 
-      confidence, 
-      malwareFamily, 
-      results.length
-    );
-    
-    return {
-      confidence,
-      threatLevel,
-      malwareFamily,
-      malwareType,
-      aggregatedSignatures,
-      aggregatedBehaviors,
-      aggregatedIocs,
-      summary
-    };
-  }
-
-  private calculateConsensusThreatLevel(
-    results: AIAnalysisResult[]
-  ): 'safe' | 'suspicious' | 'malicious' | 'critical' {
-    const threatLevels = {
-      safe: 0,
-      suspicious: 1,
-      malicious: 2,
-      critical: 3
-    };
-    
-    if (this.consensusConfig.weightedVoting) {
-      // Weighted voting based on confidence
-      let weightedSum = 0;
-      let totalWeight = 0;
-      
-      results.forEach(result => {
-        const weight = result.confidence;
-        weightedSum += threatLevels[result.threatLevel] * weight;
-        totalWeight += weight;
-      });
-      
-      const averageLevel = weightedSum / totalWeight;
-      
-      // Round to nearest threat level
-      if (averageLevel < 0.5) return 'safe';
-      if (averageLevel < 1.5) return 'suspicious';
-      if (averageLevel < 2.5) return 'malicious';
-      return 'critical';
-    } else {
-      // Simple majority voting
-      const votes: Record<string, number> = {
-        safe: 0,
-        suspicious: 0,
-        malicious: 0,
-        critical: 0
+    for (const type of analysisTypes) {
+      const task: AnalysisTask = {
+        id: `${file.id}-${type}-${Date.now()}`,
+        fileId: file.id,
+        type,
+        status: 'pending'
       };
-      
-      results.forEach(result => {
-        votes[result.threatLevel]++;
-      });
-      
-      // Return the threat level with most votes
-      return Object.entries(votes)
-        .sort((a, b) => b[1] - a[1])[0][0] as any;
+
+      this.tasks.set(task.id, task);
+      await this.enqueueTask(task);
+    }
+
+    // Update progress tracking
+    analysisStore.startAnalysis(file.id);
+  }
+
+  private async enqueueTask(task: AnalysisTask) {
+    const queue = this.queues.get(task.type);
+    const bulkhead = this.bulkheads.get(task.type);
+    
+    if (!queue || !bulkhead) {
+      throw new Error(`Invalid task type: ${task.type}`);
+    }
+
+    // Check if we can run immediately
+    const active = this.activeCount.get(task.type) || 0;
+    
+    if (active < bulkhead.maxConcurrent) {
+      this.runTask(task);
+    } else if (queue.length < bulkhead.queueSize) {
+      queue.push(task);
+    } else {
+      // Queue is full, reject task
+      task.status = 'failed';
+      task.error = new Error('Analysis queue is full');
+      this.handleTaskCompletion(task);
     }
   }
 
-  private calculateConsensusConfidence(results: AIAnalysisResult[]): number {
-    // Calculate average confidence weighted by agreement
-    const avgConfidence = results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
-    
-    // Calculate agreement factor (how much providers agree)
-    const threatLevels = results.map(r => r.threatLevel);
-    const uniqueLevels = new Set(threatLevels).size;
-    const agreementFactor = 1 - (uniqueLevels - 1) / 3; // Normalize to 0-1
-    
-    // Final confidence is average confidence adjusted by agreement
-    return Math.round((avgConfidence * 0.7 + agreementFactor * 0.3) * 100) / 100;
+  private async runTask(task: AnalysisTask) {
+    const bulkhead = this.bulkheads.get(task.type)!;
+    const abortController = new AbortController();
+    this.cancellationTokens.set(task.id, abortController);
+
+    // Increment active count
+    this.activeCount.set(task.type, (this.activeCount.get(task.type) || 0) + 1);
+
+    // Update task status
+    task.status = 'running';
+    task.startTime = Date.now();
+
+    // Set timeout
+    const timeoutId = setTimeout(() => {
+      if (task.status === 'running') {
+        abortController.abort();
+        task.status = 'failed';
+        task.error = new Error(`Analysis timed out after ${bulkhead.timeout}ms`);
+        this.handleTaskCompletion(task);
+      }
+    }, bulkhead.timeout);
+
+    try {
+      // Execute analysis based on type
+      const result = await this.executeAnalysis(task, abortController.signal);
+      
+      clearTimeout(timeoutId);
+      
+      if (!abortController.signal.aborted) {
+        task.status = 'completed';
+        task.result = result;
+        task.endTime = Date.now();
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      if (!abortController.signal.aborted) {
+        task.status = 'failed';
+        task.error = error as Error;
+        task.endTime = Date.now();
+      }
+    } finally {
+      this.cancellationTokens.delete(task.id);
+      this.handleTaskCompletion(task);
+    }
   }
 
-  private determineMalwareClassification(results: AIAnalysisResult[]) {
-    // Count occurrences of malware families and types
-    const familyCounts = new Map<string, number>();
-    const typeCounts = new Map<string, number>();
-    
-    results.forEach(result => {
-      if (result.malwareFamily) {
-        familyCounts.set(
-          result.malwareFamily, 
-          (familyCounts.get(result.malwareFamily) || 0) + result.confidence
-        );
-      }
-      if (result.malwareType) {
-        typeCounts.set(
-          result.malwareType, 
-          (typeCounts.get(result.malwareType) || 0) + result.confidence
-        );
+  private async executeAnalysis(task: AnalysisTask, signal: AbortSignal): Promise<any> {
+    const file = analysisStore.state.files.find(f => f.id === task.fileId);
+    if (!file) {
+      throw new Error('File not found');
+    }
+
+    // Update progress
+    const progressKey = `${task.type}Analysis` as any;
+    analysisStore.updateProgress({
+      [progressKey]: {
+        status: 'running',
+        progress: 0
       }
     });
-    
-    // Get most confident classification
-    const malwareFamily = this.getMostConfidentValue(familyCounts);
-    const malwareType = this.getMostConfidentValue(typeCounts);
-    
-    return { malwareFamily, malwareType };
+
+    switch (task.type) {
+      case 'static':
+        return this.executeStaticAnalysis(file, signal);
+      
+      case 'yara':
+        return this.executeYaraAnalysis(file, signal);
+      
+      case 'wasm':
+        return this.executeWasmAnalysis(file, signal);
+      
+      case 'ai':
+        return this.executeAIAnalysis(file, signal);
+      
+      default:
+        throw new Error(`Unknown analysis type: ${task.type}`);
+    }
   }
 
-  private getMostConfidentValue(counts: Map<string, number>): string | undefined {
-    if (counts.size === 0) return undefined;
-    
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])[0][0];
+  private async executeStaticAnalysis(file: AnalysisFile, signal: AbortSignal) {
+    // This is already done in the backend, but we can enhance it
+    if (file.analysisResult) {
+      return file.analysisResult;
+    }
+
+    // Start progress tracking
+    progressTracker.startAnalysis(file.id, 'static');
+
+    // Phase 1: File reading
+    progressTracker.updateProgress(file.id, 'static', 10, 'reading', 'Reading file contents...');
+
+    const result = await invokeCommand('analyze_file', { 
+      filePath: file.path 
+    });
+
+    // Phase 2: Analysis complete
+    progressTracker.updateProgress(file.id, 'static', 90, 'analyzing', 'Analyzing file structure...');
+
+    // Complete
+    progressTracker.completeAnalysis(file.id, 'static', result);
+
+    return result;
   }
 
-  private aggregateUniqueValues(results: AIAnalysisResult[], path: string): string[] {
-    const values = new Set<string>();
+  private async executeYaraAnalysis(file: AnalysisFile, signal: AbortSignal) {
+    progressTracker.startAnalysis(file.id, 'yara');
     
-    results.forEach(result => {
-      const pathParts = path.split('.');
-      let value: any = result;
-      
-      for (const part of pathParts) {
-        value = value?.[part];
-      }
-      
-      if (Array.isArray(value)) {
-        value.forEach(v => values.add(v));
-      }
+    // Phase 1: Loading rules
+    progressTracker.updateProgress(file.id, 'yara', 20, 'loading-rules', 'Loading YARA rules...');
+    
+    // Phase 2: Scanning
+    progressTracker.updateProgress(file.id, 'yara', 50, 'scanning', 'Scanning file with YARA rules...');
+    
+    const result = await invokeCommand('scan_file_with_yara', { 
+      filePath: file.path 
     });
     
-    return Array.from(values);
+    // Phase 3: Processing matches
+    progressTracker.updateProgress(file.id, 'yara', 80, 'processing', 'Processing rule matches...');
+    
+    progressTracker.completeAnalysis(file.id, 'yara', result);
+    return result;
   }
 
-  private identifyDisagreements(
-    results: AIAnalysisResult[], 
-    consensus: EnsembleAnalysisResult['consensusResult']
-  ): EnsembleAnalysisResult['disagreements'] {
-    const disagreements: EnsembleAnalysisResult['disagreements'] = [];
+  private async executeWasmAnalysis(file: AnalysisFile, signal: AbortSignal) {
+    progressTracker.startAnalysis(file.id, 'wasm');
     
-    results.forEach(result => {
-      // Check threat level disagreement
-      if (result.threatLevel !== consensus.threatLevel) {
-        disagreements.push({
-          provider: result.provider,
-          field: 'threatLevel',
-          value: result.threatLevel
-        });
-      }
+    // Phase 1: Loading WASM modules
+    progressTracker.updateProgress(file.id, 'wasm', 10, 'loading', 'Loading WASM security modules...');
+    
+    // Simulate streaming results for each module
+    const modules = ['analysis-engine', 'crypto', 'deobfuscator', 'file-processor', 'pattern-matcher'];
+    
+    for (let i = 0; i < modules.length; i++) {
+      const progress = 10 + (i * 15);
+      progressTracker.updateProgress(
+        file.id, 
+        'wasm', 
+        progress, 
+        'analyzing', 
+        `Running ${modules[i]} module...`
+      );
       
-      // Check malware family disagreement
-      if (result.malwareFamily && result.malwareFamily !== consensus.malwareFamily) {
-        disagreements.push({
-          provider: result.provider,
-          field: 'malwareFamily',
-          value: result.malwareFamily
-        });
-      }
-      
-      // Check significant confidence deviation
-      if (Math.abs(result.confidence - consensus.confidence) > 0.2) {
-        disagreements.push({
-          provider: result.provider,
-          field: 'confidence',
-          value: result.confidence
-        });
-      }
+      // Small delay to show progress
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    const result = await invokeCommand('analyze_file_with_wasm', { 
+      filePath: file.path 
     });
     
-    return disagreements;
-  }
-
-  private generateConsensusSummary(
-    threatLevel: string,
-    confidence: number,
-    malwareFamily: string | undefined,
-    providerCount: number
-  ): string {
-    const confidencePercent = Math.round(confidence * 100);
-    const familyText = malwareFamily ? ` identified as ${malwareFamily}` : '';
+    // Stream partial results
+    if (result.wasm_analyses) {
+      for (const analysis of result.wasm_analyses) {
+        progressTracker.streamResult(file.id, 'wasm', analysis, false);
+      }
+    }
     
-    return `Based on analysis from ${providerCount} AI providers with ${confidencePercent}% ` +
-           `confidence, the file is classified as ${threatLevel}${familyText}. ` +
-           `This consensus was reached through weighted voting and cross-validation ` +
-           `of behavioral patterns, signatures, and indicators of compromise.`;
+    progressTracker.completeAnalysis(file.id, 'wasm', result);
+    return result;
   }
 
-  getAnalysisResult(analysisId: string): EnsembleAnalysisResult | undefined {
-    return this.activeAnalyses.get(analysisId);
+  private async executeAIAnalysis(file: AnalysisFile, signal: AbortSignal) {
+    progressTracker.startAnalysis(file.id, 'ai');
+    
+    const request: AIAnalysisRequest = {
+      fileHash: file.hash,
+      fileName: file.name,
+      filePath: file.path,
+      fileSize: file.size,
+      fileType: file.type,
+      providers: ['claude', 'gpt4', 'deepseek', 'gemini', 'mistral', 'llama'],
+      analysisType: 'comprehensive',
+      priority: 'high'
+    };
+    
+    // Phase 1: Preparing request
+    progressTracker.updateProgress(file.id, 'ai', 5, 'preparing', 'Preparing AI analysis request...');
+    
+    // Use custom progress callback for AI service
+    const progressCallback = (provider: string, progress: number) => {
+      const overallProgress = 5 + (progress * 0.9); // 5-95%
+      progressTracker.updateProgress(
+        file.id, 
+        'ai', 
+        overallProgress, 
+        'analyzing', 
+        `Analyzing with ${provider}...`
+      );
+      
+      // Stream individual provider results
+      progressTracker.streamResult(file.id, 'ai', {
+        provider,
+        progress,
+        timestamp: Date.now()
+      }, false);
+    };
+    
+    const result = await aiService.analyzeWithEnsemble(request, 'voting', progressCallback);
+    
+    // Convert to analysis results format
+    const analysisResults = {
+      malwareScore: result.consensus.confidence * 100,
+      threats: result.consensus.signatures,
+      aiAnalysis: result.individual.reduce((acc, res) => {
+        acc[res.provider] = {
+          score: res.confidence * 100,
+          summary: `Threat Level: ${res.threatLevel}`,
+          details: res.recommendations.join('\n')
+        };
+        return acc;
+      }, {} as any)
+    };
+    
+    // Update store with results
+    analysisStore.setAnalysisResults(file.id, analysisResults);
+    
+    // Complete with final result
+    progressTracker.completeAnalysis(file.id, 'ai', result);
+    
+    return result;
   }
 
-  updateConsensusConfig(config: Partial<ConsensusConfig>) {
-    this.consensusConfig = { ...this.consensusConfig, ...config };
+  private handleTaskCompletion(task: AnalysisTask) {
+    // Decrement active count
+    const active = this.activeCount.get(task.type) || 0;
+    this.activeCount.set(task.type, Math.max(0, active - 1));
+
+    // Check if we should process next task in queue
+    const queue = this.queues.get(task.type);
+    if (queue && queue.length > 0) {
+      const nextTask = queue.shift();
+      if (nextTask) {
+        this.runTask(nextTask);
+      }
+    }
+
+    // Check if all tasks for this file are complete
+    const fileTasks = Array.from(this.tasks.values())
+      .filter(t => t.fileId === task.fileId);
+    
+    const allComplete = fileTasks.every(t => 
+      t.status === 'completed' || t.status === 'failed'
+    );
+
+    if (allComplete) {
+      // Calculate overall score
+      const completedTasks = fileTasks.filter(t => t.status === 'completed');
+      const scores = completedTasks
+        .filter(t => t.result?.confidence)
+        .map(t => t.result.confidence);
+      
+      const overallScore = scores.length > 0 
+        ? scores.reduce((a, b) => a + b, 0) / scores.length 
+        : 0;
+
+      analysisStore.updateFileStatus(task.fileId, 'completed');
+    }
+  }
+
+  cancelAnalysis(fileId: string) {
+    // Cancel all tasks for this file
+    const fileTasks = Array.from(this.tasks.values())
+      .filter(t => t.fileId === fileId && t.status === 'running');
+
+    for (const task of fileTasks) {
+      const controller = this.cancellationTokens.get(task.id);
+      if (controller) {
+        controller.abort();
+      }
+    }
+
+    // Remove from queues
+    for (const [type, queue] of this.queues) {
+      const filtered = queue.filter(t => t.fileId !== fileId);
+      this.queues.set(type, filtered);
+    }
+
+    analysisStore.updateFileStatus(fileId, 'error');
+  }
+
+  getTaskStatus(fileId: string) {
+    const fileTasks = Array.from(this.tasks.values())
+      .filter(t => t.fileId === fileId);
+
+    return {
+      total: fileTasks.length,
+      completed: fileTasks.filter(t => t.status === 'completed').length,
+      failed: fileTasks.filter(t => t.status === 'failed').length,
+      running: fileTasks.filter(t => t.status === 'running').length,
+      pending: fileTasks.filter(t => t.status === 'pending').length,
+      tasks: fileTasks
+    };
+  }
+
+  getQueueStatus() {
+    const status: Record<string, any> = {};
+
+    for (const [type, queue] of this.queues) {
+      status[type] = {
+        queueLength: queue.length,
+        activeCount: this.activeCount.get(type) || 0,
+        maxConcurrent: this.bulkheads.get(type)?.maxConcurrent || 0
+      };
+    }
+
+    return status;
+  }
+
+  // Resource monitoring
+  getResourceUsage() {
+    const totalActive = Array.from(this.activeCount.values())
+      .reduce((sum, count) => sum + count, 0);
+
+    const totalQueued = Array.from(this.queues.values())
+      .reduce((sum, queue) => sum + queue.length, 0);
+
+    return {
+      activeAnalyses: totalActive,
+      queuedAnalyses: totalQueued,
+      memoryUsage: memoryManager.getUsage(),
+      bulkheadStatus: this.getQueueStatus()
+    };
   }
 }
 

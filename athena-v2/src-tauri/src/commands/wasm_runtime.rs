@@ -34,11 +34,11 @@ pub struct WasmModule {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WasmExecutionResult {
-    success: bool,
-    output: Option<String>,
-    error: Option<String>,
-    execution_time_ms: u64,
-    memory_used: u64,
+    pub success: bool,
+    pub output: Option<String>,
+    pub error: Option<String>,
+    pub execution_time_ms: u64,
+    pub memory_used: u64,
 }
 
 pub struct WasmRuntime {

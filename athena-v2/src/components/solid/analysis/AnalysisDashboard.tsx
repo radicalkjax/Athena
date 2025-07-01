@@ -1,11 +1,11 @@
-import { Component, For, Show, createSignal } from 'solid-js';
+import { Component, For, Show, createSignal, lazy } from 'solid-js';
 import { AIProviderStatus } from '../providers/AIProviderStatus';
-import WasmBridge from '../wasm/WasmBridge';
 import { WasmErrorBoundary } from '../ErrorBoundary';
-import AIEnsemble from './AIEnsemble';
 import type { WasmAnalysisResult } from '../../../types/wasm';
 import AnalysisPanel from '../shared/AnalysisPanel';
-import { StatCard } from '../shared/StatCard';
+
+// Lazy load heavy components
+const WasmBridge = lazy(() => import('../wasm/WasmBridge'));
 
 interface AnalysisStage {
   id: string;
@@ -64,7 +64,7 @@ export const AnalysisDashboard: Component<Props> = (props) => {
   });
 
   const [selectedAnalysisType, setSelectedAnalysisType] = createSignal<'static' | 'dynamic' | 'network' | 'behavioral'>('static');
-  const [wasmResults, setWasmResults] = createSignal<Record<string, WasmAnalysisResult>>({});
+  const [, setWasmResults] = createSignal<Record<string, WasmAnalysisResult>>({});
 
   const handleWasmAnalysisComplete = (type: string, result: WasmAnalysisResult) => {
     setWasmResults(prev => ({ ...prev, [type]: result }));

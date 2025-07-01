@@ -82,16 +82,18 @@ export const ErrorBoundary: Component<Props> = (props) => {
   
   return (
     <SolidErrorBoundary
-      fallback={(error, resetFn) => (
-        <FallbackComponent 
-          error={error} 
-          reset={() => {
-            reset();
-            resetFn();
-          }} 
-        />
-      )}
-      onError={handleError}
+      fallback={(error, resetFn) => {
+        handleError(error, { componentStack: '' });
+        return (
+          <FallbackComponent 
+            error={error} 
+            reset={() => {
+              reset();
+              resetFn();
+            }} 
+          />
+        );
+      }}
     >
       {props.children}
     </SolidErrorBoundary>

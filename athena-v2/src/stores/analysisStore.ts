@@ -11,6 +11,7 @@ export interface AnalysisFile {
   status: 'pending' | 'analyzing' | 'completed' | 'error';
   results?: AnalysisResults;
   fileData?: Uint8Array;
+  analysisResult?: any; // Raw backend analysis result
 }
 
 export interface AnalysisResults {
@@ -29,26 +30,57 @@ export interface AnalysisProgress {
   staticAnalysis?: {
     status: 'pending' | 'running' | 'completed' | 'error';
     progress: number;
+    phase?: string;
+    message?: string;
+    estimatedTimeRemaining?: number;
     result?: any;
   };
   dynamicAnalysis?: {
     status: 'pending' | 'running' | 'completed' | 'error';
     progress: number;
+    phase?: string;
+    message?: string;
+    estimatedTimeRemaining?: number;
     result?: any;
   };
   networkAnalysis?: {
     status: 'pending' | 'running' | 'completed' | 'error';
     progress: number;
+    phase?: string;
+    message?: string;
+    estimatedTimeRemaining?: number;
     result?: any;
   };
   behavioralAnalysis?: {
     status: 'pending' | 'running' | 'completed' | 'error';
     progress: number;
+    phase?: string;
+    message?: string;
+    estimatedTimeRemaining?: number;
     result?: any;
   };
   aiAnalysis?: {
     status: 'pending' | 'running' | 'completed' | 'error';
     progress: number;
+    phase?: string;
+    message?: string;
+    estimatedTimeRemaining?: number;
+    result?: any;
+  };
+  yaraAnalysis?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    progress: number;
+    phase?: string;
+    message?: string;
+    estimatedTimeRemaining?: number;
+    result?: any;
+  };
+  wasmAnalysis?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    progress: number;
+    phase?: string;
+    message?: string;
+    estimatedTimeRemaining?: number;
     result?: any;
   };
 }
@@ -60,6 +92,7 @@ interface AnalysisStore {
   uploadedFile?: AnalysisFile;
   currentFile?: AnalysisFile;
   analysisProgress?: AnalysisProgress;
+  streamingResults?: Record<string, Record<string, any[]>>;
 }
 
 const [store, setStore] = createStore<AnalysisStore>({
@@ -71,6 +104,8 @@ const [store, setStore] = createStore<AnalysisStore>({
 
 export const analysisStore = {
   state: store,
+  
+  files: () => store.files,
   
   get currentFile() {
     return store.currentFile;
@@ -122,5 +157,9 @@ export const analysisStore = {
   
   updateProgress(progress: Partial<AnalysisProgress>) {
     setStore('analysisProgress', prev => ({ ...prev, ...progress }));
+  },
+  
+  updateStreamingResults(results: Record<string, Record<string, any[]>>) {
+    setStore('streamingResults', results);
   },
 };

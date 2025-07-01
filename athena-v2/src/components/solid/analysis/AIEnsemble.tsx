@@ -1,7 +1,7 @@
-import { Component, createSignal, createEffect, For } from 'solid-js';
+import { Component, createSignal, createEffect, For, Show } from 'solid-js';
 import { analysisStore } from '../../../stores/analysisStore';
-import { analysisCoordinator } from '../../../services/analysisCoordinator';
-import type { AIProvider, EnsembleAnalysisResult } from '../../../types/ai';
+import { aiService } from '../../../services/aiService';
+import type { AIProvider, EnsembleAnalysisResult, AIAnalysisResult } from '../../../types/ai';
 import './AIEnsemble.css';
 
 const AIEnsemble: Component = () => {
@@ -40,15 +40,37 @@ const AIEnsemble: Component = () => {
     setError(null);
 
     try {
-      const result = await analysisCoordinator.coordinateAnalysis({
+      // Run AI analysis through the AI service
+      const ensembleResult = await aiService.analyzeWithEnsemble({
         fileHash: file.hash,
         fileName: file.name,
+        filePath: file.path,
         fileSize: file.size,
         fileType: file.type,
         analysisType: 'comprehensive',
         providers: selectedProviders(),
         priority: 'high'
-      });
+      }, 'voting');
+
+      // Convert to EnsembleAnalysisResult format
+      const result: EnsembleAnalysisResult = {
+        id: `ensemble-${file.hash}-${Date.now()}`,
+        fileHash: file.hash,
+        timestamp: Date.now(),
+        providers: selectedProviders(),
+        individualResults: ensembleResult.individual,
+        consensusResult: {
+          confidence: ensembleResult.consensus.confidence,
+          threatLevel: ensembleResult.consensus.threatLevel,
+          malwareFamily: ensembleResult.consensus.malwareFamily,
+          malwareType: ensembleResult.consensus.malwareType,
+          aggregatedSignatures: ensembleResult.consensus.signatures,
+          aggregatedBehaviors: ensembleResult.consensus.behaviors,
+          aggregatedIocs: ensembleResult.consensus.iocs,
+          summary: `${ensembleResult.consensus.malwareFamily || 'Unknown'} - ${ensembleResult.consensus.malwareType || 'Suspicious'}`
+        },
+        disagreements: findDisagreements(ensembleResult.individual)
+      };
 
       setAnalysisResult(result);
       
@@ -64,6 +86,36 @@ const AIEnsemble: Component = () => {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const findDisagreements = (results: AIAnalysisResult[]) => {
+    const disagreements: any[] = [];
+    const fields = ['threatLevel', 'malwareFamily', 'malwareType'] as const;
+    
+    for (const field of fields) {
+      const values = new Map<string, AIProvider[]>();
+      
+      results.forEach(result => {
+        const value = result[field] || 'unknown';
+        const providers = values.get(value) || [];
+        providers.push(result.provider);
+        values.set(value, providers);
+      });
+      
+      if (values.size > 1) {
+        for (const [value, providers] of values) {
+          if (providers.length === 1) {
+            disagreements.push({
+              provider: providers[0],
+              field,
+              value
+            });
+          }
+        }
+      }
+    }
+    
+    return disagreements;
   };
 
   // Mock analysis result for demonstration
@@ -138,15 +190,19 @@ const AIEnsemble: Component = () => {
         </div>
       )}
       
-      <div class="ensemble-consensus" style="margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div class="consensus-score">94% Consensus</div>
-          <div style="color: var(--success-color); font-weight: 600;">6/6 Providers Agreement</div>
+      <Show when={analysisResult()}>
+        <div class="ensemble-consensus" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div class="consensus-score">{Math.round(analysisResult()!.consensusResult.confidence * 100)}% Consensus</div>
+            <div style="color: var(--success-color); font-weight: 600;">
+              {analysisResult()!.individualResults.filter(r => r.confidence > 0).length}/{analysisResult()!.providers.length} Providers Agreement
+            </div>
+          </div>
+          <div style="color: var(--text-secondary);">
+            <strong>Final Classification:</strong> {analysisResult()!.consensusResult.summary}
+          </div>
         </div>
-        <div style="color: var(--text-secondary);">
-          <strong>Final Classification:</strong> Trojan.GenKryptik.Win32 - High Risk Info-stealer
-        </div>
-      </div>
+      </Show>
       
       <div class="analysis-grid">
         <div class="analysis-main">
@@ -160,18 +216,34 @@ const AIEnsemble: Component = () => {
             
             <div class="panel-content">
               <div style="display: grid; gap: 15px;">
-                <For each={providerInsights}>
-                  {(item) => (
-                    <div style={`background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid ${item.color};`}>
-                      <h4 style={`color: ${item.color}; margin-bottom: 8px;`}>
-                        {item.provider.icon} {item.provider.name} - {item.provider.confidence}% Confidence
-                      </h4>
-                      <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
-                        {item.description}
-                      </p>
-                    </div>
-                  )}
-                </For>
+                <Show when={analysisResult()} fallback={
+                  <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    {isAnalyzing() ? 'Analyzing with AI providers...' : 'No analysis results yet. Click "Run Analysis" to start.'}
+                  </div>
+                }>
+                  <For each={analysisResult()!.individualResults}>
+                    {(result) => {
+                      const providerInfo = providers.find(p => p.id === result.provider);
+                      const color = providerInfo ? providerInsights.find(i => i.provider.id === result.provider)?.color || '#74b9ff' : '#74b9ff';
+                      
+                      return (
+                        <div style={`background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid ${color};`}>
+                          <h4 style={`color: ${color}; margin-bottom: 8px;`}>
+                            {providerInfo?.icon} {providerInfo?.name} - {Math.round(result.confidence * 100)}% Confidence
+                          </h4>
+                          <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0 0 8px 0;">
+                            <strong>Threat Level:</strong> {result.threatLevel} | 
+                            <strong>Family:</strong> {result.malwareFamily || 'Unknown'} | 
+                            <strong>Type:</strong> {result.malwareType || 'Unknown'}
+                          </p>
+                          <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                            <strong>Recommendations:</strong> {result.recommendations.slice(0, 2).join('. ')}
+                          </p>
+                        </div>
+                      );
+                    }}
+                  </For>
+                </Show>
               </div>
             </div>
           </div>
@@ -184,16 +256,28 @@ const AIEnsemble: Component = () => {
           
           <div class="stats-overview" style="grid-template-columns: 1fr;">
             <div class="stat-card">
-              <div class="stat-value">94%</div>
+              <div class="stat-value">
+                {analysisResult() ? `${Math.round(analysisResult()!.consensusResult.confidence * 100)}%` : '0%'}
+              </div>
               <div class="stat-label">Final Confidence</div>
             </div>
             <div class="stat-card">
-              <div class="stat-value">6/6</div>
+              <div class="stat-value">
+                {analysisResult() ? 
+                  `${analysisResult()!.individualResults.filter(r => r.confidence > 0).length}/${analysisResult()!.providers.length}` : 
+                  '0/0'
+                }
+              </div>
               <div class="stat-label">Provider Agreement</div>
             </div>
             <div class="stat-card">
-              <div class="stat-value">1.8s</div>
-              <div class="stat-label">Analysis Time</div>
+              <div class="stat-value">
+                {analysisResult() && analysisResult()!.disagreements.length > 0 ? 
+                  analysisResult()!.disagreements.length : 
+                  '0'
+                }
+              </div>
+              <div class="stat-label">Disagreements</div>
             </div>
           </div>
           
@@ -211,8 +295,8 @@ const AIEnsemble: Component = () => {
             <button class="btn btn-secondary">
               📊 Generate Report
             </button>
-            <button class="btn btn-secondary" onClick={startEnsembleAnalysis} disabled={isAnalyzing()}>
-              🔄 {isAnalyzing() ? 'Analyzing...' : 'Rerun Analysis'}
+            <button class="btn btn-secondary" onClick={startEnsembleAnalysis} disabled={isAnalyzing() || !analysisStore.currentFile}>
+              🔄 {isAnalyzing() ? 'Analyzing...' : analysisResult() ? 'Rerun Analysis' : 'Run Analysis'}
             </button>
           </div>
         </div>

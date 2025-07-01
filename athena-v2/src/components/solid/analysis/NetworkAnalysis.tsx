@@ -142,7 +142,7 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
             <div>
               <NetworkTraffic 
                 onPacketSelect={handlePacketSelect}
-                filter={(packet) => {
+                filter={() => {
                   // Custom filter logic can be added here
                   return true;
                 }}

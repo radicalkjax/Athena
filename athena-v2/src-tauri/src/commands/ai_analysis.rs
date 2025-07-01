@@ -1,6 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use tauri::command;
+use crate::ai_providers::{AIProvider, AIProviderConfig as ProviderConfig, AnalysisRequest as ProviderRequest};
+use crate::ai_providers::claude::ClaudeProvider;
+use crate::ai_providers::openai::OpenAIProvider;
+use crate::ai_providers::deepseek::DeepSeekProvider;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AIProviderConfig {
@@ -54,154 +59,99 @@ pub struct IOCs {
 #[command]
 pub async fn analyze_with_ai(
     provider: String,
-    _config: AIProviderConfig,
-    _request: AIAnalysisRequest,
+    config: AIProviderConfig,
+    request: AIAnalysisRequest,
 ) -> Result<AIAnalysisResult, String> {
-    // In a real implementation, this would call actual AI provider APIs
-    // For now, we'll return mock data that simulates different AI provider responses
-    
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| e.to_string())?
-        .as_secs();
-    
-    // Simulate different responses based on provider
-    let result = match provider.as_str() {
-        "claude" => AIAnalysisResult {
-            provider: provider.clone(),
-            timestamp,
-            confidence: 0.92,
-            threat_level: "malicious".to_string(),
-            malware_family: Some("Emotet".to_string()),
-            malware_type: Some("Trojan".to_string()),
-            signatures: vec![
-                "PE_Packed".to_string(),
-                "Anti_Debug".to_string(),
-                "Process_Injection".to_string(),
-            ],
-            behaviors: vec![
-                "Downloads additional payloads".to_string(),
-                "Steals credentials".to_string(),
-                "Spreads via email".to_string(),
-            ],
-            iocs: IOCs {
-                domains: vec!["malicious-c2.com".to_string(), "evil-payload.net".to_string()],
-                ips: vec!["192.168.1.100".to_string(), "10.0.0.50".to_string()],
-                files: vec!["C:\\Windows\\Temp\\payload.exe".to_string()],
-                registry: vec!["HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run".to_string()],
-                processes: vec!["svchost.exe".to_string(), "rundll32.exe".to_string()],
-            },
-            recommendations: vec![
-                "Isolate the infected system".to_string(),
-                "Run deep malware scan".to_string(),
-                "Check network logs for C2 communications".to_string(),
-                "Update security signatures".to_string(),
-            ],
-            raw_response: None,
-            error: None,
-        },
-        "gpt4" => AIAnalysisResult {
-            provider: provider.clone(),
-            timestamp,
-            confidence: 0.88,
-            threat_level: "malicious".to_string(),
-            malware_family: Some("Emotet".to_string()),
-            malware_type: Some("Banking Trojan".to_string()),
-            signatures: vec![
-                "PE_Obfuscated".to_string(),
-                "Registry_Persistence".to_string(),
-                "Network_C2".to_string(),
-            ],
-            behaviors: vec![
-                "Establishes persistence".to_string(),
-                "Communicates with C2".to_string(),
-                "Keylogging capability".to_string(),
-            ],
-            iocs: IOCs {
-                domains: vec!["command-control.net".to_string()],
-                ips: vec!["172.16.0.100".to_string()],
-                files: vec!["C:\\Users\\Public\\malware.dll".to_string()],
-                registry: vec!["HKCU\\Software\\Classes".to_string()],
-                processes: vec!["explorer.exe".to_string()],
-            },
-            recommendations: vec![
-                "Block identified C2 domains".to_string(),
-                "Reset user credentials".to_string(),
-                "Enable enhanced monitoring".to_string(),
-            ],
-            raw_response: None,
-            error: None,
-        },
-        "deepseek" => AIAnalysisResult {
-            provider: provider.clone(),
-            timestamp,
-            confidence: 0.85,
-            threat_level: "suspicious".to_string(),
-            malware_family: None,
-            malware_type: Some("Potentially Unwanted".to_string()),
-            signatures: vec![
-                "Code_Injection".to_string(),
-                "Memory_Manipulation".to_string(),
-            ],
-            behaviors: vec![
-                "Modifies system files".to_string(),
-                "Hidden processes".to_string(),
-            ],
-            iocs: IOCs {
-                domains: vec![],
-                ips: vec!["127.0.0.1".to_string()],
-                files: vec!["C:\\Temp\\unknown.exe".to_string()],
-                registry: vec![],
-                processes: vec!["conhost.exe".to_string()],
-            },
-            recommendations: vec![
-                "Monitor system behavior".to_string(),
-                "Scan with multiple AV engines".to_string(),
-            ],
-            raw_response: None,
-            error: None,
-        },
-        _ => {
-            // Generic response for other providers
-            AIAnalysisResult {
-                provider: provider.clone(),
-                timestamp,
-                confidence: 0.75,
-                threat_level: "suspicious".to_string(),
-                malware_family: None,
-                malware_type: None,
-                signatures: vec!["Generic_Suspicious".to_string()],
-                behaviors: vec!["Unknown behavior detected".to_string()],
-                iocs: IOCs {
-                    domains: vec![],
-                    ips: vec![],
-                    files: vec![],
-                    registry: vec![],
-                    processes: vec![],
-                },
-                recommendations: vec!["Further analysis required".to_string()],
-                raw_response: None,
-                error: None,
-            }
-        }
+    // Convert to provider-specific config
+    let provider_config = ProviderConfig {
+        api_key: config.api_key.ok_or("API key is required")?,
+        base_url: config.base_url,
+        model: config.model.unwrap_or_else(|| match provider.as_str() {
+            "claude" => "claude-3-sonnet-20240229".to_string(),
+            "gpt4" => "gpt-4-turbo-preview".to_string(),
+            "deepseek" => "deepseek-chat".to_string(),
+            _ => "default".to_string(),
+        }),
+        max_tokens: config.max_tokens.unwrap_or(4096) as u32,
+        temperature: config.temperature.unwrap_or(0.3),
+        timeout_secs: 30,
     };
     
-    // Simulate network delay
-    tokio::time::sleep(tokio::time::Duration::from_millis(1500)).await;
+    // Create the appropriate provider
+    let ai_provider: Arc<dyn AIProvider> = match provider.as_str() {
+        "claude" => Arc::new(ClaudeProvider::new(provider_config)),
+        "gpt4" | "openai" => Arc::new(OpenAIProvider::new(provider_config)),
+        "deepseek" => Arc::new(DeepSeekProvider::new(provider_config)),
+        _ => return Err(format!("Unsupported provider: {}", provider)),
+    };
+    
+    // Convert request
+    let provider_request = ProviderRequest {
+        file_hash: request.file_hash,
+        file_name: request.file_name,
+        file_size: request.file_size,
+        file_type: request.file_type,
+        file_content: request.file_content,
+        analysis_type: request.analysis_type,
+    };
+    
+    // Perform analysis
+    let analysis_response = ai_provider.analyze(&provider_request)
+        .await
+        .map_err(|e| format!("Analysis failed: {}", e))?;
+    
+    // Convert response
+    let result = AIAnalysisResult {
+        provider: analysis_response.provider,
+        timestamp: analysis_response.timestamp as u64,
+        confidence: analysis_response.confidence,
+        threat_level: match analysis_response.threat_level {
+            crate::ai_providers::ThreatLevel::Benign => "benign".to_string(),
+            crate::ai_providers::ThreatLevel::Suspicious => "suspicious".to_string(),
+            crate::ai_providers::ThreatLevel::Malicious => "malicious".to_string(),
+            crate::ai_providers::ThreatLevel::Critical => "critical".to_string(),
+        },
+        malware_family: analysis_response.malware_family,
+        malware_type: analysis_response.malware_type,
+        signatures: analysis_response.signatures,
+        behaviors: analysis_response.behaviors,
+        iocs: IOCs {
+            domains: analysis_response.iocs.domains,
+            ips: analysis_response.iocs.ips,
+            files: analysis_response.iocs.files,
+            registry: analysis_response.iocs.registry_keys,
+            processes: analysis_response.iocs.processes,
+        },
+        recommendations: analysis_response.recommendations,
+        raw_response: Some(serde_json::json!({
+            "detailed_analysis": analysis_response.detailed_analysis,
+            "processing_time_ms": analysis_response.processing_time_ms,
+        })),
+        error: None,
+    };
     
     Ok(result)
 }
 
 #[command]
 pub async fn get_ai_provider_status() -> Result<HashMap<String, bool>, String> {
-    // In a real implementation, this would check actual API connectivity
     let mut status = HashMap::new();
+    
+    // Check each provider's health
+    // Note: This requires API keys to be configured in the app
+    // For now, we'll return a simulated status
+    // In production, you would:
+    // 1. Load API keys from secure storage
+    // 2. Create provider instances
+    // 3. Call health_check() on each
+    
     status.insert("claude".to_string(), true);
     status.insert("gpt4".to_string(), true);
+    status.insert("openai".to_string(), true);
     status.insert("deepseek".to_string(), true);
-    status.insert("gemini".to_string(), true);
-    status.insert("mistral".to_string(), true);
-    status.insert("llama".to_string(), false); // Simulate one offline
+    status.insert("gemini".to_string(), false); // Not implemented yet
+    status.insert("mistral".to_string(), false); // Not implemented yet
+    status.insert("llama".to_string(), false); // Not implemented yet
     
     Ok(status)
 }

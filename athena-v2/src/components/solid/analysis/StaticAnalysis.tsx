@@ -1,70 +1,144 @@
-import { Component, createSignal } from 'solid-js';
+import { Component, createSignal, createEffect, onMount } from 'solid-js';
 import { StatCard } from '../shared/StatCard';
 import AnalysisPanel from '../shared/AnalysisPanel';
-import CodeEditor from '../shared/CodeEditor';
+import { analysisStore } from '../../../stores/analysisStore';
 import './StaticAnalysis.css';
 
 const StaticAnalysis: Component = () => {
-  const [fileHashes] = createSignal({
-    md5: 'a1b2c3d4e5f6789012345678901234567',
-    sha1: '9876543210abcdef9876543210abcdef98765432',
-    sha256: '1234567890abcdef1234567890abcdef1234567890abcdef',
-    ssdeep: '98304:abc123def456ghi789...'
+  const [fileHashes, setFileHashes] = createSignal({
+    md5: '',
+    sha1: '',
+    sha256: '',
+    ssdeep: ''
   });
 
-  const [fileInfo] = createSignal({
-    architecture: 'x86-64',
-    entryPoint: '0x401000',
-    sections: 5,
-    imports: 47,
-    exports: 12,
-    resources: 3,
-    timestamp: '2024-12-15 14:30:22 UTC'
+  const [fileInfo, setFileInfo] = createSignal({
+    architecture: '',
+    entryPoint: '',
+    sections: 0,
+    imports: 0,
+    exports: 0,
+    resources: 0,
+    timestamp: ''
   });
 
-  const [strings] = createSignal([
-    'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run',
-    'C:\\Windows\\System32\\rundll32.exe',
-    '192.168.1.100:8080',
-    'keylogger.dll',
-    'encrypt_files'
-  ]);
-
-  const [apiCalls] = createSignal([
-    { name: 'RegCreateKeyEx', description: 'Registry manipulation' },
-    { name: 'CreateFile', description: 'File system access' },
-    { name: 'InternetConnect', description: 'Network activity' },
-    { name: 'SetWindowsHookEx', description: 'Hooking mechanism' }
-  ]);
-
+  const [strings, setStrings] = createSignal<string[]>([]);
+  const [apiCalls, setApiCalls] = createSignal<Array<{name: string, description: string}>>([]);
   const [aiResults] = createSignal([
-    { provider: '🤖 Claude 3.5 Sonnet', prediction: 'Identified vulnerable entry points and evasion techniques. Confidence: 92%' },
-    { provider: '🧠 GPT-4 Turbo', prediction: 'Architecture suggests multi-stage payload delivery. Risk level: High' },
-    { provider: '🔍 DeepSeek V3', prediction: 'Matches known campaign signatures. Attribution: Possible APT group' },
-    { provider: '💎 Claude 3 Opus', prediction: 'Code patterns indicate commercial packer with obfuscation' },
-    { provider: '⚡ GPT-4o', prediction: 'Infrastructure impact: Network monitoring, persistence mechanisms' },
-    { provider: '🌟 Gemini Pro', prediction: 'Family: TrojanDownloader.Win32.Emotet. Variant: 2024.Q4' }
+    { provider: '🤖 Claude 3.5 Sonnet', prediction: 'Waiting for analysis...' },
+    { provider: '🧠 GPT-4 Turbo', prediction: 'Waiting for analysis...' },
+    { provider: '🔍 DeepSeek V3', prediction: 'Waiting for analysis...' },
+    { provider: '💎 Claude 3 Opus', prediction: 'Waiting for analysis...' },
+    { provider: '⚡ GPT-4o', prediction: 'Waiting for analysis...' },
+    { provider: '🌟 Gemini Pro', prediction: 'Waiting for analysis...' }
   ]);
+  
+  const [, setCurrentFile] = createSignal<any>(null);
+  const [entropy, setEntropy] = createSignal(0);
+  const [fileType, setFileType] = createSignal('');
+  const [fileSize, setFileSize] = createSignal(0);
+  const [packerInfo, setPackerInfo] = createSignal('None');
 
-  const hashContent = `MD5: ${fileHashes().md5}
-SHA1: ${fileHashes().sha1}
-SHA256: ${fileHashes().sha256}
-SSDEEP: ${fileHashes().ssdeep}
+  // Listen for file analysis events
+  onMount(() => {
+    const handleFileAnalyzed = (event: CustomEvent) => {
+      const { result } = event.detail;
+      updateAnalysisData(result);
+    };
+    
+    window.addEventListener('file-analyzed', handleFileAnalyzed as any);
+    
+    return () => {
+      window.removeEventListener('file-analyzed', handleFileAnalyzed as any);
+    };
+  });
 
-File Info:
-Architecture: ${fileInfo().architecture}
-Entry Point: ${fileInfo().entryPoint}
-Sections: ${fileInfo().sections}
-Imports: ${fileInfo().imports}
-Exports: ${fileInfo().exports}
-Resources: ${fileInfo().resources}
-Timestamp: ${fileInfo().timestamp}`;
+  // Watch for current file changes in analysis store
+  createEffect(() => {
+    const files = analysisStore.files();
+    if (files.length > 0) {
+      const latestFile = files[files.length - 1];
+      setCurrentFile(latestFile);
+      
+      if (latestFile.analysisResult) {
+        updateAnalysisData(latestFile.analysisResult);
+      }
+    }
+  });
 
-  const stringsContent = `Suspicious Strings:
-${strings().join('\n')}
+  const updateAnalysisData = (result: any) => {
+    // Update hashes
+    setFileHashes({
+      md5: result.hashes?.md5 || '',
+      sha1: result.hashes?.sha1 || '',
+      sha256: result.hashes?.sha256 || '',
+      ssdeep: result.hashes?.ssdeep || ''
+    });
 
-API Calls:
-${apiCalls().map(api => `${api.name} - ${api.description}`).join('\n')}`;
+    // Update file info
+    const format = result.format || {};
+    setFileInfo({
+      architecture: format.architecture || 'Unknown',
+      entryPoint: format.entry_point ? `0x${format.entry_point.toString(16)}` : 'N/A',
+      sections: format.sections?.length || 0,
+      imports: format.imports?.length || 0,
+      exports: format.exports?.length || 0,
+      resources: format.resources?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+
+    // Update other properties
+    setEntropy(result.entropy || 0);
+    setFileType(format.type || 'Unknown');
+    setFileSize(result.size || 0);
+    setPackerInfo(format.packer_info || 'None detected');
+
+    // Update strings (limit to 10 most suspicious)
+    if (result.strings?.suspicious) {
+      setStrings(result.strings.suspicious.slice(0, 10));
+    }
+
+    // Extract API calls from imports
+    if (format.imports) {
+      const suspiciousApis = format.imports
+        .filter((imp: any) => isSuspiciousApi(imp.name))
+        .slice(0, 10)
+        .map((imp: any) => ({
+          name: imp.name,
+          description: getApiDescription(imp.name)
+        }));
+      setApiCalls(suspiciousApis);
+    }
+  };
+
+  const isSuspiciousApi = (apiName: string): boolean => {
+    const suspicious = [
+      'CreateRemoteThread', 'VirtualAllocEx', 'WriteProcessMemory',
+      'SetWindowsHookEx', 'RegCreateKeyEx', 'InternetConnect',
+      'CreateFile', 'OpenProcess', 'LoadLibrary', 'GetProcAddress'
+    ];
+    return suspicious.some(api => apiName.includes(api));
+  };
+
+  const getApiDescription = (apiName: string): string => {
+    const descriptions: Record<string, string> = {
+      'CreateRemoteThread': 'Code injection',
+      'VirtualAllocEx': 'Memory allocation in remote process',
+      'WriteProcessMemory': 'Process manipulation',
+      'SetWindowsHookEx': 'Hooking mechanism',
+      'RegCreateKeyEx': 'Registry manipulation',
+      'InternetConnect': 'Network activity',
+      'CreateFile': 'File system access',
+      'OpenProcess': 'Process access',
+      'LoadLibrary': 'DLL loading',
+      'GetProcAddress': 'Dynamic API resolution'
+    };
+    
+    for (const [key, desc] of Object.entries(descriptions)) {
+      if (apiName.includes(key)) return desc;
+    }
+    return 'System API';
+  };
 
   return (
     <div class="content-panel">
@@ -74,25 +148,25 @@ ${apiCalls().map(api => `${api.name} - ${api.description}`).join('\n')}`;
       
       <div class="stats-overview" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px;">
         <StatCard 
-          value="PE32" 
+          value={fileType() || "Unknown"} 
           label="File Type" 
         />
         <StatCard 
-          value="2.3MB" 
+          value={fileSize() > 0 ? `${(fileSize() / 1024 / 1024).toFixed(2)}MB` : "0MB"} 
           label="File Size" 
         />
         <div class="entropy-stat-card">
           <StatCard 
-            value="7.82" 
+            value={entropy().toFixed(2)} 
             label="Entropy Score" 
           />
           <div class="entropy-bar">
-            <div class="entropy-fill" style="width: 78.2%"></div>
-            <span class="entropy-label">78.2%</span>
+            <div class="entropy-fill" style={`width: ${(entropy() / 8 * 100).toFixed(1)}%`}></div>
+            <span class="entropy-label">{(entropy() / 8 * 100).toFixed(1)}%</span>
           </div>
         </div>
         <StatCard 
-          value="UPX" 
+          value={packerInfo()} 
           label="Packer Detected" 
         />
       </div>

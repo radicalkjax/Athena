@@ -1,0 +1,1 @@
+/Users/radicalkjax/Athena/athena-v2/wasm-modules/pattern-matcher/target/wasm32-unknown-unknown/release/pattern_matcher.wasm: /Users/radicalkjax/Athena/athena-v2/wasm-modules/pattern-matcher/src/lib.rs
