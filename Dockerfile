@@ -2,7 +2,7 @@
 # Uses pre-built WASM modules for faster builds
 
 # Stage 1: Node.js application
-FROM node:20-alpine as node-builder
+FROM node:20-alpine AS node-builder
 
 # Install build dependencies
 RUN apk add --no-cache python3 make g++

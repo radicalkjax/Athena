@@ -271,8 +271,7 @@ const CustomWorkflows: Component = () => {
     setConnectionStart(null);
   };
 
-  const runWorkflow = async (workflow: Workflow) => {
-    console.log('Running workflow:', workflow.name);
+  const runWorkflow = async (_workflow: Workflow) => {
     // Implementation would execute the workflow
   };
 

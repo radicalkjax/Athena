@@ -118,56 +118,6 @@ const AIEnsemble: Component = () => {
     return disagreements;
   };
 
-  // Mock analysis result for demonstration
-  const mockResult: EnsembleAnalysisResult = {
-    id: 'mock-analysis-123',
-    fileHash: analysisStore.currentFile?.hash || 'mock-hash',
-    timestamp: Date.now(),
-    providers: selectedProviders(),
-    consensusResult: {
-      threatLevel: 'malicious',
-      confidence: 0.94,
-      malwareFamily: 'Trojan.GenKryptik.Win32',
-      malwareType: 'High Risk Info-stealer',
-      summary: 'Trojan.GenKryptik.Win32 - High Risk Info-stealer',
-      aggregatedSignatures: ['Trojan.GenKryptik', 'Win32.Malware', 'Packed.UPX'],
-      aggregatedBehaviors: ['Process Injection', 'Registry Modification', 'Network Communication'],
-      aggregatedIocs: {
-        domains: ['malicious-domain.com', 'c2-server.net'],
-        ips: ['192.168.1.100', '10.0.0.50'],
-        files: ['dropped-file.exe', 'temp-payload.dll'],
-        registry: ['HKLM\\Software\\Malware', 'HKCU\\Run\\BadEntry'],
-        processes: ['svchost.exe', 'explorer.exe']
-      }
-    },
-    individualResults: providers.map(p => ({
-      provider: p.id,
-      timestamp: Date.now(),
-      threatLevel: 'malicious' as const,
-      confidence: (p.confidence || 90) / 100,
-      malwareFamily: 'Trojan.GenKryptik',
-      malwareType: 'Trojan',
-      signatures: ['UPX Packed', 'API Hooking', 'Code Injection'],
-      behaviors: ['Process Injection', 'Persistence', 'Data Exfiltration'],
-      iocs: {
-        domains: ['malicious-domain.com'],
-        ips: ['192.168.1.100'],
-        files: ['dropped-file.exe'],
-        registry: ['HKLM\\Software\\Malware'],
-        processes: ['svchost.exe']
-      },
-      recommendations: ['Quarantine immediately', 'Block network access', 'Run deep scan'],
-      error: undefined
-    })),
-    disagreements: []
-  };
-
-  // Automatically set mock result if we have a file
-  createEffect(() => {
-    if (analysisStore.currentFile && !analysisResult() && !isAnalyzing()) {
-      setTimeout(() => setAnalysisResult(mockResult), 500);
-    }
-  });
 
   const providerInsights = [
     { provider: providers[0], description: 'Advanced reasoning capabilities identified multiple evasion techniques including anti-VM checks and API hashing. Sample uses sophisticated methods to avoid detection during initial execution phases. Recommends enhanced behavioral monitoring.', color: '#74b9ff' },

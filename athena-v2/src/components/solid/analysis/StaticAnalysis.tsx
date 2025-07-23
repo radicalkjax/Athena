@@ -1,4 +1,4 @@
-import { Component, createSignal, createEffect, onMount } from 'solid-js';
+import { Component, createSignal, createEffect, onMount, Show } from 'solid-js';
 import { StatCard } from '../shared/StatCard';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { analysisStore } from '../../../stores/analysisStore';
@@ -24,14 +24,7 @@ const StaticAnalysis: Component = () => {
 
   const [strings, setStrings] = createSignal<string[]>([]);
   const [apiCalls, setApiCalls] = createSignal<Array<{name: string, description: string}>>([]);
-  const [aiResults] = createSignal([
-    { provider: '🤖 Claude 3.5 Sonnet', prediction: 'Waiting for analysis...' },
-    { provider: '🧠 GPT-4 Turbo', prediction: 'Waiting for analysis...' },
-    { provider: '🔍 DeepSeek V3', prediction: 'Waiting for analysis...' },
-    { provider: '💎 Claude 3 Opus', prediction: 'Waiting for analysis...' },
-    { provider: '⚡ GPT-4o', prediction: 'Waiting for analysis...' },
-    { provider: '🌟 Gemini Pro', prediction: 'Waiting for analysis...' }
-  ]);
+  const [aiResults, setAiResults] = createSignal<Array<{provider: string, prediction: string}>>([]);
   
   const [, setCurrentFile] = createSignal<any>(null);
   const [entropy, setEntropy] = createSignal(0);
@@ -256,12 +249,18 @@ const StaticAnalysis: Component = () => {
           </div>
           
           <div class="agent-results">
-            {aiResults().map(result => (
-              <div class="agent-result">
-                <div class="agent-name">{result.provider}</div>
-                <div class="agent-prediction">{result.prediction}</div>
+            <Show when={aiResults().length > 0} fallback={
+              <div style="color: var(--text-secondary); text-align: center; padding: 20px;">
+                AI analysis results will appear here when analysis is complete
               </div>
-            ))}
+            }>
+              {aiResults().map(result => (
+                <div class="agent-result">
+                  <div class="agent-name">{result.provider}</div>
+                  <div class="agent-prediction">{result.prediction}</div>
+                </div>
+              ))}
+            </Show>
           </div>
         </div>
       </div>

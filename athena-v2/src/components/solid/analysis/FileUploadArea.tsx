@@ -4,6 +4,7 @@ import { memoryManager } from '../../../services/memoryManager';
 import { StatCard } from '../shared/StatCard';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { invokeCommand, openFileDialog, isTauri } from '../../../utils/tauriCompat';
+import { logger } from '../../../services/loggingService';
 
 interface FileMetadata {
   name: string;
@@ -145,7 +146,7 @@ export const FileUploadArea: Component = () => {
         'file',
         `File: ${metadata.name}`,
         () => {
-          console.log(`Memory freed for file ${metadata.name}`);
+          logger.debug(`Memory freed for file ${metadata.name}`);
         }
       );
       
@@ -176,7 +177,7 @@ export const FileUploadArea: Component = () => {
           analysisCoordinator.analyzeFile(currentFile);
         }
       } catch (err) {
-        console.log('Analysis coordinator not available:', err);
+        logger.warn('Analysis coordinator not available:', err);
       }
     } catch (err) {
       setError(`Failed to analyze file: ${err}`);
@@ -201,9 +202,31 @@ export const FileUploadArea: Component = () => {
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
       if (isTauri()) {
-        // In Tauri, we need to handle file drops differently
-        // This is a placeholder - actual implementation would need native file handling
-        setError('Drag and drop not yet implemented. Please use the file selector.');
+        // In Tauri, we need to convert the File object to a path
+        // For security reasons, Tauri doesn't allow direct file access from drag-drop
+        // Instead, we'll read the file and pass it through the same analysis pipeline
+        try {
+          const file = files[0];
+          const buffer = await file.arrayBuffer();
+          const bytes = Array.from(new Uint8Array(buffer));
+          
+          // Create a temporary file path in Tauri's app data directory
+          const fileName = file.name;
+          const tempPath = await invokeCommand('create_temp_file', {
+            fileName,
+            bytes
+          });
+          
+          if (tempPath) {
+            await uploadFile(tempPath);
+          } else {
+            // If temp file creation fails, fall back to web-style upload
+            await uploadWebFile(file);
+          }
+        } catch (err) {
+          logger.warn('Failed to handle Tauri file drop, falling back to web method', err);
+          await uploadWebFile(files[0]);
+        }
       } else {
         // Web drag and drop
         await uploadWebFile(files[0]);

@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Redis Cache - Required for API functionality
+  redis:
+    image: redis:7-alpine
+    container_name: athena-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - athena-network
+
+  # API Server - Simplified for development without WASM
+  api:
+    image: node:20-alpine
+    container_name: athena-api-dev
+    working_dir: /app
+    ports:
+      - "3000:3000"
+      - "9090:9090"  # Metrics port
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - METRICS_PORT=9090
+      # Enable WASM
+      - DISABLE_WASM=false
+      # Security Environment Variables
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRY=${JWT_EXPIRY}
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
+      - CLIENT_API_KEY=${CLIENT_API_KEY}
+      - ANALYSIS_API_KEY=${ANALYSIS_API_KEY}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - ENABLE_RATE_LIMITING=${ENABLE_RATE_LIMITING}
+      - SECURITY_AUDIT_LOG=${SECURITY_AUDIT_LOG}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services:/app/services:ro
+      - ./utils:/app/utils:ro
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./start-api.sh:/app/start-api.sh:ro
+      - ./athena-v2/public/wasm:/app/public/wasm:ro
+      - ./wasm-modules:/app/wasm-modules:ro
+      - node_modules:/app/node_modules
+    command: >
+      sh -c "
+        npm install &&
+        echo 'Starting API server...' &&
+        sh /app/start-api.sh
+      "
+    networks:
+      - athena-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Simple monitoring - optional for development
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: athena-prometheus-dev
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - athena-network
+    depends_on:
+      - api
+
+networks:
+  athena-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  node_modules:
+  prometheus-data:

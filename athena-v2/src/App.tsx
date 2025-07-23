@@ -1,24 +1,27 @@
-import { Component, createSignal, onMount, onCleanup, Show } from 'solid-js';
+import { Component, createSignal, onMount, onCleanup, Show, lazy, Suspense } from 'solid-js';
 import { Header } from './components/solid/layout/Header';
 import { Sidebar } from './components/solid/navigation/Sidebar';
 import { FileUploadArea } from './components/solid/analysis/FileUploadArea';
-import StaticAnalysis from './components/solid/analysis/StaticAnalysis';
-import DynamicAnalysis from './components/solid/analysis/DynamicAnalysis';
-import AIEnsemble from './components/solid/analysis/AIEnsemble';
-import Reports from './components/solid/analysis/Reports';
-import HexViewer from './components/solid/analysis/HexViewer';
-import NetworkAnalysis from './components/solid/analysis/NetworkAnalysis';
-import Disassembly from './components/solid/analysis/Disassembly';
-import { ErrorBoundary, AnalysisErrorBoundary } from './components/solid/ErrorBoundary';
-import YaraScanner from './components/solid/analysis/YaraScanner';
-import ThreatIntelligence from './components/solid/analysis/ThreatIntelligence';
-import MemoryAnalysis from './components/solid/analysis/MemoryAnalysis';
-import CustomWorkflows from './components/solid/analysis/CustomWorkflows';
-import PlatformConfig from './components/solid/PlatformConfig';
+import { ErrorBoundary, AnalysisErrorBoundary, WasmErrorBoundary } from './components/solid/ErrorBoundary';
 import { analysisStore } from './stores/analysisStore';
 import { AnalysisProvider } from './contexts/AnalysisContext';
 import { useKeyboardShortcuts } from './services/keyboardShortcuts';
-import { LoadingOverlay } from './components/solid/shared/LoadingStates';
+import { LoadingOverlay, LoadingSpinner } from './components/solid/shared/LoadingStates';
+import { BackendStatus } from './components/solid/BackendStatus';
+
+// Lazy load heavy analysis components
+const StaticAnalysis = lazy(() => import('./components/solid/analysis/StaticAnalysis'));
+const DynamicAnalysis = lazy(() => import('./components/solid/analysis/DynamicAnalysis'));
+const AIEnsemble = lazy(() => import('./components/solid/analysis/AIEnsemble'));
+const Reports = lazy(() => import('./components/solid/analysis/Reports'));
+const HexViewer = lazy(() => import('./components/solid/analysis/HexViewer'));
+const NetworkAnalysis = lazy(() => import('./components/solid/analysis/NetworkAnalysis'));
+const Disassembly = lazy(() => import('./components/solid/analysis/Disassembly'));
+const YaraScanner = lazy(() => import('./components/solid/analysis/YaraScanner'));
+const ThreatIntelligence = lazy(() => import('./components/solid/analysis/ThreatIntelligence'));
+const MemoryAnalysis = lazy(() => import('./components/solid/analysis/MemoryAnalysis'));
+const CustomWorkflows = lazy(() => import('./components/solid/analysis/CustomWorkflows'));
+const PlatformConfig = lazy(() => import('./components/solid/PlatformConfig'));
 
 const App: Component = () => {
   const [activePanel, setActivePanel] = createSignal('upload');
@@ -78,54 +81,91 @@ const App: Component = () => {
             <main class="analysis-area" id="main-content" role="main">
             <div class="content-panels">
             <div class={`content-panel-container ${activePanel() === 'upload' ? 'active' : ''}`}>
-              <FileUploadArea />
+              <AnalysisErrorBoundary>
+                <FileUploadArea />
+              </AnalysisErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'static' ? 'active' : ''}`}>
               <AnalysisErrorBoundary>
-                <StaticAnalysis />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <StaticAnalysis />
+                </Suspense>
               </AnalysisErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'dynamic' ? 'active' : ''}`}>
-              <DynamicAnalysis />
+              <WasmErrorBoundary>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <DynamicAnalysis />
+                </Suspense>
+              </WasmErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'ai-ensemble' ? 'active' : ''}`}>
               <AnalysisErrorBoundary>
-                <AIEnsemble />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <AIEnsemble />
+                </Suspense>
               </AnalysisErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'threat-intel' ? 'active' : ''}`}>
-              <ThreatIntelligence />
+              <AnalysisErrorBoundary>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ThreatIntelligence />
+                </Suspense>
+              </AnalysisErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'reports' ? 'active' : ''}`}>
-              <Reports />
+              <Suspense fallback={<LoadingSpinner />}>
+                <Reports />
+              </Suspense>
             </div>
             <div class={`content-panel-container ${activePanel() === 'hex' ? 'active' : ''}`}>
-              <HexViewer filePath={analysisStore.state.uploadedFile?.path} />
+              <Suspense fallback={<LoadingSpinner />}>
+                <HexViewer filePath={analysisStore.state.uploadedFile?.path} />
+              </Suspense>
             </div>
             <div class={`content-panel-container ${activePanel() === 'network' ? 'active' : ''}`}>
-              <NetworkAnalysis filePath={analysisStore.state.uploadedFile?.path} />
+              <AnalysisErrorBoundary>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <NetworkAnalysis filePath={analysisStore.state.uploadedFile?.path} />
+                </Suspense>
+              </AnalysisErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'disassembly' ? 'active' : ''}`}>
-              <Disassembly filePath={analysisStore.state.uploadedFile?.path} />
+              <AnalysisErrorBoundary>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Disassembly filePath={analysisStore.state.uploadedFile?.path} />
+                </Suspense>
+              </AnalysisErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'memory' ? 'active' : ''}`}>
-              <MemoryAnalysis />
+              <WasmErrorBoundary>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <MemoryAnalysis />
+                </Suspense>
+              </WasmErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'workflows' ? 'active' : ''}`}>
-              <CustomWorkflows />
+              <Suspense fallback={<LoadingSpinner />}>
+                <CustomWorkflows />
+              </Suspense>
             </div>
             <div class={`content-panel-container ${activePanel() === 'yara' ? 'active' : ''}`}>
               <AnalysisErrorBoundary>
-                <YaraScanner />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <YaraScanner />
+                </Suspense>
               </AnalysisErrorBoundary>
             </div>
             <div class={`content-panel-container ${activePanel() === 'platform-config' ? 'active' : ''}`}>
-              <PlatformConfig />
+              <Suspense fallback={<LoadingSpinner />}>
+                <PlatformConfig />
+              </Suspense>
             </div>
           </div>
         </main>
       </div>
     </div>
+    <BackendStatus />
     </AnalysisProvider>
     </ErrorBoundary>
   );

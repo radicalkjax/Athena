@@ -1,4 +1,5 @@
 import { Component, ErrorBoundary as SolidErrorBoundary, JSX, createSignal } from 'solid-js';
+import { logger } from '../../services/loggingService';
 import './ErrorBoundary.css';
 
 interface ErrorInfo {
@@ -50,7 +51,7 @@ export const ErrorBoundary: Component<Props> = (props) => {
   const [retryCount, setRetryCount] = createSignal(0);
   
   const handleError = (error: Error, errorInfo: any) => {
-    console.error('Error caught by boundary:', error, errorInfo);
+    logger.error('Error caught by boundary:', { error, errorInfo });
     
     // Add to error history
     const newError: ErrorInfo = {
@@ -138,7 +139,7 @@ export const WasmErrorBoundary: Component<{ children: JSX.Element }> = (props) =
     <ErrorBoundary 
       fallbackComponent={WasmErrorFallback}
       onError={(error) => {
-        console.error('WASM Error:', error);
+        logger.error('WASM Error:', error);
         // Could send telemetry or notify user
       }}
     >
@@ -177,7 +178,7 @@ export const AnalysisErrorBoundary: Component<{ children: JSX.Element }> = (prop
     <ErrorBoundary 
       fallbackComponent={AnalysisErrorFallback}
       onError={(error) => {
-        console.error('Analysis Error:', error);
+        logger.error('Analysis Error:', error);
       }}
     >
       {props.children}

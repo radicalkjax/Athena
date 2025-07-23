@@ -1,4 +1,5 @@
 import { Component, For } from 'solid-js';
+import { preloadService } from '../../../services/preloadService';
 
 interface SidebarProps {
   activePanel: string;
@@ -58,6 +59,8 @@ export const Sidebar: Component<SidebarProps> = (props) => {
                   e.preventDefault();
                   props.onPanelChange(feature.id);
                 }}
+                onMouseEnter={() => preloadService.preloadComponent(feature.id)}
+                onMouseLeave={() => preloadService.cancelPreload(feature.id)}
                 data-tab={feature.id}
               >
                 <span aria-hidden="true">{feature.icon}</span>
@@ -83,6 +86,8 @@ export const Sidebar: Component<SidebarProps> = (props) => {
                   e.preventDefault();
                   props.onPanelChange(feature.id);
                 }}
+                onMouseEnter={() => preloadService.preloadComponent(feature.id)}
+                onMouseLeave={() => preloadService.cancelPreload(feature.id)}
                 data-tab={feature.id}
               >
                 <span aria-hidden="true">{feature.icon}</span>
@@ -108,6 +113,8 @@ export const Sidebar: Component<SidebarProps> = (props) => {
                   e.preventDefault();
                   props.onPanelChange(feature.id);
                 }}
+                onMouseEnter={() => preloadService.preloadComponent(feature.id)}
+                onMouseLeave={() => preloadService.cancelPreload(feature.id)}
                 data-tab={feature.id}
               >
                 <span aria-hidden="true">{feature.icon}</span>

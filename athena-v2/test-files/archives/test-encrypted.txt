@@ -1,0 +1,39 @@
+ENCRYPTED ARCHIVE SIMULATION
+============================
+
+Archive Type: ZIP (AES-256 Encrypted)
+Password Protected: Yes
+Compression: DEFLATE
+
+[HEADER PATTERNS]
+PK\x03\x04\x14\x00\x01\x00\x08\x00
+Encryption Type: 0x63 (AES)
+CRC-32: 0xDEADBEEF
+
+[SIMULATED CONTENTS]
+File 1: ransomware.exe (FAKE - just a name)
+  - Size: 524288 bytes
+  - Encrypted: Yes
+  - Compression Ratio: 65%
+  
+File 2: instructions.txt
+  - Content: "Your files have been encrypted (TEST ONLY)"
+  - Size: 1024 bytes
+  
+File 3: decrypt_tool.exe (FAKE - just a name)
+  - Size: 262144 bytes
+  - Digital Signature: None
+
+[SUSPICIOUS PATTERNS]
+- Double extension: document.pdf.exe
+- Hidden files: .hidden_payload
+- Unicode RLO: report\u202Eexe.pdf
+- Large number of similar files (10000+)
+
+[METADATA]
+Created: Recent timestamp
+Modified: Timestamp in future
+Author: "CryptoLocker Test"
+Comment: "All your files belong to us (TEST)"
+
+Note: This is a text simulation of encrypted archive patterns for testing Athena's detection capabilities. No actual encryption or malicious content.

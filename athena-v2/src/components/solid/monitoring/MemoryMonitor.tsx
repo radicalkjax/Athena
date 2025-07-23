@@ -1,5 +1,6 @@
 import { Component, createSignal, onMount, onCleanup, For, Show } from 'solid-js';
 import { memoryManager, MemoryManager } from '../../../services/memoryManager';
+import { logger } from '../../../services/loggingService';
 import './MemoryMonitor.css';
 
 const MemoryMonitor: Component = () => {
@@ -24,7 +25,7 @@ const MemoryMonitor: Component = () => {
 
     // Subscribe to pressure changes
     unsubscribe = memoryManager.onPressureChange((pressure) => {
-      console.log('Memory pressure changed:', pressure);
+      logger.debug('Memory pressure changed:', pressure);
     });
   });
 
@@ -71,12 +72,12 @@ const MemoryMonitor: Component = () => {
 
   const clearCache = () => {
     const freed = memoryManager.clearType('cache');
-    console.log(`Cleared ${MemoryManager.formatBytes(freed)} of cache`);
+    logger.info(`Cleared ${MemoryManager.formatBytes(freed)} of cache`);
   };
 
   const clearFileAllocations = () => {
     const freed = memoryManager.clearType('file');
-    console.log(`Cleared ${MemoryManager.formatBytes(freed)} of file allocations`);
+    logger.info(`Cleared ${MemoryManager.formatBytes(freed)} of file allocations`);
   };
 
   return (

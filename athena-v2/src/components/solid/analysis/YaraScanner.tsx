@@ -55,19 +55,8 @@ const YaraScanner: Component = () => {
   };
 
   const testRule = () => {
-    // Simulate rule testing
-    setTestResults({
-      compilation: 'Success',
-      matches: scanResults().length,
-      falsePositives: 2,
-      performance: '12ms avg',
-      coverage: {
-        strings: 95,
-        conditions: 100,
-        confidence: 92,
-        fpRisk: 'Low'
-      }
-    });
+    // Rule testing will be implemented with actual YARA engine
+    setTestResults(null);
   };
 
 

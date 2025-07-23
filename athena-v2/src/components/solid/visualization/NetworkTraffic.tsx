@@ -1,6 +1,7 @@
 import { Component, createSignal, onMount, onCleanup, For, Show, createEffect } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { useRealtimeData, useAnimatedValue, realtimeService } from '../../../services/realtimeService';
+import { logger } from '../../../services/loggingService';
 import './NetworkTraffic.css';
 
 interface NetworkPacket {
@@ -63,29 +64,7 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
     Other: '#dfe6e9'
   };
 
-  const generateMockPacket = (): NetworkPacket => {
-    const protocols: NetworkPacket['protocol'][] = ['TCP', 'UDP', 'HTTP', 'HTTPS', 'DNS', 'Other'];
-    const protocol = protocols[Math.floor(Math.random() * protocols.length)];
-    const isSuspicious = Math.random() < 0.1; // 10% chance of suspicious
-    
-    return {
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      protocol,
-      source: {
-        ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        port: Math.floor(Math.random() * 65535)
-      },
-      destination: {
-        ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        port: protocol === 'HTTP' ? 80 : protocol === 'HTTPS' ? 443 : Math.floor(Math.random() * 65535)
-      },
-      size: Math.floor(Math.random() * 1500) + 60,
-      direction: Math.random() < 0.5 ? 'inbound' : 'outbound',
-      suspicious: isSuspicious,
-      flags: isSuspicious ? ['MALFORMED', 'SUSPICIOUS_PATTERN'] : undefined
-    };
-  };
+  // Mock packet generation removed - will only use real network data
 
   const updateStats = () => {
     const now = Date.now();
@@ -144,19 +123,8 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
         }
       });
     } else {
-      // Fall back to mock data generation
-      intervalId = setInterval(() => {
-        const newPacket = generateMockPacket();
-        packetsInLastSecond.push(newPacket);
-        
-        setPackets(prev => {
-          const updated = [...prev, newPacket];
-          // Keep only last 1000 packets for performance
-          return updated.slice(-1000);
-        });
-        
-        updateStats();
-      }, 100) as unknown as number; // Generate 10 packets per second
+      // No real-time data available
+      logger.info('Real-time network data not available');
     }
   };
 
@@ -228,8 +196,7 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
   };
 
   onMount(() => {
-    // Auto-start capture for demo
-    startCapture();
+    // Do not auto-start capture - wait for user action
     
     // Check if real-time network data is available
     realtimeService.subscribe('network', () => {

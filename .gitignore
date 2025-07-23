@@ -175,3 +175,30 @@ malware/
 *.7z
 
 app-example
+
+# Test results and reports
+**/test-results.json
+**/security-test-results.json
+**/benchmark-results.json
+**/master-test-report.json
+
+# Runtime data directories
+database/
+monitoring/
+
+# WASM/Rust build artifacts
+**/target/
+
+# Vite generated files
+**/vite-env.d.ts
+
+# Runtime directories
+database/
+monitoring/
+
+# Rust/WASM build artifacts
+**/target/
+wasm-modules/**/target/
+
+# Vite auto-generated files
+**/vite-env.d.ts

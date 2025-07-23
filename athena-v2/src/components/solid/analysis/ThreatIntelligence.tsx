@@ -66,35 +66,18 @@ const ThreatIntelligence: Component = () => {
     return new Date(timestamp * 1000).toLocaleString();
   };
 
-  // Mock IOCs data for template compliance
-  const mockIOCs = {
+  // IOCs will be populated from actual analysis
+  const [iocs] = createSignal({
     fileHashes: {
-      md5: 'a1b2c3d4e5f6789012345678901234567',
-      sha1: '9876543210abcdef9876543210abcdef98765432',
-      sha256: '1234567890abcdef1234567890abcdef1234567890abcdef'
+      md5: '',
+      sha1: '',
+      sha256: ''
     },
-    networkIndicators: [
-      { type: 'Domain', value: 'malicious-c2.example.com' },
-      { type: 'Domain', value: 'update-server.badsite.org' },
-      { type: 'IP', value: '192.168.1.100:8080' },
-      { type: 'IP', value: '203.0.113.42:80' },
-      { type: 'URL', value: 'hxxp://malicious-c2.example.com/beacon.php' },
-      { type: 'URL', value: 'hxxp://data-exfil.evil.net/upload' }
-    ],
-    fileSystem: [
-      'C:\\Windows\\Temp\\update.exe',
-      '%APPDATA%\\svchost.exe',
-      'C:\\Users\\Public\\config.dat'
-    ],
-    registry: [
-      { key: 'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\Update', value: '"C:\\Windows\\Temp\\update.exe"' }
-    ],
-    processes: [
-      { name: 'svchost.exe', type: 'fake service host' },
-      { name: 'rundll32.exe', type: 'malicious DLL loading' },
-      { name: 'explorer.exe', type: 'process hollowing' }
-    ]
-  };
+    networkIndicators: [] as Array<{ type: string; value: string }>,
+    fileSystem: [] as string[],
+    registry: [] as Array<{ key: string; value: string }>,
+    processes: [] as Array<{ name: string; type: string }>
+  });
 
   const mitreMapping = [
     { category: 'Initial Access', techniques: ['T1566.001 - Spearphishing Attachment', 'T1566.002 - Spearphishing Link'] },
@@ -129,49 +112,60 @@ const ThreatIntelligence: Component = () => {
                 <strong style="color: var(--danger-color);">🚨 HIGH PRIORITY IOCs</strong><br /><br />
                 
                 <strong style="color: var(--barbie-pink);">File Hashes:</strong><br />
-                <span style="color: var(--danger-color);">MD5:</span> {mockIOCs.fileHashes.md5}<br />
-                <span style="color: var(--danger-color);">SHA1:</span> {mockIOCs.fileHashes.sha1}<br />
-                <span style="color: var(--danger-color);">SHA256:</span> {mockIOCs.fileHashes.sha256}<br /><br />
+                <Show when={iocs().fileHashes.md5} fallback={<span style="color: var(--text-secondary);">No file hashes available</span>}>
+                  <span style="color: var(--danger-color);">MD5:</span> {iocs().fileHashes.md5}<br />
+                  <span style="color: var(--danger-color);">SHA1:</span> {iocs().fileHashes.sha1}<br />
+                  <span style="color: var(--danger-color);">SHA256:</span> {iocs().fileHashes.sha256}<br />
+                </Show>
+                <br />
                 
                 <strong style="color: var(--barbie-pink);">Network Indicators:</strong><br />
-                <For each={mockIOCs.networkIndicators}>
-                  {(indicator) => (
-                    <div>
-                      <span style="color: var(--danger-color);">{indicator.type}:</span> {indicator.value}<br />
-                    </div>
-                  )}
-                </For>
+                <Show when={iocs().networkIndicators.length > 0} fallback={<span style="color: var(--text-secondary);">No network indicators detected</span>}>
+                  <For each={iocs().networkIndicators}>
+                    {(indicator) => (
+                      <div>
+                        <span style="color: var(--danger-color);">{indicator.type}:</span> {indicator.value}<br />
+                      </div>
+                    )}
+                  </For>
+                </Show>
                 <br />
                 
                 <strong style="color: var(--barbie-pink);">File System Artifacts:</strong><br />
-                <For each={mockIOCs.fileSystem}>
-                  {(file) => (
-                    <div>
-                      <span style="color: var(--warning-color);">File:</span> {file}<br />
-                    </div>
-                  )}
-                </For>
+                <Show when={iocs().fileSystem.length > 0} fallback={<span style="color: var(--text-secondary);">No file system artifacts detected</span>}>
+                  <For each={iocs().fileSystem}>
+                    {(file) => (
+                      <div>
+                        <span style="color: var(--warning-color);">File:</span> {file}<br />
+                      </div>
+                    )}
+                  </For>
+                </Show>
                 <br />
                 
                 <strong style="color: var(--barbie-pink);">Registry Keys:</strong><br />
-                <For each={mockIOCs.registry}>
-                  {(reg) => (
-                    <div>
-                      <span style="color: var(--danger-color);">Key:</span> {reg.key}<br />
-                      <span style="color: var(--warning-color);">Value:</span> {reg.value}<br />
-                    </div>
-                  )}
-                </For>
+                <Show when={iocs().registry.length > 0} fallback={<span style="color: var(--text-secondary);">No registry artifacts detected</span>}>
+                  <For each={iocs().registry}>
+                    {(reg) => (
+                      <div>
+                        <span style="color: var(--danger-color);">Key:</span> {reg.key}<br />
+                        <span style="color: var(--warning-color);">Value:</span> {reg.value}<br />
+                      </div>
+                    )}
+                  </For>
+                </Show>
                 <br />
                 
                 <strong style="color: var(--barbie-pink);">Process Indicators:</strong><br />
-                <For each={mockIOCs.processes}>
-                  {(proc) => (
-                    <div>
-                      <span style="color: var(--warning-color);">Process:</span> {proc.name} ({proc.type})<br />
-                    </div>
-                  )}
-                </For>
+                <Show when={iocs().processes.length > 0} fallback={<span style="color: var(--text-secondary);">No process artifacts detected</span>}>
+                  <For each={iocs().processes}>
+                    {(proc) => (
+                      <div>
+                        <span style="color: var(--warning-color);">Process:</span> {proc.name} ({proc.type})<br />
+                      </div>
+                    )}
+                  </For>
+                </Show>
               </div>
             </div>
           </AnalysisPanel>
