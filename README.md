@@ -1,7 +1,7 @@
 # Athena - AI-Powered Malware Analysis Assistant
 
 <div align="center">
-  <img src="./Athena/assets/images/logo.png" alt="Athena Logo" width="300" />
+  <img src="./athena-v2/src/assets/logo.png" alt="Athena Logo" width="300" />
 </div>
 
 Athena is a cross-platform application designed to help security researchers analyze and deobfuscate malware using various AI models. It provides a secure environment for malware analysis with features like isolated container execution and integration with the Metasploit database.
@@ -58,17 +58,18 @@ The foundation of Athena's idea and research comes from this research paper by K
 
 > **IMPORTANT DISCLAIMER:** The containerization and analysis components described in this documentation are still being designed and developed. Their current implementation and documentation are not reflective of what the final design could be. This documentation represents a conceptual overview and may change significantly as development progresses.
 
-Athena offers two deployment options:
+Athena is a high-performance native desktop application built with **Tauri 2.0**:
 
-### 1. React Native/Expo Version
-Built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms. It leverages the power of AI models like OpenAI's GPT-4, Claude 3 Opus, and DeepSeek Coder to analyze malicious code, deobfuscate it, and identify potential vulnerabilities.
+- **Platform Support**:
+  - **Desktop**: Windows, macOS (✅ verified), Linux
+  - **Mobile** (Beta): iOS and Android with landscape orientation
+- **Technology Stack**:
+  - **Backend**: Rust for performance and security
+  - **Frontend**: SolidJS for reactive UI
+  - **Analysis**: WebAssembly (WASM) modules for high-performance malware analysis
+- **Launch**: Use `./scripts/athena` → Option 11 (Tauri Desktop App)
 
-### 2. Tauri 2.0 Version (NEW) ✨
-A high-performance native application located in the `athena-v2/` directory:
-- **Desktop**: Windows, macOS (✅ verified), Linux
-- **Mobile**: iOS and Android with landscape orientation
-- **Built with**: Rust backend + SolidJS frontend
-- **Launch**: Use `./scripts/athena` → Option 11
+Athena leverages multiple AI models including OpenAI's GPT-4, Claude 3 Opus, and DeepSeek Coder to analyze malicious code, deobfuscate it, and identify potential vulnerabilities.
 
 The application is designed with security in mind, providing isolated container execution for safer analysis of potentially harmful code. It also integrates with the Metasploit database to provide additional context about identified vulnerabilities.
 
@@ -122,9 +123,9 @@ Before you begin, ensure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (v16 or later)
 - [npm](https://www.npmjs.com/) (v8 or later)
-- [Expo CLI](https://docs.expo.dev/get-started/installation/) (for development)
-- [Docker](https://www.docker.com/products/docker-desktop/) and [Docker Compose](https://docs.docker.com/compose/install/) (for database setup)
-- [PostgreSQL](https://www.postgresql.org/download/) (optional, if not using Docker)
+- [Rust](https://rustup.rs/) (latest stable)
+- [Tauri Prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites) for your platform
+- [Docker](https://www.docker.com/products/docker-desktop/) and [Docker Compose](https://docs.docker.com/compose/install/) (for backend services)
 - API keys for the AI models you want to use:
   - [OpenAI API key](https://platform.openai.com/account/api-keys)
   - [Claude API key](https://console.anthropic.com/account/keys)
@@ -142,30 +143,37 @@ Before you begin, ensure you have the following installed:
    ```bash
    ./scripts/athena
    ```
-   
+
    The beautiful interactive CLI will:
    - Show you a visual menu with all options
    - Auto-detect and run setup on first use
    - Guide you through API key configuration
    - Provide easy access to all Athena features
-   
-   **Quick Start: Select Option 1 (🚀 Start Athena Web)**
-   - Build and launch the web application
-   
+
+   **Quick Start: Select Option 11 (🖥️ Tauri Desktop App)**
+   - Build and launch the desktop application
+
    **That's it!** The script handles everything automatically.
 
 3. **Optional: Manual setup** (if you prefer manual control):
    ```bash
-   ./scripts/run.sh setup  # Force setup only
+   # Install root dependencies (for backend services)
    npm install
-   cd Athena
+
+   # Install Tauri app dependencies
+   cd athena-v2
    npm install
-   npm install buffer process --save
+
+   # Build the application
+   npm run build
+
+   # Or run in development mode
+   npm run tauri:dev
    ```
 
-4. **Environment variables** (optional):
-   - The script creates a `.env` file automatically from the template
-   - Edit `Athena/.env` to add your API keys (see [Configuration](#configuration))
+4. **Environment variables**:
+   - Copy `.env.example` to `.env` in the root directory
+   - Add your API keys (see [Configuration](#configuration))
    - Or use the API key validation script:
      ```bash
      node scripts/check-api-keys.js
@@ -210,49 +218,43 @@ PGADMIN_PORT=5050
 
 ### Starting the Application
 
-**Simplest approach** - Just run one command:
+**Simplest approach** - Use the interactive CLI:
 ```bash
-./scripts/run.sh
+./scripts/athena
 ```
 
-This unified script will:
-- 🔍 **Auto-detect** if setup is needed (first time or missing dependencies)
-- 🔧 **Auto-setup** all dependencies and configuration if needed
-- 🔄 **Check for updates** if already set up
-- 🚀 **Build and launch** the web application automatically
+Then select **Option 11: 🖥️ Tauri Desktop App**
 
-**Advanced options** - You can also specify different platforms:
-```bash
-# Web version (default) - Recommended
-./scripts/run.sh web
-
-# iOS version (requires macOS + Xcode)
-./scripts/run.sh ios
-
-# Android version (requires Android SDK)
-./scripts/run.sh android
-
-# Expo version (currently not working)
-./scripts/run.sh expo
-
-# Force setup only (without running)
-./scripts/run.sh setup
-```
+This will automatically:
+- 🔍 **Install** all dependencies if needed
+- 🔧 **Build** the Rust backend and SolidJS frontend
+- 🚀 **Launch** the desktop application
 
 **Manual commands** (if you prefer manual control):
 ```bash
-cd Athena
-npm run build:web
-npx serve dist
+cd athena-v2
+
+# Development mode (hot reload)
+npm run tauri:dev
+
+# Production build
+npm run tauri:build
+
+# Web-only build (for testing UI)
+npm run build
 ```
 
-> **Note:** The Expo launch method is currently not working. Please use the web version with `./scripts/run.sh` instead.
+**Platform-specific builds**:
+```bash
+# macOS (universal binary)
+npm run tauri:build:macos
 
-When working, this would start the Expo development server, allowing you to run the app on:
-- iOS simulator
-- Android emulator
-- Web browser
-- Expo Go app on a physical device
+# Windows
+npm run tauri:build:windows
+
+# Linux
+npm run tauri:build:linux
+```
 
 ### Analyzing Malware
 
@@ -270,7 +272,7 @@ When working, this would start the Expo development server, allowing you to run 
 
 ## 🏗️ Architecture
 
-Athena follows a modular architecture with clear separation of concerns. The application is built using React Native with Expo, enabling cross-platform compatibility across iOS, Android, and web platforms. The core analysis capabilities are powered by high-performance WebAssembly modules.
+Athena follows a modular architecture with clear separation of concerns. The application is built using Tauri 2.0 with a Rust backend and SolidJS frontend, enabling high-performance cross-platform compatibility. The core analysis capabilities are powered by high-performance WebAssembly modules.
 
 ```mermaid
 %%{init: {
@@ -364,25 +366,4 @@ Athena comes with comprehensive documentation to help you understand and use the
 
 ## 📱 Screenshots
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><b>Home Screen</b></td>
-      <td align="center"><b>About Screen</b></td>
-      <td align="center"><b>Settings Screen</b></td>
-      <td align="center"><b>Expanded Container Config View</b></td>
-    </tr>
-    <tr>
-      <td><img src="./Athena/screenshots/newHome.png" width="250" alt="Home Screen"/></td>
-      <td><img src="./Athena/screenshots/about2.png" width="250" alt="About Screen"/></td>
-      <td><img src="./Athena/screenshots/settings2.png" width="250" alt="Settings Screen"/></td>
-      <td><img src="./Athena/screenshots/containerConfig.png" width="250" alt="Container Config View"/></td>
-    </tr>
-    <tr>
-      <td>Main interface for analyzing malware files</td>
-      <td>Information about Athena's features</td>
-      <td>Configuration of API keys and settings</td>
-      <td>Detailed container configuration options</td>
-    </tr>
-  </table>
-</div>
+> **Note**: Screenshots are from the legacy React Native version. Tauri v2 screenshots will be added soon.

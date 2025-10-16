@@ -36,6 +36,10 @@ expo-env.d.ts
 android/
 ios/
 
+# Legacy React Native/Expo implementation (removed)
+Athena/
+athena-react-backup*.tar.gz
+
 # Metro
 .metro-health-check*
 
