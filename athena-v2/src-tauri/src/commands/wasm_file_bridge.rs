@@ -232,28 +232,47 @@ fn generate_ml_predictions(wasm_analyses: &[WasmFileAnalysis]) -> Option<MlPredi
     // Look for deobfuscator results which would contain ML predictions
     for analysis in wasm_analyses {
         if analysis.module_name == DEOBFUSCATOR {
-            // Simulate ML predictions based on analysis
-            return Some(MlPredictions {
-                malware_probability: 0.87,
-                family_predictions: vec![
-                    FamilyPrediction {
-                        family: "Emotet".to_string(),
-                        confidence: 0.72,
-                    },
-                    FamilyPrediction {
-                        family: "TrickBot".to_string(),
-                        confidence: 0.15,
-                    },
-                ],
-                behavior_predictions: vec![
-                    "Banking Trojan".to_string(),
-                    "Information Stealer".to_string(),
-                    "Dropper".to_string(),
-                ],
-            });
+            // Parse actual ML predictions from deobfuscator WASM module output
+            if let Some(output_str) = analysis.results.get("output").and_then(|v| v.as_str()) {
+                // The output is a JSON string containing DeobfuscationResult
+                if let Ok(deobfuscation_result) = serde_json::from_str::<serde_json::Value>(output_str) {
+                    // Extract ml_analysis from the deobfuscation result
+                    if let Some(ml_analysis) = deobfuscation_result.get("ml_analysis") {
+                        let malware_probability = ml_analysis.get("malware_probability")
+                            .and_then(|v| v.as_f64())
+                            .unwrap_or(0.0);
+
+                        let family_predictions = ml_analysis.get("family_predictions")
+                            .and_then(|v| v.as_array())
+                            .map(|families| {
+                                families.iter().filter_map(|f| {
+                                    let family = f.get("family")?.as_str()?.to_string();
+                                    let confidence = f.get("confidence")?.as_f64()?;
+                                    Some(FamilyPrediction { family, confidence })
+                                }).collect()
+                            })
+                            .unwrap_or_else(Vec::new);
+
+                        let behavior_predictions = ml_analysis.get("behavior_predictions")
+                            .and_then(|v| v.as_array())
+                            .map(|behaviors| {
+                                behaviors.iter()
+                                    .filter_map(|b| b.as_str().map(|s| s.to_string()))
+                                    .collect()
+                            })
+                            .unwrap_or_else(Vec::new);
+
+                        return Some(MlPredictions {
+                            malware_probability,
+                            family_predictions,
+                            behavior_predictions,
+                        });
+                    }
+                }
+            }
         }
     }
-    
+
     None
 }
 
