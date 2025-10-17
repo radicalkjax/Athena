@@ -63,13 +63,14 @@ const MemoryAnalysis: Component = () => {
   onMount(async () => {
     // Get initial system status
     await fetchSystemStatus();
-    
-    // Set up refresh interval
-    const interval = setInterval(fetchSystemStatus, 2000);
+
+    // Set up refresh interval (cast to number for browser compatibility)
+    const interval = setInterval(fetchSystemStatus, 2000) as unknown as number;
     setRefreshInterval(interval);
-    
+
     return () => {
-      if (refreshInterval()) clearInterval(refreshInterval()!);
+      const currentInterval = refreshInterval();
+      if (currentInterval !== null) clearInterval(currentInterval);
     };
   });
 

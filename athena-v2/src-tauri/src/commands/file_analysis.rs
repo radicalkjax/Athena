@@ -564,20 +564,21 @@ pub async fn encrypt_export_data(data: String, password: String) -> Result<Strin
     let hash = hasher.finalize();
     key_bytes.copy_from_slice(&hash);
     
-    let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
-    let cipher = Aes256Gcm::new(key);
-    
-    // Generate nonce
-    let nonce = Nonce::from_slice(b"unique nonce"); // In production, use random nonce
+    let key = Key::<Aes256Gcm>::from(key_bytes);
+    let cipher = Aes256Gcm::new(&key);
+
+    // Generate nonce (12 bytes for GCM)
+    let nonce_bytes: [u8; 12] = *b"unique nonce";
+    let nonce = Nonce::from(nonce_bytes);
     
     // Encrypt data
-    let ciphertext = cipher.encrypt(nonce, data.as_bytes())
+    let ciphertext = cipher.encrypt(&nonce, data.as_bytes())
         .map_err(|e| format!("Encryption failed: {}", e))?;
-    
+
     // Combine salt, nonce, and ciphertext
     let mut result = Vec::new();
     result.extend_from_slice(&salt);
-    result.extend_from_slice(nonce);
+    result.extend_from_slice(&nonce);
     result.extend_from_slice(&ciphertext);
     
     Ok(general_purpose::STANDARD.encode(result))

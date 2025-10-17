@@ -151,12 +151,15 @@ export default function DisassemblyViewer(props: DisassemblyViewerProps) {
             <div class="file-info">
               <h3>Disassembly View</h3>
               <div class="architecture">Architecture: {disassembly()!.architecture}</div>
-              {disassembly()!.entry_point && (
+              {disassembly()!.entry_point !== null && (
                 <div class="entry-point">
                   Entry Point: {formatAddress(disassembly()!.entry_point)}
-                  <button 
+                  <button
                     class="jump-btn"
-                    onClick={() => jumpToAddress(disassembly()!.entry_point!)}
+                    onClick={() => {
+                      const entryPoint = disassembly()!.entry_point;
+                      if (entryPoint !== null) jumpToAddress(entryPoint);
+                    }}
                   >
                     Jump
                   </button>
