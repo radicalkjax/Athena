@@ -23,8 +23,8 @@
   },
   "dependencies": {
     "@solidjs/router": "^0.10.5",
-    "@tauri-apps/api": "^2.0.0-beta.0",
-    "@tauri-apps/plugin-dialog": "^2.0.0-beta.0",
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
     "@types/uuid": "^10.0.0",
     "solid-js": "^1.8.11",
     "svelte": "^4.2.8",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
-    "@tauri-apps/cli": "^2.0.0-beta.0",
+    "@tauri-apps/cli": "^2.0.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "vite-plugin-solid": "^2.8.2"
