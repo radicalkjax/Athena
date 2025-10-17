@@ -27,10 +27,10 @@ anyhow = "1.0"
 reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1"
 base64 = "0.21"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 # Binary parsing
 goblin = "0.8"
-object = { version = "0.36", features = ["all"] }
+object = { version = "0.37", features = ["all"] }
 # YARA scanning
 yara-x = "0.11"
 # Additional utilities
@@ -39,6 +39,8 @@ memmap2 = "0.9"
 # Hashing
 md5 = "0.7"
 sha1 = "0.10"
+digest = "0.10"
+ssdeep = "0.6"
 # Additional dependencies
 lazy_static = "1.5"
 # Export formats
@@ -50,6 +52,14 @@ flate2 = "1.0"
 aes-gcm = "0.10"
 argon2 = "0.5"
 rand = "0.8"
+# Digital signature verification
+authenticode = { version = "0.5", features = ["object", "std"] }
+x509-parser = "0.16"
+x509-cert = "0.2"
+der-parser = "9.0"
+der = "0.7"
+sequoia-openpgp = "1.18"
+dirs = "5.0"
 
 [features]
 default = ["custom-protocol"]

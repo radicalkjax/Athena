@@ -164,7 +164,7 @@ Respond with a JSON object containing:
                 .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
                 .unwrap_or_default(),
             detailed_analysis: parsed["detailed_analysis"].as_str().unwrap_or("").to_string(),
-            processing_time_ms: 0, // Will be set later
+            processing_time_ms: 0, // Set by analyze() method after API call completes
         })
     }
 }

@@ -13,6 +13,7 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce, Key
 };
+use crate::signature_verify::{verify_pe_signature, verify_elf_signature, SignatureInfo};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileAnalysisResult {
@@ -50,6 +51,7 @@ pub enum FormatInfo {
         image_base: u64,
         is_dll: bool,
         is_signed: bool,
+        signature_info: Option<SignatureInfo>,
     },
     ELF {
         class: String,
@@ -60,6 +62,7 @@ pub enum FormatInfo {
         machine: String,
         entry_point: u64,
         interpreter: Option<String>,
+        signature_info: Option<SignatureInfo>,
     },
     MachO {
         cpu_type: String,
@@ -255,13 +258,16 @@ pub fn calculate_hashes(data: &[u8]) -> FileHashes {
     let md5 = format!("{:x}", md5::compute(data));
     let sha1 = format!("{:x}", sha1::Sha1::digest(data));
     let sha256 = format!("{:x}", sha2::Sha256::digest(data));
-    
+
+    // Calculate ssdeep fuzzy hash
+    let ssdeep = ssdeep::hash(data).ok();
+
     FileHashes {
         md5,
         sha1,
         sha256,
-        ssdeep: None, // TODO: Implement ssdeep
-        imphash: None, // TODO: Implement imphash for PE files
+        ssdeep,
+        imphash: None, // Will be calculated in parse_pe if applicable
     }
 }
 
@@ -315,14 +321,29 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
     };
     
     // Parse binary format
-    let (format_info, sections, imports, exports, anomalies) = match Object::parse(&buffer) {
-        Ok(Object::PE(pe)) => parse_pe(pe, &buffer),
-        Ok(Object::Elf(elf)) => parse_elf(elf, &buffer),
-        Ok(Object::Mach(mach)) => parse_mach(mach, &buffer),
-        _ => (FormatInfo::Unknown, Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+    let (format_info, sections, imports, exports, anomalies, imphash) = match Object::parse(&buffer) {
+        Ok(Object::PE(pe)) => {
+            let (fi, s, i, e, a, ih) = parse_pe(pe, &buffer, path);
+            (fi, s, i, e, a, ih)
+        },
+        Ok(Object::Elf(elf)) => {
+            let (fi, s, i, e, a) = parse_elf(elf, &buffer, path);
+            (fi, s, i, e, a, None)
+        },
+        Ok(Object::Mach(mach)) => {
+            let (fi, s, i, e, a) = parse_mach(mach, &buffer);
+            (fi, s, i, e, a, None)
+        },
+        _ => (FormatInfo::Unknown, Vec::new(), Vec::new(), Vec::new(), Vec::new(), None),
     };
+
+    // Update hashes with imphash if available
+    let mut final_hashes = hashes;
+    if let Some(ih) = imphash {
+        final_hashes.imphash = Some(ih);
+    }
     
-    // Detect signatures (placeholder for now)
+    // Detect signatures using pattern matching
     let signatures = detect_signatures(&buffer);
     
     Ok(FileAnalysisResult {
@@ -333,15 +354,22 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
         exports,
         strings,
         entropy,
-        hashes,
+        hashes: final_hashes,
         signatures,
         anomalies,
     })
 }
 
-fn parse_pe(pe: pe::PE, data: &[u8]) -> (FormatInfo, Vec<Section>, Vec<Import>, Vec<Export>, Vec<Anomaly>) {
+fn parse_pe(pe: pe::PE, data: &[u8], path: &Path) -> (FormatInfo, Vec<Section>, Vec<Import>, Vec<Export>, Vec<Anomaly>, Option<String>) {
     let anomalies = Vec::new();
-    
+
+    // Verify digital signature
+    let signature_info = verify_pe_signature(path, data).ok();
+    let is_signed = signature_info.as_ref().map(|s| s.is_signed).unwrap_or(false);
+
+    // Calculate imphash from imports
+    let mut imphash_data = Vec::new();
+
     // Extract PE header info
     let format_info = FormatInfo::PE {
         machine: format!("{:?}", pe.header.coff_header.machine),
@@ -351,7 +379,8 @@ fn parse_pe(pe: pe::PE, data: &[u8]) -> (FormatInfo, Vec<Section>, Vec<Import>, 
         entry_point: pe.entry as u64,
         image_base: pe.image_base as u64,
         is_dll: pe.is_lib,
-        is_signed: false, // TODO: Check for signatures
+        is_signed,
+        signature_info,
     };
     
     // Parse sections
@@ -365,75 +394,341 @@ fn parse_pe(pe: pe::PE, data: &[u8]) -> (FormatInfo, Vec<Section>, Vec<Import>, 
             section.characteristics & 0x80000000 != 0 || // IMAGE_SCN_MEM_WRITE
             section.name().unwrap_or("").starts_with(".UPX");
         
+        // Parse section characteristics flags
+        let mut characteristics = Vec::new();
+        let flags = section.characteristics;
+
+        if flags & 0x00000020 != 0 { characteristics.push("CODE".to_string()); }
+        if flags & 0x00000040 != 0 { characteristics.push("INITIALIZED_DATA".to_string()); }
+        if flags & 0x00000080 != 0 { characteristics.push("UNINITIALIZED_DATA".to_string()); }
+        if flags & 0x02000000 != 0 { characteristics.push("DISCARDABLE".to_string()); }
+        if flags & 0x04000000 != 0 { characteristics.push("NOT_CACHED".to_string()); }
+        if flags & 0x08000000 != 0 { characteristics.push("NOT_PAGED".to_string()); }
+        if flags & 0x10000000 != 0 { characteristics.push("SHARED".to_string()); }
+        if flags & 0x20000000 != 0 { characteristics.push("EXECUTE".to_string()); }
+        if flags & 0x40000000 != 0 { characteristics.push("READ".to_string()); }
+        if flags & 0x80000000 != 0 { characteristics.push("WRITE".to_string()); }
+
         sections.push(Section {
             name: section.name().unwrap_or("").to_string(),
             virtual_address: section.virtual_address as u64,
             virtual_size: section.virtual_size as u64,
             raw_size: section.size_of_raw_data as u64,
             entropy: section_entropy,
-            characteristics: vec![], // TODO: Parse characteristics
+            characteristics,
             suspicious,
         });
     }
     
-    // Parse imports - simplified for now
-    let imports = Vec::new();
-    // TODO: Parse imports when goblin API is better understood
-    
-    // Parse exports - simplified for now
-    let exports = Vec::new();
-    // TODO: Parse exports when goblin API is better understood
-    
-    (format_info, sections, imports, exports, anomalies)
+    // Parse imports and calculate imphash
+    // Group imports by DLL using a HashMap
+    let mut libs_map: HashMap<String, Vec<String>> = HashMap::new();
+
+    for import in &pe.imports {
+        let library = import.dll.to_lowercase();
+        let function_name = import.name.to_string().to_lowercase();
+
+        // Add to library's function list
+        libs_map.entry(library.clone())
+            .or_insert_with(Vec::new)
+            .push(function_name.clone());
+
+        // Add to imphash data: library.function format
+        imphash_data.push(format!("{}.{}", library, function_name));
+    }
+
+    // Convert HashMap to Import structs
+    let mut imports = Vec::new();
+    for (library, functions) in libs_map {
+        let suspicious = is_suspicious_import(&library, &functions);
+        imports.push(Import {
+            library,
+            functions,
+            suspicious,
+        });
+    }
+
+    // Calculate imphash as MD5 of sorted, comma-separated library.function pairs
+    let imphash = if !imphash_data.is_empty() {
+        imphash_data.sort();
+        let imphash_string = imphash_data.join(",");
+        Some(format!("{:x}", md5::compute(imphash_string.as_bytes())))
+    } else {
+        None
+    };
+
+    // Parse exports
+    let mut exports = Vec::new();
+    for export in pe.exports {
+        if let Some(name) = export.name {
+            exports.push(Export {
+                name: name.to_string(),
+                ordinal: None, // goblin exports don't have ordinal field
+                address: export.rva as u64,
+            });
+        }
+    }
+
+    (format_info, sections, imports, exports, anomalies, imphash)
 }
 
-fn parse_elf(elf: elf::Elf, _data: &[u8]) -> (FormatInfo, Vec<Section>, Vec<Import>, Vec<Export>, Vec<Anomaly>) {
+fn parse_elf(elf: elf::Elf, data: &[u8], path: &Path) -> (FormatInfo, Vec<Section>, Vec<Import>, Vec<Export>, Vec<Anomaly>) {
+    // Verify digital signature (GPG/PGP)
+    let signature_info = verify_elf_signature(path, data).ok();
+
+    // Parse OS ABI from ELF header
+    let os_abi = match elf.header.e_ident[7] {
+        0 => "SYSV",
+        1 => "HP-UX",
+        2 => "NetBSD",
+        3 => "Linux",
+        4 => "GNU Hurd",
+        6 => "Solaris",
+        7 => "AIX",
+        8 => "IRIX",
+        9 => "FreeBSD",
+        10 => "Tru64",
+        11 => "Novell Modesto",
+        12 => "OpenBSD",
+        13 => "OpenVMS",
+        14 => "NonStop Kernel",
+        15 => "AROS",
+        16 => "FenixOS",
+        17 => "Nuxi CloudABI",
+        _ => "Unknown",
+    }.to_string();
+
+    let abi_version = elf.header.e_ident[8];
+
     let format_info = FormatInfo::ELF {
         class: if elf.is_64 { "ELF64" } else { "ELF32" }.to_string(),
-        data: format!("{:?}", elf.little_endian),
-        version: 1,
-        os_abi: "SYSV".to_string(), // TODO: Parse from header
-        abi_version: 0,
+        data: if elf.little_endian { "Little Endian" } else { "Big Endian" }.to_string(),
+        version: elf.header.e_version as u8,
+        os_abi,
+        abi_version,
         machine: format!("{:?}", elf.header.e_machine),
         entry_point: elf.entry,
         interpreter: elf.interpreter.map(|s| s.to_string()),
+        signature_info,
     };
-    
-    // TODO: Parse sections, imports, exports
-    let sections = Vec::new();
-    let imports = Vec::new();
-    let exports = Vec::new();
+
+    // Parse sections
+    let mut sections = Vec::new();
+    for section in &elf.section_headers {
+        if let Some(name) = elf.shdr_strtab.get_at(section.sh_name) {
+            let section_offset = section.sh_offset as usize;
+            let section_size = section.sh_size as usize;
+
+            let section_data = if section_offset + section_size <= data.len() {
+                &data[section_offset..section_offset + section_size]
+            } else {
+                &[]
+            };
+
+            let section_entropy = if !section_data.is_empty() {
+                calculate_entropy(section_data)
+            } else {
+                0.0
+            };
+
+            // Check for suspicious sections
+            let suspicious = section_entropy > 7.0 ||
+                name.starts_with(".upx") ||
+                (section.sh_flags & 0x2 != 0 && section.sh_flags & 0x4 != 0); // WRITE + EXEC
+
+            let mut characteristics = Vec::new();
+            if section.sh_flags & 0x1 != 0 { characteristics.push("WRITE".to_string()); }
+            if section.sh_flags & 0x2 != 0 { characteristics.push("ALLOC".to_string()); }
+            if section.sh_flags & 0x4 != 0 { characteristics.push("EXEC".to_string()); }
+
+            sections.push(Section {
+                name: name.to_string(),
+                virtual_address: section.sh_addr,
+                virtual_size: section.sh_size,
+                raw_size: section.sh_size,
+                entropy: section_entropy,
+                characteristics,
+                suspicious,
+            });
+        }
+    }
+
+    // Parse dynamic imports (imported libraries and functions)
+    let mut imports = Vec::new();
+    let mut libs_map: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+
+    for sym in &elf.dynsyms {
+        if let Some(name) = elf.dynstrtab.get_at(sym.st_name) {
+            if sym.is_import() {
+                // Group by library (we don't have library info from ELF directly, so use "unknown")
+                libs_map.entry("libc.so.6".to_string())
+                    .or_insert_with(Vec::new)
+                    .push(name.to_string());
+            }
+        }
+    }
+
+    for (library, functions) in libs_map {
+        let suspicious = is_suspicious_import(&library, &functions);
+        imports.push(Import {
+            library,
+            functions,
+            suspicious,
+        });
+    }
+
+    // Parse exports (exported symbols)
+    let mut exports = Vec::new();
+    for sym in &elf.syms {
+        if let Some(name) = elf.strtab.get_at(sym.st_name) {
+            if sym.is_function() && sym.st_value != 0 {
+                exports.push(Export {
+                    name: name.to_string(),
+                    ordinal: None,
+                    address: sym.st_value,
+                });
+            }
+        }
+    }
+
     let anomalies = Vec::new();
-    
+
     (format_info, sections, imports, exports, anomalies)
 }
 
-fn parse_mach(mach: mach::Mach, _data: &[u8]) -> (FormatInfo, Vec<Section>, Vec<Import>, Vec<Export>, Vec<Anomaly>) {
-    let (cpu_type, entry_point, is_fat) = match mach {
+fn parse_mach(mach: mach::Mach, data: &[u8]) -> (FormatInfo, Vec<Section>, Vec<Import>, Vec<Export>, Vec<Anomaly>) {
+    // Validate we have file data for analysis
+    let file_size = data.len();
+
+    let (cpu_type, cpu_subtype, file_type, flags, entry_point, is_fat, architectures, binary_opt) = match mach {
         mach::Mach::Binary(binary) => {
-            (format!("{:?}", binary.header.cputype), Some(binary.entry), false)
+            let cpu = format!("{:?}", binary.header.cputype);
+            let subtype = format!("{:?}", binary.header.cpusubtype);
+            let ftype = format!("{:?}", binary.header.filetype);
+            let flags = binary.header.flags;
+            (cpu, subtype, ftype, flags, Some(binary.entry), false, Vec::new(), Some(binary))
         },
-        mach::Mach::Fat(_) => {
-            ("Multiple".to_string(), None, true)
+        mach::Mach::Fat(fat) => {
+            // Parse architectures from Fat binary
+            let mut archs = Vec::new();
+
+            // Get the fat architecture headers
+            if let Ok(fat_arches) = fat.arches() {
+                for arch in fat_arches {
+                    // Format CPU type and subtype for readability
+                    let arch_str = format!("{:?}/{:?}", arch.cputype, arch.cpusubtype);
+                    archs.push(arch_str);
+                }
+            }
+
+            // If we couldn't parse architectures, provide a default
+            if archs.is_empty() {
+                archs.push("Multiple architectures".to_string());
+            }
+
+            // Try to parse the first architecture for detailed analysis
+            let first_binary = fat.into_iter().next().and_then(|res| res.ok()).and_then(|single_arch| {
+                match single_arch {
+                    mach::SingleArch::MachO(macho) => Some(macho),
+                    _ => None,
+                }
+            });
+
+            ("Multiple".to_string(), "Multiple".to_string(), "Fat Binary".to_string(), 0, None, true, archs, first_binary)
         }
     };
-    
+
     let format_info = FormatInfo::MachO {
         cpu_type,
-        cpu_subtype: "Unknown".to_string(),
-        file_type: "Unknown".to_string(),
-        flags: 0,
+        cpu_subtype,
+        file_type,
+        flags,
         entry_point,
         is_fat,
-        architectures: Vec::new(),
+        architectures,
     };
-    
-    // TODO: Parse sections, imports, exports
-    let sections = Vec::new();
-    let imports = Vec::new();
-    let exports = Vec::new();
-    let anomalies = Vec::new();
-    
+
+    // Parse sections, imports, exports for single binary
+    let mut sections = Vec::new();
+    let mut imports = Vec::new();
+    let mut exports = Vec::new();
+
+    if let Some(binary) = binary_opt {
+        // Parse sections
+        for segment in &binary.segments {
+            for (section, section_data) in segment.sections().ok().iter().flatten() {
+                let section_entropy = if !section_data.is_empty() {
+                    calculate_entropy(section_data)
+                } else {
+                    0.0
+                };
+
+                let suspicious = section_entropy > 7.0;
+                let mut characteristics = Vec::new();
+
+                if section.flags & 0x1 != 0 { characteristics.push("REGULAR".to_string()); }
+                if section.flags & 0x2 != 0 { characteristics.push("ZEROFILL".to_string()); }
+
+                sections.push(Section {
+                    name: section.name().unwrap_or("").to_string(),
+                    virtual_address: section.addr,
+                    virtual_size: section.size,
+                    raw_size: section.size,
+                    entropy: section_entropy,
+                    characteristics,
+                    suspicious,
+                });
+            }
+        }
+
+        // Parse imports
+        if let Ok(imports_data) = binary.imports() {
+            let mut libs_map: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+
+            for import in imports_data {
+                let lib_name = import.dylib;  // dylib is &str, not Option
+                let func_name = import.name;
+
+                libs_map.entry(lib_name.to_string())
+                    .or_insert_with(Vec::new)
+                    .push(func_name.to_string());
+            }
+
+            for (library, functions) in libs_map {
+                let suspicious = is_suspicious_import(&library, &functions);
+                imports.push(Import {
+                    library,
+                    functions,
+                    suspicious,
+                });
+            }
+        }
+
+        // Parse exports
+        if let Ok(exports_data) = binary.exports() {
+            for export in exports_data {
+                exports.push(Export {
+                    name: export.name.to_string(),
+                    ordinal: None,
+                    address: export.offset as u64,
+                });
+            }
+        }
+    }
+
+    // Check for anomalies using file size validation
+    let mut anomalies = Vec::new();
+    if file_size < 1024 {
+        anomalies.push(Anomaly {
+            category: "File Size".to_string(),
+            description: format!("Very small Mach-O file ({} bytes)", file_size),
+            severity: "low".to_string(),
+            details: HashMap::from([
+                ("file_size".to_string(), serde_json::json!(file_size)),
+            ]),
+        });
+    }
+
     (format_info, sections, imports, exports, anomalies)
 }
 

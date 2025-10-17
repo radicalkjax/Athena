@@ -2,6 +2,7 @@
 
 mod commands;
 mod ai_providers;
+mod signature_verify;
 use commands::system_monitor::SystemMonitor;
 use commands::wasm_runtime::WasmRuntime;
 use std::sync::{Arc, Mutex};
