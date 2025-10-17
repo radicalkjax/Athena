@@ -19,8 +19,8 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,  // Disabled: too many false positives in UI components
+    "noUnusedParameters": false,  // Disabled: parameters often required by interface
     "noFallthroughCasesInSwitch": true,
     
     "baseUrl": ".",

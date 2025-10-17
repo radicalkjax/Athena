@@ -18,7 +18,8 @@ export const BackendStatus: Component = () => {
       logger.info('Backend status checked:', health);
     } catch (err) {
       setIsConnected(false);
-      setError(err.message || 'Failed to connect to backend');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect to backend';
+      setError(errorMessage);
       logger.error('Backend connection failed:', err);
     }
   };

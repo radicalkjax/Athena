@@ -204,5 +204,8 @@ monitoring/
 **/target/
 wasm-modules/**/target/
 
-# Vite auto-generated files
-**/vite-env.d.ts
+# Vite auto-generated files (keeping manual ones)
+# **/vite-env.d.ts  # Commented out - we have custom vite-env.d.ts
+
+# Agent documentation (for AI assistants)
+agentdocs/

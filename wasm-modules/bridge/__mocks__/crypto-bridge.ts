@@ -68,11 +68,13 @@ export class CryptoBridge {
       throw new Error('Unsupported hash algorithm');
     }
     
-    const mockHashes = {
-      'sha256': options.encoding === 'base64' ? 
-        'n4bQgYhMfWWaL+qqDFWtAVo79PEbKwuCLNFdbBWw8Ag=' : 
+    const mockHashes: Record<string, string> = {
+      'sha256': options.encoding === 'base64' ?
+        'n4bQgYhMfWWaL+qqDFWtAVo79PEbKwuCLNFdbBWw8Ag=' :
         'dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f',
       'sha512': 'ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff',
+      'sha384': 'ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db2',
+      'sha1': 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
       'md5': '5d41402abc4b2a76b9719d911017c592'
     };
     return mockHashes[options.algorithm] || mockHashes['sha256'];
@@ -246,15 +248,6 @@ export class CryptoBridge {
     }
     
     return patterns;
-  });
-
-  generateAESKey = vi.fn().mockImplementation((size: number): Uint8Array => {
-    const key = new Uint8Array(size / 8);
-    // Generate pseudo-random but unique keys for testing
-    for (let i = 0; i < key.length; i++) {
-      key[i] = Math.floor(Math.random() * 256);
-    }
-    return key;
   });
 
   cleanup(): void {
