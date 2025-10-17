@@ -58,9 +58,10 @@ const CodeEditor: Component<CodeEditorProps> = (props) => {
     
     // Update cursor position
     const lines = value.substring(0, target.selectionStart).split('\n');
+    const lastLine = lines[lines.length - 1];
     setCursorPosition({
       line: lines.length,
-      column: lines[lines.length - 1].length + 1
+      column: (lastLine !== undefined ? lastLine.length : 0) + 1
     });
   };
 

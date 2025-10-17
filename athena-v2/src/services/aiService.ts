@@ -154,12 +154,15 @@ class AIService {
     const availableProviders = Array.from(this.providers.entries())
       .filter(([_, config]) => config.enabled)
       .map(([provider]) => provider);
-    
+
     if (availableProviders.length === 0) {
       throw new Error('No AI providers available');
     }
-    
+
     const provider = availableProviders[0];
+    if (!provider) {
+      throw new Error('No AI providers available');
+    }
     return this.analyzeWithProvider(provider, request);
   }
 
@@ -222,12 +225,14 @@ class AIService {
     };
 
     const mockData = mockResults[provider] || {};
-    
+    const randomIndex = Math.floor(Math.random() * severityLevels.length);
+    const defaultThreatLevel = severityLevels[randomIndex] ?? 'safe';
+
     return {
       provider,
       timestamp: Date.now(),
       confidence: mockData.confidence || Math.random() * 0.3 + 0.7,
-      threatLevel: mockData.threatLevel || severityLevels[Math.floor(Math.random() * severityLevels.length)],
+      threatLevel: mockData.threatLevel || defaultThreatLevel,
       malwareFamily: mockData.malwareFamily,
       malwareType: mockData.malwareType,
       signatures: mockData.signatures || [],
@@ -294,8 +299,10 @@ class AIService {
 
     for (let i = 0; i < enabledProviders.length; i++) {
       const provider = enabledProviders[i];
+      if (!provider) continue;
+
       const baseProgress = (i / totalProviders) * 100;
-      
+
       if (progressCallback) {
         progressCallback(provider, baseProgress);
       }
@@ -303,7 +310,7 @@ class AIService {
       try {
         const result = await this.analyzeWithProvider(provider, request);
         results.push(result);
-        
+
         if (progressCallback) {
           progressCallback(provider, ((i + 1) / totalProviders) * 100);
         }
@@ -381,8 +388,8 @@ class AIService {
   }
 
   private async singleWithFallback(request: AIAnalysisRequest, progressCallback?: (provider: string, progress: number) => void) {
-    const primaryProvider = request.providers[0] || 'claude';
-    
+    const primaryProvider = request.providers[0] ?? 'claude';
+
     try {
       const result = await this.analyzeWithProvider(primaryProvider, request);
       return {
@@ -445,56 +452,63 @@ class AIService {
     
     // Determine consensus
     const consensusThreat = [...threatLevelVotes.entries()]
-      .sort((a, b) => b[1] - a[1])[0]?.[0] || 'safe';
-    
+      .sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'safe';
+
     const consensusFamily = [...familyVotes.entries()]
       .sort((a, b) => b[1] - a[1])[0]?.[0];
-    
+
     const consensus: AIAnalysisResult = {
       provider: 'ensemble' as AIProvider,
       timestamp: Date.now(),
       confidence: validResults > 0 ? totalConfidence / validResults : 0,
-      threatLevel: consensusThreat as any,
+      threatLevel: consensusThreat as 'safe' | 'suspicious' | 'malicious' | 'critical',
       malwareFamily: consensusFamily,
       malwareType: results[0]?.malwareType,
       signatures: Array.from(allSignatures),
       behaviors: Array.from(allBehaviors),
       iocs: this.mergeIOCs(results),
-      recommendations: this.generateRecommendations(consensusThreat as any)
+      recommendations: this.generateRecommendations(consensusThreat as 'safe' | 'suspicious' | 'malicious' | 'critical')
     };
-    
+
     return { consensus, individual: results };
   }
 
   private async sequentialEnhancement(request: AIAnalysisRequest, progressCallback?: (provider: string, progress: number) => void) {
     const results: AIAnalysisResult[] = [];
     let enhancedRequest = { ...request };
-    
+
     for (let i = 0; i < request.providers.length; i++) {
       const provider = request.providers[i];
+      if (!provider) continue;
+
       const progress = (i / request.providers.length) * 100;
-      
+
       if (progressCallback) {
         progressCallback(provider, progress);
       }
-      
+
       const result = await this.analyzeWithProvider(provider, enhancedRequest);
       results.push(result);
-      
+
       if (progressCallback) {
         progressCallback(provider, ((i + 1) / request.providers.length) * 100);
       }
-      
+
       // Enhance request with previous results
       enhancedRequest = {
         ...enhancedRequest,
         content: `${enhancedRequest.content}\n\nPrevious analysis:\n${JSON.stringify(result, null, 2)}`
       };
     }
-    
+
     // Last result is the most enhanced
+    const lastResult = results[results.length - 1];
+    if (!lastResult) {
+      throw new Error('No analysis results generated');
+    }
+
     return {
-      consensus: results[results.length - 1],
+      consensus: lastResult,
       individual: results
     };
   }
@@ -541,8 +555,8 @@ class AIService {
     };
   }
 
-  private generateRecommendations(threatLevel: 'safe' | 'suspicious' | 'malicious' | 'critical') {
-    const recommendations: Record<string, string[]> = {
+  private generateRecommendations(threatLevel: 'safe' | 'suspicious' | 'malicious' | 'critical'): string[] {
+    const recommendations: Record<'safe' | 'suspicious' | 'malicious' | 'critical', string[]> = {
       safe: [
         'File appears benign',
         'Continue monitoring for behavioral changes',
@@ -570,8 +584,8 @@ class AIService {
         'Consider full system rebuild after analysis'
       ]
     };
-    
-    return recommendations[threatLevel] || recommendations.safe;
+
+    return recommendations[threatLevel];
   }
 }
 

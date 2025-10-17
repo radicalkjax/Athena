@@ -36,8 +36,13 @@ const HexEditor: Component<HexEditorProps> = (props) => {
         const idx = i + j;
         if (idx < data.length) {
           const byte = data[idx];
-          bytes.push(byte);
-          ascii.push(byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.');
+          if (byte !== undefined) {
+            bytes.push(byte);
+            ascii.push(byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.');
+          } else {
+            bytes.push(null);
+            ascii.push('');
+          }
         } else {
           bytes.push(null);
           ascii.push('');
@@ -60,9 +65,12 @@ const HexEditor: Component<HexEditorProps> = (props) => {
 
   const handleByteClick = (offset: number) => {
     if (props.readOnly) return;
-    setSelectedOffset(offset);
-    setEditingOffset(offset);
-    setEditValue(props.data[offset].toString(16).padStart(2, '0'));
+    const byte = props.data[offset];
+    if (byte !== undefined) {
+      setSelectedOffset(offset);
+      setEditingOffset(offset);
+      setEditValue(byte.toString(16).padStart(2, '0'));
+    }
   };
 
   const handleEditSubmit = () => {
@@ -173,12 +181,16 @@ const HexEditor: Component<HexEditorProps> = (props) => {
       </div>
       
       <div class="hex-status">
-        {selectedOffset() !== null && (
-          <span>
-            Offset: {formatOffset(selectedOffset()!)} | 
-            Value: {formatByte(props.data[selectedOffset()!])} ({props.data[selectedOffset()!]})
-          </span>
-        )}
+        {selectedOffset() !== null && (() => {
+          const offset = selectedOffset()!;
+          const byte = props.data[offset];
+          return byte !== undefined ? (
+            <span>
+              Offset: {formatOffset(offset)} |
+              Value: {formatByte(byte)} ({byte})
+            </span>
+          ) : null;
+        })()}
       </div>
     </div>
   );

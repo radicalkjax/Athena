@@ -51,28 +51,32 @@ const PerformanceMonitor: Component = () => {
       const wasmMetrics = performanceMonitor.getMetrics('wasm_execution');
       if (wasmMetrics.length > 0) {
         const latest = wasmMetrics[wasmMetrics.length - 1];
-        const average = performanceMonitor.getAverageMetric('wasm_execution');
-        displayMetrics.push({
-          name: 'WASM Execution',
-          value: Math.round(latest.value),
-          unit: 'ms',
-          average: Math.round(average),
-          trend: latest.value > average ? 'up' : latest.value < average ? 'down' : 'stable',
-        });
+        if (latest) {
+          const average = performanceMonitor.getAverageMetric('wasm_execution');
+          displayMetrics.push({
+            name: 'WASM Execution',
+            value: Math.round(latest.value),
+            unit: 'ms',
+            average: Math.round(average),
+            trend: latest.value > average ? 'up' : latest.value < average ? 'down' : 'stable',
+          });
+        }
       }
 
       // Add file processing metrics
       const fileMetrics = performanceMonitor.getMetrics('file_processing');
       if (fileMetrics.length > 0) {
         const latest = fileMetrics[fileMetrics.length - 1];
-        const average = performanceMonitor.getAverageMetric('file_processing');
-        displayMetrics.push({
-          name: 'File Processing',
-          value: Math.round(latest.value),
-          unit: 'ms',
-          average: Math.round(average),
-          trend: latest.value > average ? 'up' : latest.value < average ? 'down' : 'stable',
-        });
+        if (latest) {
+          const average = performanceMonitor.getAverageMetric('file_processing');
+          displayMetrics.push({
+            name: 'File Processing',
+            value: Math.round(latest.value),
+            unit: 'ms',
+            average: Math.round(average),
+            trend: latest.value > average ? 'up' : latest.value < average ? 'down' : 'stable',
+          });
+        }
       }
 
       setMetrics(displayMetrics);

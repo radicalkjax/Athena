@@ -51,8 +51,10 @@ const StaticAnalysis: Component = () => {
     const files = analysisStore.files();
     if (files.length > 0) {
       const latestFile = files[files.length - 1];
+      if (!latestFile) return;
+
       setCurrentFile(latestFile);
-      
+
       if (latestFile.analysisResult) {
         updateAnalysisData(latestFile.analysisResult);
       }

@@ -252,7 +252,8 @@ class ProgressTracker {
       const key = `${fileId}-${type}`;
       const history = this.progressHistory.get(key);
       if (history && history.length > 0) {
-        progress[type] = history[history.length - 1].progress;
+        const lastEntry = history[history.length - 1];
+        progress[type] = lastEntry !== undefined ? lastEntry.progress : 0;
       } else {
         progress[type] = 0;
       }

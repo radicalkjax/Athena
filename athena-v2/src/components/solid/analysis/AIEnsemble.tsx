@@ -119,14 +119,15 @@ const AIEnsemble: Component = () => {
   };
 
 
-  const providerInsights = [
-    { provider: providers[0], description: 'Advanced reasoning capabilities identified multiple evasion techniques including anti-VM checks and API hashing. Sample uses sophisticated methods to avoid detection during initial execution phases. Recommends enhanced behavioral monitoring.', color: '#74b9ff' },
-    { provider: providers[1], description: 'Architectural analysis indicates multi-stage attack pattern with modular payload delivery. Threat model suggests this is part of larger campaign targeting financial data. Infrastructure design shows advanced planning and persistent access goals.', color: '#fd79a8' },
-    { provider: providers[2], description: 'Deep reasoning model shows strong correlation with known APT campaigns. C2 infrastructure analysis reveals connection to previous incidents. Attribution points to financially motivated threat group with East European origins.', color: '#e17055' },
-    { provider: providers[3], description: 'High-capacity model analysis reveals use of commercial packer (UPX) with additional custom obfuscation layers. Development patterns suggest professional malware-as-a-service operation. Recommends updated static analysis signatures for similar variants.', color: '#00b894' },
-    { provider: providers[4], description: 'Multimodal analysis shows high risk to system reliability. Persistence mechanisms will survive reboots and interfere with legitimate processes. Network monitoring indicates continuous data exfiltration potential.', color: '#fdcb6e' },
-    { provider: providers[5], description: 'Google\'s advanced model confirms Emotet variant classification. Family signatures match 2024 Q4 campaign patterns. Sample contains modular architecture for additional payload downloads. Generated comprehensive detection rules.', color: '#6c5ce7' }
-  ];
+  // Color mapping for providers
+  const providerColors: Record<AIProvider, string> = {
+    'claude': '#74b9ff',
+    'gpt4': '#fd79a8',
+    'deepseek': '#e17055',
+    'gemini': '#00b894',
+    'mistral': '#fdcb6e',
+    'llama': '#6c5ce7'
+  };
 
   return (
     <div class="content-panel">
@@ -174,17 +175,20 @@ const AIEnsemble: Component = () => {
                   <For each={analysisResult()!.individualResults}>
                     {(result) => {
                       const providerInfo = providers.find(p => p.id === result.provider);
-                      const color = providerInfo ? providerInsights.find(i => i.provider.id === result.provider)?.color || '#74b9ff' : '#74b9ff';
-                      
+                      const color = providerColors[result.provider] || '#74b9ff';
+
                       return (
                         <div style={`background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid ${color};`}>
                           <h4 style={`color: ${color}; margin-bottom: 8px;`}>
                             {providerInfo?.icon} {providerInfo?.name} - {Math.round(result.confidence * 100)}% Confidence
                           </h4>
                           <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0 0 8px 0;">
-                            <strong>Threat Level:</strong> {result.threatLevel} | 
-                            <strong>Family:</strong> {result.malwareFamily || 'Unknown'} | 
+                            <strong>Threat Level:</strong> {result.threatLevel} |
+                            <strong>Family:</strong> {result.malwareFamily || 'Unknown'} |
                             <strong>Type:</strong> {result.malwareType || 'Unknown'}
+                          </p>
+                          <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 8px 0;">
+                            <strong>Signatures:</strong> {result.signatures.slice(0, 3).join(', ') || 'None detected'}
                           </p>
                           <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
                             <strong>Recommendations:</strong> {result.recommendations.slice(0, 2).join('. ')}

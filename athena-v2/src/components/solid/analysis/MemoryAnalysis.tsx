@@ -93,8 +93,11 @@ const MemoryAnalysis: Component = () => {
   // Watch for file changes to update memory view
   createEffect(() => {
     const files = analysisStore.files();
-    if (files.length > 0 && files[files.length - 1].analysisResult) {
-      updateMemoryDataFromAnalysis(files[files.length - 1].analysisResult);
+    if (files.length > 0) {
+      const latestFile = files[files.length - 1];
+      if (latestFile && latestFile.analysisResult) {
+        updateMemoryDataFromAnalysis(latestFile.analysisResult);
+      }
     }
   });
 

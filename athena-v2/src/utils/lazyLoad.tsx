@@ -23,7 +23,7 @@ export function createLazyComponent<T extends Component<any>>(
       
       const observer = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) {
+          if (entry && entry.isIntersecting) {
             setIsVisible(true);
             observer.disconnect();
           }

@@ -201,22 +201,24 @@ export const FileUploadArea: Component = () => {
     
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
+      const file = files[0];
+      if (!file) return;
+
       if (isTauri()) {
         // In Tauri, we need to convert the File object to a path
         // For security reasons, Tauri doesn't allow direct file access from drag-drop
         // Instead, we'll read the file and pass it through the same analysis pipeline
         try {
-          const file = files[0];
           const buffer = await file.arrayBuffer();
           const bytes = Array.from(new Uint8Array(buffer));
-          
+
           // Create a temporary file path in Tauri's app data directory
           const fileName = file.name;
           const tempPath = await invokeCommand('create_temp_file', {
             fileName,
             bytes
           });
-          
+
           if (tempPath) {
             await uploadFile(tempPath);
           } else {
@@ -225,11 +227,11 @@ export const FileUploadArea: Component = () => {
           }
         } catch (err) {
           logger.warn('Failed to handle Tauri file drop, falling back to web method', err);
-          await uploadWebFile(files[0]);
+          await uploadWebFile(file);
         }
       } else {
         // Web drag and drop
-        await uploadWebFile(files[0]);
+        await uploadWebFile(file);
       }
     }
   };

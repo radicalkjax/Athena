@@ -507,6 +507,3 @@ class ExportService {
 
 // Create singleton instance
 export const exportService = new ExportService();
-
-// Export types and functions
-export type { ExportTemplate, BatchExportOptions };

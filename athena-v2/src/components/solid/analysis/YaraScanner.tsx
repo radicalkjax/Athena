@@ -34,7 +34,7 @@ const YaraScanner: Component = () => {
     const files = analysisStore.files();
     if (files.length > 0 && scannerInitialized() && rulesLoaded()) {
       const latestFile = files[files.length - 1];
-      if (latestFile.path) {
+      if (latestFile && latestFile.path) {
         await scanFile(latestFile.path);
       }
     }
