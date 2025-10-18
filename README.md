@@ -366,4 +366,13 @@ Athena comes with comprehensive documentation to help you understand and use the
 
 ## 📱 Screenshots
 
-> **Note**: Screenshots are from the legacy React Native version. Tauri v2 screenshots will be added soon.
+### Athena Desktop Application (Tauri 2.0)
+
+<div align="center">
+  <img src="./athena-v2/athena-v2/src-tauri/icons/Athena_Desktop_Screenshot.png" alt="Athena Desktop Application" width="100%" />
+  <p><em>AI-powered malware analysis platform with WASM-based security modules and real-time analysis</em></p>
+</div>
+
+**Platform**: macOS, Windows, Linux
+**Tech Stack**: Rust + SolidJS + WebAssembly
+**Features Shown**: File upload, AI model selection, analysis workflow, real-time processing
