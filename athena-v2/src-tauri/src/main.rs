@@ -3,16 +3,25 @@
 mod commands;
 mod ai_providers;
 mod signature_verify;
+mod workflow;
 use commands::system_monitor::SystemMonitor;
 use commands::wasm_runtime::WasmRuntime;
+use workflow::JobStore;
 use std::sync::{Arc, Mutex};
 
 fn main() {
+    // Initialize job store
+    let job_store = Arc::new(
+        JobStore::new("jobs.db")
+            .expect("Failed to initialize job store")
+    );
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(SystemMonitor::new())
         .manage(Arc::new(Mutex::new(None::<WasmRuntime>)))
+        .manage(job_store)
         .invoke_handler(tauri::generate_handler![
             commands::file_ops::upload_file,
             commands::file_ops::get_file_metadata,
@@ -40,6 +49,10 @@ fn main() {
             commands::wasm_runtime::unload_wasm_module,
             commands::wasm_runtime::get_wasm_modules,
             commands::wasm_runtime::get_wasm_memory_usage,
+            commands::wasm_runtime::get_wasm_metrics,
+            commands::wasm_runtime::get_all_wasm_metrics,
+            commands::wasm_runtime::reset_wasm_metrics,
+            commands::wasm_runtime::reset_all_wasm_metrics,
             commands::ai_analysis::analyze_with_ai,
             commands::ai_analysis::get_ai_provider_status,
             commands::ai_analysis::update_ai_provider_config,
@@ -58,6 +71,12 @@ fn main() {
             commands::file_analysis::generate_excel_report,
             commands::file_analysis::encrypt_export_data,
             commands::file_analysis::compress_export_data,
+            commands::workflow::start_job,
+            commands::workflow::get_job_status,
+            commands::workflow::list_jobs,
+            commands::workflow::cancel_job,
+            commands::workflow::delete_job,
+            commands::workflow::get_active_jobs,
         ])
         .setup(|_app| {
             #[cfg(debug_assertions)]

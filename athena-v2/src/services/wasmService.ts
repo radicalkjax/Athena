@@ -1,12 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { performanceMonitor } from './performanceMonitor';
 import { memoryManager } from './memoryManager';
-import type { 
-  WasmModule, 
-  WasmExecutionResult, 
+import type {
+  WasmModule,
+  WasmExecutionResult,
   WasmRuntimeStatus,
   WasmAnalysisRequest,
-  WasmAnalysisResult
+  WasmAnalysisResult,
+  WasmMetrics
 } from '../types/wasm';
 
 class WasmService {
@@ -199,6 +200,47 @@ class WasmService {
       return parsed.findings || [];
     } catch {
       return [];
+    }
+  }
+
+  // Metrics tracking methods
+  async getMetrics(moduleId: string): Promise<WasmMetrics> {
+    try {
+      const metrics = await invoke<WasmMetrics>('get_wasm_metrics', { moduleId });
+      return metrics;
+    } catch (error) {
+      console.error(`Failed to get metrics for module ${moduleId}:`, error);
+      throw error;
+    }
+  }
+
+  async getAllMetrics(): Promise<Record<string, WasmMetrics>> {
+    try {
+      const metrics = await invoke<Record<string, WasmMetrics>>('get_all_wasm_metrics');
+      return metrics;
+    } catch (error) {
+      console.error('Failed to get all WASM metrics:', error);
+      throw error;
+    }
+  }
+
+  async resetMetrics(moduleId: string): Promise<string> {
+    try {
+      const result = await invoke<string>('reset_wasm_metrics', { moduleId });
+      return result;
+    } catch (error) {
+      console.error(`Failed to reset metrics for module ${moduleId}:`, error);
+      throw error;
+    }
+  }
+
+  async resetAllMetrics(): Promise<string> {
+    try {
+      const result = await invoke<string>('reset_all_wasm_metrics');
+      return result;
+    } catch (error) {
+      console.error('Failed to reset all WASM metrics:', error);
+      throw error;
     }
   }
 }

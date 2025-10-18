@@ -2,6 +2,7 @@ use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 
 mod engine;
+mod fuzzy;
 mod matcher;
 mod rules;
 mod signatures;

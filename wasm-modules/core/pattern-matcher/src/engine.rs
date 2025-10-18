@@ -3,12 +3,15 @@ use rustc_hash::FxHashMap;
 use std::sync::Arc;
 
 use crate::types::*;
+use crate::fuzzy::{FuzzyMatcher, FuzzyConfig, FuzzyAlgorithm};
 
 pub struct PatternEngine {
     exact_matcher: Option<AhoCorasick>,
     exact_patterns: Vec<(String, String, f32)>, // (pattern_id, rule_id, weight)
     regex_patterns: Vec<(String, String, regex::Regex, f32)>, // (pattern_id, rule_id, regex, weight)
     binary_patterns: Vec<(String, String, Vec<u8>, Vec<u8>, f32)>, // (pattern_id, rule_id, pattern, mask, weight)
+    fuzzy_patterns: Vec<(String, String, Vec<u8>, f32)>, // (pattern_id, rule_id, pattern, weight)
+    fuzzy_matcher: FuzzyMatcher,
     rule_map: FxHashMap<String, Arc<CompiledRule>>,
 }
 
@@ -19,8 +22,17 @@ impl PatternEngine {
             exact_patterns: Vec::new(),
             regex_patterns: Vec::new(),
             binary_patterns: Vec::new(),
+            fuzzy_patterns: Vec::new(),
+            fuzzy_matcher: FuzzyMatcher::new(FuzzyConfig {
+                max_distance: 2,
+                algorithm: FuzzyAlgorithm::Levenshtein,
+            }),
             rule_map: FxHashMap::default(),
         }
+    }
+
+    pub fn set_fuzzy_config(&mut self, config: FuzzyConfig) {
+        self.fuzzy_matcher = FuzzyMatcher::new(config);
     }
 
     pub fn add_rule(&mut self, rule: CompiledRule) -> Result<()> {
@@ -70,7 +82,14 @@ impl PatternEngine {
                         }
                     }
                     PatternType::Fuzzy => {
-                        // TODO: Implement fuzzy matching
+                        if let Some(bytes) = &pattern.bytes {
+                            self.fuzzy_patterns.push((
+                                pattern.id.clone(),
+                                rule.id.clone(),
+                                bytes.clone(),
+                                pattern.weight,
+                            ));
+                        }
                     }
                 }
             }
@@ -181,9 +200,116 @@ impl PatternEngine {
             }
         }
 
-        // TODO: Evaluate rule conditions and filter matches based on them
+        // Scan fuzzy patterns
+        for (pattern_id, rule_id, pattern, weight) in &self.fuzzy_patterns {
+            let positions = self.fuzzy_matcher.find_all(pattern, data);
+
+            for offset in positions {
+                let length = pattern.len();
+
+                pattern_matches
+                    .entry(pattern_id.clone())
+                    .or_insert_with(Vec::new)
+                    .push((offset, length));
+
+                if let Some(rule) = self.rule_map.get(rule_id) {
+                    matches.push(Match {
+                        rule_id: rule_id.clone(),
+                        rule_name: rule.name.clone(),
+                        pattern_id: pattern_id.clone(),
+                        offset,
+                        length,
+                        matched_data: data[offset..offset + length].to_vec(),
+                        severity: rule.severity,
+                        category: rule.category,
+                        confidence: *weight,
+                    });
+                }
+            }
+        }
+
+        // Evaluate rule conditions and filter matches
+        matches = self.evaluate_conditions(&matches, &pattern_matches);
 
         Ok(matches)
+    }
+
+    /// Evaluate rule conditions and filter matches
+    fn evaluate_conditions(
+        &self,
+        matches: &[Match],
+        pattern_matches: &FxHashMap<String, Vec<(usize, usize)>>,
+    ) -> Vec<Match> {
+        let mut filtered_matches = Vec::new();
+        let mut processed_rules = FxHashMap::default();
+
+        for mat in matches {
+            // Skip if we've already processed this rule
+            if processed_rules.contains_key(&mat.rule_id) {
+                continue;
+            }
+
+            if let Some(rule) = self.rule_map.get(&mat.rule_id) {
+                if self.evaluate_condition(&rule.condition, pattern_matches) {
+                    // Rule condition satisfied, include all matches for this rule
+                    processed_rules.insert(mat.rule_id.clone(), true);
+
+                    for m in matches {
+                        if m.rule_id == mat.rule_id {
+                            filtered_matches.push(m.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        filtered_matches
+    }
+
+    /// Recursively evaluate a condition
+    fn evaluate_condition(
+        &self,
+        condition: &Condition,
+        pattern_matches: &FxHashMap<String, Vec<(usize, usize)>>,
+    ) -> bool {
+        match condition {
+            Condition::All => {
+                // All patterns must match
+                if let Some(rule) = self.rule_map.values().next() {
+                    rule.patterns.iter().all(|p| pattern_matches.contains_key(&p.id))
+                } else {
+                    false
+                }
+            }
+
+            Condition::Any(count) => {
+                // At least 'count' patterns must match
+                if let Some(rule) = self.rule_map.values().next() {
+                    let match_count = rule.patterns.iter()
+                        .filter(|p| pattern_matches.contains_key(&p.id))
+                        .count();
+                    match_count >= *count
+                } else {
+                    false
+                }
+            }
+
+            Condition::Not(inner) => {
+                !self.evaluate_condition(inner, pattern_matches)
+            }
+
+            Condition::And(conditions) => {
+                conditions.iter().all(|c| self.evaluate_condition(c, pattern_matches))
+            }
+
+            Condition::Or(conditions) => {
+                conditions.iter().any(|c| self.evaluate_condition(c, pattern_matches))
+            }
+
+            Condition::PatternRef(pattern_id) => {
+                pattern_matches.contains_key(pattern_id)
+            }
+        }
     }
 
     fn matches_with_mask(data: &[u8], pattern: &[u8], mask: &[u8]) -> bool {
@@ -202,12 +328,13 @@ impl PatternEngine {
 
     pub fn get_stats(&self) -> PatternStats {
         let mut stats = PatternStats::new();
-        
+
         stats.exact_patterns = self.exact_patterns.len();
         stats.regex_patterns = self.regex_patterns.len();
         stats.binary_patterns = self.binary_patterns.len();
-        stats.total_patterns = stats.exact_patterns + stats.regex_patterns + stats.binary_patterns;
-        
+        stats.fuzzy_patterns = self.fuzzy_patterns.len();
+        stats.total_patterns = stats.exact_patterns + stats.regex_patterns + stats.binary_patterns + stats.fuzzy_patterns;
+
         stats
     }
 
@@ -216,6 +343,7 @@ impl PatternEngine {
         self.exact_patterns.clear();
         self.regex_patterns.clear();
         self.binary_patterns.clear();
+        self.fuzzy_patterns.clear();
         self.rule_map.clear();
     }
 }
@@ -286,5 +414,124 @@ mod tests {
         
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].pattern_id, "binary_pattern");
+    }
+
+    #[test]
+    fn test_fuzzy_pattern_matching() {
+        let mut engine = PatternEngine::new();
+        engine.set_fuzzy_config(FuzzyConfig {
+            max_distance: 2,
+            algorithm: FuzzyAlgorithm::Levenshtein,
+        });
+
+        let pattern = CompiledPattern {
+            id: "fuzzy_pattern".to_string(),
+            pattern_type: PatternType::Fuzzy,
+            regex: None,
+            bytes: Some(b"malware".to_vec()),
+            mask: None,
+            weight: 0.85,
+        };
+
+        let rule = CompiledRule {
+            id: "fuzzy_rule".to_string(),
+            name: "Fuzzy Rule".to_string(),
+            patterns: vec![pattern],
+            condition: Condition::All,
+            severity: Severity::High,
+            category: ThreatCategory::Malware,
+        };
+
+        engine.compile(&[rule]).unwrap();
+
+        // Test with slightly different string (edit distance = 2)
+        let data = b"This contains mlware in the text";
+        let matches = engine.scan(data).unwrap();
+
+        assert!(!matches.is_empty(), "Should find fuzzy match with edit distance 2");
+        assert_eq!(matches[0].pattern_id, "fuzzy_pattern");
+    }
+
+    #[test]
+    fn test_condition_evaluation_all() {
+        let mut engine = PatternEngine::new();
+
+        let pattern1 = CompiledPattern {
+            id: "pattern1".to_string(),
+            pattern_type: PatternType::Exact,
+            regex: None,
+            bytes: Some(b"hello".to_vec()),
+            mask: None,
+            weight: 1.0,
+        };
+
+        let pattern2 = CompiledPattern {
+            id: "pattern2".to_string(),
+            pattern_type: PatternType::Exact,
+            regex: None,
+            bytes: Some(b"world".to_vec()),
+            mask: None,
+            weight: 1.0,
+        };
+
+        let rule = CompiledRule {
+            id: "cond_rule".to_string(),
+            name: "Conditional Rule".to_string(),
+            patterns: vec![pattern1, pattern2],
+            condition: Condition::All,
+            severity: Severity::Medium,
+            category: ThreatCategory::Suspicious,
+        };
+
+        engine.compile(&[rule]).unwrap();
+
+        // Both patterns present - should match
+        let data1 = b"hello world";
+        let matches1 = engine.scan(data1).unwrap();
+        assert_eq!(matches1.len(), 2, "Should find both patterns");
+
+        // Only one pattern present - should not match after condition filtering
+        let data2 = b"hello there";
+        let matches2 = engine.scan(data2).unwrap();
+        assert_eq!(matches2.len(), 0, "Condition 'All' not satisfied");
+    }
+
+    #[test]
+    fn test_condition_evaluation_any() {
+        let mut engine = PatternEngine::new();
+
+        let pattern1 = CompiledPattern {
+            id: "pattern1".to_string(),
+            pattern_type: PatternType::Exact,
+            regex: None,
+            bytes: Some(b"malware".to_vec()),
+            mask: None,
+            weight: 1.0,
+        };
+
+        let pattern2 = CompiledPattern {
+            id: "pattern2".to_string(),
+            pattern_type: PatternType::Exact,
+            regex: None,
+            bytes: Some(b"virus".to_vec()),
+            mask: None,
+            weight: 1.0,
+        };
+
+        let rule = CompiledRule {
+            id: "any_rule".to_string(),
+            name: "Any Rule".to_string(),
+            patterns: vec![pattern1, pattern2],
+            condition: Condition::Any(1),
+            severity: Severity::High,
+            category: ThreatCategory::Malware,
+        };
+
+        engine.compile(&[rule]).unwrap();
+
+        // One pattern present - should match
+        let data = b"This file contains malware";
+        let matches = engine.scan(data).unwrap();
+        assert!(!matches.is_empty(), "Condition 'Any(1)' satisfied");
     }
 }

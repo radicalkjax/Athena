@@ -10,3 +10,4 @@ pub mod disassembly;
 pub mod wasm_runtime;
 pub mod ai_analysis;
 pub mod advanced_analysis;
+pub mod workflow;

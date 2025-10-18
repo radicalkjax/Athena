@@ -45,3 +45,13 @@ export interface WasmAnalysisResult {
     instructionsExecuted?: number;
   };
 }
+
+export interface WasmMetrics {
+  confidence: number;
+  memory_used: number;
+  throughput: number;
+  execution_time_ms: number;
+  call_count: number;
+  error_count: number;
+  last_execution: string;
+}

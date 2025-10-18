@@ -22,11 +22,11 @@
     "tauri:android:dev": "tauri android dev"
   },
   "dependencies": {
-    "@solidjs/router": "^0.10.5",
+    "@solidjs/router": "^0.10.10",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-dialog": "^2.0.0",
     "@types/uuid": "^10.0.0",
-    "solid-js": "^1.8.11",
+    "solid-js": "^1.9.9",
     "svelte": "^5.15.1",
     "uuid": "^11.1.0"
   },

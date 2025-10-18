@@ -55,6 +55,8 @@ rand = "0.8"
 # Digital signature verification
 authenticode = { version = "0.5", features = ["object", "std"] }
 x509-parser = "0.16"
+# Workflow persistence
+rusqlite = { version = "0.32", features = ["bundled"] }
 x509-cert = "0.2"
 der-parser = "9.0"
 der = "0.7"

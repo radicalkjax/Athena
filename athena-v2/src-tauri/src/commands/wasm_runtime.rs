@@ -2,9 +2,11 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use tauri::State;
 use wasmtime::*;
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
+use chrono::Utc;
 
 struct WasmStore {
     _wasi: WasiCtx,
@@ -39,6 +41,113 @@ pub struct WasmExecutionResult {
     pub error: Option<String>,
     pub execution_time_ms: u64,
     pub memory_used: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WasmMetrics {
+    pub confidence: f64,
+    pub memory_used: u64,
+    pub throughput: f64,
+    pub execution_time_ms: u64,
+    pub call_count: u64,
+    pub error_count: u64,
+    pub last_execution: String,
+}
+
+impl Default for WasmMetrics {
+    fn default() -> Self {
+        Self {
+            confidence: 0.0,
+            memory_used: 0,
+            throughput: 0.0,
+            execution_time_ms: 0,
+            call_count: 0,
+            error_count: 0,
+            last_execution: Utc::now().to_rfc3339(),
+        }
+    }
+}
+
+/// Track metrics for a WASM module instance
+#[derive(Debug, Clone)]
+pub struct MetricsTracker {
+    module_name: String,
+    call_count: u64,
+    error_count: u64,
+    total_execution_time: Duration,
+    peak_memory: u64,
+    total_bytes_processed: u64,
+}
+
+impl MetricsTracker {
+    pub fn new(module_name: String) -> Self {
+        Self {
+            module_name,
+            call_count: 0,
+            error_count: 0,
+            total_execution_time: Duration::ZERO,
+            peak_memory: 0,
+            total_bytes_processed: 0,
+        }
+    }
+
+    /// Record a function execution
+    pub fn record_execution(&mut self, duration: Duration, memory_used: u64, bytes_processed: u64, success: bool) {
+        self.call_count += 1;
+        self.total_execution_time += duration;
+        self.total_bytes_processed += bytes_processed;
+
+        if memory_used > self.peak_memory {
+            self.peak_memory = memory_used;
+        }
+
+        if !success {
+            self.error_count += 1;
+        }
+    }
+
+    /// Get current metrics
+    pub fn get_metrics(&self) -> WasmMetrics {
+        WasmMetrics {
+            confidence: self.calculate_confidence(),
+            memory_used: self.peak_memory,
+            throughput: self.calculate_throughput(),
+            execution_time_ms: self.total_execution_time.as_millis() as u64,
+            call_count: self.call_count,
+            error_count: self.error_count,
+            last_execution: Utc::now().to_rfc3339(),
+        }
+    }
+
+    fn calculate_confidence(&self) -> f64 {
+        if self.call_count == 0 {
+            return 0.0;
+        }
+
+        // Confidence based on success rate
+        let success_rate = (self.call_count - self.error_count) as f64 / self.call_count as f64;
+
+        // Confidence increases with more successful calls (logarithmic scaling)
+        let call_factor = (self.call_count as f64).log10().min(1.0);
+
+        // Combine: 70% success rate + 30% call volume factor
+        success_rate * (0.7 + 0.3 * call_factor)
+    }
+
+    fn calculate_throughput(&self) -> f64 {
+        if self.total_execution_time.is_zero() {
+            return 0.0;
+        }
+
+        // Bytes per second
+        self.total_bytes_processed as f64 / self.total_execution_time.as_secs_f64()
+    }
+}
+
+// Global metrics storage
+lazy_static::lazy_static! {
+    static ref METRICS: Arc<Mutex<HashMap<String, MetricsTracker>>> =
+        Arc::new(Mutex::new(HashMap::new()));
 }
 
 pub struct WasmRuntime {
@@ -220,6 +329,19 @@ pub async fn execute_wasm_function(
     };
 
     let execution_time_ms = start.elapsed().as_millis() as u64;
+    let duration = start.elapsed();
+
+    // Estimate bytes processed (use memory size as proxy)
+    let bytes_processed = memory_used;
+
+    // Record metrics
+    {
+        let mut metrics = METRICS.lock().unwrap();
+        let tracker = metrics.entry(module_id.clone())
+            .or_insert_with(|| MetricsTracker::new(module_id.clone()));
+
+        tracker.record_execution(duration, memory_used, bytes_processed, true);
+    }
 
     Ok(WasmExecutionResult {
         success: true,
@@ -311,4 +433,41 @@ pub async fn get_wasm_memory_usage(
     }
 
     Ok(total_memory)
+}
+
+#[tauri::command]
+pub async fn get_wasm_metrics(module_id: String) -> Result<WasmMetrics, String> {
+    let metrics = METRICS.lock().unwrap();
+
+    metrics.get(&module_id)
+        .map(|tracker| tracker.get_metrics())
+        .ok_or_else(|| format!("No metrics found for module: {}", module_id))
+}
+
+#[tauri::command]
+pub async fn get_all_wasm_metrics() -> Result<HashMap<String, WasmMetrics>, String> {
+    let metrics = METRICS.lock().unwrap();
+
+    Ok(metrics.iter()
+        .map(|(module_id, tracker)| (module_id.clone(), tracker.get_metrics()))
+        .collect())
+}
+
+#[tauri::command]
+pub async fn reset_wasm_metrics(module_id: String) -> Result<String, String> {
+    let mut metrics = METRICS.lock().unwrap();
+
+    if metrics.remove(&module_id).is_some() {
+        Ok(format!("Metrics reset for module: {}", module_id))
+    } else {
+        Err(format!("No metrics found for module: {}", module_id))
+    }
+}
+
+#[tauri::command]
+pub async fn reset_all_wasm_metrics() -> Result<String, String> {
+    let mut metrics = METRICS.lock().unwrap();
+    let count = metrics.len();
+    metrics.clear();
+    Ok(format!("Reset metrics for {} modules", count))
 }
