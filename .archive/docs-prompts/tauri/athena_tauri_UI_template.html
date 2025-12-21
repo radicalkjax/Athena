@@ -1,0 +1,2968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena Platform - AI-Powered Malware Analysis</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Enhanced color palette for accessibility */
+            --primary-bg: #1a1a2e;
+            --secondary-bg: #16213e;
+            --accent-bg: #0f3460;
+            --panel-bg: #252545;
+            --border-color: #ff6b9d;
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8d4;
+            --text-accent: #ff6b9d;
+            --success-color: #4ecdc4;
+            --warning-color: #ffd93d;
+            --danger-color: #ff6b6b;
+            --info-color: #74b9ff;
+            --code-bg: #1e1e3f;
+            
+            /* Barbie aesthetic with WCAG AA compliance */
+            --barbie-pink: #ff6b9d;
+            --barbie-accent: #ff9ec7;
+            --barbie-light: #ffcde1;
+            --barbie-gradient: linear-gradient(135deg, #ff6b9d 0%, #c7ecee 100%);
+            
+            /* Focus and interaction states */
+            --focus-outline: #ffffff;
+            --focus-ring: 0 0 0 3px rgba(255, 255, 255, 0.3);
+            
+            /* Priority indicators */
+            --critical-color: #ff6b6b;
+            --important-color: #ffd93d;
+            --advanced-color: #4ecdc4;
+        }
+        
+        /* Skip to main content link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: var(--barbie-pink);
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            border-radius: 4px;
+            z-index: 1000;
+            font-weight: 600;
+        }
+        
+        .skip-link:focus {
+            top: 6px;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* Enhanced header */
+        .header {
+            background: var(--secondary-bg);
+            border-bottom: 2px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: var(--barbie-gradient);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(255, 107, 157, 0.3);
+            aria-hidden: true;
+        }
+        
+        .logo-text {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+        
+        .platform-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-left: 10px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
+        /* Main content layout */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* Analysis sidebar */
+        .analysis-sidebar {
+            width: 320px;
+            background: var(--secondary-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-header {
+            padding: 15px;
+            background: var(--accent-bg);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sidebar-content {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        /* Priority sections */
+        .priority-section {
+            margin-bottom: 20px;
+        }
+        
+        .priority-header {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .critical-priority .priority-header {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--critical-color);
+        }
+        
+        .important-priority .priority-header {
+            background: rgba(255, 217, 61, 0.2);
+            color: var(--important-color);
+        }
+        
+        .advanced-priority .priority-header {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--advanced-color);
+        }
+        
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border: 2px solid transparent;
+        }
+        
+        .sidebar-item:hover {
+            background: var(--accent-bg);
+            color: var(--text-primary);
+        }
+        
+        .sidebar-item:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+            border-color: var(--focus-outline);
+        }
+        
+        .sidebar-item.active {
+            background: var(--barbie-pink);
+            color: white;
+        }
+        
+        /* AI Ensemble Status */
+        .ensemble-status {
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .ensemble-header {
+            font-weight: 600;
+            color: var(--barbie-pink);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .agent-status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            background: var(--code-bg);
+            border-radius: 4px;
+        }
+        
+        .agent-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success-color);
+        }
+        
+        .agent-status-dot.analyzing {
+            background: var(--warning-color);
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        /* Central analysis area */
+        .analysis-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Tab navigation */
+        .tab-nav {
+            background: var(--secondary-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            padding: 0 15px;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            white-space: nowrap;
+            border: 2px solid transparent;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 107, 157, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .tab:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+            border-color: var(--focus-outline);
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--barbie-pink);
+            background: rgba(255, 107, 157, 0.15);
+            color: var(--text-primary);
+        }
+        
+        /* Content panels */
+        .content-panels {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .content-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            overflow: auto;
+            padding: 20px;
+        }
+        
+        .content-panel.active {
+            display: block;
+        }
+        
+        /* Upload area */
+        .upload-section {
+            margin-bottom: 30px;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--barbie-pink);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(255, 107, 157, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover, .upload-area:focus-within {
+            background: rgba(255, 107, 157, 0.1);
+            border-color: var(--barbie-accent);
+        }
+        
+        .upload-area input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--barbie-pink);
+            margin-bottom: 15px;
+            aria-hidden: true;
+        }
+        
+        /* Analysis grid */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 300px);
+        }
+        
+        .analysis-main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .analysis-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-bg);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            overflow: auto;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .panel-title {
+            font-weight: 600;
+            color: var(--barbie-pink);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* AI Ensemble Results */
+        .ensemble-results {
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-bg);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .ensemble-consensus {
+            background: var(--code-bg);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .consensus-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success-color);
+            margin-bottom: 5px;
+        }
+        
+        .agent-results {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .agent-result {
+            background: var(--code-bg);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 0.85rem;
+        }
+        
+        .agent-name {
+            font-weight: 600;
+            color: var(--barbie-pink);
+            margin-bottom: 5px;
+        }
+        
+        .agent-prediction {
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        /* Code editor styling */
+        .code-editor {
+            background: var(--code-bg);
+            border: 1px solid var(--accent-bg);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow: auto;
+        }
+        
+        .code-header {
+            background: var(--accent-bg);
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .code-content {
+            padding: 15px;
+            line-height: 1.4;
+        }
+        
+        /* Stats overview */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-bg);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--barbie-gradient);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--barbie-pink);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        
+        .btn:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+        
+        .btn-primary {
+            background: var(--barbie-gradient);
+            color: white;
+            border-color: var(--barbie-pink);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 157, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--accent-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+            color: white;
+        }
+        
+        /* Platform configuration */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .config-section {
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-bg);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--accent-bg);
+            font-size: 0.85rem;
+        }
+        
+        .config-item:last-child {
+            border-bottom: none;
+        }
+        
+        .config-label {
+            color: var(--text-secondary);
+        }
+        
+        .config-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        /* Accessibility features */
+        @media (prefers-contrast: high) {
+            :root {
+                --text-primary: #ffffff;
+                --text-secondary: #ffffff;
+                --border-color: #ffffff;
+                --focus-outline: #ffff00;
+            }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .analysis-sidebar {
+                width: 280px;
+            }
+            
+            .analysis-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .analysis-sidebar {
+                width: 100%;
+                max-height: 250px;
+                overflow-y: auto;
+            }
+        }
+        
+        /* Screen reader only content */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--secondary-bg);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--barbie-pink);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--barbie-accent);
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip to main content -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header" role="banner">
+            <div class="logo-section">
+                <div class="logo" aria-hidden="true">⚔️</div>
+                <div>
+                    <h1 class="logo-text">Athena Platform</h1>
+                    <div class="platform-subtitle">AI-Powered Malware Analysis</div>
+                </div>
+            </div>
+            <div class="status-indicator" role="status" aria-live="polite">
+                <div class="status-dot" aria-hidden="true"></div>
+                <span>AI Providers Ready • WASM Runtime Online • 6 Models Active</span>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Analysis Navigation Sidebar -->
+            <nav class="analysis-sidebar" role="navigation" aria-label="Analysis navigation">
+                <div class="sidebar-header">
+                    <span aria-hidden="true">🔬</span>
+                    <h2>Malware Analysis</h2>
+                </div>
+                
+                <div class="sidebar-content">
+                    <!-- Critical Priority -->
+                    <div class="priority-section critical-priority">
+                        <div class="priority-header">
+                            <span aria-hidden="true">🔥</span>
+                            <span>Critical Priority</span>
+                        </div>
+                        
+                        <a href="#" class="sidebar-item active" data-tab="upload">
+                            <span aria-hidden="true">📤</span>
+                            <span>Sample Upload</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="static">
+                            <span aria-hidden="true">🔍</span>
+                            <span>Static Analysis</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="dynamic">
+                            <span aria-hidden="true">⚡</span>
+                            <span>Dynamic Analysis</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="ai-ensemble">
+                            <span aria-hidden="true">🤖</span>
+                            <span>AI Provider Ensemble</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="threat-intel">
+                            <span aria-hidden="true">🚨</span>
+                            <span>Threat Intelligence</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="reports">
+                            <span aria-hidden="true">📊</span>
+                            <span>Analysis Reports</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Important Priority -->
+                    <div class="priority-section important-priority">
+                        <div class="priority-header">
+                            <span aria-hidden="true">⚡</span>
+                            <span>Important Priority</span>
+                        </div>
+                        
+                        <a href="#" class="sidebar-item" data-tab="hex-editor">
+                            <span aria-hidden="true">🔢</span>
+                            <span>Hex Editor</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="disassembly">
+                            <span aria-hidden="true">⚙️</span>
+                            <span>Disassembly</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="network">
+                            <span aria-hidden="true">🌐</span>
+                            <span>Network Analysis</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="memory">
+                            <span aria-hidden="true">🧠</span>
+                            <span>Memory Analysis</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Advanced Priority -->
+                    <div class="priority-section advanced-priority">
+                        <div class="priority-header">
+                            <span aria-hidden="true">🔧</span>
+                            <span>Advanced Features</span>
+                        </div>
+                        
+                        <a href="#" class="sidebar-item" data-tab="workflows">
+                            <span aria-hidden="true">🔗</span>
+                            <span>Custom Workflows</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="yara">
+                            <span aria-hidden="true">📝</span>
+                            <span>YARA Rules</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-tab="platform-config">
+                            <span aria-hidden="true">🛠️</span>
+                            <span>Platform Config</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- AI Ensemble Status -->
+                <div class="ensemble-status">
+                    <div class="ensemble-header">
+                        <span aria-hidden="true">🤖</span>
+                        <span>AI Provider Status</span>
+                    </div>
+                    <div class="agent-status-grid">
+                        <div class="agent-status">
+                            <div class="agent-status-dot" aria-label="Online"></div>
+                            <span>Claude 3.5</span>
+                        </div>
+                        <div class="agent-status">
+                            <div class="agent-status-dot" aria-label="Online"></div>
+                            <span>GPT-4 Turbo</span>
+                        </div>
+                        <div class="agent-status">
+                            <div class="agent-status-dot analyzing" aria-label="Analyzing"></div>
+                            <span>DeepSeek V3</span>
+                        </div>
+                        <div class="agent-status">
+                            <div class="agent-status-dot" aria-label="Online"></div>
+                            <span>Claude 3 Opus</span>
+                        </div>
+                        <div class="agent-status">
+                            <div class="agent-status-dot" aria-label="Online"></div>
+                            <span>GPT-4o</span>
+                        </div>
+                        <div class="agent-status">
+                            <div class="agent-status-dot" aria-label="Online"></div>
+                            <span>Gemini Pro</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Central Analysis Area -->
+            <main class="analysis-area" id="main-content" role="main">                
+                <!-- Content Panels -->
+                <div class="content-panels">
+                    <!-- Upload Panel -->
+                    <div id="upload" class="content-panel active" role="tabpanel" aria-labelledby="upload-tab">
+                        <div class="upload-section">
+                            <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                                📤 Upload Malware Sample
+                            </h2>
+                            
+                            <div class="upload-area" tabindex="0" role="button" aria-label="Upload malware sample">
+                                <input type="file" id="file-upload" multiple accept=".exe,.dll,.bin,.pdf,.doc,.docx,.xls,.xlsx,.apk,.zip" aria-describedby="upload-description">
+                                <div class="upload-icon" aria-hidden="true">📤</div>
+                                <h3>Upload Malware Sample for Analysis</h3>
+                                <p id="upload-description" style="color: var(--text-secondary); margin: 15px 0;">
+                                    Drag and drop files here or click to browse<br>
+                                    Supports: PE, ELF, Mach-O, Office docs, PDFs, APKs, Archives<br>
+                                    Maximum file size: 100MB per file
+                                </p>
+                                <button class="btn btn-primary" onclick="document.getElementById('file-upload').click()">
+                                    Choose Files
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="analysis-panel">
+                                <div class="panel-header">
+                                    <h3 class="panel-title">
+                                        <span aria-hidden="true">⚙️</span>
+                                        Analysis Configuration
+                                    </h3>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <h4 style="margin-bottom: 10px; color: var(--text-primary);">Analysis Types</h4>
+                                    <label style="display: flex; align-items: center; margin: 8px 0;">
+                                        <input type="checkbox" checked style="margin-right: 10px;">
+                                        Static Analysis (File properties, hashes, entropy)
+                                    </label>
+                                    <label style="display: flex; align-items: center; margin: 8px 0;">
+                                        <input type="checkbox" checked style="margin-right: 10px;">
+                                        Dynamic Analysis (CAPE Sandbox)
+                                    </label>
+                                    <label style="display: flex; align-items: center; margin: 8px 0;">
+                                        <input type="checkbox" checked style="margin-right: 10px;">
+                                        AI Provider Ensemble (All 6 Models)
+                                    </label>
+                                    <label style="display: flex; align-items: center; margin: 8px 0;">
+                                        <input type="checkbox" style="margin-right: 10px;">
+                                        Advanced Reverse Engineering
+                                    </label>
+                                </div>
+                                
+                                <div>
+                                    <h4 style="margin-bottom: 10px; color: var(--text-primary);">Sandbox Environment</h4>
+                                    
+                                    <!-- OS Family Selection -->
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">Operating System Family:</label>
+                                        <select id="os-family" style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px;">
+                                            <option value="windows">🪟 Windows</option>
+                                            <option value="linux">🐧 Linux</option>
+                                            <option value="macos">🍎 macOS</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Architecture Selection -->
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">Architecture:</label>
+                                        <select id="architecture" style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px;">
+                                            <option value="x64">Intel/AMD x86-64</option>
+                                            <option value="x86">Intel/AMD x86 (32-bit)</option>
+                                            <option value="arm64">ARM64 (Apple Silicon/Snapdragon)</option>
+                                            <option value="arm">ARM (32-bit)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- OS Version Selection -->
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">Version:</label>
+                                        <select id="os-version" style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px;">
+                                            <!-- Windows versions (default) -->
+                                            <option value="win11-23h2">Windows 11 23H2 (Latest)</option>
+                                            <option value="win11-22h2">Windows 11 22H2</option>
+                                            <option value="win10-22h2">Windows 10 22H2</option>
+                                            <option value="win10-21h2">Windows 10 21H2</option>
+                                            <option value="win-server-2022">Windows Server 2022</option>
+                                            <option value="win-server-2019">Windows Server 2019</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Environment Summary -->
+                                    <div style="background: var(--accent-bg); padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                        <div style="color: var(--text-secondary); font-size: 0.8rem;">
+                                            <strong>Selected Environment:</strong><br>
+                                            <span id="env-summary" style="color: var(--barbie-pink);">🪟 Windows 11 23H2 (x86-64)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-panel">
+                                <div class="panel-header">
+                                    <h3 class="panel-title">
+                                        <span aria-hidden="true">📊</span>
+                                        Quick Stats
+                                    </h3>
+                                </div>
+                                
+                                <div class="stats-overview" style="grid-template-columns: 1fr;">
+                                    <div class="stat-card">
+                                        <div class="stat-value">2,847</div>
+                                        <div class="stat-label">Samples Analyzed Today</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">94.3%</div>
+                                        <div class="stat-label">AI Provider Accuracy</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">1.2s</div>
+                                        <div class="stat-label">Avg Analysis Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Static Analysis Panel -->
+                    <div id="static" class="content-panel" role="tabpanel" aria-labelledby="static-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🔍 Static Analysis Results
+                        </h2>
+                        
+                        <div class="stats-overview">
+                            <div class="stat-card">
+                                <div class="stat-value">PE32</div>
+                                <div class="stat-label">File Type</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">2.3MB</div>
+                                <div class="stat-label">File Size</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">7.82</div>
+                                <div class="stat-label">Entropy Score</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">UPX</div>
+                                <div class="stat-label">Packer Detected</div>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🔐</span>
+                                            File Hashes & Properties
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong>MD5:</strong> a1b2c3d4e5f6789012345678901234567<br>
+                                            <strong>SHA1:</strong> 9876543210abcdef9876543210abcdef98765432<br>
+                                            <strong>SHA256:</strong> 1234567890abcdef1234567890abcdef1234567890abcdef<br>
+                                            <strong>SSDEEP:</strong> 98304:abc123def456ghi789...<br><br>
+                                            
+                                            <strong>File Info:</strong><br>
+                                            Architecture: x86-64<br>
+                                            Entry Point: 0x401000<br>
+                                            Sections: 5<br>
+                                            Imports: 47<br>
+                                            Exports: 12<br>
+                                            Resources: 3<br>
+                                            Timestamp: 2024-12-15 14:30:22 UTC
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🧬</span>
+                                            Strings & Indicators
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong>Suspicious Strings:</strong><br>
+                                            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"<br>
+                                            "C:\\Windows\\System32\\rundll32.exe"<br>
+                                            "192.168.1.100:8080"<br>
+                                            "keylogger.dll"<br>
+                                            "encrypt_files"<br><br>
+                                            
+                                            <strong>API Calls:</strong><br>
+                                            RegCreateKeyEx - Registry manipulation<br>
+                                            CreateFile - File system access<br>
+                                            InternetConnect - Network activity<br>
+                                            SetWindowsHookEx - Hooking mechanism
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🤖 AI Provider Ensemble Analysis
+                                </h3>
+                                
+                                <div class="ensemble-consensus">
+                                    <div class="consensus-score">94% Confidence</div>
+                                    <div style="color: var(--text-secondary);">
+                                        <strong>Consensus:</strong> High-risk malware - Trojan/Info-stealer
+                                    </div>
+                                </div>
+                                
+                                <div class="agent-results">
+                                    <div class="agent-result">
+                                        <div class="agent-name">🤖 Claude 3.5 Sonnet</div>
+                                        <div class="agent-prediction">Identified vulnerable entry points and evasion techniques. Confidence: 92%</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">🧠 GPT-4 Turbo</div>
+                                        <div class="agent-prediction">Architecture suggests multi-stage payload delivery. Risk level: High</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">🔍 DeepSeek V3</div>
+                                        <div class="agent-prediction">Matches known campaign signatures. Attribution: Possible APT group</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">💎 Claude 3 Opus</div>
+                                        <div class="agent-prediction">Code patterns indicate commercial packer with obfuscation</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">⚡ GPT-4o</div>
+                                        <div class="agent-prediction">Infrastructure impact: Network monitoring, persistence mechanisms</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">🌟 Gemini Pro</div>
+                                        <div class="agent-prediction">Family: TrojanDownloader.Win32.Emotet. Variant: 2024.Q4</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic Analysis Panel -->
+                    <div id="dynamic" class="content-panel" role="tabpanel" aria-labelledby="dynamic-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            ⚡ Dynamic Analysis - CAPE Sandbox
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🎬</span>
+                                            Behavioral Analysis
+                                        </h3>
+                                        <button class="btn btn-secondary">📸 View Screenshots</button>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <div style="color: var(--success-color);">[+] Process created: malware_sample.exe (PID: 1234)</div>
+                                            <div style="color: var(--warning-color);">[!] Registry key created: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\Update</div>
+                                            <div style="color: var(--warning-color);">[!] File created: C:\Windows\Temp\update.exe</div>
+                                            <div style="color: var(--danger-color);">[!] Network connection: 192.168.1.100:8080 (TCP)</div>
+                                            <div style="color: var(--warning-color);">[!] HTTP POST request to: hxxp://malicious-c2.example.com/beacon</div>
+                                            <div style="color: var(--danger-color);">[!] Process injection detected: explorer.exe</div>
+                                            <div style="color: var(--warning-color);">[!] Keylogger activity: SetWindowsHookEx</div>
+                                            <div style="color: var(--success-color);">[+] Process terminated after 120 seconds</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🌐</span>
+                                            Network Activity
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong>DNS Queries:</strong><br>
+                                            malicious-c2.example.com → 192.168.1.100<br>
+                                            update-server.badsite.org → 203.0.113.42<br><br>
+                                            
+                                            <strong>Network Connections:</strong><br>
+                                            TCP 192.168.1.100:8080 - Command & Control<br>
+                                            HTTP 203.0.113.42:80 - Data exfiltration<br><br>
+                                            
+                                            <strong>Data Transmitted:</strong><br>
+                                            Outbound: 2.3 KB (encrypted)<br>
+                                            Inbound: 847 bytes (commands)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🎯 MITRE ATT&CK Mapping
+                                </h3>
+                                
+                                <div class="agent-results">
+                                    <div class="agent-result">
+                                        <div class="agent-name">T1055 - Process Injection</div>
+                                        <div class="agent-prediction">Detected injection into explorer.exe process</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">T1060 - Registry Run Keys</div>
+                                        <div class="agent-prediction">Persistence via Run key modification</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">T1071 - Application Layer Protocol</div>
+                                        <div class="agent-prediction">HTTP-based C2 communication</div>
+                                    </div>
+                                    
+                                    <div class="agent-result">
+                                        <div class="agent-name">T1056 - Input Capture</div>
+                                        <div class="agent-prediction">Keylogging functionality detected</div>
+                                    </div>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin: 20px 0 15px;">
+                                    🛡️ Recommendations
+                                </h3>
+                                
+                                <div class="ensemble-consensus">
+                                    <div style="color: var(--text-primary);">
+                                        • Block outbound connections to 192.168.1.100<br>
+                                        • Remove registry persistence mechanism<br>
+                                        • Monitor for similar process injection patterns<br>
+                                        • Update endpoint detection rules
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Ensemble Panel -->
+                    <div id="ai-ensemble" class="content-panel" role="tabpanel" aria-labelledby="ai-ensemble-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🤖 AI Provider Ensemble Analysis
+                        </h2>
+                        
+                        <div class="ensemble-consensus" style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div class="consensus-score">94% Consensus</div>
+                                <div style="color: var(--success-color); font-weight: 600;">6/6 Providers Agreement</div>
+                            </div>
+                            <div style="color: var(--text-secondary);">
+                                <strong>Final Classification:</strong> Trojan.GenKryptik.Win32 - High Risk Info-stealer
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🧠</span>
+                                            AI Provider Insights
+                                        </h3>
+                                    </div>
+                                    
+                                    <div style="display: grid; gap: 15px;">
+                                        <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid #74b9ff;">
+                                            <h4 style="color: #74b9ff; margin-bottom: 8px;">🤖 Claude 3.5 Sonnet - 92% Confidence</h4>
+                                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                Advanced reasoning capabilities identified multiple evasion techniques including anti-VM 
+                                                checks and API hashing. Sample uses sophisticated methods to avoid detection during 
+                                                initial execution phases. Recommends enhanced behavioral monitoring.
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid #fd79a8;">
+                                            <h4 style="color: #fd79a8; margin-bottom: 8px;">🧠 GPT-4 Turbo - 95% Confidence</h4>
+                                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                Architectural analysis indicates multi-stage attack pattern with modular payload delivery. 
+                                                Threat model suggests this is part of larger campaign targeting financial data. 
+                                                Infrastructure design shows advanced planning and persistent access goals.
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid #e17055;">
+                                            <h4 style="color: #e17055; margin-bottom: 8px;">🔍 DeepSeek V3 - 96% Confidence</h4>
+                                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                Deep reasoning model shows strong correlation with known APT campaigns. 
+                                                C2 infrastructure analysis reveals connection to previous incidents. Attribution points 
+                                                to financially motivated threat group with East European origins.
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid #00b894;">
+                                            <h4 style="color: #00b894; margin-bottom: 8px;">💎 Claude 3 Opus - 93% Confidence</h4>
+                                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                High-capacity model analysis reveals use of commercial packer (UPX) with additional custom obfuscation 
+                                                layers. Development patterns suggest professional malware-as-a-service operation. 
+                                                Recommends updated static analysis signatures for similar variants.
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid #fdcb6e;">
+                                            <h4 style="color: #fdcb6e; margin-bottom: 8px;">⚡ GPT-4o - 94% Confidence</h4>
+                                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                Multimodal analysis shows high risk to system reliability. Persistence 
+                                                mechanisms will survive reboots and interfere with legitimate processes. Network 
+                                                monitoring indicates continuous data exfiltration potential.
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; border-left: 4px solid #6c5ce7;">
+                                            <h4 style="color: #6c5ce7; margin-bottom: 8px;">🌟 Gemini Pro - 97% Confidence</h4>
+                                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                Google's advanced model confirms Emotet variant classification. Family signatures 
+                                                match 2024 Q4 campaign patterns. Sample contains modular architecture for additional 
+                                                payload downloads. Generated comprehensive detection rules.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📊 Ensemble Metrics
+                                </h3>
+                                
+                                <div class="stats-overview" style="grid-template-columns: 1fr;">
+                                    <div class="stat-card">
+                                        <div class="stat-value">94%</div>
+                                        <div class="stat-label">Final Confidence</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">6/6</div>
+                                        <div class="stat-label">Provider Agreement</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">1.8s</div>
+                                        <div class="stat-label">Analysis Time</div>
+                                    </div>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin: 20px 0 15px;">
+                                    🎯 Generated Artifacts
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                    <button class="btn btn-primary">
+                                        📝 Download YARA Rules
+                                    </button>
+                                    <button class="btn btn-secondary">
+                                        🚨 Export IOCs
+                                    </button>
+                                    <button class="btn btn-secondary">
+                                        📊 Generate Report
+                                    </button>
+                                    <button class="btn btn-secondary">
+                                        🔄 Rerun Analysis
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Platform Configuration Panel -->
+                    <div id="platform-config" class="content-panel" role="tabpanel" aria-labelledby="platform-config-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🛠️ WASM Platform Configuration
+                        </h2>
+                        
+                        <div class="config-grid">
+                            <div class="config-section">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🏗️ Runtime Environment
+                                </h3>
+                                
+                                <div class="config-item">
+                                    <span class="config-label">Spin Runtime Version:</span>
+                                    <span class="config-value">2.0.1</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">WASI Preview:</span>
+                                    <span class="config-value">2.0</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">Component Model:</span>
+                                    <span class="config-value">Enabled</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">Cold Start Time:</span>
+                                    <span class="config-value">< 1μs</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">Memory Limit:</span>
+                                    <span class="config-value">2GB</span>
+                                </div>
+                                
+                                <h4 style="color: var(--text-primary); margin: 20px 0 10px;">Deployment Targets</h4>
+                                <label style="display: flex; align-items: center; margin: 8px 0;">
+                                    <input type="checkbox" checked style="margin-right: 10px;">
+                                    Fermyon Cloud (Global Edge)
+                                </label>
+                                <label style="display: flex; align-items: center; margin: 8px 0;">
+                                    <input type="checkbox" checked style="margin-right: 10px;">
+                                    wasmCloud Lattice (Distributed)
+                                </label>
+                                <label style="display: flex; align-items: center; margin: 8px 0;">
+                                    <input type="checkbox" style="margin-right: 10px;">
+                                    Kubernetes + WASM Runtime
+                                </label>
+                                <label style="display: flex; align-items: center; margin: 8px 0;">
+                                    <input type="checkbox" style="margin-right: 10px;">
+                                    Self-hosted Edge Nodes
+                                </label>
+                            </div>
+                            
+                            <div class="config-section">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🤖 AI Provider Configuration
+                                </h3>
+                                
+                                <div class="config-item">
+                                    <span class="config-label">WASI-NN Backend:</span>
+                                    <span class="config-value">ONNX + TensorFlow</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">WebLLM Engine:</span>
+                                    <span class="config-value">WebGPU Enabled</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">Hardware Acceleration:</span>
+                                    <span class="config-value">GPU + TPU</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">Model Cache:</span>
+                                    <span class="config-value">4GB</span>
+                                </div>
+                                <div class="config-item">
+                                    <span class="config-label">Ensemble Mode:</span>
+                                    <span class="config-value">Consensus Voting</span>
+                                </div>
+                                
+                                <h4 style="color: var(--text-primary); margin: 20px 0 10px;">Active AI Providers</h4>
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.85rem;">
+                                    
+                                    <!-- Claude Configuration -->
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--accent-bg);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <strong style="color: var(--barbie-pink);">🤖 Anthropic Claude</strong>
+                                            <label style="display: flex; align-items: center;">
+                                                <input type="checkbox" checked style="margin-right: 6px;">
+                                                <span style="color: var(--success-color); font-size: 0.75rem;">Enabled</span>
+                                            </label>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Model:</label>
+                                            <select style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                                <option>claude-3-5-sonnet-20241022</option>
+                                                <option>claude-3-opus-20240229</option>
+                                                <option>claude-3-haiku-20240307</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">API Key:</label>
+                                            <input type="password" placeholder="sk-ant-..." style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Max Tokens:</label>
+                                                <input type="number" value="4096" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Temperature:</label>
+                                                <input type="number" value="0.1" step="0.1" min="0" max="1" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- OpenAI Configuration -->
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--accent-bg);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <strong style="color: var(--barbie-pink);">🧠 OpenAI GPT</strong>
+                                            <label style="display: flex; align-items: center;">
+                                                <input type="checkbox" checked style="margin-right: 6px;">
+                                                <span style="color: var(--success-color); font-size: 0.75rem;">Enabled</span>
+                                            </label>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Model:</label>
+                                            <select style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                                <option>gpt-4-turbo-preview</option>
+                                                <option>gpt-4o</option>
+                                                <option>gpt-4o-mini</option>
+                                                <option>gpt-3.5-turbo</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">API Key:</label>
+                                            <input type="password" placeholder="sk-..." style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Max Tokens:</label>
+                                                <input type="number" value="4096" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Temperature:</label>
+                                                <input type="number" value="0.1" step="0.1" min="0" max="1" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- DeepSeek Configuration -->
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--accent-bg);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <strong style="color: var(--barbie-pink);">🔍 DeepSeek</strong>
+                                            <label style="display: flex; align-items: center;">
+                                                <input type="checkbox" checked style="margin-right: 6px;">
+                                                <span style="color: var(--success-color); font-size: 0.75rem;">Enabled</span>
+                                            </label>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Model:</label>
+                                            <select style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                                <option>deepseek-v3</option>
+                                                <option>deepseek-coder-v2</option>
+                                                <option>deepseek-chat</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">API Key:</label>
+                                            <input type="password" placeholder="sk-..." style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Max Tokens:</label>
+                                                <input type="number" value="4096" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Temperature:</label>
+                                                <input type="number" value="0.1" step="0.1" min="0" max="1" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Google Gemini Configuration -->
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--accent-bg);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <strong style="color: var(--barbie-pink);">🌟 Google Gemini</strong>
+                                            <label style="display: flex; align-items: center;">
+                                                <input type="checkbox" checked style="margin-right: 6px;">
+                                                <span style="color: var(--success-color); font-size: 0.75rem;">Enabled</span>
+                                            </label>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Model:</label>
+                                            <select style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                                <option>gemini-pro</option>
+                                                <option>gemini-pro-vision</option>
+                                                <option>gemini-ultra</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">API Key:</label>
+                                            <input type="password" placeholder="AIza..." style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Max Tokens:</label>
+                                                <input type="number" value="2048" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Temperature:</label>
+                                                <input type="number" value="0.1" step="0.1" min="0" max="1" style="width: 100%; padding: 4px; background: var(--primary-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 3px; font-size: 0.75rem;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <h4 style="color: var(--text-primary); margin: 20px 0 10px;">Ensemble Settings</h4>
+                                <div style="background: var(--primary-bg); padding: 10px; border-radius: 4px; border: 1px solid var(--accent-bg);">
+                                    <label style="display: flex; align-items: center; margin: 6px 0;">
+                                        <input type="checkbox" checked style="margin-right: 8px;">
+                                        <span style="font-size: 0.85rem;">Enable consensus voting</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; margin: 6px 0;">
+                                        <input type="checkbox" checked style="margin-right: 8px;">
+                                        <span style="font-size: 0.85rem;">Weight responses by model confidence</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; margin: 6px 0;">
+                                        <input type="checkbox" style="margin-right: 8px;">
+                                        <span style="font-size: 0.85rem;">Enable model cross-validation</span>
+                                    </label>
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem;">Minimum Consensus Threshold:</label>
+                                        <input type="range" min="50" max="100" value="75" style="width: 100%; margin-bottom: 4px;">
+                                        <div style="text-align: center; font-size: 0.75rem; color: var(--text-secondary);">75%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <div class="config-section">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📊 Platform Monitoring
+                                </h3>
+                                
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                    <div class="stat-card">
+                                        <div class="stat-value">99.8%</div>
+                                        <div class="stat-label">Platform Uptime</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">6/6</div>
+                                        <div class="stat-label">Providers Online</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">142MB</div>
+                                        <div class="stat-label">Memory Usage</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">23%</div>
+                                        <div class="stat-label">CPU Utilization</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px; display: flex; gap: 15px;">
+                                    <button class="btn btn-primary">
+                                        🚀 Deploy Configuration
+                                    </button>
+                                    <button class="btn btn-secondary">
+                                        🔄 Restart Platform
+                                    </button>
+                                    <button class="btn btn-secondary">
+                                        📊 View Metrics
+                                    </button>
+                                    <button class="btn btn-secondary">
+                                        📋 Export Config
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hex Editor Panel -->
+                    <div id="hex-editor" class="content-panel" role="tabpanel" aria-labelledby="hex-editor-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🔢 Hex Editor - Binary Analysis
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">📄</span>
+                                            Binary Data View (Offset: 0x401000)
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">🔍 Search</button>
+                                            <button class="btn btn-secondary">📋 Export</button>
+                                            <button class="btn btn-secondary">🖊️ Edit</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.4;">
+                                            <div style="color: var(--text-accent);">00401000:</div> 55 48 89 E5 48 83 EC 20 E8 F3 0F 00 00 85 C0 74  <span style="color: var(--text-secondary);">UH..H.. ....t</span><br>
+                                            <div style="color: var(--text-accent);">00401010:</div> 0F E8 E3 1F 00 00 E8 E3 2F 00 00 B8 00 00 00 00  <span style="color: var(--text-secondary);">......../.......  </span><br>
+                                            <div style="color: var(--text-accent);">00401020:</div> C9 C3 90 90 90 90 90 90 55 48 89 E5 48 83 EC 10  <span style="color: var(--text-secondary);">........UH..H...</span><br>
+                                            <div style="color: var(--text-accent);">00401030:</div> 89 7D FC 8B 45 FC 83 F8 05 7E 13 C7 45 F8 01 00  <span style="color: var(--text-secondary);">.}..E....~..E...</span><br>
+                                            <div style="color: var(--text-accent);">00401040:</div> 00 00 8B 45 F8 89 C7 E8 A5 FE FF FF EB 07 C7 45  <span style="color: var(--text-secondary);">...E...........E</span><br>
+                                            <div style="color: var(--text-accent);">00401050:</div> F8 00 00 00 00 8B 45 F8 C9 C3 66 2E 0F 1F 84 00  <span style="color: var(--text-secondary);">......E...f.....</span><br>
+                                            <div style="color: var(--text-accent);">00401060:</div> 00 00 00 00 0F 1F 40 00 41 57 41 56 41 55 41 54  <span style="color: var(--text-secondary);">......@.AWAVAUAТ</span><br>
+                                            <div style="color: var(--text-accent);">00401070:</div> 55 53 48 83 EC 08 48 8B 05 F2 2E 00 00 48 85 C0  <span style="color: var(--text-secondary);">USH...H......H..</span><br>
+                                            <div style="color: var(--text-accent);">00401080:</div> 74 2F 48 8D 35 E3 2E 00 00 48 89 C7 E8 D5 FE FF  <span style="color: var(--text-secondary);">t/H.5....H......</span><br>
+                                            <div style="color: var(--text-accent);">00401090:</div> FF 48 85 C0 74 1A 48 8D 35 CE 2E 00 00 48 89 C7  <span style="color: var(--text-secondary);">.H..t.H.5....H..</span><br>
+                                            <div style="color: var(--text-accent);">004010A0:</div> E8 C1 FE FF FF 48 89 C7 E8 B9 FE FF FF EB 01 90  <span style="color: var(--text-secondary);">.....H..........</span><br>
+                                            <div style="color: var(--text-accent);">004010B0:</div> 48 83 C4 08 5B 5D 41 5C 41 5D 41 5E 41 5F C3 90  <span style="color: var(--text-secondary);">H...[]A\A]A^A_..</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🎯</span>
+                                            Pattern Analysis
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">Detected Patterns:</strong><br><br>
+                                            
+                                            <strong>Function Prologue (0x401000):</strong><br>
+                                            <span style="color: var(--success-color);">55 48 89 E5</span> - Standard x64 function entry<br><br>
+                                            
+                                            <strong>Stack Allocation:</strong><br>
+                                            <span style="color: var(--warning-color);">48 83 EC 20</span> - Allocate 32 bytes on stack<br><br>
+                                            
+                                            <strong>Function Calls:</strong><br>
+                                            <span style="color: var(--info-color);">E8 F3 0F 00 00</span> - Call to 0x411000<br>
+                                            <span style="color: var(--info-color);">E8 E3 1F 00 00</span> - Call to 0x413000<br><br>
+                                            
+                                            <strong>Suspicious Patterns:</strong><br>
+                                            <span style="color: var(--danger-color);">90 90 90 90</span> - NOP sled detected<br>
+                                            <span style="color: var(--danger-color);">41 57 41 56 41 55</span> - Register preservation pattern
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📊 Binary Statistics
+                                </h3>
+                                
+                                <div class="stats-overview" style="grid-template-columns: 1fr;">
+                                    <div class="stat-card">
+                                        <div class="stat-value">6.23</div>
+                                        <div class="stat-label">Entropy</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">23%</div>
+                                        <div class="stat-label">ASCII Ratio</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">15%</div>
+                                        <div class="stat-label">Null Bytes</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">87</div>
+                                        <div class="stat-label">Unique Bytes</div>
+                                    </div>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin: 20px 0 15px;">
+                                    🔍 Search & Navigation
+                                </h3>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <input type="text" placeholder="Search hex pattern..." style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px; margin-bottom: 10px;">
+                                    <input type="text" placeholder="Jump to offset..." style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px;">
+                                </div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-secondary">📍 Go to Entry Point</button>
+                                    <button class="btn btn-secondary">🔍 Find String References</button>
+                                    <button class="btn btn-secondary">📊 Entropy Analysis</button>
+                                    <button class="btn btn-secondary">🎯 Pattern Matching</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Disassembly Panel -->
+                    <div id="disassembly" class="content-panel" role="tabpanel" aria-labelledby="disassembly-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            ⚙️ Disassembly - Assembly Code Analysis
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🔧</span>
+                                            Assembly Code - main() Function
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">📍 Set Breakpoint</button>
+                                            <button class="btn btn-primary">🔍 Decompile</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content" style="font-family: 'JetBrains Mono', monospace;">
+                                            <div><span style="color: var(--text-accent);">0x401000:</span> <span style="color: var(--success-color);">push</span> <span style="color: var(--info-color);">rbp</span> <span style="color: var(--text-secondary);">; Function prologue</span></div>
+                                            <div><span style="color: var(--text-accent);">0x401001:</span> <span style="color: var(--success-color);">mov</span> <span style="color: var(--info-color);">rbp, rsp</span></div>
+                                            <div><span style="color: var(--text-accent);">0x401004:</span> <span style="color: var(--success-color);">sub</span> <span style="color: var(--info-color);">rsp, 0x20</span> <span style="color: var(--text-secondary);">; Allocate stack space</span></div>
+                                            <div><span style="color: var(--text-accent);">0x401008:</span> <span style="color: var(--warning-color);">call</span> <span style="color: var(--info-color);">0x402000</span> <span style="color: var(--text-secondary);">; Call decrypt_payload</span></div>
+                                            <div><span style="color: var(--text-accent);">0x40100d:</span> <span style="color: var(--success-color);">test</span> <span style="color: var(--info-color);">eax, eax</span> <span style="color: var(--text-secondary);">; Check return value</span></div>
+                                            <div><span style="color: var(--text-accent);">0x40100f:</span> <span style="color: var(--warning-color);">jz</span> <span style="color: var(--info-color);">0x401020</span> <span style="color: var(--text-secondary);">; Jump if zero</span></div>
+                                            <div><span style="color: var(--text-accent);">0x401011:</span> <span style="color: var(--danger-color);">call</span> <span style="color: var(--info-color);">0x403000</span> <span style="color: var(--text-secondary);">; Call network_beacon</span></div>
+                                            <div><span style="color: var(--text-accent);">0x401016:</span> <span style="color: var(--danger-color);">call</span> <span style="color: var(--info-color);">0x404000</span> <span style="color: var(--text-secondary);">; Call persistence_install</span></div>
+                                            <div><span style="color: var(--text-accent);">0x40101b:</span> <span style="color: var(--success-color);">mov</span> <span style="color: var(--info-color);">eax, 0x0</span> <span style="color: var(--text-secondary);">; Return success</span></div>
+                                            <div><span style="color: var(--text-accent);">0x401020:</span> <span style="color: var(--success-color);">leave</span></div>
+                                            <div><span style="color: var(--text-accent);">0x401021:</span> <span style="color: var(--success-color);">ret</span> <span style="color: var(--text-secondary);">; Function epilogue</span></div>
+                                            <br>
+                                            <div style="color: var(--barbie-pink); font-weight: bold;">--- decrypt_payload Function ---</div>
+                                            <div><span style="color: var(--text-accent);">0x402000:</span> <span style="color: var(--success-color);">push</span> <span style="color: var(--info-color);">rbp</span></div>
+                                            <div><span style="color: var(--text-accent);">0x402001:</span> <span style="color: var(--success-color);">mov</span> <span style="color: var(--info-color);">rbp, rsp</span></div>
+                                            <div><span style="color: var(--text-accent);">0x402004:</span> <span style="color: var(--warning-color);">mov</span> <span style="color: var(--info-color);">rdi, qword ptr [encrypted_data]</span></div>
+                                            <div><span style="color: var(--text-accent);">0x40200b:</span> <span style="color: var(--warning-color);">call</span> <span style="color: var(--info-color);">0x405000</span> <span style="color: var(--text-secondary);">; XOR decryption routine</span></div>
+                                            <div><span style="color: var(--text-accent);">0x402010:</span> <span style="color: var(--success-color);">test</span> <span style="color: var(--info-color);">rax, rax</span></div>
+                                            <div><span style="color: var(--text-accent);">0x402013:</span> <span style="color: var(--success-color);">pop</span> <span style="color: var(--info-color);">rbp</span></div>
+                                            <div><span style="color: var(--text-accent);">0x402014:</span> <span style="color: var(--success-color);">ret</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🎯</span>
+                                            Function Analysis
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">Identified Functions:</strong><br><br>
+                                            
+                                            <div style="margin-bottom: 10px;">
+                                                <strong style="color: var(--success-color);">main() @ 0x401000</strong><br>
+                                                <span style="color: var(--text-secondary);">Entry point, orchestrates malware execution</span>
+                                            </div>
+                                            
+                                            <div style="margin-bottom: 10px;">
+                                                <strong style="color: var(--warning-color);">decrypt_payload() @ 0x402000</strong><br>
+                                                <span style="color: var(--text-secondary);">XOR-based payload decryption</span>
+                                            </div>
+                                            
+                                            <div style="margin-bottom: 10px;">
+                                                <strong style="color: var(--danger-color);">network_beacon() @ 0x403000</strong><br>
+                                                <span style="color: var(--text-secondary);">C2 communication function</span>
+                                            </div>
+                                            
+                                            <div style="margin-bottom: 10px;">
+                                                <strong style="color: var(--danger-color);">persistence_install() @ 0x404000</strong><br>
+                                                <span style="color: var(--text-secondary);">Registry-based persistence mechanism</span>
+                                            </div>
+                                            
+                                            <div style="margin-bottom: 10px;">
+                                                <strong style="color: var(--info-color);">xor_decrypt() @ 0x405000</strong><br>
+                                                <span style="color: var(--text-secondary);">Core decryption algorithm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🔗 Cross References
+                                </h3>
+                                
+                                <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem;">
+                                    <strong>References to main():</strong><br>
+                                    0x400890 (entry point)<br>
+                                    0x405670 (thread_start)<br><br>
+                                    
+                                    <strong>Calls from main():</strong><br>
+                                    decrypt_payload @ 0x402000<br>
+                                    network_beacon @ 0x403000<br>
+                                    persistence_install @ 0x404000<br><br>
+                                    
+                                    <strong>String References:</strong><br>
+                                    "C:\\Windows\\System32"<br>
+                                    "SOFTWARE\\Microsoft\\Windows"<br>
+                                    "192.168.1.100:8080"
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🛠️ Analysis Tools
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-primary">🔍 Decompile to C</button>
+                                    <button class="btn btn-secondary">📊 Control Flow Graph</button>
+                                    <button class="btn btn-secondary">🎯 Find Call Sites</button>
+                                    <button class="btn btn-secondary">📝 Add Comments</button>
+                                    <button class="btn btn-secondary">🏷️ Rename Function</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Memory Analysis Panel -->
+                    <div id="memory" class="content-panel" role="tabpanel" aria-labelledby="memory-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🧠 Memory Analysis - Runtime Investigation
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">💾</span>
+                                            Memory Dump Analysis
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">📄 Load Dump</button>
+                                            <button class="btn btn-secondary">🔍 Search</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">Process Memory Map:</strong><br><br>
+                                            
+                                            <div style="color: var(--success-color);">0x00400000-0x0041FFFF</div> malware_sample.exe (Text)<br>
+                                            <div style="color: var(--info-color);">0x00420000-0x0042FFFF</div> malware_sample.exe (Data)<br>
+                                            <div style="color: var(--warning-color);">0x10000000-0x1000FFFF</div> Injected Code (Heap)<br>
+                                            <div style="color: var(--text-secondary);">0x7FFE0000-0x7FFFFFFF</div> ntdll.dll<br>
+                                            <div style="color: var(--text-secondary);">0x77E50000-0x77F3FFFF</div> kernel32.dll<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Suspicious Memory Regions:</strong><br><br>
+                                            
+                                            <div style="color: var(--danger-color);">🚨 0x10000000: RWX Memory (Shellcode)</div>
+                                            <span style="color: var(--text-secondary);">Size: 64KB, Contains encrypted payload</span><br><br>
+                                            
+                                            <div style="color: var(--warning-color);">⚠️ 0x00425000: Modified Import Table</div>
+                                            <span style="color: var(--text-secondary);">Hooked API calls detected</span><br><br>
+                                            
+                                            <div style="color: var(--warning-color);">⚠️ 0x7C801000: Process Hollowing</div>
+                                            <span style="color: var(--text-secondary);">Suspicious modifications in system DLL</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🔬</span>
+                                            String Analysis
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">Extracted Strings:</strong><br><br>
+                                            
+                                            <strong>Network Indicators:</strong><br>
+                                            <span style="color: var(--danger-color);">malicious-c2.example.com</span><br>
+                                            <span style="color: var(--danger-color);">192.168.1.100:8080</span><br>
+                                            <span style="color: var(--warning-color);">GET /beacon.php HTTP/1.1</span><br>
+                                            <span style="color: var(--warning-color);">User-Agent: Mozilla/5.0</span><br><br>
+                                            
+                                            <strong>File System:</strong><br>
+                                            <span style="color: var(--warning-color);">C:\\Windows\\Temp\\update.exe</span><br>
+                                            <span style="color: var(--warning-color);">%APPDATA%\\svchost.exe</span><br>
+                                            <span style="color: var(--info-color);">SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run</span><br><br>
+                                            
+                                            <strong>Decryption Keys:</strong><br>
+                                            <span style="color: var(--success-color);">Key: 0xDEADBEEF</span><br>
+                                            <span style="color: var(--success-color);">Salt: MySecretSalt2024</span><br>
+                                            <span style="color: var(--info-color);">Algorithm: XOR + RC4</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📊 Memory Statistics
+                                </h3>
+                                
+                                <div class="stats-overview" style="grid-template-columns: 1fr;">
+                                    <div class="stat-card">
+                                        <div class="stat-value">2.1GB</div>
+                                        <div class="stat-label">Total Memory</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">847</div>
+                                        <div class="stat-label">Processes</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">23</div>
+                                        <div class="stat-label">Injected Modules</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">5</div>
+                                        <div class="stat-label">Rootkit Hooks</div>
+                                    </div>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin: 20px 0 15px;">
+                                    🔧 Memory Tools
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-primary">🔍 Volatility Analysis</button>
+                                    <button class="btn btn-secondary">📊 Process Tree</button>
+                                    <button class="btn btn-secondary">🌐 Network Connections</button>
+                                    <button class="btn btn-secondary">🔑 Crypto Analysis</button>
+                                    <button class="btn btn-secondary">📄 Extract Artifacts</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Network Analysis Panel -->
+                    <div id="network" class="content-panel" role="tabpanel" aria-labelledby="network-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🌐 Network Analysis - Traffic Investigation
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">📡</span>
+                                            Network Traffic Capture
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">📄 Load PCAP</button>
+                                            <button class="btn btn-secondary">🔍 Filter</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">TCP Connections:</strong><br><br>
+                                            
+                                            <div style="color: var(--danger-color);">🔴 192.168.1.100:8080 ← C2 Server</div>
+                                            <span style="color: var(--text-secondary);">Protocol: TCP | Bytes: 2.3KB out, 847B in | Duration: 120s</span><br>
+                                            <span style="color: var(--warning-color);">⚠️ Encrypted payload detected</span><br><br>
+                                            
+                                            <div style="color: var(--warning-color);">🟠 203.0.113.42:80 ← Data Exfiltration</div>
+                                            <span style="color: var(--text-secondary);">Protocol: HTTP | Bytes: 15.7KB out | POST requests</span><br>
+                                            <span style="color: var(--danger-color);">🚨 Potential data theft</span><br><br>
+                                            
+                                            <div style="color: var(--info-color);">🔵 8.8.8.8:53 ← DNS Queries</div>
+                                            <span style="color: var(--text-secondary);">Queries: malicious-c2.example.com, update-server.badsite.org</span><br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">HTTP Traffic Analysis:</strong><br><br>
+                                            
+                                            <div style="background: var(--accent-bg); padding: 10px; border-radius: 4px; margin: 10px 0;">
+                                                <div style="color: var(--warning-color);">POST /beacon.php HTTP/1.1</div>
+                                                <div style="color: var(--text-secondary);">Host: malicious-c2.example.com</div>
+                                                <div style="color: var(--text-secondary);">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)</div>
+                                                <div style="color: var(--text-secondary);">Content-Type: application/x-www-form-urlencoded</div>
+                                                <div style="color: var(--danger-color);">Data: [ENCRYPTED PAYLOAD - 2048 bytes]</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">📊</span>
+                                            Protocol Analysis
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">Traffic Breakdown:</strong><br><br>
+                                            
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                                                <div>TCP: 89.3%</div><div>UDP: 8.2%</div>
+                                                <div>HTTP: 67.1%</div><div>HTTPS: 22.2%</div>
+                                                <div>DNS: 8.2%</div><div>Other: 2.5%</div>
+                                            </div>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Suspicious Indicators:</strong><br><br>
+                                            
+                                            <div style="color: var(--danger-color);">🚨 Non-standard User-Agent strings</div>
+                                            <div style="color: var(--danger-color);">🚨 Base64 encoded data in HTTP requests</div>
+                                            <div style="color: var(--warning-color);">⚠️ Abnormal request timing (every 30s)</div>
+                                            <div style="color: var(--warning-color);">⚠️ DGA-like domain patterns</div>
+                                            <div style="color: var(--info-color);">ℹ️ TLS certificate validation bypass</div><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Geolocation:</strong><br><br>
+                                            
+                                            <div>192.168.1.100 → Unknown (Private)</div>
+                                            <div>203.0.113.42 → Eastern Europe</div>
+                                            <div style="color: var(--warning-color);">🏴‍☠️ Known malicious infrastructure</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🎯 Network IOCs
+                                </h3>
+                                
+                                <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem;">
+                                    <strong>Domains:</strong><br>
+                                    malicious-c2.example.com<br>
+                                    update-server.badsite.org<br>
+                                    data-exfil.evil.net<br><br>
+                                    
+                                    <strong>IP Addresses:</strong><br>
+                                    192.168.1.100 (C2 Server)<br>
+                                    203.0.113.42 (Data Exfiltration)<br>
+                                    198.51.100.15 (Backup C2)<br><br>
+                                    
+                                    <strong>Ports:</strong><br>
+                                    8080/tcp (Primary C2)<br>
+                                    80/tcp (HTTP Exfiltration)<br>
+                                    443/tcp (Backup Channel)
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🛡️ Blocking Rules
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-primary">🚫 Generate Firewall Rules</button>
+                                    <button class="btn btn-secondary">📝 Export Snort Rules</button>
+                                    <button class="btn btn-secondary">🌐 DNS Blacklist</button>
+                                    <button class="btn btn-secondary">📊 Traffic Report</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- YARA Rules Panel -->
+                    <div id="yara" class="content-panel" role="tabpanel" aria-labelledby="yara-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            📝 YARA Rules - Signature Detection
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🎯</span>
+                                            Generated YARA Rules
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">📄 Save Rule</button>
+                                            <button class="btn btn-primary">✅ Test Rule</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content" style="font-family: 'JetBrains Mono', monospace;">
+rule <span style="color: var(--barbie-pink);">Trojan_Emotet_2024Q4</span> {
+    <span style="color: var(--success-color);">meta:</span>
+        <span style="color: var(--info-color);">description</span> = <span style="color: var(--warning-color);">"Emotet Banking Trojan - 2024 Q4 Variant"</span>
+        <span style="color: var(--info-color);">author</span> = <span style="color: var(--warning-color);">"Athena AI Providers"</span>
+        <span style="color: var(--info-color);">date</span> = <span style="color: var(--warning-color);">"2024-12-15"</span>
+        <span style="color: var(--info-color);">hash</span> = <span style="color: var(--warning-color);">"a1b2c3d4e5f6789012345678901234567"</span>
+        <span style="color: var(--info-color);">threat_level</span> = <span style="color: var(--warning-color);">"high"</span>
+        <span style="color: var(--info-color);">family</span> = <span style="color: var(--warning-color);">"Emotet"</span>
+    
+    <span style="color: var(--success-color);">strings:</span>
+        <span style="color: var(--info-color);">$mz</span> = <span style="color: var(--warning-color);">{ 4D 5A }</span>
+        <span style="color: var(--info-color);">$pe</span> = <span style="color: var(--warning-color);">"PE"</span> <span style="color: var(--text-secondary);">nocase</span>
+        
+        <span style="color: var(--text-secondary);">// Persistence mechanism</span>
+        <span style="color: var(--info-color);">$registry</span> = <span style="color: var(--warning-color);">"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"</span>
+        <span style="color: var(--info-color);">$persist</span> = <span style="color: var(--warning-color);">"svchost.exe"</span> <span style="color: var(--text-secondary);">nocase</span>
+        
+        <span style="color: var(--text-secondary);">// Network indicators</span>
+        <span style="color: var(--info-color);">$c2_domain</span> = <span style="color: var(--warning-color);">"malicious-c2.example.com"</span>
+        <span style="color: var(--info-color);">$beacon_uri</span> = <span style="color: var(--warning-color);">"/beacon.php"</span>
+        <span style="color: var(--info-color);">$user_agent</span> = <span style="color: var(--warning-color);">"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"</span>
+        
+        <span style="color: var(--text-secondary);">// Encryption patterns</span>
+        <span style="color: var(--info-color);">$xor_key</span> = <span style="color: var(--warning-color);">{ DE AD BE EF }</span>
+        <span style="color: var(--info-color);">$decrypt_loop</span> = <span style="color: var(--warning-color);">{ 30 ?? 40 75 ?? }</span>
+        
+        <span style="color: var(--text-secondary);">// Function signatures</span>
+        <span style="color: var(--info-color);">$func_prologue</span> = <span style="color: var(--warning-color);">{ 55 48 89 E5 48 83 EC 20 }</span>
+        <span style="color: var(--info-color);">$api_hash</span> = <span style="color: var(--warning-color);">{ 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? }</span>
+    
+    <span style="color: var(--success-color);">condition:</span>
+        <span style="color: var(--info-color);">$mz</span> <span style="color: var(--text-secondary);">at</span> <span style="color: var(--warning-color);">0</span> <span style="color: var(--text-secondary);">and</span>
+        <span style="color: var(--info-color);">$pe</span> <span style="color: var(--text-secondary);">and</span>
+        <span style="color: var(--text-secondary);">(</span>
+            <span style="color: var(--text-secondary);">(</span><span style="color: var(--info-color);">$registry</span> <span style="color: var(--text-secondary);">and</span> <span style="color: var(--info-color);">$persist</span><span style="color: var(--text-secondary);">)</span> <span style="color: var(--text-secondary);">or</span>
+            <span style="color: var(--text-secondary);">(</span><span style="color: var(--info-color);">$c2_domain</span> <span style="color: var(--text-secondary);">and</span> <span style="color: var(--info-color);">$beacon_uri</span><span style="color: var(--text-secondary);">)</span> <span style="color: var(--text-secondary);">or</span>
+            <span style="color: var(--text-secondary);">(</span><span style="color: var(--info-color);">$xor_key</span> <span style="color: var(--text-secondary);">and</span> <span style="color: var(--info-color);">$decrypt_loop</span><span style="color: var(--text-secondary);">)</span>
+        <span style="color: var(--text-secondary);">)</span> <span style="color: var(--text-secondary);">and</span>
+        <span style="color: var(--text-secondary);">#</span><span style="color: var(--info-color);">func_prologue</span> <span style="color: var(--text-secondary);">&gt;</span> <span style="color: var(--warning-color);">3</span> <span style="color: var(--text-secondary);">and</span>
+        <span style="color: var(--text-secondary);">filesize</span> <span style="color: var(--text-secondary);">&lt;</span> <span style="color: var(--warning-color);">5MB</span>
+}
+
+<span style="color: var(--text-secondary);">// Additional family detection rule</span>
+rule <span style="color: var(--barbie-pink);">Emotet_Network_Behavior</span> {
+    <span style="color: var(--success-color);">meta:</span>
+        <span style="color: var(--info-color);">description</span> = <span style="color: var(--warning-color);">"Emotet network behavior patterns"</span>
+        <span style="color: var(--info-color);">author</span> = <span style="color: var(--warning-color);">"Athena AI Providers"</span>
+    
+    <span style="color: var(--success-color);">strings:</span>
+        <span style="color: var(--info-color);">$http_post</span> = <span style="color: var(--warning-color);">"POST /"</span>
+        <span style="color: var(--info-color);">$http_beacon</span> = <span style="color: var(--warning-color);">"beacon"</span>
+        <span style="color: var(--info-color);">$base64_padding</span> = <span style="color: var(--warning-color);">{ 3D 3D }</span> <span style="color: var(--text-secondary);">// Base64 padding "=="</span>
+    
+    <span style="color: var(--success-color);">condition:</span>
+        <span style="color: var(--text-secondary);">all of them</span>
+}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🔍</span>
+                                            Rule Testing & Validation
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">Test Results:</strong><br><br>
+                                            
+                                            <div style="color: var(--success-color);">✅ Rule compiled successfully</div>
+                                            <div style="color: var(--success-color);">✅ Matches current sample</div>
+                                            <div style="color: var(--success-color);">✅ No false positives on clean files</div>
+                                            <div style="color: var(--warning-color);">⚠️ Performance: 0.23ms scan time</div><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Coverage Analysis:</strong><br><br>
+                                            
+                                            <div>String matches: 8/10 (80%)</div>
+                                            <div>Condition logic: Valid</div>
+                                            <div>Detection confidence: High</div>
+                                            <div>False positive risk: Low</div><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Recommendations:</strong><br><br>
+                                            
+                                            <div style="color: var(--info-color);">• Add API hashing patterns</div>
+                                            <div style="color: var(--info-color);">• Include process injection signatures</div>
+                                            <div style="color: var(--info-color);">• Test against known Emotet variants</div>
+                                            <div style="color: var(--info-color);">• Optimize for performance</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📚 Rule Library
+                                </h3>
+                                
+                                <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem;">
+                                    <strong>Family Rules:</strong><br>
+                                    ✅ Emotet_Main_Detection<br>
+                                    ✅ Emotet_Network_Behavior<br>
+                                    ✅ Emotet_Persistence_Mechanism<br>
+                                    ⏳ Emotet_Process_Injection (generating...)<br><br>
+                                    
+                                    <strong>Generic Rules:</strong><br>
+                                    ✅ Trojan_Downloader_Generic<br>
+                                    ✅ Banking_Malware_Indicators<br>
+                                    ✅ C2_Communication_Patterns<br>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🛠️ Rule Actions
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-primary">📄 Export Rules</button>
+                                    <button class="btn btn-secondary">🔄 Auto-Generate</button>
+                                    <button class="btn btn-secondary">✅ Batch Test</button>
+                                    <button class="btn btn-secondary">📊 Performance Test</button>
+                                    <button class="btn btn-secondary">📚 Add to Library</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Workflows Panel -->
+                    <div id="workflows" class="content-panel" role="tabpanel" aria-labelledby="workflows-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🔗 Custom Workflows - Advanced Agent Orchestration
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🎨</span>
+                                            Workflow Designer
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">💾 Save Workflow</button>
+                                            <button class="btn btn-primary">▶️ Execute</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="background: var(--code-bg); border-radius: 6px; padding: 20px; min-height: 300px; position: relative; border: 1px solid var(--accent-bg);">
+                                        <h4 style="color: var(--text-primary); margin-bottom: 15px;">
+                                            Drag & Drop Workflow Canvas
+                                        </h4>
+                                        
+                                        <!-- Sample workflow nodes -->
+                                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                                            <div style="background: var(--panel-bg); border: 2px solid #6c5ce7; border-radius: 8px; padding: 10px 15px; cursor: pointer;">
+                                                🔬 Doru
+                                            </div>
+                                            <div style="color: var(--barbie-pink); font-size: 1.2rem; margin: 0 5px;">→</div>
+                                            <div style="background: var(--panel-bg); border: 2px solid #e17055; border-radius: 8px; padding: 10px 15px; cursor: pointer;">
+                                                🛡️ Aegis
+                                            </div>
+                                            <div style="color: var(--barbie-pink); font-size: 1.2rem; margin: 0 5px;">→</div>
+                                            <div style="background: var(--panel-bg); border: 2px solid #fd79a8; border-radius: 8px; padding: 10px 15px; cursor: pointer;">
+                                                🕸️ Weaver
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="background: var(--accent-bg); padding: 15px; border-radius: 6px; margin-top: 20px;">
+                                            <strong style="color: var(--barbie-pink);">Current Workflow: Advanced Threat Analysis</strong><br>
+                                            <span style="color: var(--text-secondary); font-size: 0.85rem;">
+                                                1. Doru performs deep malware analysis<br>
+                                                2. Results passed to Aegis for threat intelligence correlation<br>
+                                                3. Weaver updates threat model with new patterns<br>
+                                                4. Final ensemble consensus with confidence scoring
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">⚙️</span>
+                                            Workflow Configuration
+                                        </h3>
+                                    </div>
+                                    <div style="padding: 15px;">
+                                        <div style="margin-bottom: 15px;">
+                                            <label style="display: block; margin-bottom: 5px; color: var(--text-primary);">Workflow Name:</label>
+                                            <input type="text" value="Advanced Threat Analysis" style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px;">
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 15px;">
+                                            <label style="display: block; margin-bottom: 5px; color: var(--text-primary);">Execution Mode:</label>
+                                            <select style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px;">
+                                                <option>Sequential (Default)</option>
+                                                <option>Parallel Execution</option>
+                                                <option>Conditional Logic</option>
+                                                <option>Ensemble Voting</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 15px;">
+                                            <label style="display: block; margin-bottom: 5px; color: var(--text-primary);">Timeout (seconds):</label>
+                                            <input type="number" value="300" style="width: 100%; padding: 8px; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--accent-bg); border-radius: 4px;">
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 15px;">
+                                            <label style="display: flex; align-items: center; margin: 8px 0;">
+                                                <input type="checkbox" checked style="margin-right: 10px;">
+                                                Enable cross-agent intelligence sharing
+                                            </label>
+                                            <label style="display: flex; align-items: center; margin: 8px 0;">
+                                                <input type="checkbox" checked style="margin-right: 10px;">
+                                                Generate intermediate reports
+                                            </label>
+                                            <label style="display: flex; align-items: center; margin: 8px 0;">
+                                                <input type="checkbox" style="margin-right: 10px;">
+                                                Auto-retry on failure
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📋 Predefined Workflows
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent-bg);">
+                                        <strong style="color: var(--success-color);">🔍 Quick Analysis</strong><br>
+                                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Fast static + dynamic + AI ensemble</span>
+                                    </div>
+                                    
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent-bg);">
+                                        <strong style="color: var(--warning-color);">🎯 Deep Investigation</strong><br>
+                                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Comprehensive multi-agent analysis</span>
+                                    </div>
+                                    
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent-bg);">
+                                        <strong style="color: var(--info-color);">🚨 Incident Response</strong><br>
+                                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Rapid triage and attribution</span>
+                                    </div>
+                                    
+                                    <div style="background: var(--code-bg); padding: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent-bg);">
+                                        <strong style="color: var(--barbie-pink);">📊 Research Mode</strong><br>
+                                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Detailed analysis with reports</span>
+                                    </div>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📊 Workflow History
+                                </h3>
+                                
+                                <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; font-size: 0.85rem;">
+                                    <div style="margin-bottom: 8px;">
+                                        <strong>WF-2024-001:</strong> Deep Investigation<br>
+                                        <span style="color: var(--success-color);">✅ Completed - 94% confidence</span>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong>WF-2024-002:</strong> Quick Analysis<br>
+                                        <span style="color: var(--success-color);">✅ Completed - 89% confidence</span>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong>WF-2024-003:</strong> Incident Response<br>
+                                        <span style="color: var(--warning-color);">⏳ In Progress - Step 2/4</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-primary">🎨 New Workflow</button>
+                                    <button class="btn btn-secondary">📋 Import Template</button>
+                                    <button class="btn btn-secondary">📊 View Analytics</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Reports Panel -->
+                    <div id="reports" class="content-panel" role="tabpanel" aria-labelledby="reports-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            📊 Analysis Reports - Comprehensive Documentation
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">📄</span>
+                                            Executive Summary Report
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">📧 Email Report</button>
+                                            <button class="btn btn-primary">📄 Export PDF</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <div style="text-align: center; margin-bottom: 20px;">
+                                                <h3 style="color: var(--barbie-pink);">MALWARE ANALYSIS REPORT</h3>
+                                                <div style="color: var(--text-secondary);">Sample: malware_sample.exe</div>
+                                                <div style="color: var(--text-secondary);">Analysis Date: 2024-12-15 14:30:22 UTC</div>
+                                                <div style="color: var(--text-secondary);">Report ID: REP-2024-1215-001</div>
+                                            </div>
+                                            
+                                            <strong style="color: var(--barbie-pink); font-size: 1.1rem;">EXECUTIVE SUMMARY</strong><br><br>
+                                            
+                                            The analyzed sample (MD5: a1b2c3d4e5f6789012345678901234567) has been classified as 
+                                            <strong style="color: var(--danger-color);">high-risk malware</strong> belonging to the Emotet banking trojan family. 
+                                            The AI ensemble analysis achieved <strong>94% confidence</strong> with unanimous agreement 
+                                            across all six specialized agents.<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">KEY FINDINGS:</strong><br>
+                                            • <strong style="color: var(--danger-color);">Threat Level:</strong> High<br>
+                                            • <strong style="color: var(--warning-color);">Family:</strong> Trojan.GenKryptik.Win32 (Emotet variant)<br>
+                                            • <strong style="color: var(--info-color);">Primary Function:</strong> Banking credential theft, botnet recruitment<br>
+                                            • <strong style="color: var(--warning-color);">Persistence:</strong> Registry Run key modification<br>
+                                            • <strong style="color: var(--danger-color);">C2 Communication:</strong> HTTP-based beacon to malicious infrastructure<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">IMMEDIATE ACTIONS REQUIRED:</strong><br>
+                                            1. Block network communication to 192.168.1.100:8080<br>
+                                            2. Remove registry persistence mechanism<br>
+                                            3. Scan all systems for similar indicators<br>
+                                            4. Update endpoint detection rules<br>
+                                            5. Implement network monitoring for similar traffic patterns<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">BUSINESS IMPACT:</strong><br>
+                                            This malware poses significant risk to financial data and could lead to:<br>
+                                            • Unauthorized access to banking credentials<br>
+                                            • Potential financial theft<br>
+                                            • System compromise and lateral movement<br>
+                                            • Compliance violations (PCI-DSS, SOX)<br>
+                                            • Reputational damage
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🔬</span>
+                                            Technical Analysis Details
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">TECHNICAL DETAILS</strong><br><br>
+                                            
+                                            <strong>File Properties:</strong><br>
+                                            Name: malware_sample.exe<br>
+                                            Size: 2,457,600 bytes (2.3 MB)<br>
+                                            Type: PE32 Executable<br>
+                                            Architecture: x86-64<br>
+                                            Entropy: 7.82 (High - indicates packing/encryption)<br>
+                                            Packer: UPX v3.96 with custom modifications<br><br>
+                                            
+                                            <strong>Static Analysis:</strong><br>
+                                            Entry Point: 0x401000<br>
+                                            Sections: 5 (.text, .data, .rdata, .rsrc, .upx)<br>
+                                            Imports: 47 functions from 8 libraries<br>
+                                            Notable APIs: RegCreateKeyEx, InternetConnect, SetWindowsHookEx<br><br>
+                                            
+                                            <strong>Dynamic Behavior:</strong><br>
+                                            Process Creation: Creates svchost.exe copy in %TEMP%<br>
+                                            Registry Modification: Adds Run key for persistence<br>
+                                            Network Activity: Connects to C2 server every 30 seconds<br>
+                                            File System: Creates encrypted config file<br>
+                                            Process Injection: Injects code into explorer.exe<br><br>
+                                            
+                                            <strong>AI Provider Analysis:</strong><br>
+                                            🤖 Claude 3.5: Identified evasion techniques, 92% confidence<br>
+                                            🧠 GPT-4 Turbo: Architecture suggests multi-stage attack, 95% confidence<br>
+                                            🔍 DeepSeek V3: Correlates with known APT campaign, 96% confidence<br>
+                                            💎 Claude 3 Opus: Commercial packer with obfuscation, 93% confidence<br>
+                                            ⚡ GPT-4o: High infrastructure impact, 94% confidence<br>
+                                            🌟 Gemini Pro: Emotet family classification, 97% confidence
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📋 Report Templates
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                                    <button class="btn btn-primary">📄 Executive Summary</button>
+                                    <button class="btn btn-secondary">🔬 Technical Report</button>
+                                    <button class="btn btn-secondary">🚨 Incident Response</button>
+                                    <button class="btn btn-secondary">📊 Compliance Report</button>
+                                    <button class="btn btn-secondary">🎯 IOC Summary</button>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    📊 Report Statistics
+                                </h3>
+                                
+                                <div class="stats-overview" style="grid-template-columns: 1fr;">
+                                    <div class="stat-card">
+                                        <div class="stat-value">94%</div>
+                                        <div class="stat-label">Analysis Confidence</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">6/6</div>
+                                        <div class="stat-label">Provider Agreement</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">127</div>
+                                        <div class="stat-label">IOCs Extracted</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">23</div>
+                                        <div class="stat-label">MITRE Techniques</div>
+                                    </div>
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin: 20px 0 15px;">
+                                    📤 Export Options
+                                </h3>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-primary">📄 Export PDF</button>
+                                    <button class="btn btn-secondary">📧 Email Report</button>
+                                    <button class="btn btn-secondary">📋 Copy to Clipboard</button>
+                                    <button class="btn btn-secondary">💾 Save Template</button>
+                                    <button class="btn btn-secondary">🔗 Share Link</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Threat Intelligence Panel -->
+                    <div id="threat-intel" class="content-panel" role="tabpanel" aria-labelledby="threat-intel-tab">
+                        <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
+                            🚨 Threat Intelligence - IOCs & Attribution
+                        </h2>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-main">
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🎯</span>
+                                            Indicators of Compromise (IOCs)
+                                        </h3>
+                                        <div>
+                                            <button class="btn btn-secondary">📋 Copy IOCs</button>
+                                            <button class="btn btn-primary">📤 Export STIX</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--danger-color);">🚨 HIGH PRIORITY IOCs</strong><br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">File Hashes:</strong><br>
+                                            <span style="color: var(--danger-color);">MD5:</span> a1b2c3d4e5f6789012345678901234567<br>
+                                            <span style="color: var(--danger-color);">SHA1:</span> 9876543210abcdef9876543210abcdef98765432<br>
+                                            <span style="color: var(--danger-color);">SHA256:</span> 1234567890abcdef1234567890abcdef1234567890abcdef<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Network Indicators:</strong><br>
+                                            <span style="color: var(--danger-color);">Domain:</span> malicious-c2.example.com<br>
+                                            <span style="color: var(--danger-color);">Domain:</span> update-server.badsite.org<br>
+                                            <span style="color: var(--danger-color);">IP:</span> 192.168.1.100:8080<br>
+                                            <span style="color: var(--danger-color);">IP:</span> 203.0.113.42:80<br>
+                                            <span style="color: var(--warning-color);">URL:</span> hxxp://malicious-c2.example.com/beacon.php<br>
+                                            <span style="color: var(--warning-color);">URL:</span> hxxp://data-exfil.evil.net/upload<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">File System Artifacts:</strong><br>
+                                            <span style="color: var(--warning-color);">File:</span> C:\\Windows\\Temp\\update.exe<br>
+                                            <span style="color: var(--warning-color);">File:</span> %APPDATA%\\svchost.exe<br>
+                                            <span style="color: var(--warning-color);">File:</span> C:\\Users\\Public\\config.dat<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Registry Keys:</strong><br>
+                                            <span style="color: var(--danger-color);">Key:</span> HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\Update<br>
+                                            <span style="color: var(--warning-color);">Value:</span> "C:\\Windows\\Temp\\update.exe"<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">Process Indicators:</strong><br>
+                                            <span style="color: var(--warning-color);">Process:</span> svchost.exe (fake service host)<br>
+                                            <span style="color: var(--warning-color);">Process:</span> rundll32.exe (malicious DLL loading)<br>
+                                            <span style="color: var(--danger-color);">Injection:</span> explorer.exe (process hollowing)
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-panel">
+                                    <div class="panel-header">
+                                        <h3 class="panel-title">
+                                            <span aria-hidden="true">🕵️</span>
+                                            Attribution & Campaign Analysis
+                                        </h3>
+                                    </div>
+                                    <div class="code-editor">
+                                        <div class="code-content">
+                                            <strong style="color: var(--barbie-pink);">THREAT ATTRIBUTION</strong><br><br>
+                                            
+                                            <strong>Campaign Name:</strong> <span style="color: var(--danger-color);">Operation Banking Wolf</span><br>
+                                            <strong>Threat Actor:</strong> <span style="color: var(--warning-color);">TA505 (Financially Motivated)</span><br>
+                                            <strong>Active Since:</strong> <span style="color: var(--text-secondary);">September 2024</span><br>
+                                            <strong>Geographic Focus:</strong> <span style="color: var(--info-color);">North America, Europe</span><br>
+                                            <strong>Confidence Level:</strong> <span style="color: var(--success-color);">High (85%)</span><br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">CAMPAIGN CHARACTERISTICS:</strong><br><br>
+                                            
+                                            <strong>Primary Targets:</strong><br>
+                                            • Financial institutions and their customers<br>
+                                            • E-commerce platforms<br>
+                                            • Online banking users<br>
+                                            • Small to medium businesses<br><br>
+                                            
+                                            <strong>Attack Vector:</strong><br>
+                                            • Phishing emails with malicious attachments<br>
+                                            • Fake software updates<br>
+                                            • Exploit kits on compromised websites<br>
+                                            • Social engineering campaigns<br><br>
+                                            
+                                            <strong>Infrastructure Pattern:</strong><br>
+                                            • Uses fast-flux DNS for C2 servers<br>
+                                            • Bulletproof hosting in Eastern Europe<br>
+                                            • Domain generation algorithm (DGA) backup<br>
+                                            • Encrypted communication channels<br><br>
+                                            
+                                            <strong style="color: var(--barbie-pink);">RELATED SAMPLES:</strong><br>
+                                            • SHA256: abcdef1234567890... (87% similarity)<br>
+                                            • SHA256: fedcba0987654321... (92% similarity)<br>
+                                            • SHA256: 1357924680acebd... (76% similarity)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ensemble-results">
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🎯 MITRE ATT&CK Mapping
+                                </h3>
+                                
+                                <div style="background: var(--code-bg); padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem;">
+                                    <strong>Initial Access:</strong><br>
+                                    T1566.001 - Spearphishing Attachment<br>
+                                    T1566.002 - Spearphishing Link<br><br>
+                                    
+                                    <strong>Execution:</strong><br>
+                                    T1059.003 - Windows Command Shell<br>
+                                    T1204.002 - Malicious File<br><br>
+                                    
+                                    <strong>Persistence:</strong><br>
+                                    T1547.001 - Registry Run Keys<br>
+                                    T1053.005 - Scheduled Task<br><br>
+                                    
+                                    <strong>Defense Evasion:</strong><br>
+                                    T1055.012 - Process Hollowing<br>
+                                    T1027 - Obfuscated Files<br>
+                                    T1140 - Deobfuscate/Decode Files<br><br>
+                                    
+                                    <strong>Collection:</strong><br>
+                                    T1056.001 - Keylogging<br>
+                                    T1113 - Screen Capture<br><br>
+                                    
+                                    <strong>Command and Control:</strong><br>
+                                    T1071.001 - Web Protocols<br>
+                                    T1573.001 - Symmetric Cryptography
+                                </div>
+                                
+                                <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
+                                    🛡️ Defense Recommendations
+                                </h3>
+                                
+                                <div style="background: var(--code-bg); padding: 15px; border-radius: 6px;">
+                                    <strong style="color: var(--success-color);">Immediate Actions:</strong><br>
+                                    ✅ Block malicious domains/IPs<br>
+                                    ✅ Remove registry persistence<br>
+                                    ✅ Scan for similar indicators<br>
+                                    ✅ Update endpoint protection<br><br>
+                                    
+                                    <strong style="color: var(--warning-color);">Medium-term:</strong><br>
+                                    ⚠️ User awareness training<br>
+                                    ⚠️ Email security hardening<br>
+                                    ⚠️ Network segmentation<br>
+                                    ⚠️ Behavioral monitoring
+                                </div>
+                                
+                                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-primary">📤 Share Intel</button>
+                                    <button class="btn btn-secondary">🔗 MITRE Navigator</button>
+                                    <button class="btn btn-secondary">📊 Campaign Report</button>
+                                    <button class="btn btn-secondary">🚨 Create Alert</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        // Sandbox environment configuration
+        function initializeSandboxConfig() {
+            const osFamily = document.getElementById('os-family');
+            const architecture = document.getElementById('architecture');
+            const osVersion = document.getElementById('os-version');
+            const envSummary = document.getElementById('env-summary');
+            
+            const osVersions = {
+                windows: {
+                    x64: [
+                        { value: 'win11-23h2', text: 'Windows 11 23H2 (Latest)' },
+                        { value: 'win11-22h2', text: 'Windows 11 22H2' },
+                        { value: 'win10-22h2', text: 'Windows 10 22H2' },
+                        { value: 'win10-21h2', text: 'Windows 10 21H2' },
+                        { value: 'win-server-2022', text: 'Windows Server 2022' },
+                        { value: 'win-server-2019', text: 'Windows Server 2019' }
+                    ],
+                    x86: [
+                        { value: 'win10-22h2-x86', text: 'Windows 10 22H2 (32-bit)' },
+                        { value: 'win10-21h2-x86', text: 'Windows 10 21H2 (32-bit)' },
+                        { value: 'win7-sp1', text: 'Windows 7 SP1 (Legacy)' }
+                    ],
+                    arm64: [
+                        { value: 'win11-arm64', text: 'Windows 11 ARM64' },
+                        { value: 'win10-arm64', text: 'Windows 10 ARM64' }
+                    ],
+                    arm: [
+                        { value: 'win-iot-arm', text: 'Windows 10 IoT ARM32' }
+                    ]
+                },
+                linux: {
+                    x64: [
+                        { value: 'ubuntu-22.04', text: 'Ubuntu 22.04 LTS (Jammy)' },
+                        { value: 'ubuntu-20.04', text: 'Ubuntu 20.04 LTS (Focal)' },
+                        { value: 'debian-12', text: 'Debian 12 (Bookworm)' },
+                        { value: 'centos-9', text: 'CentOS Stream 9' },
+                        { value: 'fedora-39', text: 'Fedora 39' },
+                        { value: 'kali-latest', text: 'Kali Linux (Latest)' }
+                    ],
+                    x86: [
+                        { value: 'ubuntu-20.04-x86', text: 'Ubuntu 20.04 LTS (32-bit)' },
+                        { value: 'debian-11-x86', text: 'Debian 11 (32-bit)' }
+                    ],
+                    arm64: [
+                        { value: 'ubuntu-22.04-arm64', text: 'Ubuntu 22.04 ARM64' },
+                        { value: 'debian-12-arm64', text: 'Debian 12 ARM64' },
+                        { value: 'alpine-arm64', text: 'Alpine Linux ARM64' }
+                    ],
+                    arm: [
+                        { value: 'raspbian-latest', text: 'Raspberry Pi OS (ARM32)' },
+                        { value: 'ubuntu-20.04-arm', text: 'Ubuntu 20.04 ARM32' }
+                    ]
+                },
+                macos: {
+                    x64: [
+                        { value: 'macos-monterey', text: 'macOS 12 Monterey (Intel)' },
+                        { value: 'macos-big-sur', text: 'macOS 11 Big Sur (Intel)' },
+                        { value: 'macos-catalina', text: 'macOS 10.15 Catalina' }
+                    ],
+                    arm64: [
+                        { value: 'macos-sonoma-m3', text: 'macOS 14 Sonoma (M3)' },
+                        { value: 'macos-ventura-m2', text: 'macOS 13 Ventura (M2)' },
+                        { value: 'macos-monterey-m1', text: 'macOS 12 Monterey (M1)' }
+                    ]
+                }
+            };
+            
+            const osIcons = {
+                windows: '🪟',
+                linux: '🐧',
+                macos: '🍎'
+            };
+            
+            const archLabels = {
+                x64: 'x86-64',
+                x86: 'x86 (32-bit)',
+                arm64: 'ARM64',
+                arm: 'ARM (32-bit)'
+            };
+            
+            function updateVersions() {
+                const selectedOS = osFamily.value;
+                const selectedArch = architecture.value;
+                const versions = osVersions[selectedOS][selectedArch] || [];
+                
+                // Clear current options
+                osVersion.innerHTML = '';
+                
+                // Add new options
+                versions.forEach(version => {
+                    const option = document.createElement('option');
+                    option.value = version.value;
+                    option.textContent = version.text;
+                    osVersion.appendChild(option);
+                });
+                
+                updateSummary();
+            }
+            
+            function updateArchitectures() {
+                const selectedOS = osFamily.value;
+                const availableArchs = Object.keys(osVersions[selectedOS]);
+                
+                // Store current selection
+                const currentArch = architecture.value;
+                
+                // Clear and repopulate architecture options
+                architecture.innerHTML = '';
+                availableArchs.forEach(arch => {
+                    const option = document.createElement('option');
+                    option.value = arch;
+                    option.textContent = archLabels[arch];
+                    architecture.appendChild(option);
+                });
+                
+                // Restore selection if still available
+                if (availableArchs.includes(currentArch)) {
+                    architecture.value = currentArch;
+                }
+                
+                updateVersions();
+            }
+            
+            function updateSummary() {
+                const selectedOS = osFamily.value;
+                const selectedArch = architecture.value;
+                const selectedVersion = osVersion.options[osVersion.selectedIndex]?.text || '';
+                
+                const icon = osIcons[selectedOS];
+                const archLabel = archLabels[selectedArch];
+                
+                envSummary.textContent = `${icon} ${selectedVersion} (${archLabel})`;
+            }
+            
+            // Event listeners
+            osFamily.addEventListener('change', updateArchitectures);
+            architecture.addEventListener('change', updateVersions);
+            osVersion.addEventListener('change', updateSummary);
+            
+            // Initialize with default values
+            updateArchitectures();
+        }
+        
+        // Navigation and tab management
+        function initializeNavigation() {
+            const navItems = document.querySelectorAll('.sidebar-item');
+            const panels = document.querySelectorAll('.content-panel');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    switchPanel(item);
+                });
+                
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        switchPanel(item);
+                    }
+                });
+            });
+        }
+        
+        function switchPanel(selectedItem) {
+            const navItems = document.querySelectorAll('.sidebar-item');
+            const panels = document.querySelectorAll('.content-panel');
+            
+            // Remove active state from all nav items
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            // Hide all panels
+            panels.forEach(panel => panel.classList.remove('active'));
+            
+            // Add active state to selected item
+            selectedItem.classList.add('active');
+            
+            // Show corresponding panel
+            const targetTab = selectedItem.dataset.tab;
+            const targetPanel = document.getElementById(targetTab);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+            
+            // Announce to screen readers
+            const itemText = selectedItem.textContent.trim();
+            announceToScreenReader(`${itemText} panel activated`);
+        }
+        
+        // File upload functionality
+        function initializeUpload() {
+            const uploadArea = document.querySelector('.upload-area');
+            const fileInput = document.getElementById('file-upload');
+            
+            if (uploadArea && fileInput) {
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        fileInput.click();
+                    }
+                });
+                
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.background = 'rgba(255, 107, 157, 0.15)';
+                });
+                
+                uploadArea.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.background = 'rgba(255, 107, 157, 0.05)';
+                });
+                
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.background = 'rgba(255, 107, 157, 0.05)';
+                    handleFileUpload(e.dataTransfer.files);
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    handleFileUpload(e.target.files);
+                });
+            }
+        }
+        
+        function handleFileUpload(files) {
+            if (files.length > 0) {
+                // Switch to static analysis panel after upload
+                const staticNavItem = document.querySelector('[data-tab="static"]');
+                if (staticNavItem) {
+                    switchPanel(staticNavItem);
+                }
+                
+                // Simulate analysis start
+                const agentDots = document.querySelectorAll('.agent-status-dot');
+                agentDots.forEach((dot, index) => {
+                    setTimeout(() => {
+                        dot.classList.add('analyzing');
+                        setTimeout(() => {
+                            dot.classList.remove('analyzing');
+                        }, 2000);
+                    }, index * 300);
+                });
+                
+                announceToScreenReader(`${files.length} file(s) uploaded. Starting AI provider ensemble analysis.`);
+            }
+        }
+        
+        // Screen reader announcements
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+            setTimeout(() => document.body.removeChild(announcement), 3000);
+        }
+        
+        // Simulate real-time agent status updates
+        function initializeRealtimeUpdates() {
+            setInterval(() => {
+                const statusDot = document.querySelector('.status-dot');
+                if (statusDot) {
+                    const colors = ['var(--success-color)', 'var(--warning-color)', 'var(--info-color)'];
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    statusDot.style.background = randomColor;
+                }
+            }, 5000);
+        }
+        
+        // Initialize all functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeNavigation();
+            initializeUpload();
+            initializeRealtimeUpdates();
+            initializeSandboxConfig();
+        });
+    </script>
+</body>
+</html>

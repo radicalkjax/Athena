@@ -31,7 +31,7 @@ export const invokeCommand = async (command: string, args?: any): Promise<any> =
       }
       return '';
       
-    case 'get_system_info':
+    case 'get_system_status':
       // Return mock system info for web
       return {
         cpu_usage: Math.random() * 100,

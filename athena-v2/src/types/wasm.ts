@@ -47,6 +47,7 @@ export interface WasmAnalysisResult {
 }
 
 export interface WasmMetrics {
+  module_name: string;
   confidence: number;
   memory_used: number;
   throughput: number;

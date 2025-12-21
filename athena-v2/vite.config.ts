@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 // Check if we're building for Tauri
 const isTauri = process.env.TAURI_PLATFORM !== undefined;
@@ -9,10 +8,6 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig({
   plugins: [
     solidPlugin(),
-    svelte({
-      include: ['**/*.svelte'],
-      exclude: ['**/node_modules/**'],
-    }),
   ],
 
   // Vite 7: Improved dev server configuration
@@ -68,9 +63,6 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('solid-js')) {
               return 'vendor-solid';
-            }
-            if (id.includes('svelte')) {
-              return 'vendor-svelte';
             }
             return 'vendor';
           }

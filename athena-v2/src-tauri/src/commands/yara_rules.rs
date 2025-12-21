@@ -1,4 +1,5 @@
-// Placeholder YARA rules until we have actual rule files
+// Additional YARA rule sets for malware detection
+// These can be loaded via load_yara_rules() for extended detection capabilities
 
 #[allow(dead_code)]
 pub const RANSOMWARE_RULES: &str = r#"
