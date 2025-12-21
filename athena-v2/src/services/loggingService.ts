@@ -55,43 +55,48 @@ class LoggingService {
       error: logData.error
     };
 
-    // TODO: Implement actual logging service integration
-    // For now, we'll store in localStorage for debugging
+    // In production, send to backend via Tauri IPC for file-based logging
+    // Per DeepWiki: localStorage is not appropriate for desktop app logging
     if (!this.isDev) {
-      try {
-        const logs = JSON.parse(localStorage.getItem('athena_logs') || '[]');
-        logs.push(fullLogData);
-        // Keep only last 1000 logs
-        if (logs.length > 1000) {
-          logs.splice(0, logs.length - 1000);
-        }
-        localStorage.setItem('athena_logs', JSON.stringify(logs));
-      } catch (e) {
-        // Fail silently if localStorage is full or unavailable
-      }
+      // Use Tauri's invoke to send logs to backend for persistent storage
+      // Backend should use app_log_dir() for proper log file location
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        invoke('log_frontend_message', {
+          level: fullLogData.level,
+          message: fullLogData.message,
+          data: fullLogData.data,
+          timestamp: fullLogData.timestamp
+        }).catch(() => {
+          // Fail silently if backend is unavailable
+        });
+      }).catch(() => {
+        // Fail silently if Tauri API is unavailable
+      });
     }
   }
 
-  private sendToErrorTracking(_message: string, error?: any): void {
-    // TODO: Integrate with error tracking service (e.g., Sentry)
-    // For now, just ensure critical errors are captured
+  private sendToErrorTracking(message: string, error?: any): void {
+    // Send critical errors to backend for persistent logging
+    // Per DeepWiki: Use Tauri IPC to forward errors to backend
     if (!this.isDev && error) {
-      // Could integrate with Tauri's error reporting here
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        invoke('log_frontend_error', {
+          message,
+          error: error?.toString() || String(error),
+          stack: error?.stack,
+          timestamp: new Date().toISOString()
+        }).catch(() => {
+          // Fail silently if backend is unavailable
+        });
+      }).catch(() => {
+        // Fail silently if Tauri API is unavailable
+      });
     }
   }
 
-  // Method to retrieve logs (useful for debugging)
-  getLogs(): LogData[] {
-    try {
-      return JSON.parse(localStorage.getItem('athena_logs') || '[]');
-    } catch {
-      return [];
-    }
-  }
-
-  clearLogs(): void {
-    localStorage.removeItem('athena_logs');
-  }
+  // Methods removed: getLogs() and clearLogs()
+  // Per DeepWiki: localStorage is not appropriate for desktop app logging
+  // Logs are now stored on backend using Tauri's app_log_dir()
 }
 
 export const logger = new LoggingService();

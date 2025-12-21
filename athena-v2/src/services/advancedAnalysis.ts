@@ -58,142 +58,15 @@ class AdvancedAnalysisService {
     fileHash: string,
     fileData: Uint8Array
   ): Promise<BehavioralAnalysis> {
-    try {
-      const result = await invoke<BehavioralAnalysis>('analyze_behavior', {
-        fileHash,
-        fileData: Array.from(fileData)
-      });
-      return result;
-    } catch (error) {
-      // Return mock behavioral analysis for now
-      return this.generateMockBehavioralAnalysis(fileHash);
-    }
+    // Propagate errors to UI - zero tolerance for mock data
+    const result = await invoke<BehavioralAnalysis>('analyze_behavior', {
+      fileHash,
+      fileData: Array.from(fileData)
+    });
+    return result;
   }
 
-  private generateMockBehavioralAnalysis(fileHash: string): BehavioralAnalysis {
-    const behaviors: BehaviorPattern[] = [
-      {
-        type: 'evasion',
-        description: 'Process hollowing detected in svchost.exe',
-        severity: 'high',
-        confidence: 0.85,
-        evidence: [
-          'Suspended process creation',
-          'Memory unmapping in remote process',
-          'WriteProcessMemory calls detected'
-        ]
-      },
-      {
-        type: 'persistence',
-        description: 'Registry run key modification',
-        severity: 'medium',
-        confidence: 0.92,
-        evidence: [
-          'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run modified',
-          'Autostart entry added'
-        ]
-      },
-      {
-        type: 'communication',
-        description: 'C2 communication detected',
-        severity: 'critical',
-        confidence: 0.78,
-        evidence: [
-          'Encrypted traffic to suspicious domain',
-          'Regular beacon interval detected',
-          'Non-standard port usage'
-        ]
-      }
-    ];
-
-    const networkActivity: NetworkBehavior[] = [
-      {
-        type: 'dns_query',
-        destination: 'malicious-c2.com',
-        port: 53,
-        protocol: 'UDP',
-        suspicious: true,
-        timestamp: Date.now() - 5000
-      },
-      {
-        type: 'http_request',
-        destination: '192.168.1.100',
-        port: 8080,
-        protocol: 'TCP',
-        data: 'POST /beacon',
-        suspicious: true,
-        timestamp: Date.now() - 3000
-      }
-    ];
-
-    const fileOperations: FileOperation[] = [
-      {
-        operation: 'create',
-        path: 'C:\\Windows\\Temp\\payload.exe',
-        process: 'malware.exe',
-        timestamp: Date.now() - 10000,
-        suspicious: true
-      },
-      {
-        operation: 'write',
-        path: 'C:\\Users\\Public\\readme.txt',
-        process: 'malware.exe',
-        timestamp: Date.now() - 8000,
-        suspicious: true
-      }
-    ];
-
-    const processActivity: ProcessBehavior[] = [
-      {
-        operation: 'create',
-        processName: 'svchost.exe',
-        pid: 1234,
-        parentPid: 5678,
-        commandLine: 'svchost.exe -k netsvcs',
-        suspicious: true,
-        timestamp: Date.now() - 15000
-      },
-      {
-        operation: 'inject',
-        processName: 'explorer.exe',
-        pid: 2468,
-        suspicious: true,
-        timestamp: Date.now() - 12000
-      }
-    ];
-
-    const riskScore = this.calculateRiskScore(behaviors, networkActivity, fileOperations, processActivity);
-
-    return {
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      behaviors,
-      riskScore,
-      sandboxEscape: Math.random() > 0.7,
-      persistence: [
-        {
-          technique: 'Registry Run Keys',
-          location: 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
-          details: 'Added malicious entry to startup',
-          mitreTechnique: 'T1547.001'
-        }
-      ],
-      networkActivity,
-      fileOperations,
-      processActivity,
-      registryModifications: [
-        {
-          operation: 'create',
-          key: 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Malware',
-          value: 'C:\\Windows\\Temp\\payload.exe',
-          data: '',
-          process: 'malware.exe',
-          suspicious: true,
-          timestamp: Date.now() - 7000
-        }
-      ]
-    };
-  }
+  // Mock behavioral analysis removed - zero tolerance for mock data in production
 
   private calculateRiskScore(
     behaviors: BehaviorPattern[],
@@ -224,140 +97,26 @@ class AdvancedAnalysisService {
     fileData: Uint8Array,
     customRules?: string[]
   ): Promise<YaraMatch[]> {
-    try {
-      const rules = customRules || Array.from(this.yaraRules.values());
-      const result = await invoke<YaraMatch[]>('run_yara_scan', {
-        fileData: Array.from(fileData),
-        rules
-      });
-      return result;
-    } catch (error) {
-      // Return mock YARA matches for now
-      return this.generateMockYaraMatches();
-    }
+    const rules = customRules || Array.from(this.yaraRules.values());
+    const result = await invoke<YaraMatch[]>('scan_file_with_yara', {
+      fileData: Array.from(fileData),
+      rules
+    });
+    return result;
   }
 
-  private generateMockYaraMatches(): YaraMatch[] {
-    return [
-      {
-        rule: 'Emotet_Trojan',
-        namespace: 'malware',
-        tags: ['trojan', 'emotet', 'banker'],
-        meta: {
-          description: 'Detects Emotet trojan variants',
-          author: 'Athena Platform',
-          severity: 'critical'
-        },
-        strings: [
-          {
-            identifier: '$a',
-            offset: 0x1234,
-            value: 'C7 45 ?? ?? ?? ?? ?? C7 45 ?? ?? ?? ?? ??',
-            length: 14
-          },
-          {
-            identifier: '$b',
-            offset: 0x5678,
-            value: 'urlmon.dll',
-            length: 10
-          }
-        ],
-        confidence: 0.95
-      },
-      {
-        rule: 'Suspicious_API_Usage',
-        tags: ['suspicious', 'api'],
-        meta: {
-          description: 'Detects suspicious API usage patterns',
-          severity: 'medium'
-        },
-        strings: [
-          {
-            identifier: '$api1',
-            offset: 0x2468,
-            value: 'VirtualAllocEx',
-            length: 14
-          },
-          {
-            identifier: '$api2',
-            offset: 0x3579,
-            value: 'WriteProcessMemory',
-            length: 18
-          }
-        ],
-        confidence: 0.82
-      }
-    ];
-  }
 
   async getThreatIntelligence(
     fileHash: string,
     iocs: string[]
   ): Promise<ThreatIntelligence[]> {
-    try {
-      const result = await invoke<ThreatIntelligence[]>('get_threat_intelligence', {
-        fileHash,
-        iocs
-      });
-      return result;
-    } catch (error) {
-      // Return mock threat intel for now
-      return this.generateMockThreatIntel(fileHash);
-    }
+    const result = await invoke<ThreatIntelligence[]>('get_threat_intelligence', {
+      fileHash,
+      iocs
+    });
+    return result;
   }
 
-  private generateMockThreatIntel(fileHash: string): ThreatIntelligence[] {
-    return [
-      {
-        source: 'VirusTotal',
-        timestamp: Date.now(),
-        indicators: [
-          {
-            type: 'hash',
-            value: fileHash,
-            confidence: 0.95,
-            firstSeen: Date.now() - 86400000,
-            lastSeen: Date.now(),
-            tags: ['emotet', 'trojan', 'malware']
-          },
-          {
-            type: 'domain',
-            value: 'malicious-c2.com',
-            confidence: 0.88,
-            tags: ['c2', 'emotet']
-          },
-          {
-            type: 'ip',
-            value: '192.168.1.100',
-            confidence: 0.75,
-            tags: ['c2', 'suspicious']
-          }
-        ],
-        malwareFamily: 'Emotet',
-        campaigns: ['Emotet Campaign 2024'],
-        actors: ['TA542'],
-        ttps: ['T1055', 'T1547.001', 'T1071.001'],
-        references: [
-          'https://attack.mitre.org/software/S0367/',
-          'https://malpedia.caad.fkie.fraunhofer.de/details/win.emotet'
-        ]
-      },
-      {
-        source: 'AlienVault OTX',
-        timestamp: Date.now() - 3600000,
-        indicators: [
-          {
-            type: 'file_path',
-            value: 'C:\\Windows\\Temp\\payload.exe',
-            confidence: 0.80,
-            tags: ['dropper', 'suspicious']
-          }
-        ],
-        campaigns: ['Banking Trojan Wave Q1 2024'],
-        references: ['https://otx.alienvault.com/']
-      }
-    ];
-  }
 
   async generateTimeline(
     behavioral: BehavioralAnalysis,

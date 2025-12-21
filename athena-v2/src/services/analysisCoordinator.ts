@@ -437,7 +437,7 @@ class AnalysisCoordinator {
     return {
       activeAnalyses: totalActive,
       queuedAnalyses: totalQueued,
-      memoryUsage: memoryManager.getUsage(),
+      memoryUsage: memoryManager.getTotalAllocated(),
       bulkheadStatus: this.getQueueStatus()
     };
   }

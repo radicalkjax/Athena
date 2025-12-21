@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { save } from '@tauri-apps/plugin-dialog';
+import { save, open } from '@tauri-apps/plugin-dialog';
 import { invokeCommand } from '../utils/tauriCompat';
 
 export interface ExportOptions {
@@ -148,10 +148,11 @@ class ExportService {
     const exportedPaths: string[] = [];
     const errors: Array<{ fileId: string; error: string }> = [];
 
-    // Get output directory
-    const outputDir = options.outputDirectory || await save({
+    // Get output directory - use open dialog for directory selection per Tauri 2.0 API
+    const outputDir = options.outputDirectory || await open({
       directory: true,
-      defaultPath: `athena_batch_export_${Date.now()}`
+      multiple: false,
+      title: 'Select Export Directory'
     });
 
     if (!outputDir) {

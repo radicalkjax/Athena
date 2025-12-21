@@ -139,11 +139,12 @@ class AIService {
       
       // Cache the result
       this.requestCache.set(cacheKey, finalResult);
-      
+
       return finalResult;
     } catch (error) {
-      console.warn(`AI analysis failed for ${provider}, using fallback:`, error);
-      return this.createMockResult(provider, request);
+      // Propagate error to UI - no mock data in production
+      console.error(`AI analysis failed for ${provider}:`, error);
+      throw error;
     } finally {
       this.activeRequests.delete(requestId);
     }
@@ -166,92 +167,7 @@ class AIService {
     return this.analyzeWithProvider(provider, request);
   }
 
-  private createMockResult(
-    provider: AIProvider, 
-    request: AIAnalysisRequest
-  ): AIAnalysisResult {
-    const severityLevels: Array<'safe' | 'suspicious' | 'malicious' | 'critical'> = 
-      ['safe', 'suspicious', 'malicious', 'critical'];
-    
-    const mockResults: Record<AIProvider, Partial<AIAnalysisResult>> = {
-      claude: {
-        confidence: 0.92,
-        threatLevel: 'malicious',
-        malwareFamily: 'Emotet',
-        malwareType: 'Trojan',
-        signatures: ['PE_Packed', 'Anti_Debug', 'Process_Injection'],
-        behaviors: ['Downloads additional payloads', 'Steals credentials', 'Spreads via email']
-      },
-      gpt4: {
-        confidence: 0.88,
-        threatLevel: 'malicious',
-        malwareFamily: 'Emotet',
-        malwareType: 'Banking Trojan',
-        signatures: ['PE_Obfuscated', 'Registry_Persistence', 'Network_C2'],
-        behaviors: ['Establishes persistence', 'Communicates with C2', 'Keylogging capability']
-      },
-      deepseek: {
-        confidence: 0.85,
-        threatLevel: 'suspicious',
-        malwareFamily: 'Unknown',
-        malwareType: 'Potentially Unwanted',
-        signatures: ['Code_Injection', 'Memory_Manipulation'],
-        behaviors: ['Modifies system files', 'Hidden processes']
-      },
-      gemini: {
-        confidence: 0.90,
-        threatLevel: 'malicious',
-        malwareFamily: 'Emotet',
-        malwareType: 'Dropper',
-        signatures: ['API_Hooking', 'Encryption_Routine', 'Self_Modifying'],
-        behaviors: ['Drops malicious payloads', 'Encrypts communications', 'Evades detection']
-      },
-      mistral: {
-        confidence: 0.87,
-        threatLevel: 'malicious',
-        malwareFamily: 'Emotet',
-        malwareType: 'Trojan',
-        signatures: ['Import_Hash_Match', 'Known_Bad_Certificate'],
-        behaviors: ['Lateral movement', 'Data exfiltration']
-      },
-      llama: {
-        confidence: 0.83,
-        threatLevel: 'suspicious',
-        malwareFamily: 'Generic',
-        malwareType: 'Suspicious',
-        signatures: ['Packed_Executable', 'Suspicious_Strings'],
-        behaviors: ['Unusual network activity', 'File system modifications']
-      }
-    };
-
-    const mockData = mockResults[provider] || {};
-    const randomIndex = Math.floor(Math.random() * severityLevels.length);
-    const defaultThreatLevel = severityLevels[randomIndex] ?? 'safe';
-
-    return {
-      provider,
-      timestamp: Date.now(),
-      confidence: mockData.confidence || Math.random() * 0.3 + 0.7,
-      threatLevel: mockData.threatLevel || defaultThreatLevel,
-      malwareFamily: mockData.malwareFamily,
-      malwareType: mockData.malwareType,
-      signatures: mockData.signatures || [],
-      behaviors: mockData.behaviors || [],
-      iocs: {
-        domains: ['malicious-c2.com', 'evil-payload.net'],
-        ips: ['192.168.1.100', '10.0.0.50'],
-        files: ['C:\\Windows\\Temp\\payload.exe'],
-        registry: ['HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'],
-        processes: ['svchost.exe', 'rundll32.exe']
-      },
-      recommendations: [
-        'Isolate the infected system',
-        'Run deep malware scan',
-        'Check network logs for C2 communications',
-        'Update security signatures'
-      ]
-    };
-  }
+  // Mock fallback removed - zero tolerance for incomplete/mock data in production
 
   async analyzeWithMultipleProviders(
     request: AIAnalysisRequest

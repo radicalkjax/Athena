@@ -3,7 +3,7 @@ import { performanceConfig } from '../config/performance';
 
 class PreloadService {
   private preloadQueue = new Set<string>();
-  private preloadTimers = new Map<string, NodeJS.Timeout>();
+  private preloadTimers = new Map<string, number>();
   private loadedModules = new Map<string, any>();
 
   // Component loaders map

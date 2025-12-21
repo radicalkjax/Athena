@@ -292,7 +292,7 @@ class ProgressTracker {
 
   // Batch progress updates for performance
   private batchedUpdates: Map<string, ProgressUpdate> = new Map();
-  private batchTimer: NodeJS.Timeout | null = null;
+  private batchTimer: number | null = null;
 
   batchProgressUpdate(update: ProgressUpdate) {
     const key = `${update.fileId}-${update.analysisType}`;

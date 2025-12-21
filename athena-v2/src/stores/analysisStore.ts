@@ -162,4 +162,67 @@ export const analysisStore = {
   updateStreamingResults(results: Record<string, Record<string, any[]>>) {
     setStore('streamingResults', results);
   },
+
+  deleteFile(fileId: string) {
+    const fileIndex = store.files.findIndex(f => f.id === fileId);
+    if (fileIndex === -1) return;
+
+    // Remove the file from the array
+    setStore('files', files => files.filter(f => f.id !== fileId));
+
+    // Handle active file cleanup
+    if (store.activeFileId === fileId) {
+      // If there are remaining files, set the first one as active
+      if (store.files.length > 1) {
+        const nextFile = fileIndex > 0 ? store.files[fileIndex - 1] : store.files[0];
+        if (nextFile && nextFile.id !== fileId) {
+          setStore('activeFileId', nextFile.id);
+          setStore('currentFile', nextFile);
+        } else {
+          setStore('activeFileId', null);
+          setStore('currentFile', undefined);
+        }
+      } else {
+        setStore('activeFileId', null);
+        setStore('currentFile', undefined);
+      }
+    }
+
+    // Clean up uploaded file reference if it matches
+    if (store.uploadedFile?.id === fileId) {
+      setStore('uploadedFile', undefined);
+    }
+
+    // Clean up current file reference if it matches
+    if (store.currentFile?.id === fileId) {
+      setStore('currentFile', undefined);
+    }
+
+    // Clear analysis progress if we're deleting the file being analyzed
+    if (store.currentFile?.id === fileId && store.isAnalyzing) {
+      setStore('analysisProgress', undefined);
+      setStore('isAnalyzing', false);
+    }
+
+    // Clean up streaming results for this file
+    if (store.streamingResults?.[fileId]) {
+      setStore('streamingResults', results => {
+        if (!results) return results;
+        const newResults = { ...results };
+        delete newResults[fileId];
+        return Object.keys(newResults).length > 0 ? newResults : undefined;
+      });
+    }
+  },
+
+  clearAllFiles() {
+    // Clear all file-related state
+    setStore('files', []);
+    setStore('activeFileId', null);
+    setStore('uploadedFile', undefined);
+    setStore('currentFile', undefined);
+    setStore('analysisProgress', undefined);
+    setStore('streamingResults', undefined);
+    setStore('isAnalyzing', false);
+  },
 };
