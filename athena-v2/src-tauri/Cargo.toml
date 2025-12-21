@@ -12,27 +12,38 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+tokio = { version = "1.48.0", features = ["full"] }
+# HTTP server for external API access
+axum = "0.8.6"
+tower = "0.5.2"
+tower-http = { version = "0.6.6", features = ["cors", "trace"] }
 sha2 = "0.10"
 hex = "0.4"
 mime_guess = "2.0"
-uuid = { version = "1.6", features = ["v4"] }
+uuid = { version = "1.18.1", features = ["v4"] }
 sysinfo = "0.31"
-wasmtime = { version = "37.0", features = ["component-model"] }
-wasmtime-wasi = "37.0"
+wasmtime = { version = "38.0.3", features = ["component-model"] }
+wasmtime-wasi = "38.0.3"
 wasm-bindgen = "0.2"
-anyhow = "1.0"
-reqwest = { version = "0.11", features = ["json"] }
+anyhow = "1.0.100"
+reqwest = { version = "0.12.24", features = ["json", "rustls-tls"], default-features = false }
 async-trait = "0.1"
-base64 = "0.21"
-chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.22.1"
+chrono = { version = "0.4.42", features = ["serde"] }
 # Binary parsing
-goblin = "0.8"
+goblin = "0.10.3"
 object = { version = "0.37", features = ["all"] }
 # YARA scanning
-yara-x = "1.8"
+yara-x = "1.8.1"
+# Threat Intelligence
+rust-stix2 = { git = "https://github.com/oasis-open/cti-rust-stix.git" }
+# Network capture and analysis
+pcap = "2.0"
+libc = "0.2"
+pnet = "0.35"
+pnet_packet = "0.35"
 # Additional utilities
 byteorder = "1.5"
 memmap2 = "0.9"
@@ -62,6 +73,19 @@ der-parser = "9.0"
 der = "0.7"
 sequoia-openpgp = "1.18"
 dirs = "5.0"
+
+# Prometheus metrics with Pushgateway support (per DeepWiki for desktop apps)
+prometheus = { version = "0.13", features = ["push"] }
+metrics = "0.24"
+metrics-exporter-prometheus = "0.16"
+
+# Additional async utilities
+futures = "0.3"
+once_cell = "1.20"
+
+# Docker container support
+bollard = "0.16"
+tar = "0.4"
 
 [features]
 default = ["custom-protocol"]
