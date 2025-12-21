@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["HeaderError","HeaderReadError","HeaderSliceError","SliceError"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["analyze_packet","check_packet_anomalies","parse_packet_details"],"struct":["EthernetInfo","IpInfo","PacketInfo","TransportInfo"]};

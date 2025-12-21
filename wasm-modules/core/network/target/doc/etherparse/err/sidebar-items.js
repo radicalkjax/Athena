@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["FromSliceError","Layer","ReadError","ValueType"],"mod":["double_vlan","io","ip","ip_auth","ip_exts","ipv4","ipv4_exts","ipv6","ipv6_exts","packet","tcp"],"struct":["LenError","SliceWriteSpaceError","ValueTooBigError"]};

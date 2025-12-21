@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["additional_records","answers","has_flags","id","name_servers","opcode","questions","rcode"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["detect_anomalies","detect_data_exfiltration","detect_port_scan"],"struct":["DataExfiltrationInfo","PortScanInfo","TrafficAnomaly"]};
