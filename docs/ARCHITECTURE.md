@@ -36,7 +36,7 @@ A high-performance native application built with Tauri 2.0, offering:
 - **SolidJS Frontend**: Reactive UI with minimal overhead
 - **Single Codebase**: Unified development across all platforms
 
-See [`athena-v2/docs/ARCHITECTURE.md`](../athena-v2/docs/ARCHITECTURE.md) for Tauri-specific architecture details.
+See [`implementation/TAURI_DEVELOPMENT_GUIDE.md`](./implementation/TAURI_DEVELOPMENT_GUIDE.md) for Tauri-specific development details.
 
 ### Key Features
 

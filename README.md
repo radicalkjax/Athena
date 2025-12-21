@@ -1,7 +1,7 @@
 # Athena - AI-Powered Malware Analysis Assistant
 
 <div align="center">
-  <img src="./athena-v2/src/assets/logo.png" alt="Athena Logo" width="300" />
+  <img src="./athena-v2/src-tauri/icons/logo.png" alt="Athena Logo" width="300" />
 </div>
 
 Athena is a cross-platform application designed to help security researchers analyze and deobfuscate malware using various AI models. It provides a secure environment for malware analysis with features like isolated container execution and integration with the Metasploit database.
@@ -73,6 +73,26 @@ Athena leverages multiple AI models including OpenAI's GPT-4, Claude 3 Opus, and
 
 The application is designed with security in mind, providing isolated container execution for safer analysis of potentially harmful code. It also integrates with the Metasploit database to provide additional context about identified vulnerabilities.
 
+### 🤖 Rust: Building for the AI/Agentic Era
+
+Athena's choice of Rust as the core backend technology positions the platform for the future of AI and agentic systems:
+
+- **Memory Safety Without Garbage Collection**: Rust's ownership model provides deterministic memory management crucial for AI workloads where predictable performance matters. No unexpected GC pauses during time-sensitive malware analysis.
+
+- **Fearless Concurrency**: Rust's type system prevents data races at compile time, enabling safe parallel processing of multiple AI model requests, WASM module execution, and concurrent malware analysis without locks or runtime overhead.
+
+- **Zero-Cost Abstractions**: High-level abstractions compile down to efficient machine code, allowing AI agents to interact with low-level malware analysis operations without performance penalties.
+
+- **WebAssembly Integration**: Rust's first-class WASM support enables sandboxed execution of AI-generated analysis code and untrusted binaries with cryptographic verification and component model isolation.
+
+- **Type Safety for AI Interoperability**: Strong typing ensures AI-generated code integrations are verified at compile time, preventing runtime errors when AI agents orchestrate complex analysis workflows.
+
+- **Cross-Platform Native Performance**: Single codebase deploys to desktop (Windows, macOS, Linux) and mobile (iOS, Android) with native performance, allowing AI agents to operate consistently across platforms.
+
+- **Ecosystem for AI/ML**: Growing Rust ecosystem for machine learning (burn, candle, linfa) enables future on-device AI model inference, keeping sensitive malware analysis data local and secure.
+
+By building on Rust, Athena is prepared for future enhancements like autonomous AI agents that can orchestrate multi-stage malware analysis, generate custom YARA rules, and adapt detection strategies—all while maintaining the security guarantees critical for malware analysis platforms.
+
 ## ✨ Features
 
 - **🎨 Beautiful Interactive CLI**: New `/scripts/athena` command provides a gorgeous menu-driven interface with:
@@ -99,11 +119,10 @@ The application is designed with security in mind, providing isolated container 
   - Isolated network environment
   - Real-time container monitoring
 - **Advanced Analysis Options**: Configure analysis depth and focus areas
-- **Persistent Storage**: PostgreSQL database for storing:
-  - Container configurations
-  - Analysis results
-  - Monitoring data
-  - Activity logs
+- **Persistent Storage**: SQLite database for storing:
+  - Workflow configurations and job status
+  - Analysis results and metadata
+  - Local caching (with optional Redis for distributed caching)
 - **Container Monitoring**: Comprehensive monitoring of container activity:
   - Resource usage (CPU, memory, disk, network)
   - Network connections and traffic
@@ -121,15 +140,17 @@ The application is designed with security in mind, providing isolated container 
 
 Before you begin, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v16 or later)
-- [npm](https://www.npmjs.com/) (v8 or later)
-- [Rust](https://rustup.rs/) (latest stable)
+- [Rust](https://rustup.rs/) (latest stable) - **Required for Tauri backend**
+- [Node.js](https://nodejs.org/) (v16 or later) - **Only for building the SolidJS frontend**
+- [npm](https://www.npmjs.com/) (v8 or later) - **Only for managing frontend dependencies**
 - [Tauri Prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites) for your platform
-- [Docker](https://www.docker.com/products/docker-desktop/) and [Docker Compose](https://docs.docker.com/compose/install/) (for backend services)
+- [Docker](https://www.docker.com/products/docker-desktop/) (optional) - Only needed if you want Redis caching
 - API keys for the AI models you want to use:
   - [OpenAI API key](https://platform.openai.com/account/api-keys)
   - [Claude API key](https://console.anthropic.com/account/keys)
   - [DeepSeek API key](https://platform.deepseek.com/)
+
+**Note:** Athena is now a **100% Tauri-only application**. The Node.js backend has been completely removed. Node.js is only used for building the frontend UI during development.
 
 ### Installation
 
@@ -157,18 +178,17 @@ Before you begin, ensure you have the following installed:
 
 3. **Optional: Manual setup** (if you prefer manual control):
    ```bash
-   # Install root dependencies (for backend services)
-   npm install
-
-   # Install Tauri app dependencies
+   # Navigate to Tauri app directory
    cd athena-v2
+
+   # Install frontend dependencies (SolidJS)
    npm install
 
-   # Build the application
-   npm run build
-
-   # Or run in development mode
+   # Run in development mode
    npm run tauri:dev
+
+   # Or build for production
+   npm run tauri:build
    ```
 
 4. **Environment variables**:
@@ -197,18 +217,10 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 # CLAUDE_API_BASE_URL=https://api.anthropic.com/v1
 # DEEPSEEK_API_BASE_URL=https://api.deepseek.com/v1
 
-# Database Configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=athena_db
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_DIALECT=postgres
-
-# pgAdmin Configuration (for Docker setup)
-PGADMIN_EMAIL=admin@athena.local
-PGADMIN_PASSWORD=admin
-PGADMIN_PORT=5050
+# Redis Configuration (optional - for caching)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+# REDIS_PASSWORD=your_redis_password_here (if using password authentication)
 ```
 
 3. You can use the provided `.env.example` file as a template
@@ -279,20 +291,20 @@ Athena follows a modular architecture with clear separation of concerns. The app
   'theme': 'base',
   'themeVariables': {
     'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
+    'primaryTextColor': '#000000',
     'primaryBorderColor': '#ffffff',
     'lineColor': '#333333',
     'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
+    'secondaryTextColor': '#000000',
     'secondaryBorderColor': '#333333',
     'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
+    'tertiaryTextColor': '#000000',
     'tertiaryBorderColor': '#333333',
     'background': '#ffffff',
     'mainBkg': '#6d105a',
     'secondBkg': '#e8f4d4',
     'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
+    'textColor': '#000000',
     'fontFamily': 'Arial, sans-serif'
   }
 }}%%
@@ -369,7 +381,7 @@ Athena comes with comprehensive documentation to help you understand and use the
 ### Athena Desktop Application (Tauri 2.0)
 
 <div align="center">
-  <img src="./athena-v2/athena-v2/src-tauri/icons/Athena_Desktop_Screenshot.png" alt="Athena Desktop Application" width="100%" />
+  <img src="./athena-v2/src-tauri/icons/Athena_Desktop_Screenshot.png" alt="Athena Desktop Application" width="100%" />
   <p><em>AI-powered malware analysis platform with WASM-based security modules and real-time analysis</em></p>
 </div>
 
