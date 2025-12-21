@@ -26,6 +26,8 @@ const BatchExport: Component<BatchExportProps> = (props) => {
   const [customPattern, setCustomPattern] = createSignal('export_{index}_{timestamp}');
   const [password, setPassword] = createSignal('');
   const [showPassword, setShowPassword] = createSignal(false);
+  const [exportStatus, setExportStatus] = createSignal<string>('');
+  const [hasTimedOut, setHasTimedOut] = createSignal(false);
 
   const templates = exportService.getTemplates();
   const completedAnalyses = () => {
@@ -73,14 +75,29 @@ const BatchExport: Component<BatchExportProps> = (props) => {
       return;
     }
 
+    // Validate encryption password if enabled
+    if (exportOptions.encryption?.enabled && !password()) {
+      alert('Please enter an encryption password');
+      return;
+    }
+
     setIsExporting(true);
     setExportProgress(0);
+    setExportStatus('Preparing export...');
+    setHasTimedOut(false);
+
+    // Set up timeout (30 seconds)
+    const timeout = setTimeout(() => {
+      setHasTimedOut(true);
+      setExportStatus('Export is taking longer than expected. Please wait...');
+    }, 30000);
 
     try {
       // Prepare analysis data map
       const analysisDataMap = new Map<string, any>();
       const fileIds = Array.from(selectedFiles);
-      
+
+      setExportStatus('Collecting file data...');
       fileIds.forEach((fileId, index) => {
         const file = analysisStore.files().find(f => f.id === fileId);
         if (file?.results) {
@@ -89,7 +106,15 @@ const BatchExport: Component<BatchExportProps> = (props) => {
         setExportProgress(((index + 1) / fileIds.length) * 50);
       });
 
+      // Check if we have any data to export
+      if (analysisDataMap.size === 0) {
+        clearTimeout(timeout);
+        alert('No analysis data found for selected files. Please analyze files first.');
+        return;
+      }
+
       // Perform batch export
+      setExportStatus(`Exporting ${analysisDataMap.size} files...`);
       const batchOptions = {
         ...exportOptions,
         fileIds,
@@ -103,17 +128,22 @@ const BatchExport: Component<BatchExportProps> = (props) => {
       };
 
       const exportedPaths = await exportService.batchExport(analysisDataMap, batchOptions);
-      
+
+      clearTimeout(timeout);
       setExportProgress(100);
-      
+      setExportStatus('Export complete!');
+
       setTimeout(() => {
-        alert(`Successfully exported ${exportedPaths.length} files!`);
+        alert(`Successfully exported ${exportedPaths.length} files to:\n${exportedPaths[0] || 'export directory'}`);
         props.onClose?.();
       }, 500);
 
     } catch (error) {
+      clearTimeout(timeout);
       console.error('Batch export failed:', error);
-      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setExportStatus(`Export failed: ${errorMessage}`);
+      alert(`Export failed: ${errorMessage}\n\nPlease check:\n- File permissions\n- Available disk space\n- Export format compatibility`);
     } finally {
       setIsExporting(false);
     }
@@ -137,11 +167,10 @@ const BatchExport: Component<BatchExportProps> = (props) => {
               <span class="selection-count">{selectedFiles.size} files selected</span>
             </div>
             
-            <div class="file-list">
+            <div class="file-list" style={{ height: '300px' }}>
               <VirtualList
                 items={completedAnalyses()}
                 itemHeight={60}
-                containerHeight={300}
                 overscan={5}
                 renderItem={(analysis) => (
                   <div 
@@ -278,12 +307,23 @@ const BatchExport: Component<BatchExportProps> = (props) => {
           <Show when={isExporting()}>
             <div class="export-progress">
               <div class="progress-bar">
-                <div 
+                <div
                   class="progress-fill"
-                  style={{ width: `${exportProgress()}%` }}
+                  style={{
+                    width: `${exportProgress()}%`,
+                    transition: 'width 0.3s ease'
+                  }}
                 />
               </div>
-              <span class="progress-text">Exporting... {exportProgress().toFixed(0)}%</span>
+              <div class="progress-info">
+                <span class="progress-text">{exportProgress().toFixed(0)}%</span>
+                <span class="progress-status">{exportStatus()}</span>
+              </div>
+              <Show when={hasTimedOut()}>
+                <div style="color: var(--warning-color); margin-top: 10px; text-align: center;">
+                  This is taking longer than usual. Large exports or encryption may take extra time.
+                </div>
+              </Show>
             </div>
           </Show>
         </div>

@@ -1,6 +1,6 @@
 import { Component, createSignal, Show } from 'solid-js';
 import HexEditor from '../editors/HexEditor';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import AnalysisPanel from '../shared/AnalysisPanel';
 
 interface HexViewerProps {
@@ -20,12 +20,12 @@ const HexViewer: Component<HexViewerProps> = (props) => {
     
     try {
       // Read file as binary through Tauri
-      const result = await invoke<number[]>('read_file_binary', {
+      const result = await invokeCommand('read_file_binary', {
         path: props.filePath,
         offset: 0,
         length: 1024 * 1024 // Read first 1MB
-      });
-      
+      }) as number[];
+
       setFileData(new Uint8Array(result));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load file');

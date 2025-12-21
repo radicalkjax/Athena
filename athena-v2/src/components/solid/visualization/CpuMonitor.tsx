@@ -1,7 +1,7 @@
 import { createSignal, onCleanup, For, createEffect } from 'solid-js';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { StatCard } from '../shared/StatCard';
-import { useRealtimeData, useAnimatedValue } from '../../services/realtimeService';
+import { useRealtimeData, useAnimatedValue } from '../../../services/realtimeService';
 
 interface CpuInfo {
   usage: number;

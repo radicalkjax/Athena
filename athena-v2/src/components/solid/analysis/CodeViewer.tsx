@@ -1,6 +1,6 @@
 import { Component, createSignal, Show } from 'solid-js';
 import CodeEditor from '../editors/CodeEditor';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import AnalysisPanel from '../shared/AnalysisPanel';
 
 interface CodeViewerProps {
@@ -58,10 +58,10 @@ const CodeViewer: Component<CodeViewerProps> = (props) => {
     
     try {
       // Read file as text through Tauri
-      const result = await invoke<string>('read_file_text', {
+      const result = await invokeCommand('read_file_text', {
         path: props.filePath
-      });
-      
+      }) as string;
+
       setCode(result);
       setLanguage(detectLanguage(props.filePath));
     } catch (err) {

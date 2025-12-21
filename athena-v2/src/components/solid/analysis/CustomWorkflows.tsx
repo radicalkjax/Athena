@@ -1,6 +1,7 @@
 import { Component, createSignal, For, Show, onMount } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import './CustomWorkflows.css';
+import { jobService, type ProgressUpdate } from '../../../services/jobService';
 
 interface WorkflowNode {
   id: string;
@@ -68,6 +69,9 @@ const CustomWorkflows: Component = () => {
   const [selectedNode, setSelectedNode] = createSignal<WorkflowNode | null>(null);
   const [, setConnecting] = createSignal(false);
   const [connectionStart, setConnectionStart] = createSignal<{node: string, port: string} | null>(null);
+  const [runningJobId, setRunningJobId] = createSignal<string | null>(null);
+  const [executionProgress, setExecutionProgress] = createSignal(0);
+  const [executionMessage, setExecutionMessage] = createSignal('');
 
   let canvasRef: HTMLDivElement | undefined;
 
@@ -271,8 +275,163 @@ const CustomWorkflows: Component = () => {
     setConnectionStart(null);
   };
 
-  const runWorkflow = async (_workflow: Workflow) => {
-    // Implementation would execute the workflow
+  const runWorkflow = async (workflow: Workflow) => {
+    try {
+      // Validate workflow has nodes
+      if (!workflow.nodes || workflow.nodes.length === 0) {
+        alert('Workflow has no nodes to execute');
+        return;
+      }
+
+      // Determine workflow type based on nodes
+      const workflowType = determineWorkflowType(workflow);
+
+      // Convert workflow to input format for backend
+      const workflowInput = {
+        workflow_id: workflow.id,
+        workflow_name: workflow.name,
+        nodes: workflow.nodes.map(node => ({
+          id: node.id,
+          type: node.type,
+          name: node.name,
+          config: node.config,
+        })),
+        connections: workflow.connections,
+        metadata: {
+          description: workflow.description,
+          created_at: workflow.createdAt,
+        },
+      };
+
+      // Start the job
+      setExecutionMessage('Starting workflow execution...');
+      setExecutionProgress(0);
+
+      const jobId = await jobService.startJob(workflowType, workflowInput);
+      setRunningJobId(jobId);
+
+      // Subscribe to progress updates
+      const unsubscribe = jobService.onProgress(jobId, (update: ProgressUpdate) => {
+        setExecutionProgress(update.progress * 100);
+        setExecutionMessage(update.message);
+      });
+
+      // Poll for job completion
+      let completed = false;
+      let attempts = 0;
+      const maxAttempts = 120; // 2 minutes with 1 second intervals
+
+      while (!completed && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        try {
+          const job = await jobService.getJobStatus(jobId);
+
+          if (job.status === 'Completed') {
+            completed = true;
+            setExecutionProgress(100);
+            setExecutionMessage('Workflow completed successfully!');
+
+            // Show results
+            if (job.output) {
+              console.log('Workflow output:', job.output);
+              alert(`Workflow completed successfully!\n\nResults:\n${JSON.stringify(job.output, null, 2)}`);
+            }
+
+            // Clear state after a delay
+            setTimeout(() => {
+              setRunningJobId(null);
+              setExecutionProgress(0);
+              setExecutionMessage('');
+            }, 3000);
+
+          } else if (job.status === 'Failed') {
+            completed = true;
+            const errorMsg = job.error || 'Unknown error occurred';
+            setExecutionMessage(`Workflow failed: ${errorMsg}`);
+            alert(`Workflow execution failed:\n${errorMsg}`);
+
+            setTimeout(() => {
+              setRunningJobId(null);
+              setExecutionProgress(0);
+              setExecutionMessage('');
+            }, 3000);
+
+          } else if (job.status === 'Cancelled') {
+            completed = true;
+            setExecutionMessage('Workflow was cancelled');
+
+            setTimeout(() => {
+              setRunningJobId(null);
+              setExecutionProgress(0);
+              setExecutionMessage('');
+            }, 3000);
+          }
+          // Update progress from job status
+          else if (job.status === 'Running') {
+            setExecutionProgress(job.progress * 100);
+          }
+
+        } catch (error) {
+          console.error('Error checking job status:', error);
+        }
+
+        attempts++;
+      }
+
+      // Cleanup
+      unsubscribe();
+
+      if (!completed) {
+        setExecutionMessage('Workflow execution timed out');
+        alert('Workflow execution timed out. Check the job status manually.');
+        setTimeout(() => {
+          setRunningJobId(null);
+          setExecutionProgress(0);
+          setExecutionMessage('');
+        }, 3000);
+      }
+
+    } catch (error) {
+      console.error('Failed to start workflow:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setExecutionMessage(`Error: ${errorMsg}`);
+      alert(`Failed to execute workflow:\n${errorMsg}`);
+
+      setTimeout(() => {
+        setRunningJobId(null);
+        setExecutionProgress(0);
+        setExecutionMessage('');
+      }, 3000);
+    }
+  };
+
+  const determineWorkflowType = (workflow: Workflow): string => {
+    // Analyze workflow nodes to determine the appropriate workflow type
+    const nodeTypes = workflow.nodes.map(n => n.config?.type || n.name.toLowerCase());
+
+    // Check for file analysis patterns
+    if (nodeTypes.some(t => ['static', 'yara', 'wasm', 'ai'].includes(t))) {
+      return 'FileAnalysis';
+    }
+
+    // Check for batch scanning patterns
+    if (nodeTypes.some(t => t.includes('batch') || t.includes('scan'))) {
+      return 'BatchScan';
+    }
+
+    // Check for threat hunting patterns
+    if (nodeTypes.some(t => ['network', 'behavioral', 'pattern'].includes(t))) {
+      return 'ThreatHunting';
+    }
+
+    // Check for report generation patterns
+    if (nodeTypes.some(t => t.includes('report') || t === 'report')) {
+      return 'ReportGeneration';
+    }
+
+    // Default to FileAnalysis
+    return 'FileAnalysis';
   };
 
   return (
@@ -451,7 +610,7 @@ const CustomWorkflows: Component = () => {
                   <span>🔗 {workflow.connections.length} connections</span>
                 </div>
                 <div class="workflow-actions">
-                  <button 
+                  <button
                     onClick={() => {
                       setCurrentWorkflow(workflow);
                       setIsDesigning(true);
@@ -460,13 +619,28 @@ const CustomWorkflows: Component = () => {
                   >
                     ✏️ Edit
                   </button>
-                  <button 
+                  <button
                     onClick={() => runWorkflow(workflow)}
                     class="run-button"
+                    disabled={runningJobId() !== null}
                   >
                     ▶️ Run
                   </button>
                 </div>
+                <Show when={runningJobId() !== null && executionMessage()}>
+                  <div class="workflow-execution-status">
+                    <div class="execution-message">{executionMessage()}</div>
+                    <div class="execution-progress-bar">
+                      <div
+                        class="execution-progress-fill"
+                        style={{ width: `${executionProgress()}%` }}
+                      />
+                    </div>
+                    <div class="execution-progress-text">
+                      {Math.round(executionProgress())}%
+                    </div>
+                  </div>
+                </Show>
               </div>
             )}
           </For>

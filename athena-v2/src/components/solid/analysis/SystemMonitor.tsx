@@ -2,7 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import CpuMonitor from '../visualization/CpuMonitor';
 import MemoryMonitor from '../visualization/MemoryMonitor';
 import ProcessViewer from '../visualization/ProcessViewer';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { StatCard } from '../shared/StatCard';
 
@@ -31,7 +31,7 @@ export default function SystemMonitor() {
 
   const updateDiskInfo = async () => {
     try {
-      const data = await invoke<DiskInfo[]>('get_disk_info');
+      const data = await invokeCommand('get_disk_info') as DiskInfo[];
       setDiskInfo(data);
     } catch (err) {
       console.error('Failed to get disk info:', err);
@@ -40,7 +40,7 @@ export default function SystemMonitor() {
 
   const updateNetworkInfo = async () => {
     try {
-      const data = await invoke<NetworkInfo[]>('get_network_info');
+      const data = await invokeCommand('get_network_info') as NetworkInfo[];
       setNetworkInfo(data);
     } catch (err) {
       console.error('Failed to get network info:', err);

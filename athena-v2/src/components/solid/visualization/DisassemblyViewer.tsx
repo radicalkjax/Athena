@@ -1,9 +1,9 @@
 import { createSignal, onMount, For, Show, createMemo } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 
 interface DisassemblyResult {
   instructions: Instruction[];
-  functions: Function[];
+  functions: DisassembledFunction[];
   strings: ExtractedString[];
   entry_point: number | null;
   architecture: string;
@@ -21,7 +21,7 @@ interface Instruction {
   jump_target: number | null;
 }
 
-interface Function {
+interface DisassembledFunction {
   name: string;
   address: number;
   size: number;
@@ -49,42 +49,72 @@ interface DisassemblyViewerProps {
 
 export default function DisassemblyViewer(props: DisassemblyViewerProps) {
   const [disassembly, setDisassembly] = createSignal<DisassemblyResult | null>(null);
-  const [selectedFunction, setSelectedFunction] = createSignal<Function | null>(null);
+  const [selectedFunction, setSelectedFunction] = createSignal<DisassembledFunction | null>(null);
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal<string>('');
   const [searchTerm, setSearchTerm] = createSignal('');
   const [showStrings, setShowStrings] = createSignal(true);
   const [showFunctions, setShowFunctions] = createSignal(true);
   const [addressMap, setAddressMap] = createSignal<Map<number, number>>(new Map());
+  const [hasTimedOut, setHasTimedOut] = createSignal(false);
+  const [loadingProgress, setLoadingProgress] = createSignal('Initializing disassembler...');
 
   const loadDisassembly = async () => {
-    if (!props.filePath) return;
-    
+    if (!props.filePath) {
+      setError('No file path provided. Please select a file to disassemble.');
+      return;
+    }
+
     setLoading(true);
     setError('');
-    
+    setHasTimedOut(false);
+    setLoadingProgress('Initializing disassembler...');
+
+    // Set up timeout (60 seconds for large binaries)
+    const timeout = setTimeout(() => {
+      setHasTimedOut(true);
+      setLoadingProgress('Still disassembling... Large binaries may take several minutes.');
+    }, 60000);
+
     try {
-      const result = await invoke<DisassemblyResult>('disassemble_file', {
+      setLoadingProgress('Reading binary file...');
+
+      const result = await invokeCommand('disassemble_file', {
         filePath: props.filePath,
-      });
-      
+      }) as DisassemblyResult;
+
+      clearTimeout(timeout);
+      setLoadingProgress('Processing instructions...');
+
+      if (!result.instructions || result.instructions.length === 0) {
+        setError('No instructions found. The file may not be a valid executable or may be packed/obfuscated.');
+        return;
+      }
+
       setDisassembly(result);
-      
+
       // Build address to line mapping
+      setLoadingProgress('Building address map...');
       const map = new Map<number, number>();
       result.instructions.forEach((inst, index) => {
         map.set(inst.address, index);
       });
       setAddressMap(map);
-      
+
       // Auto-select first function
       if (result.functions.length > 0) {
-        setSelectedFunction(result.functions[0]);
+        const firstFunction = result.functions[0];
+        if (firstFunction) {
+          setSelectedFunction(firstFunction);
+        }
       }
     } catch (err) {
-      setError(`Failed to disassemble: ${err}`);
+      clearTimeout(timeout);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Failed to disassemble file: ${errorMessage}\n\nPossible causes:\n- File is not a valid executable\n- File is corrupted or encrypted\n- Unsupported binary format\n- Insufficient memory for large binary`);
     } finally {
       setLoading(false);
+      setHasTimedOut(false);
     }
   };
 
@@ -130,7 +160,7 @@ export default function DisassemblyViewer(props: DisassemblyViewerProps) {
     }
   };
 
-  const jumpToFunction = (func: Function) => {
+  const jumpToFunction = (func: DisassembledFunction) => {
     setSelectedFunction(func);
     jumpToAddress(func.address);
   };
@@ -138,11 +168,30 @@ export default function DisassemblyViewer(props: DisassemblyViewerProps) {
   return (
     <div class="disassembly-viewer">
       {loading() && (
-        <div class="loading">Disassembling binary...</div>
+        <div class="loading">
+          <div class="spinner" style="margin: 0 auto 20px;"></div>
+          <div>{loadingProgress()}</div>
+          <Show when={hasTimedOut()}>
+            <div style="color: var(--warning-color); margin-top: 15px; max-width: 600px;">
+              Disassembly is taking longer than expected. This is normal for large binaries (>10MB) or complex executables with many functions.
+            </div>
+          </Show>
+        </div>
       )}
-      
+
       {error() && (
-        <div class="error-message">{error()}</div>
+        <div class="error-message">
+          {error()}
+          <button
+            onClick={() => {
+              setError('');
+              loadDisassembly();
+            }}
+            style="margin-top: 15px; padding: 10px 20px; background: var(--barbie-pink); color: white; border: none; border-radius: 4px; cursor: pointer;"
+          >
+            Retry
+          </button>
+        </div>
       )}
       
       {disassembly() && (
@@ -153,7 +202,7 @@ export default function DisassemblyViewer(props: DisassemblyViewerProps) {
               <div class="architecture">Architecture: {disassembly()!.architecture}</div>
               {disassembly()!.entry_point !== null && (
                 <div class="entry-point">
-                  Entry Point: {formatAddress(disassembly()!.entry_point)}
+                  Entry Point: {formatAddress(disassembly()!.entry_point!)}
                   <button
                     class="jump-btn"
                     onClick={() => {

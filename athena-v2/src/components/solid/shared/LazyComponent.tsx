@@ -1,9 +1,9 @@
-import { Component, lazy, Suspense } from 'solid-js';
+import { Component, lazy, Suspense, JSX } from 'solid-js';
 import { LoadingSpinner } from './LoadingStates';
 
 interface LazyComponentProps {
   loader: () => Promise<{ default: Component<any> }>;
-  fallback?: Component;
+  fallback?: JSX.Element;
   props?: any;
 }
 

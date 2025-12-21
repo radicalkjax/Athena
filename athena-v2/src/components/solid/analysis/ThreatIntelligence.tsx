@@ -1,5 +1,5 @@
 import { Component, createSignal, Show, For, onMount } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import { analysisStore } from '../../../stores/analysisStore';
 import type { ThreatIntelligence as ThreatIntelType, ThreatIndicator } from '../../../types/analysis';
 import AnalysisPanel from '../shared/AnalysisPanel';
@@ -11,6 +11,8 @@ const ThreatIntelligence: Component = () => {
   const [threatIntel, setThreatIntel] = createSignal<ThreatIntelType[]>([]);
   const [selectedSource, setSelectedSource] = createSignal<string>('all');
   const [error, setError] = createSignal<string | null>(null);
+  const [hasTimedOut, setHasTimedOut] = createSignal(false);
+  const [loadingMessage, setLoadingMessage] = createSignal('Loading threat intelligence...');
 
   const sources = [
     { id: 'all', name: 'All Sources', icon: '🌐' },
@@ -30,22 +32,41 @@ const ThreatIntelligence: Component = () => {
 
   const fetchThreatIntelligence = async () => {
     const file = analysisStore.currentFile;
-    if (!file) return;
+    if (!file) {
+      setError('No file selected. Please upload and analyze a file first.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
+    setHasTimedOut(false);
+    setLoadingMessage('Querying threat intelligence sources...');
+
+    // Set up timeout (60 seconds for threat intel queries)
+    const timeout = setTimeout(() => {
+      setHasTimedOut(true);
+      setLoadingMessage('Still loading... External threat intelligence services may be slow.');
+    }, 60000);
 
     try {
-      const result = await invoke<ThreatIntelType[]>('get_threat_intelligence', {
+      const result = await invokeCommand('get_threat_intelligence', {
         fileHash: file.hash,
         iocs: [] // Will be populated from other analysis
-      });
-      
+      }) as ThreatIntelType[];
+
+      clearTimeout(timeout);
       setThreatIntel(result);
+
+      if (result.length === 0) {
+        setError('No threat intelligence found for this file. This may indicate the file is new or not previously reported.');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch threat intelligence');
+      clearTimeout(timeout);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch threat intelligence';
+      setError(`${errorMessage}\n\nPossible causes:\n- Network connectivity issues\n- Threat intelligence service unavailable\n- Invalid file hash or API key`);
     } finally {
       setIsLoading(false);
+      setHasTimedOut(false);
     }
   };
 
@@ -64,6 +85,170 @@ const ThreatIntelligence: Component = () => {
 
   const formatTimestamp = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  const copyIOCs = async () => {
+    try {
+      const iocData = iocs();
+      let iocText = '=== FILE HASHES ===\n';
+      if (iocData.fileHashes.md5) {
+        iocText += `MD5: ${iocData.fileHashes.md5}\n`;
+        iocText += `SHA1: ${iocData.fileHashes.sha1}\n`;
+        iocText += `SHA256: ${iocData.fileHashes.sha256}\n\n`;
+      }
+
+      iocText += '=== NETWORK INDICATORS ===\n';
+      iocData.networkIndicators.forEach(ind => {
+        iocText += `${ind.type}: ${ind.value}\n`;
+      });
+
+      iocText += '\n=== FILE SYSTEM ===\n';
+      iocData.fileSystem.forEach(file => {
+        iocText += `${file}\n`;
+      });
+
+      iocText += '\n=== REGISTRY KEYS ===\n';
+      iocData.registry.forEach(reg => {
+        iocText += `${reg.key}: ${reg.value}\n`;
+      });
+
+      iocText += '\n=== PROCESSES ===\n';
+      iocData.processes.forEach(proc => {
+        iocText += `${proc.name} (${proc.type})\n`;
+      });
+
+      await navigator.clipboard.writeText(iocText);
+      alert('IOCs copied to clipboard!');
+    } catch (err) {
+      setError(`Failed to copy IOCs: ${err}`);
+    }
+  };
+
+  const exportSTIX = async () => {
+    try {
+      const file = analysisStore.currentFile;
+      if (!file) {
+        setError('No file selected for STIX export');
+        return;
+      }
+
+      if (threatIntel().length === 0) {
+        setError('No threat intelligence data available to export. Please fetch threat intelligence first.');
+        return;
+      }
+
+      setIsLoading(true);
+      setLoadingMessage('Generating STIX export...');
+      setHasTimedOut(false);
+
+      const timeout = setTimeout(() => {
+        setHasTimedOut(true);
+      }, 30000);
+
+      const stixData = await invokeCommand('export_stix_format', {
+        fileHash: file.hash,
+        indicators: threatIntel()
+      });
+
+      clearTimeout(timeout);
+
+      const fileName = `stix_export_${Date.now()}.json`;
+      const blob = new Blob([JSON.stringify(stixData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      alert(`STIX export successful: ${fileName}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Failed to export STIX: ${errorMessage}\n\nPlease check your threat intelligence data and try again.`);
+    } finally {
+      setIsLoading(false);
+      setHasTimedOut(false);
+    }
+  };
+
+  const shareIntel = async () => {
+    try {
+      const file = analysisStore.currentFile;
+      if (!file) {
+        setError('No file selected for sharing');
+        return;
+      }
+
+      setIsLoading(true);
+      await invokeCommand('share_threat_intelligence', {
+        fileHash: file.hash,
+        indicators: threatIntel(),
+        platforms: ['misp', 'virustotal']
+      });
+
+      alert('Threat intelligence shared successfully!');
+    } catch (err) {
+      setError(`Failed to share intelligence: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openMitreNavigator = () => {
+    const mitreUrl = 'https://mitre-attack.github.io/attack-navigator/';
+    window.open(mitreUrl, '_blank');
+  };
+
+  const generateCampaignReport = async () => {
+    try {
+      const file = analysisStore.currentFile;
+      if (!file) {
+        setError('No file selected for report generation');
+        return;
+      }
+
+      setIsLoading(true);
+      const report = await invokeCommand('generate_campaign_report', {
+        fileHash: file.hash,
+        threatIntel: threatIntel()
+      });
+
+      const fileName = `campaign_report_${Date.now()}.html`;
+      const blob = new Blob([report as string], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(`Failed to generate report: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createAlert = async () => {
+    try {
+      const file = analysisStore.currentFile;
+      if (!file) {
+        setError('No file selected for alert creation');
+        return;
+      }
+
+      setIsLoading(true);
+      await invokeCommand('create_threat_alert', {
+        fileHash: file.hash,
+        severity: 'high',
+        indicators: threatIntel()
+      });
+
+      alert('Threat alert created successfully!');
+    } catch (err) {
+      setError(`Failed to create alert: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // IOCs will be populated from actual analysis
@@ -93,7 +278,34 @@ const ThreatIntelligence: Component = () => {
       <h2 style="color: var(--barbie-pink); margin-bottom: 20px;">
         🚨 Threat Intelligence - IOCs & Attribution
       </h2>
-      
+
+      <Show when={isLoading()}>
+        <div style="text-align: center; padding: 40px; background: var(--panel-bg); border-radius: 8px; margin-bottom: 20px;">
+          <div class="spinner" style="margin: 0 auto 20px;"></div>
+          <div style="color: var(--text-secondary);">{loadingMessage()}</div>
+          <Show when={hasTimedOut()}>
+            <div style="color: var(--warning-color); margin-top: 15px; max-width: 500px; margin-left: auto; margin-right: auto;">
+              This is taking longer than usual. External threat intelligence services may be experiencing high load or network delays.
+            </div>
+          </Show>
+        </div>
+      </Show>
+
+      <Show when={error()}>
+        <div style="background: var(--danger-color); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <strong>Error:</strong> {error()}
+          <button
+            onClick={() => {
+              setError(null);
+              fetchThreatIntelligence();
+            }}
+            style="margin-left: 10px; padding: 5px 10px; background: white; color: var(--danger-color); border: none; border-radius: 4px; cursor: pointer;"
+          >
+            Retry
+          </button>
+        </div>
+      </Show>
+
       <div class="analysis-grid">
         <div class="analysis-main">
           <AnalysisPanel 
@@ -101,8 +313,19 @@ const ThreatIntelligence: Component = () => {
             icon="🎯"
             actions={
               <div style="display: flex; gap: 8px;">
-                <button class="btn btn-secondary">📋 Copy IOCs</button>
-                <button class="btn btn-primary">📤 Export STIX</button>
+                <button
+                  class="btn btn-secondary"
+                  onClick={copyIOCs}
+                >
+                  📋 Copy IOCs
+                </button>
+                <button
+                  class="btn btn-primary"
+                  onClick={exportSTIX}
+                  disabled={isLoading()}
+                >
+                  📤 Export STIX
+                </button>
               </div>
             }
             className="scrollable-panel"
@@ -262,10 +485,33 @@ const ThreatIntelligence: Component = () => {
           </div>
           
           <div class="threat-actions">
-            <button class="threat-action-btn primary">📤 Share Intel</button>
-            <button class="threat-action-btn">🔗 MITRE Navigator</button>
-            <button class="threat-action-btn">📊 Campaign Report</button>
-            <button class="threat-action-btn">🚨 Create Alert</button>
+            <button
+              class="threat-action-btn primary"
+              onClick={shareIntel}
+              disabled={isLoading()}
+            >
+              📤 Share Intel
+            </button>
+            <button
+              class="threat-action-btn"
+              onClick={openMitreNavigator}
+            >
+              🔗 MITRE Navigator
+            </button>
+            <button
+              class="threat-action-btn"
+              onClick={generateCampaignReport}
+              disabled={isLoading()}
+            >
+              📊 Campaign Report
+            </button>
+            <button
+              class="threat-action-btn"
+              onClick={createAlert}
+              disabled={isLoading()}
+            >
+              🚨 Create Alert
+            </button>
           </div>
         </div>
       </div>

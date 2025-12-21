@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, onMount, For, Show, createMemo } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import AnalysisPanel from '../shared/AnalysisPanel';
 
 interface ProcessInfo {
@@ -29,7 +29,7 @@ export default function ProcessViewer() {
 
   const updateProcesses = async () => {
     try {
-      const data = await invoke<ProcessInfo[]>('get_processes');
+      const data = await invokeCommand('get_processes') as ProcessInfo[];
       setProcesses(data);
       buildProcessTree(data);
       setError('');
@@ -63,7 +63,7 @@ export default function ProcessViewer() {
 
   const killProcess = async (pid: number) => {
     try {
-      const success = await invoke<boolean>('kill_process', { pid });
+      const success = await invokeCommand('kill_process', { pid }) as boolean;
       if (success) {
         await updateProcesses();
       } else {

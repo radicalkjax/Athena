@@ -1,5 +1,5 @@
 import { Component, createSignal, onMount } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 import logoImg from '../../../assets/images/logo.png';
 
 interface SystemStatus {
@@ -17,7 +17,7 @@ export const Header: Component = () => {
 
   onMount(async () => {
     try {
-      const status = await invoke<SystemStatus>('get_system_status');
+      const status = await invokeCommand('get_system_status') as SystemStatus;
       setSystemStatus(status);
     } catch (err) {
       console.error('Failed to get system status:', err);

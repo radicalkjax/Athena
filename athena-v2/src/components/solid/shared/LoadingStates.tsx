@@ -1,4 +1,4 @@
-import { Component, Show, createSignal, For } from 'solid-js';
+import { Component, Show, createSignal, For, JSX } from 'solid-js';
 import './LoadingStates.css';
 
 interface LoadingSpinnerProps {
@@ -16,7 +16,7 @@ export const LoadingSpinner: Component<LoadingSpinnerProps> = (props) => {
   const size = sizeMap[props.size || 'medium'];
 
   return (
-    <div 
+    <div
       class="loading-spinner"
       style={{
         width: `${size}px`,
@@ -27,7 +27,7 @@ export const LoadingSpinner: Component<LoadingSpinnerProps> = (props) => {
   );
 };
 
-interface SkeletonProps {
+interface SkeletonProps extends JSX.HTMLAttributes<HTMLDivElement> {
   width?: string;
   height?: string;
   variant?: 'text' | 'rect' | 'circle';

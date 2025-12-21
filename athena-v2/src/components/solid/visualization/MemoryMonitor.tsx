@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, onMount } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 
 interface MemoryInfo {
   total: number;
@@ -20,9 +20,9 @@ export default function MemoryMonitor() {
 
   const updateMemoryInfo = async () => {
     try {
-      const data = await invoke<MemoryInfo>('get_memory_info');
+      const data = await invokeCommand('get_memory_info') as MemoryInfo;
       setMemoryData(data);
-      
+
       // Update history for graph
       setHistory(prev => {
         const newHistory = [...prev, data.usage_percentage];
@@ -31,7 +31,7 @@ export default function MemoryMonitor() {
         }
         return newHistory;
       });
-      
+
       setError('');
     } catch (err) {
       setError(`Failed to get memory info: ${err}`);
@@ -86,7 +86,7 @@ export default function MemoryMonitor() {
             fill="transparent"
             stroke-width={strokeWidth}
             stroke-dasharray={`${circumference} ${circumference}`}
-            style={{ "stroke-dashoffset": strokeDashoffset }}
+            style={{ "stroke-dashoffset": `${strokeDashoffset}` }}
             stroke-linecap="round"
             r={normalizedRadius}
             cx={radius}

@@ -1,5 +1,5 @@
 import { createSignal, onMount, For, Show, createEffect } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '../../../utils/tauriCompat';
 
 interface ControlFlowGraph {
   blocks: ControlFlowBlock[];
@@ -59,10 +59,10 @@ export default function ControlFlowGraph(props: ControlFlowGraphProps) {
     setError('');
     
     try {
-      const result = await invoke<ControlFlowGraph>('get_control_flow_graph', {
+      const result = await invokeCommand('get_control_flow_graph', {
         filePath: props.filePath,
         functionAddress: props.functionAddress,
-      });
+      }) as ControlFlowGraph;
       
       setCfg(result);
       layoutBlocks(result);
