@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::{BufReader, Read, Write};
 use std::path::Path;
-use tauri::{AppHandle, Emitter};
+use std::time::Instant;
+use tauri::{AppHandle, Emitter, Manager};
+use crate::metrics::{FILE_OPERATION_DURATION, FILE_OPERATION_COUNTER, FILE_SIZE_HISTOGRAM};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileMetadata {
@@ -23,17 +25,31 @@ pub struct UploadProgress {
 
 #[tauri::command]
 pub async fn upload_file(app: AppHandle, path: String) -> Result<FileMetadata, String> {
+    let start_time = Instant::now();
     let file_path = Path::new(&path);
-    
+
     if !file_path.exists() {
+        FILE_OPERATION_COUNTER
+            .with_label_values(&["upload_file", "error"])
+            .inc();
         return Err("File not found".to_string());
     }
-    
+
     let metadata = std::fs::metadata(&file_path)
-        .map_err(|e| format!("Failed to get file metadata: {}", e))?;
-    
+        .map_err(|e| {
+            FILE_OPERATION_COUNTER
+                .with_label_values(&["upload_file", "error"])
+                .inc();
+            format!("Failed to get file metadata: {}", e)
+        })?;
+
     let file = File::open(&file_path)
-        .map_err(|e| format!("Failed to open file: {}", e))?;
+        .map_err(|e| {
+            FILE_OPERATION_COUNTER
+                .with_label_values(&["upload_file", "error"])
+                .inc();
+            format!("Failed to open file: {}", e)
+        })?;
     
     let total_size = metadata.len();
     let mut reader = BufReader::new(file);
@@ -84,7 +100,21 @@ pub async fn upload_file(app: AppHandle, path: String) -> Result<FileMetadata, S
         percentage: 100.0,
         status: "completed".to_string(),
     }).ok();
-    
+
+    // Record metrics
+    let duration = start_time.elapsed();
+    FILE_OPERATION_DURATION
+        .with_label_values(&["upload_file", "success"])
+        .observe(duration.as_secs_f64());
+
+    FILE_OPERATION_COUNTER
+        .with_label_values(&["upload_file", "success"])
+        .inc();
+
+    FILE_SIZE_HISTOGRAM
+        .with_label_values(&["upload_file"])
+        .observe(total_size as f64);
+
     Ok(FileMetadata {
         name: file_path.file_name()
             .unwrap_or_default()
@@ -183,9 +213,55 @@ pub async fn read_file_text(path: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn write_file_text(path: String, content: String) -> Result<(), String> {
     let file_path = Path::new(&path);
-    
+
     std::fs::write(&file_path, content)
         .map_err(|e| format!("Failed to write file: {}", e))?;
-    
+
     Ok(())
+}
+
+/// Create a temporary file in the app's data directory
+/// Used for drag-and-drop file handling where the browser File API
+/// doesn't provide a filesystem path
+#[tauri::command]
+pub async fn create_temp_file(
+    app: AppHandle,
+    file_name: String,
+    bytes: Vec<u8>,
+) -> Result<String, String> {
+    // Get app data directory for temporary files
+    let app_data_dir = app.path().app_data_dir()
+        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
+
+    // Create temp subdirectory
+    let temp_dir = app_data_dir.join("temp");
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create temp directory: {}", e))?;
+
+    // Sanitize filename to prevent path traversal
+    let safe_name = Path::new(&file_name)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown_file");
+
+    // Add timestamp to avoid collisions
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+
+    let temp_file_name = format!("{}_{}", timestamp, safe_name);
+    let temp_path = temp_dir.join(&temp_file_name);
+
+    // Write the file
+    let mut file = File::create(&temp_path)
+        .map_err(|e| format!("Failed to create temp file: {}", e))?;
+
+    file.write_all(&bytes)
+        .map_err(|e| format!("Failed to write temp file: {}", e))?;
+
+    // Return the path as a string
+    temp_path.to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| "Failed to convert path to string".to_string())
 }

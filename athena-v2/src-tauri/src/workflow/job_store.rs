@@ -1,7 +1,7 @@
 use rusqlite::{Connection, params, OptionalExtension};
 use anyhow::{Result, Context};
 use std::sync::{Arc, Mutex};
-use super::schema::{Job, JobStatus, WorkflowType, LogEntry, LogLevel};
+use super::schema::{Job, JobStatus, LogEntry};
 
 pub struct JobStore {
     conn: Arc<Mutex<Connection>>,
@@ -11,6 +11,19 @@ impl JobStore {
     pub fn new(db_path: &str) -> Result<Self> {
         let conn = Connection::open(db_path)
             .context("Failed to open jobs database")?;
+
+        // Configure SQLite for production per DeepWiki best practices
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;           -- Write-Ahead Logging for better concurrency
+             PRAGMA synchronous = NORMAL;         -- Balance between safety and performance
+             PRAGMA cache_size = -64000;          -- 64MB cache (negative = KB)
+             PRAGMA temp_store = MEMORY;          -- Store temp tables in memory
+             PRAGMA mmap_size = 30000000000;      -- 30GB memory-mapped I/O
+             PRAGMA page_size = 4096;             -- 4KB pages (good for modern systems)
+             PRAGMA auto_vacuum = INCREMENTAL;    -- Reclaim space incrementally
+             PRAGMA busy_timeout = 5000;          -- 5s timeout for locks
+             PRAGMA foreign_keys = ON;            -- Enforce foreign key constraints"
+        ).context("Failed to configure SQLite pragmas")?;
 
         // Create jobs table
         conn.execute(
