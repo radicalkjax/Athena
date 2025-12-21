@@ -1,0 +1,58 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install monitoring and analysis tools
+RUN apt-get update && apt-get install -y \
+    # Syscall and process monitoring
+    strace \
+    ltrace \
+    procps \
+    # Network capture
+    tcpdump \
+    net-tools \
+    # File monitoring
+    inotify-tools \
+    # Memory analysis
+    gdb \
+    # Video recording (headless X11)
+    xvfb \
+    ffmpeg \
+    fluxbox \
+    xdotool \
+    imagemagick \
+    # General utilities
+    curl \
+    file \
+    binutils \
+    strings \
+    hexdump \
+    xxd \
+    # Python for scripts
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create sandbox directories
+RUN mkdir -p /sandbox/input /sandbox/output /sandbox/output/memory /sandbox/output/screenshots
+
+# Set up user for execution (non-root for some samples)
+RUN useradd -m -s /bin/bash sandbox && \
+    chown -R sandbox:sandbox /sandbox
+
+WORKDIR /sandbox
+
+# Copy scripts
+COPY monitor_agent.sh /usr/local/bin/monitor_agent.sh
+COPY anti_evasion.sh /usr/local/bin/anti_evasion.sh
+RUN chmod +x /usr/local/bin/monitor_agent.sh /usr/local/bin/anti_evasion.sh
+
+# Create startup script that runs anti-evasion setup
+RUN echo '#!/bin/bash\n/usr/local/bin/anti_evasion.sh\nexec "$@"' > /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Default command: sleep (keeps container alive)
+CMD ["sleep", "infinity"]

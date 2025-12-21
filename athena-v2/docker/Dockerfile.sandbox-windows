@@ -1,0 +1,108 @@
+# Athena Windows Sandbox Container
+# Provides isolated execution environment for Windows malware analysis
+#
+# Requirements:
+# - Windows Server 2019+ or Windows 10/11 Pro as Docker host
+# - Docker Desktop in Windows containers mode
+# - At least 4GB RAM allocated to container
+#
+# Build: docker build -f Dockerfile.sandbox-windows -t athena-sandbox-windows .
+# Run: docker run --isolation=process -v C:\samples:C:\sandbox\input athena-sandbox-windows
+
+# Use Windows Server Core LTSC 2022 for stability and compatibility
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+# Metadata
+LABEL maintainer="Athena Team"
+LABEL description="Windows sandbox for malware analysis with Sysinternals and ETW monitoring"
+LABEL version="1.0"
+
+# Set shell to PowerShell
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+# Create required directories
+RUN New-Item -ItemType Directory -Force -Path C:\tools, `
+    C:\sandbox\input, `
+    C:\sandbox\output, `
+    C:\sandbox\output\memory, `
+    C:\sandbox\output\screenshots, `
+    C:\sandbox\output\network, `
+    C:\sandbox\output\procmon, `
+    C:\sandbox\output\etw, `
+    C:\temp
+
+# Download and install Sysinternals Suite
+# These tools are essential for Windows malware analysis
+RUN Write-Host 'Installing Sysinternals tools...' ; `
+    # Process Monitor - file, registry, network monitoring
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/procmon.exe' -OutFile C:\tools\procmon.exe ; `
+    # Process Dump - memory dump utility
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/procdump.exe' -OutFile C:\tools\procdump.exe ; `
+    # Handle - view open handles
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/handle.exe' -OutFile C:\tools\handle.exe ; `
+    # ListDLLs - show loaded DLLs
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/listdlls.exe' -OutFile C:\tools\listdlls.exe ; `
+    # Process Explorer command line version
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/pslist.exe' -OutFile C:\tools\pslist.exe ; `
+    # Autoruns command line
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/autorunsc.exe' -OutFile C:\tools\autorunsc.exe ; `
+    # Sigcheck - signature verification
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/sigcheck.exe' -OutFile C:\tools\sigcheck.exe ; `
+    # Strings
+    Invoke-WebRequest -Uri 'https://live.sysinternals.com/strings.exe' -OutFile C:\tools\strings.exe ; `
+    Write-Host 'Sysinternals tools installed successfully'
+
+# Accept Sysinternals EULA (required for automated use)
+RUN New-ItemProperty -Path 'HKCU:\Software\Sysinternals\Process Monitor' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force ; `
+    New-ItemProperty -Path 'HKCU:\Software\Sysinternals\ProcDump' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force ; `
+    New-ItemProperty -Path 'HKCU:\Software\Sysinternals\Handle' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force ; `
+    New-ItemProperty -Path 'HKCU:\Software\Sysinternals\ListDLLs' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force ; `
+    New-ItemProperty -Path 'HKCU:\Software\Sysinternals\PsList' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force ; `
+    New-ItemProperty -Path 'HKCU:\Software\Sysinternals\Autoruns' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force ; `
+    New-ItemProperty -Path 'HKCU:\Software\Sysinternals\Sigcheck' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force ; `
+    New-ItemProperty -Path 'HKCU:\Software\Sysinternals\Strings' -Name 'EulaAccepted' -Value 1 -PropertyType DWord -Force
+
+# Install network capture tools
+# Note: Full Wireshark installation is complex in containers; using netsh trace instead
+RUN Write-Host 'Configuring network capture capabilities...' ; `
+    # Enable netsh trace capability
+    netsh trace show scenarios | Out-Null
+
+# Copy monitoring scripts
+COPY monitor_agent_windows.ps1 C:\tools\monitor_agent.ps1
+COPY anti_evasion_windows.ps1 C:\tools\anti_evasion.ps1
+
+# Create a startup script that initializes the environment
+RUN $startupScript = @' `
+# Athena Windows Sandbox Startup Script `
+Write-Host "[ATHENA] Initializing Windows sandbox environment..." `
+`
+# Run anti-evasion setup `
+if (Test-Path C:\tools\anti_evasion.ps1) { `
+    & C:\tools\anti_evasion.ps1 `
+} `
+`
+# Start the monitor agent if a sample is provided `
+$samplePath = Get-ChildItem C:\sandbox\input -File | Select-Object -First 1 `
+if ($samplePath) { `
+    Write-Host "[ATHENA] Found sample: $($samplePath.FullName)" `
+    & C:\tools\monitor_agent.ps1 -SamplePath $samplePath.FullName `
+} else { `
+    Write-Host "[ATHENA] No sample found in C:\sandbox\input, entering wait mode..." `
+    while ($true) { Start-Sleep -Seconds 3600 } `
+} `
+'@ ; `
+    Set-Content -Path C:\tools\entrypoint.ps1 -Value $startupScript
+
+# Set working directory
+WORKDIR C:\sandbox
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 `
+    CMD powershell -Command "if (Test-Path C:\tools\procmon.exe) { exit 0 } else { exit 1 }"
+
+# Default entrypoint
+ENTRYPOINT ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:\\tools\\entrypoint.ps1"]
+
+# If no sample, just keep container alive
+CMD ["powershell", "-Command", "while ($true) { Start-Sleep -Seconds 3600 }"]
