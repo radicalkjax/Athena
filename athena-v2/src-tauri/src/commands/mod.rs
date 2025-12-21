@@ -1,7 +1,7 @@
 pub mod file_ops;
 pub mod file_analysis;
 pub mod wasm_file_bridge;
-pub mod yara_scanner_simple;
+pub mod yara_scanner;
 pub mod yara_rules;
 pub mod system;
 pub mod network;
@@ -11,3 +11,6 @@ pub mod wasm_runtime;
 pub mod ai_analysis;
 pub mod advanced_analysis;
 pub mod workflow;
+pub mod logging;
+pub mod container;
+pub mod sandbox_commands;
