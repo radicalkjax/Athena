@@ -2,6 +2,8 @@ pub mod circuit_breaker;
 pub mod claude;
 pub mod openai;
 pub mod deepseek;
+pub mod queue_manager;
+pub mod retry;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
