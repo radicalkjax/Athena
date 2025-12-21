@@ -1,0 +1,46 @@
+[package]
+name = "athena-network"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Component Model bindings
+wit-bindgen = "0.42.1"
+
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+hex = "0.4"
+base64 = "0.22"
+
+# For packet parsing - using etherparse (WASM compatible)
+etherparse = "0.14"
+
+# For DNS parsing
+simple-dns = "0.5"
+
+# For HTTP parsing
+httparse = "1.8"
+
+# For time operations (used in packet analysis)
+chrono = "0.4"
+
+# Utility crates
+thiserror = "1.0"
+anyhow = "1.0"
+
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+strip = true
+
+[package.metadata.component]
+package = "athena:network"
+
+[package.metadata.component.target]
+path = "wit"
+world = "network-component"

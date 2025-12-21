@@ -1,0 +1,45 @@
+package athena:security@0.1.0;
+
+/// Security verification and signature checking
+interface security {
+    /// Signature verification result
+    record verification-result {
+        is-valid: bool,
+        signer: option<string>,
+        timestamp: option<string>,
+        algorithm: option<string>,
+        errors: list<string>,
+        warnings: list<string>,
+    }
+
+    /// File format for signature verification
+    enum file-format {
+        pe,
+        elf,
+        macho,
+        unknown,
+    }
+
+    /// Verify PE Authenticode signature
+    verify-pe-signature: func(pe-data: list<u8>) -> result<verification-result, string>;
+
+    /// Verify ELF GPG/PGP signature
+    verify-elf-signature: func(elf-data: list<u8>, signature: option<list<u8>>) -> result<verification-result, string>;
+
+    /// Verify Mach-O code signature
+    verify-macho-signature: func(macho-data: list<u8>) -> result<verification-result, string>;
+
+    /// Detect file format
+    detect-format: func(data: list<u8>) -> file-format;
+
+    /// Calculate file hash (SHA-256)
+    calculate-hash: func(data: list<u8>) -> string;
+
+    /// Get version
+    get-version: func() -> string;
+}
+
+/// Security component
+world security-component {
+    export security;
+}

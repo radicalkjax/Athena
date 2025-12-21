@@ -1,0 +1,96 @@
+package athena:sandbox@0.1.0;
+
+/// Secure sandbox execution for malware analysis
+interface sandbox {
+    /// Resource usage tracking
+    record resource-usage {
+        memory-bytes: u64,
+        cpu-time-ms: u64,
+        syscalls-count: u32,
+    }
+
+    /// Security event type
+    enum security-event-type {
+        syscall-blocked,
+        memory-limit-reached,
+        cpu-limit-reached,
+        network-access-attempt,
+        file-access-attempt,
+        suspicious-behavior,
+    }
+
+    /// Security severity
+    enum security-severity {
+        low,
+        medium,
+        high,
+        critical,
+    }
+
+    /// Security event
+    record security-event {
+        timestamp: u64,
+        event-type: security-event-type,
+        description: string,
+        severity: security-severity,
+    }
+
+    /// Execution policy
+    record execution-policy {
+        max-memory-bytes: u64,
+        max-cpu-time-ms: u64,
+        max-execution-time-ms: u64,
+        allow-network: bool,
+        allow-file-access: bool,
+        allowed-syscalls: list<string>,
+    }
+
+    /// Execution result
+    record execution-result {
+        stdout: string,
+        stderr: string,
+        exit-code: s32,
+        resource-usage: resource-usage,
+        security-events: list<security-event>,
+        execution-time-ms: u64,
+        success: bool,
+    }
+
+    /// Instance snapshot
+    record instance-snapshot {
+        instance-id: string,
+        timestamp: u64,
+        memory-state: list<u8>,
+        metadata: string,  // JSON string
+    }
+
+    /// Create sandbox manager
+    new: func() -> sandbox-manager;
+
+    /// Create sandbox instance
+    create-instance: func(handle: sandbox-manager, policy: option<execution-policy>) -> result<string, string>;
+
+    /// Execute code in instance
+    execute: func(handle: sandbox-manager, instance-id: string, code: list<u8>) -> result<execution-result, string>;
+
+    /// Terminate instance
+    terminate-instance: func(handle: sandbox-manager, instance-id: string) -> result<_, string>;
+
+    /// Get instance stats
+    get-instance-stats: func(handle: sandbox-manager, instance-id: string) -> result<resource-usage, string>;
+
+    /// Resource handle for sandbox manager
+    resource sandbox-manager {
+        constructor();
+        create-instance: func(policy: option<execution-policy>) -> result<string, string>;
+        execute: func(instance-id: string, code: list<u8>) -> result<execution-result, string>;
+        terminate-instance: func(instance-id: string) -> result<_, string>;
+        get-instance-stats: func(instance-id: string) -> result<resource-usage, string>;
+        list-instances: func() -> list<string>;
+    }
+}
+
+/// Main sandbox component
+world sandbox-component {
+    export sandbox;
+}

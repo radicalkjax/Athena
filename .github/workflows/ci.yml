@@ -51,7 +51,7 @@ jobs:
       run: |
         echo "Setting up CI test environment..."
         # Ensure mock directories exist
-        mkdir -p wasm-modules/bridge/__mocks__
+        mkdir -p athena-v2/wasm-modules/bridge/__mocks__
         # Verify TypeScript CI config
         if [ -f "Athena/tsconfig.ci.json" ]; then
           echo "✅ TypeScript CI config found"
@@ -119,19 +119,19 @@ jobs:
     - name: Check WASM module structure
       run: |
         echo "Validating WASM module directory structure..."
-        if [ -d "wasm-modules" ]; then
+        if [ -d "athena-v2/wasm-modules" ]; then
           echo "✅ WASM modules directory exists"
-          find wasm-modules -name "*.ts" -o -name "*.js" | head -10
+          find athena-v2/wasm-modules -name "*.ts" -o -name "*.js" | head -10
         else
           echo "⚠️  WASM modules directory not found - WASM integration is mocked for testing"
         fi
-    
+
     - name: Validate WASM bridge mocks
       run: |
         echo "Checking WASM bridge mock files..."
-        if [ -d "wasm-modules/bridge/__mocks__" ]; then
+        if [ -d "athena-v2/wasm-modules/bridge/__mocks__" ]; then
           echo "✅ WASM bridge mocks found"
-          ls -la wasm-modules/bridge/__mocks__/
+          ls -la athena-v2/wasm-modules/bridge/__mocks__/
         else
           echo "❌ WASM bridge mocks missing"
           exit 1

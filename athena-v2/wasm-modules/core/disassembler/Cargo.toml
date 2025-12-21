@@ -1,0 +1,49 @@
+[package]
+name = "athena-disassembler"
+version = "0.1.0"
+edition = "2021"
+authors = ["Athena Team"]
+description = "Standalone WASM disassembler module using iced-x86"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Component Model bindings
+wit-bindgen = "0.42.1"
+
+# Disassembly with complete professional feature set
+iced-x86 = { version = "1.21", default-features = false, features = [
+    "no_std",
+    "decoder",        # Instruction decoding
+    "instr_info",     # Detailed instruction analysis
+    "op_code_info",   # Opcode metadata
+    "intel",          # Intel (XED) syntax formatter
+    "gas",            # GAS (AT&T) syntax formatter
+    "masm",           # MASM syntax formatter
+    "nasm",           # NASM syntax formatter
+    "fast_fmt",       # Fast MASM-like formatter for performance
+    "encoder",        # Re-encode instructions (patching/modification)
+    "block_encoder",  # Encode instruction blocks with branch optimization
+    "code_asm"        # Programmatic instruction creation
+] }
+
+# ARM/ARM64 disassembly via Capstone
+capstone = { version = "0.12", default-features = false }
+
+# Error handling
+thiserror = "2.0"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[package.metadata.component]
+package = "athena:disassembler"
+
+[package.metadata.component.target]
+path = "wit"
+world = "disassembler-component"

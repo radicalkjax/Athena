@@ -1,0 +1,266 @@
+package athena:analysis-engine@0.1.0;
+
+/// Malware analysis and threat detection
+interface analyzer {
+    /// Threat severity levels
+    enum severity {
+        low,
+        medium,
+        high,
+        critical,
+    }
+
+    /// Threat information
+    record threat-info {
+        threat-type: string,
+        confidence: f32,
+        description: string,
+        indicators: list<string>,
+    }
+
+    /// Analysis metadata
+    record analysis-metadata {
+        file-hash: string,
+        analysis-time-ms: u32,
+        engine-version: string,
+    }
+
+    /// Analysis result
+    record analysis-result {
+        severity: severity,
+        threats: list<threat-info>,
+        deobfuscated-content: option<string>,
+        metadata: analysis-metadata,
+    }
+
+    /// Analyze content for threats
+    analyze: func(content: list<u8>) -> result<analysis-result, string>;
+
+    /// Get engine version
+    get-version: func() -> string;
+}
+
+/// Pattern matching for malware detection
+interface pattern-matcher {
+    /// Pattern category
+    enum pattern-category {
+        obfuscation,
+        shellcode,
+        exploit,
+        credential-theft,
+        data-exfiltration,
+        persistence,
+        evasion,
+        suspicious-api,
+    }
+
+    /// Pattern severity
+    enum pattern-severity {
+        low,
+        medium,
+        high,
+        critical,
+    }
+
+    /// Pattern match result
+    record pattern-match {
+        category: pattern-category,
+        severity: pattern-severity,
+        name: string,
+        description: string,
+        offset: u64,
+        length: u64,
+        matched-data: string,
+    }
+
+    /// Scan content for malicious patterns
+    scan: func(content: list<u8>) -> list<pattern-match>;
+}
+
+/// Code deobfuscation
+interface deobfuscator {
+    /// Deobfuscation options
+    record deobfuscation-options {
+        max-iterations: u32,
+        decode-base64: bool,
+        decode-hex: bool,
+        decode-url: bool,
+        unescape-strings: bool,
+    }
+
+    /// Deobfuscation result
+    record deobfuscation-result {
+        deobfuscated: string,
+        techniques-applied: list<string>,
+        confidence: f32,
+    }
+
+    /// Deobfuscate code/text
+    deobfuscate: func(content: string, options: option<deobfuscation-options>) -> result<deobfuscation-result, string>;
+
+    /// Check if content appears obfuscated
+    is-obfuscated: func(content: string) -> bool;
+}
+
+/// Disassembly and reverse engineering
+interface disassembler {
+    /// CPU architecture
+    enum architecture {
+        x86,
+        x64,
+        arm,
+        arm64,
+    }
+
+    /// Disassembly syntax
+    enum syntax {
+        intel,
+        att,
+        masm,
+        nasm,
+    }
+
+    /// Register access type
+    enum register-access {
+        none,
+        read,
+        write,
+        read-write,
+        cond-read,
+        cond-write,
+    }
+
+    /// Memory access type
+    enum memory-access {
+        none,
+        read,
+        write,
+        read-write,
+        cond-read,
+        cond-write,
+    }
+
+    /// Register usage information
+    record used-register {
+        register: string,
+        access: register-access,
+    }
+
+    /// Memory usage information
+    record used-memory {
+        segment: string,
+        base: string,
+        index: string,
+        scale: u32,
+        displacement: s64,
+        size: u32,
+        access: memory-access,
+    }
+
+    /// Constant offsets (immediates and displacements)
+    record constant-offsets {
+        has-displacement: bool,
+        displacement-offset: u32,
+        displacement-size: u32,
+        has-immediate: bool,
+        immediate-offset: u32,
+        immediate-size: u32,
+        has-immediate2: bool,
+        immediate-offset2: u32,
+        immediate-size2: u32,
+    }
+
+    /// Disassembled instruction with full analysis
+    record instruction {
+        offset: u64,
+        bytes: list<u8>,
+        mnemonic: string,
+        operands: string,
+        full-text: string,
+        is-branch: bool,
+        is-call: bool,
+        is-return: bool,
+        is-privileged: bool,
+        branch-target: option<u64>,
+        length: u32,
+        // Register analysis
+        used-registers: list<used-register>,
+        // Memory analysis
+        used-memory: list<used-memory>,
+        memory-size: u32,
+        // Constant offsets for finding strings/values
+        constant-offsets: constant-offsets,
+        // CPU features
+        cpuid-features: list<string>,
+        // RFLAGS analysis
+        rflags-read: u32,
+        rflags-written: u32,
+        rflags-cleared: u32,
+        rflags-set: u32,
+        rflags-undefined: u32,
+        rflags-modified: u32,
+        // Stack tracking
+        is-stack-instruction: bool,
+        stack-pointer-increment: s32,
+        // FPU stack tracking
+        fpu-writes-top: bool,
+        fpu-increment: s32,
+        fpu-conditional: bool,
+        // Condition code
+        condition-code: string,
+        // OpCode info
+        op-code-string: string,
+        instruction-string: string,
+        encoding: string,
+        // Operand info
+        op-count: u32,
+        operand-kinds: list<string>,
+    }
+
+    /// Control flow basic block
+    record basic-block {
+        start-offset: u64,
+        end-offset: u64,
+        instructions: list<instruction>,
+        successors: list<u64>,
+        predecessors: list<u64>,
+    }
+
+    /// Function information
+    record function-info {
+        start-offset: u64,
+        end-offset: option<u64>,
+        name: option<string>,
+        basic-blocks: list<basic-block>,
+        calls-to: list<u64>,
+        called-from: list<u64>,
+    }
+
+    /// Disassembly options
+    record disasm-options {
+        arch: architecture,
+        syntax: syntax,
+        show-bytes: bool,
+        max-instructions: u32,
+    }
+
+    /// Disassemble code
+    disassemble: func(code: list<u8>, offset: u64, options: disasm-options) -> result<list<instruction>, string>;
+
+    /// Analyze control flow and extract basic blocks
+    analyze-control-flow: func(code: list<u8>, entry-point: u64, arch: architecture) -> result<list<basic-block>, string>;
+
+    /// Extract function boundaries
+    find-functions: func(code: list<u8>, entry-points: list<u64>, arch: architecture) -> result<list<function-info>, string>;
+
+    /// Find cross-references to an address
+    find-xrefs: func(code: list<u8>, target-address: u64, arch: architecture) -> result<list<u64>, string>;
+}
+
+/// Main analysis engine component
+world analysis-engine-component {
+    export analyzer;
+    export pattern-matcher;
+    export deobfuscator;
+    export disassembler;
+}

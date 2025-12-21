@@ -1,0 +1,147 @@
+package athena:pattern-matcher@0.1.0;
+
+/// Advanced pattern matching for malware detection
+interface pattern-matcher {
+    /// Pattern type
+    enum pattern-type {
+        exact,
+        regex,
+        binary,
+        fuzzy,
+    }
+
+    /// Severity level
+    enum severity {
+        critical,
+        high,
+        medium,
+        low,
+        info,
+    }
+
+    /// Threat category
+    enum threat-category {
+        malware,
+        exploit,
+        obfuscation,
+        suspicious,
+        pii,
+        secret,
+    }
+
+    /// Pattern definition
+    record pattern {
+        id: string,
+        pattern-type: pattern-type,
+        value: list<u8>,
+        mask: option<list<u8>>,
+        description: string,
+        weight: f32,
+    }
+
+    /// Condition for rule matching
+    variant condition {
+        all,
+        any(u32),
+        not(string),  // Reference to another condition
+        and-conditions(list<string>),
+        or-conditions(list<string>),
+        pattern-ref(string),
+    }
+
+    /// Pattern matching rule
+    record rule {
+        id: string,
+        name: string,
+        description: string,
+        patterns: list<pattern>,
+        condition: condition,
+        severity: severity,
+        category: threat-category,
+        tags: list<string>,
+    }
+
+    /// Pattern match result
+    record pattern-match {
+        rule-id: string,
+        rule-name: string,
+        pattern-id: string,
+        offset: u64,
+        length: u64,
+        matched-data: list<u8>,
+        severity: severity,
+        category: threat-category,
+        confidence: f32,
+    }
+
+    /// Scan result
+    record scan-result {
+        matches: list<pattern-match>,
+        total-rules-evaluated: u32,
+        scan-time-ms: u64,
+        bytes-scanned: u64,
+        threat-score: f32,
+    }
+
+    /// Pattern statistics
+    record pattern-stats {
+        total-patterns: u32,
+        exact-patterns: u32,
+        regex-patterns: u32,
+        binary-patterns: u32,
+        fuzzy-patterns: u32,
+    }
+
+    /// Streaming scan chunk
+    record scan-chunk {
+        has-result: bool,
+        scan-result: option<scan-result>,
+    }
+
+    /// Create matcher with default rules
+    new: func() -> matcher;
+
+    /// Create matcher without loading default rules
+    new-empty: func() -> matcher;
+
+    /// Load default malware signatures
+    load-default-rules: func(handle: matcher) -> result<_, string>;
+
+    /// Add a rule from text
+    add-rule-text: func(handle: matcher, rule-text: string) -> result<string, string>;
+
+    /// Scan data for patterns
+    scan: func(handle: matcher, data: list<u8>) -> result<scan-result, string>;
+
+    /// Get rule count
+    get-rule-count: func(handle: matcher) -> u32;
+
+    /// Get pattern statistics
+    get-stats: func(handle: matcher) -> pattern-stats;
+
+    /// Clear all rules
+    clear-rules: func(handle: matcher);
+
+    /// Resource handle for pattern matcher instance
+    resource matcher {
+        constructor();
+        load-default-rules: func() -> result<_, string>;
+        add-rule-text: func(rule-text: string) -> result<string, string>;
+        scan: func(data: list<u8>) -> result<scan-result, string>;
+        get-rule-count: func() -> u32;
+        get-stats: func() -> pattern-stats;
+        clear-rules: func();
+    }
+
+    /// Resource for streaming scanner
+    resource streaming-scanner {
+        constructor(chunk-size: u32);
+        process-chunk: func(chunk: list<u8>) -> result<scan-chunk, string>;
+        finish: func() -> result<scan-chunk, string>;
+    }
+}
+
+/// Main pattern-matcher component
+world pattern-matcher-component {
+    export pattern-matcher;
+}

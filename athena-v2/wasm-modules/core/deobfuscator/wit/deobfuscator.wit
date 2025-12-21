@@ -1,0 +1,142 @@
+package athena:deobfuscator@0.1.0;
+
+/// Advanced code deobfuscation module
+interface deobfuscator {
+    /// Obfuscation techniques
+    variant obfuscation-technique {
+        // Encoding
+        base64-encoding,
+        hex-encoding,
+        unicode-escape,
+        url-encoding,
+        html-entity-encoding,
+
+        // String manipulation
+        charcode-concat,
+        string-reverse,
+        string-split,
+        string-replace,
+
+        // Encryption
+        xor-encryption(list<u8>),
+        rc4-encryption,
+        simple-substitution,
+
+        // JavaScript specific
+        js-eval-chain,
+        js-packed-code,
+        js-obfuscator-io,
+        js-function-constructor,
+        js-uglified,
+
+        // PowerShell specific
+        ps-encoded-command,
+        ps-compressed,
+        ps-string-replace,
+        ps-invoke-expression,
+
+        // Binary
+        binary-packed,
+        binary-compressed,
+        binary-encrypted,
+
+        // Control flow
+        control-flow-flattening,
+        dead-code-injection,
+        opaque-predicates,
+
+        // Custom
+        custom-encoding(string),
+    }
+
+    /// Applied technique with metadata
+    record applied-technique {
+        technique: obfuscation-technique,
+        confidence: f32,
+        layer: u32,
+        context: option<string>,
+    }
+
+    /// Extracted string from analysis
+    record extracted-string {
+        value: string,
+        confidence: f32,
+        context: string,
+        offset: u64,
+    }
+
+    /// ML predictions
+    record ml-predictions {
+        obfuscation-probability: f32,
+        malware-probability: f32,
+        technique-probabilities: list<tuple<string, f32>>,
+    }
+
+    /// Deobfuscation metadata
+    record deobfuscation-metadata {
+        entropy-before: f32,
+        entropy-after: f32,
+        layers-detected: u32,
+        processing-time-ms: u64,
+        suspicious-patterns: list<string>,
+        extracted-strings: list<extracted-string>,
+        ml-predictions: option<ml-predictions>,
+    }
+
+    /// Deobfuscation result
+    record deobfuscation-result {
+        original: string,
+        deobfuscated: string,
+        techniques-applied: list<applied-technique>,
+        confidence: f32,
+        metadata: deobfuscation-metadata,
+    }
+
+    /// Configuration options
+    record deobfuscator-config {
+        max-layers: u32,
+        min-confidence: f32,
+        enable-ml: bool,
+        timeout-ms: u64,
+        extract-strings: bool,
+        detect-packers: bool,
+    }
+
+    /// Obfuscation analysis result
+    record obfuscation-analysis {
+        detected-techniques: list<tuple<obfuscation-technique, f32>>,
+        complexity-score: f32,
+        ml-hints: option<ml-predictions>,
+    }
+
+    /// Create deobfuscator with default config
+    new: func() -> deobfuscator;
+
+    /// Create deobfuscator with custom config
+    with-config: func(config: deobfuscator-config) -> deobfuscator;
+
+    /// Detect obfuscation techniques
+    detect-obfuscation: func(handle: deobfuscator, content: string) -> result<obfuscation-analysis, string>;
+
+    /// Deobfuscate content
+    deobfuscate: func(handle: deobfuscator, content: string) -> result<deobfuscation-result, string>;
+
+    /// Check if content is obfuscated
+    is-obfuscated: func(handle: deobfuscator, content: string) -> bool;
+
+    /// Get supported techniques
+    get-supported-techniques: func() -> list<obfuscation-technique>;
+
+    /// Resource handle for deobfuscator instance
+    resource deobfuscator {
+        constructor();
+        detect: func(content: string) -> result<obfuscation-analysis, string>;
+        deobfuscate: func(content: string) -> result<deobfuscation-result, string>;
+        is-obfuscated: func(content: string) -> bool;
+    }
+}
+
+/// Main deobfuscator component
+world deobfuscator-component {
+    export deobfuscator;
+}

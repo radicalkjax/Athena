@@ -1,0 +1,199 @@
+package athena:file-processor@0.1.0;
+
+/// File format detection and identification
+interface detector {
+    /// File format enumeration
+    enum file-format {
+        // Executables
+        pe32,
+        pe64,
+        elf32,
+        elf64,
+        macho,
+
+        // Documents
+        pdf,
+        docx,
+        xlsx,
+        pptx,
+        odt,
+
+        // Archives
+        zip,
+        rar,
+        sevenz,
+        tar,
+        gzip,
+
+        // Scripts
+        javascript,
+        typescript,
+        python,
+        powershell,
+        batch,
+        shell,
+        php,
+        ruby,
+
+        // Web
+        html,
+        xml,
+        json,
+        css,
+
+        // Other
+        plain-text,
+        binary,
+        unknown,
+    }
+
+    /// Detect file format from buffer and optional filename
+    detect-format: func(buffer: list<u8>, filename: option<string>) -> file-format;
+
+    /// Check if file appears to be text
+    is-text-file: func(buffer: list<u8>) -> bool;
+
+    /// Get MIME type for a file format
+    get-mime-type: func(format: file-format) -> string;
+}
+
+/// File validation for security and integrity
+interface validator {
+    use detector.{file-format};
+
+    /// Validation result
+    record validation-result {
+        is-valid: bool,
+        format-valid: bool,
+        size-valid: bool,
+        content-safe: bool,
+        errors: list<string>,
+        warnings: list<string>,
+    }
+
+    /// Validate file for security and integrity
+    validate-file: func(buffer: list<u8>, format: file-format) -> validation-result;
+}
+
+/// File parsing and analysis
+interface parser {
+    use detector.{file-format};
+
+    /// File section information
+    record file-section {
+        name: string,
+        offset: u64,
+        size: u64,
+        entropy: f64,
+        section-flags: list<string>,
+    }
+
+    /// Embedded file information
+    record embedded-file {
+        name: option<string>,
+        format: file-format,
+        offset: u64,
+        size: u64,
+        hash: string,
+    }
+
+    /// Suspicious severity levels
+    enum suspicious-severity {
+        low,
+        medium,
+        high,
+        critical,
+    }
+
+    /// Suspicious indicator
+    record suspicious-indicator {
+        indicator-type: string,
+        description: string,
+        severity: suspicious-severity,
+        location: option<string>,
+        evidence: string,
+    }
+
+    /// File integrity information
+    record file-integrity {
+        valid-structure: bool,
+        checksum-valid: option<bool>,
+        signature-valid: option<bool>,
+        issues: list<string>,
+    }
+
+    /// File metadata
+    record file-metadata {
+        size: u64,
+        hash: string,
+        mime-type: string,
+        created-at: option<string>,
+        modified-at: option<string>,
+        // Note: WIT doesn't support HashMap directly, using list of key-value pairs
+        attributes: list<tuple<string, string>>,
+    }
+
+    /// Parsed file structure
+    record parsed-file {
+        format: file-format,
+        metadata: file-metadata,
+        sections: list<file-section>,
+        embedded-files: list<embedded-file>,
+        strings: list<string>,  // Simplified for WIT
+        suspicious-indicators: list<suspicious-indicator>,
+        integrity: file-integrity,
+    }
+
+    /// Parse file and extract its content
+    parse-file: func(buffer: list<u8>, format-hint: option<file-format>) -> result<parsed-file, string>;
+
+    /// Extract metadata from file
+    extract-metadata: func(buffer: list<u8>, format: file-format) -> result<file-metadata, string>;
+}
+
+/// Content extraction utilities
+interface extractor {
+    /// Extracted string with context
+    record extracted-string {
+        value: string,
+        offset: u64,
+        encoding: string,
+        suspicious: bool,
+    }
+
+    /// Pattern types
+    enum pattern-type {
+        url,
+        ip-address,
+        domain,
+        email,
+        base64,
+        hex-encoded,
+        obfuscated-code,
+        crypto-wallet,
+        api-key,
+        password,
+    }
+
+    /// Suspicious pattern
+    record suspicious-pattern {
+        pattern-type: pattern-type,
+        value: string,
+        context: option<string>,
+        confidence: f32,
+    }
+
+    /// Extract strings from file
+    extract-strings: func(buffer: list<u8>, min-length: u32) -> list<extracted-string>;
+
+    /// Extract suspicious patterns from content
+    extract-suspicious-patterns: func(content: string) -> list<suspicious-pattern>;
+}
+
+/// Main file processor component
+world file-processor-component {
+    export detector;
+    export validator;
+    export parser;
+    export extractor;
+}

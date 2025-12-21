@@ -1,0 +1,124 @@
+package athena:crypto@0.1.0;
+
+/// Hash operations for malware analysis
+interface hash {
+    /// Compute SHA-256 hash (hex encoded)
+    sha256: func(data: list<u8>) -> string;
+
+    /// Compute SHA-256 hash (base64 encoded)
+    sha256-base64: func(data: list<u8>) -> string;
+
+    /// Compute SHA-512 hash (hex encoded)
+    sha512: func(data: list<u8>) -> string;
+
+    /// Compute SHA-384 hash (hex encoded)
+    sha384: func(data: list<u8>) -> string;
+
+    /// Compute SHA-1 hash (hex encoded) - legacy support
+    sha1: func(data: list<u8>) -> string;
+
+    /// Compute MD5 hash (hex encoded) - legacy support
+    md5: func(data: list<u8>) -> string;
+}
+
+/// HMAC operations for message authentication
+interface hmac {
+    /// Compute HMAC-SHA256 (hex encoded)
+    hmac-sha256: func(key: list<u8>, data: list<u8>) -> string;
+
+    /// Compute HMAC-SHA256 (base64 encoded)
+    hmac-sha256-base64: func(key: list<u8>, data: list<u8>) -> string;
+
+    /// Compute HMAC-SHA512 (hex encoded)
+    hmac-sha512: func(key: list<u8>, data: list<u8>) -> string;
+
+    /// Compute HMAC-SHA384 (hex encoded)
+    hmac-sha384: func(key: list<u8>, data: list<u8>) -> string;
+
+    /// Verify HMAC
+    verify-hmac: func(key: list<u8>, data: list<u8>, expected-hmac: string) -> bool;
+
+    /// Generate random HMAC key
+    generate-hmac-key: func(length: u32) -> list<u8>;
+}
+
+/// AES symmetric encryption
+interface aes {
+    /// Encrypt data using AES-128-GCM (returns base64)
+    encrypt-aes128-gcm: func(key: list<u8>, plaintext: list<u8>) -> result<string, string>;
+
+    /// Decrypt data using AES-128-GCM
+    decrypt-aes128-gcm: func(key: list<u8>, ciphertext-base64: string) -> result<list<u8>, string>;
+
+    /// Encrypt data using AES-256-GCM (returns base64)
+    encrypt-aes256-gcm: func(key: list<u8>, plaintext: list<u8>) -> result<string, string>;
+
+    /// Decrypt data using AES-256-GCM
+    decrypt-aes256-gcm: func(key: list<u8>, ciphertext-base64: string) -> result<list<u8>, string>;
+
+    /// Derive AES key from password using PBKDF2
+    derive-key-from-password: func(password: string, salt: list<u8>, key-length: u32) -> result<list<u8>, string>;
+
+    /// Generate random AES key
+    generate-aes-key: func(key-length: u32) -> result<list<u8>, string>;
+}
+
+/// RSA asymmetric encryption
+interface rsa {
+    /// RSA key pair representation
+    record key-pair {
+        private-key: list<u8>,  // PKCS#8 DER format
+        public-key: list<u8>,   // PKIX DER format
+    }
+
+    /// Generate RSA key pair (2048 or 4096 bits)
+    generate-key-pair: func(key-size: u32) -> result<key-pair, string>;
+
+    /// Sign data using RSA with SHA-256
+    sign-sha256: func(private-key-der: list<u8>, message: list<u8>) -> result<string, string>;
+
+    /// Sign data using RSA with SHA-512
+    sign-sha512: func(private-key-der: list<u8>, message: list<u8>) -> result<string, string>;
+
+    /// Verify RSA signature with SHA-256
+    verify-sha256: func(public-key-der: list<u8>, message: list<u8>, signature-base64: string) -> result<bool, string>;
+
+    /// Verify RSA signature with SHA-512
+    verify-sha512: func(public-key-der: list<u8>, message: list<u8>, signature-base64: string) -> result<bool, string>;
+}
+
+/// Cryptographic utilities
+interface utils {
+    /// Generate cryptographically secure random bytes
+    generate-random-bytes: func(length: u32) -> result<list<u8>, string>;
+
+    /// Generate random hex string
+    generate-random-hex: func(length: u32) -> result<string, string>;
+
+    /// Generate random base64 string
+    generate-random-base64: func(length: u32) -> result<string, string>;
+
+    /// Constant-time comparison (timing attack resistant)
+    constant-time-compare: func(a: list<u8>, b: list<u8>) -> bool;
+
+    /// Convert hex string to bytes
+    hex-to-bytes: func(hex: string) -> result<list<u8>, string>;
+
+    /// Convert bytes to hex string
+    bytes-to-hex: func(bytes: list<u8>) -> string;
+
+    /// Base64 encode
+    base64-encode: func(data: list<u8>) -> string;
+
+    /// Base64 decode
+    base64-decode: func(encoded: string) -> result<list<u8>, string>;
+}
+
+/// Main crypto component world
+world crypto-component {
+    export hash;
+    export hmac;
+    export aes;
+    export rsa;
+    export utils;
+}

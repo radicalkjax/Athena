@@ -1,0 +1,85 @@
+package athena:network@0.1.0;
+
+/// Network packet analysis and anomaly detection
+interface network {
+    /// Packet analysis result
+    record packet-analysis {
+        packet-type: string,
+        source-ip: option<string>,
+        dest-ip: option<string>,
+        source-port: option<u16>,
+        dest-port: option<u16>,
+        protocol: string,
+        payload-size: u64,
+        packet-flags: list<string>,
+        timestamp: option<s64>,
+    }
+
+    /// Protocol information
+    record protocol-info {
+        protocol-type: string,
+        version: option<string>,
+        headers: string,  // JSON string
+        payload: option<string>,
+        is-encrypted: bool,
+    }
+
+    /// Network anomaly
+    record network-anomaly {
+        anomaly-type: string,
+        severity: string,
+        description: string,
+        indicators: list<string>,
+        timestamp: s64,
+    }
+
+    /// Traffic pattern
+    record traffic-pattern {
+        pattern-type: string,
+        confidence: f64,
+        matches: list<string>,
+        metadata: string,  // JSON string
+    }
+
+    /// Severity level for anomalies
+    enum anomaly-severity {
+        low,
+        medium,
+        high,
+        critical,
+    }
+
+    /// Create network analyzer
+    new: func() -> network-analyzer;
+
+    /// Analyze packet data
+    analyze-packet: func(handle: network-analyzer, packet-data: list<u8>) -> result<packet-analysis, string>;
+
+    /// Detect protocol from data
+    detect-protocol: func(handle: network-analyzer, data: list<u8>) -> result<protocol-info, string>;
+
+    /// Analyze traffic pattern
+    analyze-traffic-pattern: func(handle: network-analyzer, packets-json: string) -> result<list<traffic-pattern>, string>;
+
+    /// Detect anomalies
+    detect-anomalies: func(handle: network-analyzer, traffic-data: string) -> result<list<network-anomaly>, string>;
+
+    /// Get analyzer version
+    get-version: func(handle: network-analyzer) -> string;
+
+    /// Resource handle for network analyzer instance
+    resource network-analyzer {
+        constructor();
+        analyze-packet: func(packet-data: list<u8>) -> result<packet-analysis, string>;
+        detect-protocol: func(data: list<u8>) -> result<protocol-info, string>;
+        analyze-traffic-pattern: func(packets-json: string) -> result<list<traffic-pattern>, string>;
+        detect-anomalies: func(traffic-data: string) -> result<list<network-anomaly>, string>;
+        get-version: func() -> string;
+        is-initialized: func() -> bool;
+    }
+}
+
+/// Main network component
+world network-component {
+    export network;
+}

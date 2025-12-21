@@ -1,0 +1,63 @@
+[package]
+name = "athena-analysis-engine"
+version = "0.1.0"
+edition = "2021"
+authors = ["Athena Team"]
+description = "WASM analysis engine for malware detection and deobfuscation"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Component Model bindings
+wit-bindgen = "0.42.1"
+
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Security and crypto
+sha2 = "0.10"
+hex = "0.4"
+base64 = "0.22"
+
+# Pattern matching
+regex = "1.10"
+aho-corasick = "1.1"
+
+# Disassembly for reverse engineering - Complete professional feature set
+iced-x86 = { version = "1.21", default-features = false, features = [
+    "no_std",
+    "decoder",        # Instruction decoding
+    "instr_info",     # Detailed instruction analysis
+    "op_code_info",   # Opcode metadata
+    "intel",          # Intel (XED) syntax formatter
+    "gas",            # GAS (AT&T) syntax formatter
+    "masm",           # MASM syntax formatter
+    "nasm",           # NASM syntax formatter
+    "fast_fmt",       # Fast MASM-like formatter for performance
+    "encoder",        # Re-encode instructions (patching/modification)
+    "block_encoder",  # Encode instruction blocks with branch optimization
+    "code_asm"        # Programmatic instruction creation
+] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[package.metadata.component]
+package = "athena:analysis-engine"
+
+[package.metadata.component.target]
+path = "wit"
+world = "analysis-engine-component"

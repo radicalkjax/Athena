@@ -1,0 +1,37 @@
+[package]
+name = "athena-crypto"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Component Model bindings
+wit-bindgen = "0.42.1"
+
+# Cryptographic primitives
+sha2 = { version = "0.10", features = ["oid"] }
+sha1 = { version = "0.10", features = ["oid"] }
+md-5 = "0.10"
+hmac = "0.12"
+aes-gcm = "0.10"
+pbkdf2 = "0.12"
+rsa = "0.9"
+rand = "0.8"
+hex = "0.4"
+base64 = "0.21"
+zeroize = { version = "1.8", features = ["derive"] }
+getrandom = { version = "0.2", features = ["js"] }
+
+# Elliptic Curve Cryptography
+p256 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+p384 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+signature = "2.2"
+
+[package.metadata.component]
+package = "athena:crypto"
+
+[package.metadata.component.target]
+path = "wit"
+world = "crypto-component"

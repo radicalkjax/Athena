@@ -1,0 +1,154 @@
+package athena:disassembler@0.1.0;
+
+/// Disassembly and reverse engineering interface
+interface disassembler {
+    /// CPU architecture
+    enum architecture {
+        x86,
+        x64,
+        arm,
+        arm64,
+    }
+
+    /// Disassembly syntax
+    enum syntax {
+        intel,
+        att,
+        masm,
+        nasm,
+    }
+
+    /// Register access type
+    enum register-access {
+        none,
+        read,
+        write,
+        read-write,
+        cond-read,
+        cond-write,
+    }
+
+    /// Memory access type
+    enum memory-access {
+        none,
+        read,
+        write,
+        read-write,
+        cond-read,
+        cond-write,
+    }
+
+    /// Register usage information
+    record used-register {
+        register: string,
+        access: register-access,
+    }
+
+    /// Memory usage information
+    record used-memory {
+        segment: string,
+        base: string,
+        index: string,
+        scale: u32,
+        displacement: s64,
+        size: u32,
+        access: memory-access,
+    }
+
+    /// Constant offsets (immediates and displacements)
+    record constant-offsets {
+        has-displacement: bool,
+        displacement-offset: u32,
+        displacement-size: u32,
+        has-immediate: bool,
+        immediate-offset: u32,
+        immediate-size: u32,
+        has-immediate2: bool,
+        immediate-offset2: u32,
+        immediate-size2: u32,
+    }
+
+    /// Disassembled instruction with full analysis
+    record instruction {
+        offset: u64,
+        bytes: list<u8>,
+        mnemonic: string,
+        operands: string,
+        full-text: string,
+        is-branch: bool,
+        is-call: bool,
+        is-return: bool,
+        is-privileged: bool,
+        branch-target: option<u64>,
+        length: u32,
+        used-registers: list<used-register>,
+        used-memory: list<used-memory>,
+        memory-size: u32,
+        constant-offsets: constant-offsets,
+        cpuid-features: list<string>,
+        rflags-read: u32,
+        rflags-written: u32,
+        rflags-cleared: u32,
+        rflags-set: u32,
+        rflags-undefined: u32,
+        rflags-modified: u32,
+        is-stack-instruction: bool,
+        stack-pointer-increment: s32,
+        fpu-writes-top: bool,
+        fpu-increment: s32,
+        fpu-conditional: bool,
+        condition-code: string,
+        op-code-string: string,
+        instruction-string: string,
+        encoding: string,
+        op-count: u32,
+        operand-kinds: list<string>,
+    }
+
+    /// Control flow basic block
+    record basic-block {
+        start-offset: u64,
+        end-offset: u64,
+        instructions: list<instruction>,
+        successors: list<u64>,
+        predecessors: list<u64>,
+    }
+
+    /// Function information
+    record function-info {
+        start-offset: u64,
+        end-offset: option<u64>,
+        name: option<string>,
+        basic-blocks: list<basic-block>,
+        calls-to: list<u64>,
+        called-from: list<u64>,
+    }
+
+    /// Disassembly options
+    record disasm-options {
+        arch: architecture,
+        syntax: syntax,
+        show-bytes: bool,
+        max-instructions: u32,
+    }
+
+    /// Disassemble code
+    disassemble: func(code: list<u8>, offset: u64, options: disasm-options) -> result<list<instruction>, string>;
+
+    /// Analyze control flow and extract basic blocks
+    analyze-control-flow: func(code: list<u8>, entry-point: u64, arch: architecture) -> result<list<basic-block>, string>;
+
+    /// Extract function boundaries
+    find-functions: func(code: list<u8>, entry-points: list<u64>, arch: architecture) -> result<list<function-info>, string>;
+
+    /// Find cross-references to an address
+    find-xrefs: func(code: list<u8>, target-address: u64, arch: architecture) -> result<list<u64>, string>;
+
+    /// Get version
+    get-version: func() -> string;
+}
+
+/// Standalone disassembler component
+world disassembler-component {
+    export disassembler;
+}
