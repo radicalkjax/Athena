@@ -569,12 +569,19 @@ fn verify_detached_gpg_signature(file_path: &Path, sig_path: &Path) -> Result<Si
 
 /// Verify embedded GPG signature
 fn verify_embedded_gpg_signature(
-    _file_path: &Path,
+    file_path: &Path,
     file_data: &[u8],
     sig_data: &[u8],
 ) -> Result<SignatureInfo> {
     use sequoia_openpgp::parse::{Parse, stream::DetachedVerifierBuilder};
     use sequoia_openpgp::{PacketPile, policy::StandardPolicy};
+
+    // Log verification attempt for debugging/auditing
+    let file_name = file_path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown");
+
+    eprintln!("Verifying embedded GPG signature for: {}", file_name);
 
     // First, extract metadata from the embedded signature
     let mut signer_info = None;

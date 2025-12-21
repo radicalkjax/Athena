@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::sync::{Arc, Mutex};
+use tauri::State;
+use crate::commands::wasm_runtime::WasmRuntime;
 
 #[derive(Serialize, Deserialize)]
 pub struct DisassemblyResult {
@@ -102,232 +105,190 @@ fn extract_strings_from_data(data: &[u8], min_length: usize) -> Vec<ExtractedStr
     strings
 }
 
-// For now, provide a simplified mock implementation
-// In production, this would use capstone for real disassembly
+const DISASSEMBLER_MODULE: &str = "disassembler";
+
 #[tauri::command]
-pub async fn disassemble_file(file_path: String, offset: Option<u64>, length: Option<usize>) -> Result<DisassemblyResult, String> {
+pub async fn disassemble_file(
+    runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
+    file_path: String,
+    offset: Option<u64>,
+    length: Option<usize>,
+) -> Result<DisassemblyResult, String> {
     let data = fs::read(&file_path).map_err(|e| format!("Failed to read file: {}", e))?;
-    
-    // Mock instructions for demonstration
-    let mut instructions = Vec::new();
-    let start = offset.unwrap_or(0) as usize;
-    let len = length.unwrap_or(100).min(data.len() - start);
-    
-    // Create some mock assembly instructions
-    for i in (0..len).step_by(4) {
-        let addr = start as u64 + i as u64;
-        let bytes = data[start + i..start + i + 4.min(len - i)]
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect::<Vec<_>>()
-            .join(" ");
-        
-        // Simple pattern matching for common x86 instructions
-        let (mnemonic, operands, is_jump, is_call) = match data.get(start + i) {
-            Some(0xe8) => ("call", "0x1000", false, true),
-            Some(0xe9) => ("jmp", "0x2000", true, false),
-            Some(0x74) => ("je", "0x3000", true, false),
-            Some(0x75) => ("jne", "0x4000", true, false),
-            Some(0x90) => ("nop", "", false, false),
-            Some(0xc3) => ("ret", "", false, false),
-            Some(0x55) => ("push", "rbp", false, false),
-            Some(0x89) => ("mov", "rsp, rbp", false, false),
-            _ => ("db", bytes.as_str(), false, false),
-        };
-        
-        instructions.push(Instruction {
-            address: addr,
-            bytes: bytes.clone(),
-            mnemonic: mnemonic.to_string(),
-            operands: operands.to_string(),
-            size: 4.min(len - i),
-            is_jump,
-            is_call,
-            jump_target: if is_jump || is_call { Some(addr + 0x1000) } else { None },
-        });
-    }
-    
-    // Mock functions
-    let functions = vec![
-        Function {
-            name: "main".to_string(),
-            address: start as u64,
-            size: 100,
-            instructions_count: 25,
-            calls: vec!["sub_1000".to_string(), "sub_2000".to_string()],
-        },
-        Function {
-            name: "sub_1000".to_string(),
-            address: start as u64 + 0x1000,
-            size: 50,
-            instructions_count: 12,
-            calls: vec![],
-        },
+
+    let start = offset.unwrap_or(0);
+    let len = length.unwrap_or(100);
+
+    // Call WASM disassembler module
+    let disasm_options = serde_json::json!({
+        "arch": "x64",
+        "syntax": "intel",
+        "show_bytes": true,
+        "max_instructions": len
+    });
+
+    let args = vec![
+        serde_json::json!(data),
+        serde_json::json!(start),
+        disasm_options
     ];
-    
-    // Extract strings
+
+    let result = crate::commands::wasm_runtime::execute_wasm_function(
+        runtime,
+        DISASSEMBLER_MODULE.to_string(),
+        "disassembler#disassemble".to_string(),
+        args,
+    ).await?;
+
+    // Parse WASM result
+    if !result.success {
+        return Err(result.error.unwrap_or("Disassembly failed".to_string()));
+    }
+
+    let output_str = result.output.as_ref()
+        .ok_or("No output from disassembler")?;
+    let wasm_output: serde_json::Value = serde_json::from_str(output_str)
+        .map_err(|e| format!("Failed to parse disassembly output: {}", e))?;
+
+    // Convert WASM instructions to our format
+    let mut instructions = Vec::new();
+    if let Some(wasm_insns) = wasm_output.as_array() {
+        for insn in wasm_insns {
+            instructions.push(Instruction {
+                address: insn["offset"].as_u64().unwrap_or(0),
+                bytes: insn["bytes"].as_array()
+                    .map(|bytes| bytes.iter()
+                        .filter_map(|b| b.as_u64())
+                        .map(|b| format!("{:02x}", b))
+                        .collect::<Vec<_>>()
+                        .join(" "))
+                    .unwrap_or_default(),
+                mnemonic: insn["mnemonic"].as_str().unwrap_or("").to_string(),
+                operands: insn["operands"].as_str().unwrap_or("").to_string(),
+                size: insn["length"].as_u64().unwrap_or(0) as usize,
+                is_jump: insn["is_branch"].as_bool().unwrap_or(false),
+                is_call: insn["is_call"].as_bool().unwrap_or(false),
+                jump_target: insn["branch_target"].as_u64(),
+            });
+        }
+    }
+
+    // Extract strings from binary
     let strings = extract_strings_from_data(&data, 4);
-    
-    // Mock sections
+
+    // Basic sections (would ideally come from file-processor WASM module)
     let sections = vec![
         Section {
             name: ".text".to_string(),
             address: 0x1000,
-            size: 0x5000,
+            size: data.len() as u64,
             flags: "rx".to_string(),
         },
-        Section {
-            name: ".data".to_string(),
-            address: 0x6000,
-            size: 0x2000,
-            flags: "rw".to_string(),
-        },
-        Section {
-            name: ".rodata".to_string(),
-            address: 0x8000,
-            size: 0x1000,
-            flags: "r".to_string(),
+    ];
+
+    // Basic function detection (would ideally use find-functions from WASM)
+    let functions = vec![
+        Function {
+            name: "entry".to_string(),
+            address: start,
+            size: instructions.len() * 4,
+            instructions_count: instructions.len(),
+            calls: instructions.iter()
+                .filter(|i| i.is_call)
+                .filter_map(|i| i.jump_target)
+                .map(|addr| format!("sub_{:x}", addr))
+                .collect(),
         },
     ];
-    
+
     Ok(DisassemblyResult {
         instructions,
         functions,
-        strings: strings.into_iter().take(50).collect(), // Limit strings for performance
-        entry_point: Some(0x1000),
+        strings: strings.into_iter().take(50).collect(),
+        entry_point: Some(start),
         architecture: "x86_64".to_string(),
         sections,
     })
 }
 
 #[tauri::command]
-pub async fn get_control_flow_graph(_file_path: String, function_address: u64) -> Result<ControlFlowGraph, String> {
-    // Mock CFG for demonstration
-    let blocks = vec![
-        ControlFlowBlock {
-            id: format!("block_0x{:x}", function_address),
-            start_address: function_address,
-            end_address: function_address + 20,
-            instructions: vec![
-                Instruction {
-                    address: function_address,
-                    bytes: "55".to_string(),
-                    mnemonic: "push".to_string(),
-                    operands: "rbp".to_string(),
-                    size: 1,
-                    is_jump: false,
-                    is_call: false,
-                    jump_target: None,
-                },
-                Instruction {
-                    address: function_address + 1,
-                    bytes: "48 89 e5".to_string(),
-                    mnemonic: "mov".to_string(),
-                    operands: "rbp, rsp".to_string(),
-                    size: 3,
-                    is_jump: false,
-                    is_call: false,
-                    jump_target: None,
-                },
-                Instruction {
-                    address: function_address + 4,
-                    bytes: "74 10".to_string(),
-                    mnemonic: "je".to_string(),
-                    operands: "0x16".to_string(),
-                    size: 2,
-                    is_jump: true,
-                    is_call: false,
-                    jump_target: Some(function_address + 0x16),
-                },
-            ],
-            successors: vec![
-                format!("block_0x{:x}", function_address + 6),
-                format!("block_0x{:x}", function_address + 0x16),
-            ],
-            predecessors: vec![],
-        },
-        ControlFlowBlock {
-            id: format!("block_0x{:x}", function_address + 6),
-            start_address: function_address + 6,
-            end_address: function_address + 0x16,
-            instructions: vec![
-                Instruction {
-                    address: function_address + 6,
-                    bytes: "b8 01 00 00 00".to_string(),
-                    mnemonic: "mov".to_string(),
-                    operands: "eax, 1".to_string(),
-                    size: 5,
-                    is_jump: false,
-                    is_call: false,
-                    jump_target: None,
-                },
-                Instruction {
-                    address: function_address + 0x0b,
-                    bytes: "e9 10 00 00 00".to_string(),
-                    mnemonic: "jmp".to_string(),
-                    operands: "0x20".to_string(),
-                    size: 5,
-                    is_jump: true,
-                    is_call: false,
-                    jump_target: Some(function_address + 0x20),
-                },
-            ],
-            successors: vec![format!("block_0x{:x}", function_address + 0x20)],
-            predecessors: vec![format!("block_0x{:x}", function_address)],
-        },
-        ControlFlowBlock {
-            id: format!("block_0x{:x}", function_address + 0x16),
-            start_address: function_address + 0x16,
-            end_address: function_address + 0x20,
-            instructions: vec![
-                Instruction {
-                    address: function_address + 0x16,
-                    bytes: "b8 00 00 00 00".to_string(),
-                    mnemonic: "mov".to_string(),
-                    operands: "eax, 0".to_string(),
-                    size: 5,
-                    is_jump: false,
-                    is_call: false,
-                    jump_target: None,
-                },
-            ],
-            successors: vec![format!("block_0x{:x}", function_address + 0x20)],
-            predecessors: vec![format!("block_0x{:x}", function_address)],
-        },
-        ControlFlowBlock {
-            id: format!("block_0x{:x}", function_address + 0x20),
-            start_address: function_address + 0x20,
-            end_address: function_address + 0x25,
-            instructions: vec![
-                Instruction {
-                    address: function_address + 0x20,
-                    bytes: "5d".to_string(),
-                    mnemonic: "pop".to_string(),
-                    operands: "rbp".to_string(),
-                    size: 1,
-                    is_jump: false,
-                    is_call: false,
-                    jump_target: None,
-                },
-                Instruction {
-                    address: function_address + 0x21,
-                    bytes: "c3".to_string(),
-                    mnemonic: "ret".to_string(),
-                    operands: "".to_string(),
-                    size: 1,
-                    is_jump: false,
-                    is_call: false,
-                    jump_target: None,
-                },
-            ],
-            successors: vec![],
-            predecessors: vec![
-                format!("block_0x{:x}", function_address + 6),
-                format!("block_0x{:x}", function_address + 0x16),
-            ],
-        },
+pub async fn get_control_flow_graph(
+    runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
+    file_path: String,
+    function_address: u64,
+) -> Result<ControlFlowGraph, String> {
+    let data = fs::read(&file_path).map_err(|e| format!("Failed to read file: {}", e))?;
+
+    // Call WASM disassembler for CFG analysis
+    let args = vec![
+        serde_json::json!(data),
+        serde_json::json!(function_address),
+        serde_json::json!("x64")
     ];
-    
+
+    let result = crate::commands::wasm_runtime::execute_wasm_function(
+        runtime,
+        DISASSEMBLER_MODULE.to_string(),
+        "disassembler#analyze-control-flow".to_string(),
+        args,
+    ).await?;
+
+    if !result.success {
+        return Err(result.error.unwrap_or("CFG analysis failed".to_string()));
+    }
+
+    let output_str = result.output.as_ref()
+        .ok_or("No output from CFG analysis")?;
+    let wasm_blocks: Vec<serde_json::Value> = serde_json::from_str(output_str)
+        .map_err(|e| format!("Failed to parse CFG output: {}", e))?;
+
+    // Convert WASM blocks to our format
+    let mut blocks = Vec::new();
+    for block in wasm_blocks {
+        let block_start = block["start_offset"].as_u64().unwrap_or(0);
+        let mut instructions = Vec::new();
+
+        if let Some(insns) = block["instructions"].as_array() {
+            for insn in insns {
+                instructions.push(Instruction {
+                    address: insn["offset"].as_u64().unwrap_or(0),
+                    bytes: insn["bytes"].as_array()
+                        .map(|bytes| bytes.iter()
+                            .filter_map(|b| b.as_u64())
+                            .map(|b| format!("{:02x}", b))
+                            .collect::<Vec<_>>()
+                            .join(" "))
+                        .unwrap_or_default(),
+                    mnemonic: insn["mnemonic"].as_str().unwrap_or("").to_string(),
+                    operands: insn["operands"].as_str().unwrap_or("").to_string(),
+                    size: insn["length"].as_u64().unwrap_or(0) as usize,
+                    is_jump: insn["is_branch"].as_bool().unwrap_or(false),
+                    is_call: insn["is_call"].as_bool().unwrap_or(false),
+                    jump_target: insn["branch_target"].as_u64(),
+                });
+            }
+        }
+
+        blocks.push(ControlFlowBlock {
+            id: format!("block_0x{:x}", block_start),
+            start_address: block_start,
+            end_address: block["end_offset"].as_u64().unwrap_or(0),
+            instructions,
+            successors: block["successors"].as_array()
+                .map(|succ| succ.iter()
+                    .filter_map(|s| s.as_u64())
+                    .map(|addr| format!("block_0x{:x}", addr))
+                    .collect())
+                .unwrap_or_default(),
+            predecessors: block["predecessors"].as_array()
+                .map(|pred| pred.iter()
+                    .filter_map(|p| p.as_u64())
+                    .map(|addr| format!("block_0x{:x}", addr))
+                    .collect())
+                .unwrap_or_default(),
+        });
+    }
+
     Ok(ControlFlowGraph {
         entry_block: format!("block_0x{:x}", function_address),
         blocks,

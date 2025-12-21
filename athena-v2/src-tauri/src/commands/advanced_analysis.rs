@@ -117,171 +117,230 @@ pub struct ThreatIndicator {
 
 #[command]
 pub async fn analyze_behavior(
-    _file_hash: String,
-    _file_data: Vec<u8>,
+    runtime: tauri::State<'_, std::sync::Arc<std::sync::Mutex<Option<crate::commands::wasm_runtime::WasmRuntime>>>>,
+    file_hash: String,
+    file_data: Vec<u8>,
 ) -> Result<BehavioralAnalysis, String> {
-    // Simulate behavioral analysis
+    use crate::commands::wasm_runtime;
+
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| e.to_string())?
         .as_secs();
-    
-    let behaviors = vec![
-        BehaviorPattern {
-            r#type: "evasion".to_string(),
-            description: "Process hollowing detected in svchost.exe".to_string(),
-            severity: "high".to_string(),
-            confidence: 0.85,
-            evidence: vec![
-                "Suspended process creation".to_string(),
-                "Memory unmapping in remote process".to_string(),
-                "WriteProcessMemory calls detected".to_string(),
-            ],
-        },
-        BehaviorPattern {
-            r#type: "persistence".to_string(),
-            description: "Registry run key modification".to_string(),
-            severity: "medium".to_string(),
-            confidence: 0.92,
-            evidence: vec![
-                "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run modified".to_string(),
-                "Autostart entry added".to_string(),
-            ],
-        },
-    ];
-    
-    let network_activity = vec![
-        NetworkBehavior {
-            r#type: "dns_query".to_string(),
-            destination: "malicious-c2.com".to_string(),
-            port: 53,
-            protocol: "UDP".to_string(),
-            data: None,
-            suspicious: true,
-            timestamp: timestamp - 5,
-        },
-    ];
-    
-    let file_operations = vec![
-        FileOperation {
-            operation: "create".to_string(),
-            path: "C:\\Windows\\Temp\\payload.exe".to_string(),
-            process: "malware.exe".to_string(),
-            timestamp: timestamp - 10,
-            suspicious: true,
-        },
-    ];
-    
-    let process_activity = vec![
-        ProcessBehavior {
-            operation: "create".to_string(),
-            process_name: "svchost.exe".to_string(),
-            pid: 1234,
-            parent_pid: Some(5678),
-            command_line: Some("svchost.exe -k netsvcs".to_string()),
-            suspicious: true,
-            timestamp: timestamp - 15,
-        },
-    ];
-    
+
+    // Execute sandbox WASM module for behavioral analysis
+    let args = vec![serde_json::json!(file_data)];
+
+    let result = wasm_runtime::execute_wasm_function(
+        runtime,
+        "sandbox".to_string(),
+        "sandbox#analyze".to_string(),
+        args,
+    )
+    .await
+    .map_err(|e| format!("Sandbox analysis failed: {}", e))?;
+
+    if !result.success {
+        return Err(result.error.unwrap_or("Behavioral analysis failed".to_string()));
+    }
+
+    // Parse sandbox output
+    let output_str = result.output.as_ref()
+        .ok_or("No output from sandbox")?;
+    let sandbox_result: serde_json::Value = serde_json::from_str(output_str)
+        .map_err(|e| format!("Failed to parse sandbox output: {}", e))?;
+
+    // Extract behaviors from sandbox output
+    let mut behaviors = Vec::new();
+    if let Some(behavior_array) = sandbox_result["behaviors"].as_array() {
+        for behavior in behavior_array {
+            behaviors.push(BehaviorPattern {
+                r#type: behavior["type"].as_str().unwrap_or("unknown").to_string(),
+                description: behavior["description"].as_str().unwrap_or("").to_string(),
+                severity: behavior["severity"].as_str().unwrap_or("medium").to_string(),
+                confidence: behavior["confidence"].as_f64().unwrap_or(0.5) as f32,
+                evidence: behavior["evidence"]
+                    .as_array()
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+            });
+        }
+    }
+
+    // Extract network activity
+    let mut network_activity = Vec::new();
+    if let Some(network_array) = sandbox_result["network_activity"].as_array() {
+        for net in network_array {
+            network_activity.push(NetworkBehavior {
+                r#type: net["type"].as_str().unwrap_or("unknown").to_string(),
+                destination: net["destination"].as_str().unwrap_or("").to_string(),
+                port: net["port"].as_u64().unwrap_or(0) as u16,
+                protocol: net["protocol"].as_str().unwrap_or("TCP").to_string(),
+                data: net["data"].as_str().map(|s| s.to_string()),
+                suspicious: net["suspicious"].as_bool().unwrap_or(false),
+                timestamp: net["timestamp"].as_u64().unwrap_or(timestamp),
+            });
+        }
+    }
+
+    // Extract file operations
+    let mut file_operations = Vec::new();
+    if let Some(file_array) = sandbox_result["file_operations"].as_array() {
+        for file_op in file_array {
+            file_operations.push(FileOperation {
+                operation: file_op["operation"].as_str().unwrap_or("").to_string(),
+                path: file_op["path"].as_str().unwrap_or("").to_string(),
+                process: file_op["process"].as_str().unwrap_or("").to_string(),
+                timestamp: file_op["timestamp"].as_u64().unwrap_or(timestamp),
+                suspicious: file_op["suspicious"].as_bool().unwrap_or(false),
+            });
+        }
+    }
+
+    // Extract process activity
+    let mut process_activity = Vec::new();
+    if let Some(proc_array) = sandbox_result["process_activity"].as_array() {
+        for proc in proc_array {
+            process_activity.push(ProcessBehavior {
+                operation: proc["operation"].as_str().unwrap_or("").to_string(),
+                process_name: proc["process_name"].as_str().unwrap_or("").to_string(),
+                pid: proc["pid"].as_u64().unwrap_or(0) as u32,
+                parent_pid: proc["parent_pid"].as_u64().map(|p| p as u32),
+                command_line: proc["command_line"].as_str().map(|s| s.to_string()),
+                suspicious: proc["suspicious"].as_bool().unwrap_or(false),
+                timestamp: proc["timestamp"].as_u64().unwrap_or(timestamp),
+            });
+        }
+    }
+
+    // Extract persistence mechanisms
+    let mut persistence = Vec::new();
+    if let Some(persist_array) = sandbox_result["persistence"].as_array() {
+        for persist in persist_array {
+            persistence.push(PersistenceMechanism {
+                technique: persist["technique"].as_str().unwrap_or("").to_string(),
+                location: persist["location"].as_str().unwrap_or("").to_string(),
+                details: persist["details"].as_str().unwrap_or("").to_string(),
+                mitre_technique: persist["mitre_technique"].as_str().map(|s| s.to_string()),
+            });
+        }
+    }
+
+    // Extract registry modifications
+    let mut registry_modifications = Vec::new();
+    if let Some(reg_array) = sandbox_result["registry_modifications"].as_array() {
+        for reg in reg_array {
+            registry_modifications.push(RegistryChange {
+                operation: reg["operation"].as_str().unwrap_or("").to_string(),
+                key: reg["key"].as_str().unwrap_or("").to_string(),
+                value: reg["value"].as_str().map(|s| s.to_string()),
+                data: reg["data"].as_str().map(|s| s.to_string()),
+                process: reg["process"].as_str().unwrap_or("").to_string(),
+                suspicious: reg["suspicious"].as_bool().unwrap_or(false),
+                timestamp: reg["timestamp"].as_u64().unwrap_or(timestamp),
+            });
+        }
+    }
+
+    let risk_score = sandbox_result["risk_score"].as_u64().unwrap_or(0) as u32;
+    let sandbox_escape = sandbox_result["sandbox_escape"].as_bool().unwrap_or(false);
+
     Ok(BehavioralAnalysis {
-        id: uuid::Uuid::new_v4().to_string(),
+        id: file_hash,
         timestamp,
         behaviors,
-        risk_score: 85,
-        sandbox_escape: false,
-        persistence: vec![
-            PersistenceMechanism {
-                technique: "Registry Run Keys".to_string(),
-                location: "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run".to_string(),
-                details: "Added malicious entry to startup".to_string(),
-                mitre_technique: Some("T1547.001".to_string()),
-            },
-        ],
+        risk_score,
+        sandbox_escape,
+        persistence,
         network_activity,
         file_operations,
         process_activity,
-        registry_modifications: vec![],
+        registry_modifications,
     })
 }
 
-#[command]
-pub async fn run_yara_scan(
-    file_data: Vec<u8>,
-    _rules: Vec<String>,
-) -> Result<Vec<YaraMatch>, String> {
-    // Simulate YARA scanning
-    // In a real implementation, this would use the yara-rust crate
-    
-    let mut matches = Vec::new();
-    
-    // Simulate finding matches
-    if file_data.len() > 1000 {
-        let mut meta = HashMap::new();
-        meta.insert("description".to_string(), "Detects Emotet trojan variants".to_string());
-        meta.insert("author".to_string(), "Athena Platform".to_string());
-        meta.insert("severity".to_string(), "critical".to_string());
-        
-        matches.push(YaraMatch {
-            rule: "Emotet_Trojan".to_string(),
-            namespace: Some("malware".to_string()),
-            tags: vec!["trojan".to_string(), "emotet".to_string(), "banker".to_string()],
-            meta,
-            strings: vec![
-                YaraString {
-                    identifier: "$a".to_string(),
-                    offset: 0x1234,
-                    value: "C7 45 ?? ?? ?? ?? ?? C7 45 ?? ?? ?? ?? ??".to_string(),
-                    length: 14,
-                },
-                YaraString {
-                    identifier: "$b".to_string(),
-                    offset: 0x5678,
-                    value: "urlmon.dll".to_string(),
-                    length: 10,
-                },
-            ],
-            confidence: 0.95,
-        });
-    }
-    
-    Ok(matches)
-}
+// YARA scanning is now handled by yara_scanner.rs
+// Uses yara-x for full YARA rule support with compilation and persistent state
 
 #[command]
 pub async fn get_threat_intelligence(
     file_hash: String,
-    _iocs: Vec<String>,
+    iocs: Vec<String>,
 ) -> Result<Vec<ThreatIntelligence>, String> {
-    // Simulate threat intelligence lookup
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| e.to_string())?
-        .as_secs();
-    
-    let threat_intel = vec![
-        ThreatIntelligence {
-            source: "VirusTotal".to_string(),
-            timestamp,
-            indicators: vec![
-                ThreatIndicator {
-                    r#type: "hash".to_string(),
-                    value: file_hash,
-                    confidence: 0.95,
-                    first_seen: Some(timestamp - 86400),
-                    last_seen: Some(timestamp),
-                    tags: vec!["emotet".to_string(), "trojan".to_string()],
-                },
-            ],
-            malware_family: Some("Emotet".to_string()),
-            campaigns: Some(vec!["Emotet Campaign 2024".to_string()]),
-            actors: Some(vec!["TA542".to_string()]),
-            ttps: Some(vec!["T1055".to_string(), "T1547.001".to_string()]),
-            references: vec![
-                "https://attack.mitre.org/software/S0367/".to_string(),
-            ],
-        },
-    ];
-    
+    use crate::threat_intel::stix_parser;
+
+    // Load threat intelligence from MITRE ATT&CK STIX feed
+    let mitre_intel = stix_parser::load_mitre_attack_stix()
+        .await
+        .map_err(|e| format!("Failed to load MITRE ATT&CK data: {}", e))?;
+
+    // Create a set of all IOCs to search for (including file hash)
+    let mut search_indicators: std::collections::HashSet<String> = iocs.iter().cloned().collect();
+    if !file_hash.is_empty() {
+        search_indicators.insert(file_hash.to_lowercase());
+    }
+
+    // Filter threat intelligence based on matching indicators
+    let threat_intel: Vec<ThreatIntelligence> = mitre_intel
+        .into_iter()
+        .filter_map(|intel| {
+            // Check if any indicators match our IOCs
+            let has_matching_indicator = intel.indicators.iter().any(|ind| {
+                search_indicators.contains(&ind.value.to_lowercase()) ||
+                search_indicators.iter().any(|ioc| {
+                    ind.value.to_lowercase().contains(&ioc.to_lowercase()) ||
+                    ioc.to_lowercase().contains(&ind.value.to_lowercase())
+                })
+            });
+
+            // Check if malware family matches any IOC
+            let has_matching_malware = intel.malware_family.as_ref().map_or(false, |family| {
+                search_indicators.iter().any(|ioc| {
+                    family.to_lowercase().contains(&ioc.to_lowercase()) ||
+                    ioc.to_lowercase().contains(&family.to_lowercase())
+                })
+            });
+
+            // Check if any TTP contains matching keywords
+            let has_matching_ttp = intel.ttps.iter().any(|ttp| {
+                search_indicators.iter().any(|ioc| {
+                    ttp.to_lowercase().contains(&ioc.to_lowercase())
+                })
+            });
+
+            // If we have no search indicators, return all threat intel (for general threat landscape)
+            // Otherwise, only return matches
+            if search_indicators.is_empty() || has_matching_indicator || has_matching_malware || has_matching_ttp {
+                Some(ThreatIntelligence {
+                    source: intel.source,
+                    timestamp: intel.timestamp,
+                    indicators: intel
+                        .indicators
+                        .into_iter()
+                        .map(|ind| ThreatIndicator {
+                            r#type: ind.indicator_type,
+                            value: ind.value,
+                            confidence: ind.confidence,
+                            first_seen: ind.first_seen,
+                            last_seen: ind.last_seen,
+                            tags: ind.tags,
+                        })
+                        .collect(),
+                    malware_family: intel.malware_family,
+                    campaigns: intel.campaigns,
+                    actors: intel.actors,
+                    ttps: Some(intel.ttps),
+                    references: intel.references,
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
+
     Ok(threat_intel)
 }

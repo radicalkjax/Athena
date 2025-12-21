@@ -51,83 +51,99 @@ pub async fn analyze_file_with_wasm(
     file_path: String,
 ) -> Result<EnhancedFileAnalysis, String> {
     let _start = std::time::Instant::now();
-    
+
     // First, perform basic file analysis
     let basic_analysis = crate::commands::file_analysis::analyze_file(file_path.clone())
         .await?;
-    
+
     // Read file data for WASM analysis
     let file_data = std::fs::read(&file_path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
-    
+
     let mut wasm_analyses = Vec::new();
-    
+
     // Check if WASM runtime is initialized
     let has_runtime = {
         let runtime_guard = runtime.lock().map_err(|e| e.to_string())?;
         runtime_guard.is_some()
     };
-    
+
     if has_runtime {
-        // Run analysis with each WASM module
-        
+        // ========================================================================
+        // STATELESS MODULES - Simple function calls, no resources needed
+        // ========================================================================
+
         // 1. Analysis Engine - Core malware analysis
+        // WIT: athena:analysis-engine/analyzer exports analyze(content: list<u8>)
         if let Ok(result) = run_wasm_analysis(
             &runtime,
             ANALYSIS_ENGINE,
-            "analyze",
+            "analyze",  // Will try "analyzer#analyze" via fallback
             &file_data,
         ).await {
             wasm_analyses.push(result);
         }
-        
-        // 2. Crypto Module - Encryption detection
+
+        // 2. Crypto Module - Hash calculation
+        // WIT: athena:crypto/hash exports sha256(data: list<u8>)
         if let Ok(result) = run_wasm_analysis(
             &runtime,
             CRYPTO_MODULE,
-            "detect_encryption",
+            "sha256",  // Will try "hash#sha256" via fallback
             &file_data,
         ).await {
             wasm_analyses.push(result);
         }
-        
-        // 3. Deobfuscator - ML-based deobfuscation
-        if let Ok(result) = run_wasm_analysis(
-            &runtime,
-            DEOBFUSCATOR,
-            "deobfuscate",
-            &file_data,
-        ).await {
-            wasm_analyses.push(result);
-        }
-        
-        // 4. File Processor - Format parsing
-        if let Ok(result) = run_wasm_analysis(
+
+        // 3. File Processor - Parse file
+        // WIT: athena:file-processor/parser exports parse-file(buffer: list<u8>, format-hint: option<file-format>)
+        if let Ok(result) = run_wasm_analysis_with_option(
             &runtime,
             FILE_PROCESSOR,
-            "process_file",
+            "parse-file",  // Will try "parser#parse-file" via fallback
             &file_data,
+            None, // No format hint - let the parser detect
         ).await {
             wasm_analyses.push(result);
         }
-        
-        // 5. Pattern Matcher - Signature detection
-        if let Ok(result) = run_wasm_analysis(
+
+        // ========================================================================
+        // RESOURCE-BASED MODULES - Require session for resource lifecycle
+        // ========================================================================
+
+        // 4. Deobfuscator - Uses resource-based API
+        // WIT: athena:deobfuscator/deobfuscator resource with detect() method
+        if let Ok(result) = run_resource_analysis(
+            &runtime,
+            DEOBFUSCATOR,
+            "new",              // Constructor function to create resource
+            "detect",           // Method to call on resource (deobfuscator#detect)
+            &file_data,
+            true,               // Convert bytes to string for deobfuscator
+        ).await {
+            wasm_analyses.push(result);
+        }
+
+        // 5. Pattern Matcher - Uses resource-based API
+        // WIT: athena:pattern-matcher/pattern-matcher resource with scan() method
+        if let Ok(result) = run_resource_analysis(
             &runtime,
             PATTERN_MATCHER,
-            "match_patterns",
+            "new",              // Constructor function to create matcher resource
+            "scan",             // Method to call on resource (pattern-matcher#scan)
             &file_data,
+            false,              // Keep as bytes for pattern matching
         ).await {
             wasm_analyses.push(result);
         }
     }
-    
+
     // Calculate combined risk score
     let combined_risk_score = calculate_combined_risk_score(&basic_analysis, &wasm_analyses);
-    
+
     // Generate ML predictions if deobfuscator module provided results
     let ml_predictions = generate_ml_predictions(&wasm_analyses);
-    
+
     Ok(EnhancedFileAnalysis {
         basic_analysis,
         wasm_analyses,
@@ -136,6 +152,7 @@ pub async fn analyze_file_with_wasm(
     })
 }
 
+/// Run stateless WASM analysis with simple function call
 async fn run_wasm_analysis(
     runtime: &State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
     module_name: &str,
@@ -143,13 +160,10 @@ async fn run_wasm_analysis(
     file_data: &[u8],
 ) -> Result<WasmFileAnalysis, String> {
     let start = std::time::Instant::now();
-    
-    // Convert file data to JSON value for passing to WASM
-    let args = vec![serde_json::json!({
-        "data": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, file_data),
-        "length": file_data.len(),
-    })];
-    
+
+    // Pass data as list<u8> (JSON array of bytes)
+    let args = vec![serde_json::json!(file_data)];
+
     // Execute WASM function
     let result = crate::commands::wasm_runtime::execute_wasm_function(
         runtime.clone(),
@@ -157,9 +171,9 @@ async fn run_wasm_analysis(
         function_name.to_string(),
         args,
     ).await?;
-    
+
     let execution_time_ms = start.elapsed().as_millis() as u64;
-    
+
     Ok(WasmFileAnalysis {
         module_name: module_name.to_string(),
         analysis_type: function_name.to_string(),
@@ -171,6 +185,145 @@ async fn run_wasm_analysis(
         execution_time_ms,
         memory_used: result.memory_used,
     })
+}
+
+/// Run stateless WASM analysis with an optional second parameter
+async fn run_wasm_analysis_with_option(
+    runtime: &State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
+    module_name: &str,
+    function_name: &str,
+    file_data: &[u8],
+    option_value: Option<serde_json::Value>,
+) -> Result<WasmFileAnalysis, String> {
+    let start = std::time::Instant::now();
+
+    // Build args: first is the file data, second is optional parameter
+    let args = vec![
+        serde_json::json!(file_data),
+        match option_value {
+            Some(v) => serde_json::json!({"_some": v}),
+            None => serde_json::json!({"_none": true}),
+        },
+    ];
+
+    // Execute WASM function
+    let result = crate::commands::wasm_runtime::execute_wasm_function(
+        runtime.clone(),
+        module_name.to_string(),
+        function_name.to_string(),
+        args,
+    ).await?;
+
+    let execution_time_ms = start.elapsed().as_millis() as u64;
+
+    Ok(WasmFileAnalysis {
+        module_name: module_name.to_string(),
+        analysis_type: function_name.to_string(),
+        results: serde_json::json!({
+            "success": result.success,
+            "output": result.output,
+            "error": result.error,
+        }),
+        execution_time_ms,
+        memory_used: result.memory_used,
+    })
+}
+
+/// Run resource-based WASM analysis using session API
+/// This creates a session, instantiates the resource, calls a method, and cleans up
+async fn run_resource_analysis(
+    runtime: &State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
+    module_name: &str,
+    constructor_name: &str,
+    method_name: &str,
+    file_data: &[u8],
+    convert_to_string: bool,
+) -> Result<WasmFileAnalysis, String> {
+    let start = std::time::Instant::now();
+
+    // 1. Create a session for this module
+    let session_info = crate::commands::wasm_runtime::create_wasm_session(
+        runtime.clone(),
+        module_name.to_string(),
+    ).await?;
+
+    let session_id = session_info.session_id.clone();
+
+    // 2. Call the constructor to create the resource
+    let constructor_result = crate::commands::wasm_runtime::execute_session_function(
+        session_id.clone(),
+        constructor_name.to_string(),
+        vec![], // No args for constructor
+    ).await;
+
+    let resource_handle = match constructor_result {
+        Ok(result) => {
+            // Parse the output to get the resource handle
+            if let Some(output) = result.output.as_ref() {
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(output) {
+                    if let Some(handle) = parsed.get("_resource_handle").and_then(|v| v.as_str()) {
+                        handle.to_string()
+                    } else {
+                        // Constructor might return the resource directly
+                        // Clean up and return error
+                        let _ = crate::commands::wasm_runtime::destroy_wasm_session(session_id).await;
+                        return Err("Constructor did not return a resource handle".to_string());
+                    }
+                } else {
+                    let _ = crate::commands::wasm_runtime::destroy_wasm_session(session_id).await;
+                    return Err("Failed to parse constructor output".to_string());
+                }
+            } else {
+                let _ = crate::commands::wasm_runtime::destroy_wasm_session(session_id).await;
+                return Err("Constructor returned no output".to_string());
+            }
+        }
+        Err(e) => {
+            let _ = crate::commands::wasm_runtime::destroy_wasm_session(session_id).await;
+            return Err(format!("Constructor failed: {}", e));
+        }
+    };
+
+    // 3. Call the method on the resource
+    let method_args = if convert_to_string {
+        let content = String::from_utf8_lossy(file_data);
+        vec![
+            serde_json::json!({"_resource_handle": resource_handle}),
+            serde_json::json!(content),
+        ]
+    } else {
+        vec![
+            serde_json::json!({"_resource_handle": resource_handle}),
+            serde_json::json!(file_data),
+        ]
+    };
+
+    let method_result = crate::commands::wasm_runtime::execute_session_function(
+        session_id.clone(),
+        method_name.to_string(),
+        method_args,
+    ).await;
+
+    // 4. Clean up the session (this will drop all resources)
+    let _ = crate::commands::wasm_runtime::destroy_wasm_session(session_id).await;
+
+    let execution_time_ms = start.elapsed().as_millis() as u64;
+
+    // 5. Return the result
+    match method_result {
+        Ok(result) => Ok(WasmFileAnalysis {
+            module_name: module_name.to_string(),
+            analysis_type: method_name.to_string(),
+            results: serde_json::json!({
+                "success": result.success,
+                "output": result.output,
+                "error": result.error,
+            }),
+            execution_time_ms,
+            memory_used: result.memory_used,
+        }),
+        Err(e) => Err(format!("Method {} failed: {}", method_name, e)),
+    }
 }
 
 fn calculate_combined_risk_score(
@@ -280,43 +433,40 @@ fn generate_ml_predictions(wasm_analyses: &[WasmFileAnalysis]) -> Option<MlPredi
 pub async fn load_wasm_security_modules(
     runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
 ) -> Result<Vec<String>, String> {
-    // Load actual WASM files from the public directory
+    // Load Component Model WASM files from wasm-modules directory
     let modules = vec![
-        (ANALYSIS_ENGINE, "analysis-engine"),
-        (CRYPTO_MODULE, "crypto"),
-        (DEOBFUSCATOR, "deobfuscator"),
-        (FILE_PROCESSOR, "file-processor"),
-        (NETWORK_MODULE, "network"),
-        (PATTERN_MATCHER, "pattern-matcher"),
-        (SANDBOX_MODULE, "sandbox"),
+        (ANALYSIS_ENGINE, "analysis-engine", "athena_analysis_engine"),
+        (CRYPTO_MODULE, "crypto", "athena_crypto"),
+        (DEOBFUSCATOR, "deobfuscator", "athena_deobfuscator"),
+        (FILE_PROCESSOR, "file-processor", "athena_file_processor"),
+        (NETWORK_MODULE, "network", "athena_network"),
+        (PATTERN_MATCHER, "pattern-matcher", "athena_pattern_matcher"),
+        (SANDBOX_MODULE, "sandbox", "athena_sandbox"),
     ];
-    
+
     let mut loaded_modules = Vec::new();
-    
-    for (name, module_dir) in modules {
-        // Try to load the WASM file
-        let wasm_path = format!("../public/wasm/{}/{}_bg.wasm", module_dir, module_dir.replace("-", "_"));
-        
-        match std::fs::read(&wasm_path) {
-            Ok(bytes) => {
-                match crate::commands::wasm_runtime::load_wasm_module(
-                    runtime.clone(),
-                    name.to_string(),
-                    bytes,
-                ).await {
-                    Ok(_) => {
-                        loaded_modules.push(name.to_string());
-                        println!("Successfully loaded WASM module: {}", name);
-                    },
-                    Err(e) => eprintln!("Failed to load WASM module {}: {}", name, e),
-                }
+
+    for (name, module_dir, wasm_name) in modules {
+        // Component Model WASM path (relative to athena-v2/src-tauri/src/commands/ working directory)
+        let wasm_path = format!("../../wasm-modules/core/{}/target/wasm32-wasip1/release/{}.wasm",
+            module_dir, wasm_name);
+
+        // Use Component::from_file approach (recommended by Wasmtime docs)
+        match crate::commands::wasm_runtime::load_wasm_module_from_file(
+            runtime.clone(),
+            name.to_string(),
+            wasm_path.clone(),
+        ).await {
+            Ok(_) => {
+                loaded_modules.push(name.to_string());
+                println!("Successfully loaded Component Model WASM module: {} from {}", name, wasm_path);
             },
             Err(e) => {
-                eprintln!("Failed to read WASM file at {}: {}", wasm_path, e);
+                eprintln!("Failed to load WASM module {} from {}: {}", name, wasm_path, e);
                 // For development, continue without the module
             }
         }
     }
-    
+
     Ok(loaded_modules)
 }
