@@ -1,0 +1,77 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Development files
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+coverage/
+.nyc_output/
+*.test.ts
+*.spec.ts
+__tests__/
+test/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Rust/WASM build artifacts (we copy only the final .wasm files)
+# Keep the .wasm files but ignore everything else
+wasm-modules/core/*/target/*
+!wasm-modules/core/*/target/wasm32-unknown-unknown/
+wasm-modules/core/*/target/wasm32-unknown-unknown/*/deps/
+wasm-modules/core/*/target/wasm32-unknown-unknown/*/incremental/
+wasm-modules/core/*/target/wasm32-unknown-unknown/*/build/
+wasm-modules/core/*/target/wasm32-unknown-unknown/*/.fingerprint/
+wasm-modules/core/*/Cargo.lock
+wasm-modules/core/*/*.rlib
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+*.log
+
+# Cache
+.cache/
+.npm/
+.yarn/
+
+# Backups
+*.backup
+*.bak
+
+# Development scripts
+scripts/

@@ -141,8 +141,8 @@ temp/
 /docs/prompts/*
 
 # Docker
-.dockerignore
 docker-compose.override.yml
+# Note: .dockerignore should be tracked (it's not sensitive)
 
 # Large asset files (uncomment if needed)
 # *.mp4
@@ -185,6 +185,12 @@ app-example
 **/security-test-results.json
 **/benchmark-results.json
 **/master-test-report.json
+test-output.*
+test-results.*
+failed-tests.txt
+
+# Build tools (downloaded binaries)
+binaryen-version_*/
 
 # Runtime data directories
 database/
@@ -195,6 +201,11 @@ monitoring/
 
 # Vite generated files
 **/vite-env.d.ts
+*.timestamp-*.mjs
+
+# Tauri specific
+**/WixTools/
+public/wasm/
 
 # Runtime directories
 database/
@@ -207,5 +218,111 @@ wasm-modules/**/target/
 # Vite auto-generated files (keeping manual ones)
 # **/vite-env.d.ts  # Commented out - we have custom vite-env.d.ts
 
-# Agent documentation (for AI assistants)
+# ===========================================
+# WORKING DOCUMENTATION (Agent/Dev files)
+# ===========================================
+
+# Agent working documentation
 agentdocs/
+
+# Root agent instruction file
+CLAUDE.md
+
+# Claude Code configuration (agent rules/commands)
+.claude/
+
+# Migration/implementation documentation (temporary)
+MIGRATION_TO_TAURI_ONLY.md
+
+# Development implementation notes (temporary - can be uncommented if needed)
+# docs/implementation/CONTAINER_IMPLEMENTATION.md
+# docs/implementation/TESTING_IMPLEMENTATION_SUMMARY.md
+# docs/implementation/TEST_README.md
+# docs/implementation/WASM_IMPLEMENTATION_SUMMARY.md
+
+# ===========================================
+# SECURITY - Secrets and Sensitive Files
+# ===========================================
+
+# API keys and credentials
+**/credentials.json
+**/credentials*.json
+**/service-account*.json
+**/*-credentials.json
+**/*_credentials.json
+
+# Secret files (but allow templates)
+**/secrets.yaml
+**/secrets.yml
+**/secrets-*.yaml
+**/secrets-*.yml
+!**/secrets-template.yaml
+!**/secrets-example.yaml
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.truststore
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+
+# Token files
+.token
+.tokens
+*.token
+token.txt
+auth.json
+
+# AWS
+.aws/
+aws-credentials
+.boto
+
+# Google Cloud
+.gcloud/
+gcloud.json
+application_default_credentials.json
+
+# Azure
+.azure/
+azure.json
+
+# Terraform state (may contain secrets)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Ansible vault files (encrypted secrets)
+*vault*.yml
+*vault*.yaml
+
+# HashiCorp Vault
+.vault-token
+
+# SSH
+.ssh/
+known_hosts
+
+# GPG
+.gnupg/
+*.gpg
+secring.*
+
+# Password files
+*password*
+*passwd*
+*.htpasswd
+
+# Session/auth files
+.session
+*.session
+session.json

@@ -1,0 +1,98 @@
+# Gitleaks configuration for secret detection
+# https://github.com/gitleaks/gitleaks
+
+title = "Athena Gitleaks Configuration"
+
+# Global allowlist
+[allowlist]
+  description = "Global allowlist"
+  paths = [
+    '''\.env\.example$''',
+    '''secrets-template\.yaml$''',
+    '''secrets-example\.yaml$''',
+    '''\.md$''',
+    '''test.*\.ts$''',
+    '''test.*\.js$''',
+    '''\.test\.ts$''',
+    '''\.test\.js$''',
+    '''__mocks__''',
+    '''__tests__''',
+  ]
+
+# Custom rules for Athena
+[[rules]]
+  id = "anthropic-api-key"
+  description = "Anthropic/Claude API Key"
+  regex = '''sk-ant-[a-zA-Z0-9_-]{32,}'''
+  keywords = ["sk-ant-"]
+
+[[rules]]
+  id = "openai-api-key"
+  description = "OpenAI API Key"
+  regex = '''sk-[a-zA-Z0-9]{32,}'''
+  keywords = ["sk-"]
+
+[[rules]]
+  id = "deepseek-api-key"
+  description = "DeepSeek API Key"
+  regex = '''sk-[a-zA-Z0-9]{32,}'''
+  keywords = ["deepseek"]
+
+[[rules]]
+  id = "generic-api-key"
+  description = "Generic API Key"
+  regex = '''(?i)(api[_-]?key|apikey|api[_-]?secret)\s*[:=]\s*['\"][a-zA-Z0-9_\-]{20,}['\"]'''
+  keywords = ["api_key", "apikey", "api-key", "api_secret"]
+
+[[rules]]
+  id = "jwt-token"
+  description = "JWT Token"
+  regex = '''eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+  keywords = ["eyJ"]
+
+[[rules]]
+  id = "private-key"
+  description = "Private Key"
+  regex = '''-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY( BLOCK)?-----'''
+  keywords = ["BEGIN", "PRIVATE KEY"]
+
+[[rules]]
+  id = "aws-access-key"
+  description = "AWS Access Key ID"
+  regex = '''AKIA[0-9A-Z]{16}'''
+  keywords = ["AKIA"]
+
+[[rules]]
+  id = "aws-secret-key"
+  description = "AWS Secret Access Key"
+  regex = '''(?i)aws_secret_access_key\s*[:=]\s*['\"][A-Za-z0-9/+=]{40}['\"]'''
+  keywords = ["aws_secret"]
+
+[[rules]]
+  id = "github-token"
+  description = "GitHub Token"
+  regex = '''gh[pousr]_[A-Za-z0-9_]{36,}'''
+  keywords = ["ghp_", "gho_", "ghu_", "ghs_", "ghr_"]
+
+[[rules]]
+  id = "slack-webhook"
+  description = "Slack Webhook URL"
+  regex = '''https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+'''
+  keywords = ["hooks.slack.com"]
+
+[[rules]]
+  id = "password-in-url"
+  description = "Password in URL"
+  regex = '''[a-zA-Z]{3,10}://[^/\s:@]{3,20}:[^/\s:@]{3,20}@.{1,100}'''
+
+# Allowlist specific patterns that are false positives
+[rules.allowlist]
+  regexes = [
+    '''YOUR_.*_HERE''',
+    '''your_.*_key_here''',
+    '''PLACEHOLDER''',
+    '''example\.com''',
+    '''test[_-]?key''',
+    '''dummy[_-]?key''',
+    '''fake[_-]?key''',
+  ]
