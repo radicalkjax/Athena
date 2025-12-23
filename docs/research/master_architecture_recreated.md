@@ -201,6 +201,27 @@ Resource_Allocation:
 
 ### Request Processing Flow
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     A[External Request] --> B[API Gateway]
     B --> C{Request Type}
@@ -220,6 +241,27 @@ graph TD
 
 ### Intelligence Sharing Flow
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#333333',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#333333',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#333333',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 graph TD
     A[Agent Generates Insight] --> B[Intelligence Fusion Hub]
     B --> C[Relevance Scoring]

@@ -86,11 +86,18 @@ Athena's choice of Rust as the core backend technology positions the platform fo
 
 - **Type Safety for AI Interoperability**: Strong typing ensures AI-generated code integrations are verified at compile time, preventing runtime errors when AI agents orchestrate complex analysis workflows.
 
-- **Cross-Platform Native Performance**: Single codebase deploys to desktop (Windows, macOS, Linux) and mobile (iOS, Android) with native performance, allowing AI agents to operate consistently across platforms.
+- **Cross-Platform Native Performance**: Single codebase deploys to desktop (Windows, macOS, Linux) with native performance, allowing AI agents to operate consistently across platforms.
 
 - **Ecosystem for AI/ML**: Growing Rust ecosystem for machine learning (burn, candle, linfa) enables future on-device AI model inference, keeping sensitive malware analysis data local and secure.
 
 By building on Rust, Athena is prepared for future enhancements like autonomous AI agents that can orchestrate multi-stage malware analysis, generate custom YARA rules, and adapt detection strategies—all while maintaining the security guarantees critical for malware analysis platforms.
+
+### Athena Desktop Application
+
+<div align="center">
+  <img src="./athena-v2/src-tauri/icons/Athena_Desktop_Screenshot.png" alt="Athena Desktop Application" width="100%" />
+  <p><em>AI-powered malware analysis platform with WASM-based security modules and real-time analysis</em></p>
+</div>
 
 ## ✨ Features
 
@@ -384,15 +391,3 @@ Athena comes with comprehensive documentation to help you understand and use the
 - [FileUploader](./docs/components/FILE_UPLOADER.md) - Documentation for the file upload component
 - [ContainerMonitoring](./docs/components/CONTAINER_MONITORING.md) - Documentation for the container monitoring component
 
-## 📱 Screenshots
-
-### Athena Desktop Application (Tauri 2.0)
-
-<div align="center">
-  <img src="./athena-v2/src-tauri/icons/Athena_Desktop_Screenshot.png" alt="Athena Desktop Application" width="100%" />
-  <p><em>AI-powered malware analysis platform with WASM-based security modules and real-time analysis</em></p>
-</div>
-
-**Platform**: macOS, Windows, Linux
-**Tech Stack**: Rust + SolidJS + WebAssembly
-**Features Shown**: File upload, AI model selection, analysis workflow, real-time processing

@@ -142,6 +142,27 @@ Starting web server...
 ### Next Steps After Quick Start
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#6d105a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ffffff',
+    'lineColor': '#333333',
+    'secondaryColor': '#e8f4d4',
+    'secondaryTextColor': '#000000',
+    'secondaryBorderColor': '#333333',
+    'tertiaryColor': '#f9d0c4',
+    'tertiaryTextColor': '#000000',
+    'tertiaryBorderColor': '#333333',
+    'background': '#ffffff',
+    'mainBkg': '#6d105a',
+    'secondBkg': '#e8f4d4',
+    'tertiaryBkg': '#f9d0c4',
+    'textColor': '#000000',
+    'fontFamily': 'Arial, sans-serif'
+  }
+}}%%
 flowchart LR
     Ready[Athena Ready<br/>━━━━━━━━<br/>http://localhost:3000] --> Config{Configure<br/>API Keys?}
 
