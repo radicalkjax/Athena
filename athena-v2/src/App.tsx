@@ -7,7 +7,6 @@ import { analysisStore } from './stores/analysisStore';
 import { AnalysisProvider } from './contexts/AnalysisContext';
 import { useKeyboardShortcuts } from './services/keyboardShortcuts';
 import { LoadingOverlay, LoadingSpinner } from './components/solid/shared/LoadingStates';
-import { BackendStatus } from './components/solid/BackendStatus';
 
 // Lazy load heavy analysis components
 const StaticAnalysis = lazy(() => import('./components/solid/analysis/StaticAnalysis'));
@@ -22,6 +21,7 @@ const ThreatIntelligence = lazy(() => import('./components/solid/analysis/Threat
 const MemoryAnalysis = lazy(() => import('./components/solid/analysis/MemoryAnalysis'));
 const CustomWorkflows = lazy(() => import('./components/solid/analysis/CustomWorkflows'));
 const PlatformConfig = lazy(() => import('./components/solid/PlatformConfig'));
+const ContainerSandbox = lazy(() => import('./components/solid/analysis/ContainerSandbox'));
 
 const App: Component = () => {
   const [activePanel, setActivePanel] = createSignal('upload');
@@ -144,6 +144,13 @@ const App: Component = () => {
                 </Suspense>
               </WasmErrorBoundary>
             </div>
+            <div class={`content-panel-container ${activePanel() === 'container' ? 'active' : ''}`}>
+              <AnalysisErrorBoundary>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ContainerSandbox />
+                </Suspense>
+              </AnalysisErrorBoundary>
+            </div>
             <div class={`content-panel-container ${activePanel() === 'workflows' ? 'active' : ''}`}>
               <Suspense fallback={<LoadingSpinner />}>
                 <CustomWorkflows />
@@ -165,7 +172,6 @@ const App: Component = () => {
         </main>
       </div>
     </div>
-    <BackendStatus />
     </AnalysisProvider>
     </ErrorBoundary>
   );

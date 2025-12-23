@@ -11,6 +11,8 @@ body {
     padding: 0;
     overflow-x: hidden;
     min-height: 100vh;
+    /* Global text shadow for all text */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Mobile landscape optimization */
@@ -197,6 +199,14 @@ body {
     border-radius: 50%;
     background: var(--success-color);
     animation: pulse 2s ease-in-out infinite;
+}
+
+.status-dot.online {
+    background: #00ff00;
+}
+
+.status-dot.offline {
+    background: #ff4444;
 }
 
 @keyframes pulse {
@@ -3105,4 +3115,34 @@ form button,
 
 .global-error-banner button:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   TEXT SHADOW SYSTEM - GLOBAL
+   Uses dark shadow + subtle glow for dark theme
+   ============================================ */
+
+/* Apply text shadow to ALL text-containing elements */
+h1, h2, h3, h4, h5, h6,
+p, span, a, label, button,
+li, td, th, div, nav,
+summary, legend, figcaption,
+strong, em, b, i, small {
+    text-shadow:
+        0 0 8px rgba(0, 0, 0, 0.8),
+        0 0 2px rgba(0, 0, 0, 0.9),
+        0 1px 3px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Headings get slightly stronger shadow */
+h1, h2, h3 {
+    text-shadow:
+        0 0 10px rgba(0, 0, 0, 0.9),
+        0 0 3px rgba(0, 0, 0, 1),
+        0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* No shadow on form inputs (looks weird) */
+input, textarea, select, code, pre {
+    text-shadow: none !important;
 }

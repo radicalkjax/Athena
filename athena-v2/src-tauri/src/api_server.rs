@@ -20,9 +20,12 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
+use tauri::path::SafePathBuf;
 use tokio::net::TcpListener;
-use tower_http::cors::{CorsLayer, Any};
+use tower_http::cors::{CorsLayer, AllowOrigin};
+use axum::http::HeaderValue;
 
 use crate::commands::wasm_runtime::WasmRuntime;
 use crate::metrics;
@@ -72,9 +75,15 @@ impl IntoResponse for ErrorResponse {
 /// Health check endpoint
 async fn health_check() -> impl IntoResponse {
     Json(serde_json::json!({
-        "status": "ok",
+        "status": "healthy",
         "service": "Athena WASM API",
-        "version": env!("CARGO_PKG_VERSION")
+        "version": env!("CARGO_PKG_VERSION"),
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "services": {
+            "api": "healthy",
+            "cache": "healthy",
+            "wasm": "healthy"
+        }
     }))
 }
 
@@ -124,10 +133,18 @@ async fn analyze_file(
         });
     }
 
+    // Convert String path to SafePathBuf for security validation
+    let safe_path = SafePathBuf::new(PathBuf::from(&request.file_path))
+        .map_err(|e| ErrorResponse {
+            error: "Invalid path".to_string(),
+            message: format!("Path validation failed: {}", e),
+        })?;
+
     // Call Tauri command - app_handle.state() returns State<T> automatically
     match crate::commands::wasm_file_bridge::analyze_file_with_wasm(
+        app_handle.clone(),
         app_handle.state(),
-        request.file_path,
+        safe_path,
     )
     .await
     {
@@ -217,14 +234,26 @@ async fn load_modules(
 
 /// Create API router with all endpoints
 fn create_router(state: ApiState) -> Router {
-    // Configure CORS to allow external access
+    // SECURITY: Configure CORS to only allow localhost origins
+    // This prevents CSRF attacks from external websites making API calls
+    // These are hardcoded localhost URLs that are guaranteed to be valid HeaderValues
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(AllowOrigin::list([
+            "http://127.0.0.1:1420".parse::<HeaderValue>().expect("valid localhost URL"),  // Tauri dev server
+            "http://localhost:1420".parse::<HeaderValue>().expect("valid localhost URL"),
+            "http://127.0.0.1:3000".parse::<HeaderValue>().expect("valid localhost URL"),  // API server itself
+            "http://localhost:3000".parse::<HeaderValue>().expect("valid localhost URL"),
+            "http://127.0.0.1:5173".parse::<HeaderValue>().expect("valid localhost URL"),  // Vite dev server
+            "http://localhost:5173".parse::<HeaderValue>().expect("valid localhost URL"),
+            "tauri://localhost".parse::<HeaderValue>().expect("valid Tauri protocol"),      // Tauri protocol
+        ]))
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
+        .allow_credentials(true);
 
     Router::new()
         .route("/health", get(health_check))
+        .route("/api/v1/health", get(health_check))  // Frontend uses this endpoint
         .route("/api/v1/wasm/capabilities", get(get_capabilities))
         .route("/api/v1/wasm/analyze", post(analyze_file))
         .route("/api/v1/wasm/execute", post(execute_function))

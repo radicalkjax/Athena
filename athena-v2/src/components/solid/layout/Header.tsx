@@ -1,5 +1,6 @@
-import { Component, createSignal, onMount } from 'solid-js';
+import { Component, createSignal, onMount, onCleanup } from 'solid-js';
 import { invokeCommand } from '../../../utils/tauriCompat';
+import { backendService } from '../../../services/backendService';
 import logoImg from '../../../assets/images/logo.png';
 
 interface SystemStatus {
@@ -14,6 +15,17 @@ export const Header: Component = () => {
     version: '0.1.0',
     memory_usage: 0
   });
+  const [backendConnected, setBackendConnected] = createSignal(false);
+  let healthCheckInterval: number | null = null;
+
+  const checkBackendHealth = async () => {
+    try {
+      await backendService.checkHealth();
+      setBackendConnected(true);
+    } catch {
+      setBackendConnected(false);
+    }
+  };
 
   onMount(async () => {
     try {
@@ -21,6 +33,16 @@ export const Header: Component = () => {
       setSystemStatus(status);
     } catch (err) {
       console.error('Failed to get system status:', err);
+    }
+
+    // Check backend health
+    await checkBackendHealth();
+    healthCheckInterval = window.setInterval(checkBackendHealth, 10000);
+  });
+
+  onCleanup(() => {
+    if (healthCheckInterval) {
+      clearInterval(healthCheckInterval);
     }
   });
 
@@ -37,10 +59,12 @@ export const Header: Component = () => {
           </h1>
         </div>
       </div>
-      
+
       <div class="status-indicator" role="status" aria-live="polite">
-        <div class="status-dot" aria-hidden="true"></div>
-        <span>AI Providers Ready • WASM Runtime Online • 6 Models Active</span>
+        <div class={`status-dot ${backendConnected() ? 'online' : 'offline'}`} aria-hidden="true"></div>
+        <span>
+          {backendConnected() ? 'Backend Connected' : 'Backend Disconnected'} • WASM Runtime Online
+        </span>
       </div>
     </header>
   );
