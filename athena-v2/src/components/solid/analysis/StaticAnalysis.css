@@ -169,11 +169,133 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, 
-    #ffb3d9 0%, 
-    var(--barbie-accent) 35%, 
+  background: linear-gradient(90deg,
+    #ffb3d9 0%,
+    var(--barbie-accent) 35%,
     var(--barbie-pink) 70%,
     #ff4d7d 100%);
   opacity: 0.8;
   box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+}
+
+/* Code Signing Section Styles */
+.code-signing-section {
+  padding: 10px 0;
+}
+
+.signing-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.signing-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.signing-badge.trusted {
+  background: linear-gradient(135deg, #00c853, #69f0ae);
+  color: #1a1a2e;
+}
+
+.signing-badge.developer {
+  background: linear-gradient(135deg, #2196f3, #64b5f6);
+  color: white;
+}
+
+.signing-badge.unknown {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: #1a1a2e;
+}
+
+.signing-badge.suspicious {
+  background: linear-gradient(135deg, #f44336, #ef5350);
+  color: white;
+}
+
+.signing-badge.unsigned {
+  background: linear-gradient(135deg, #9e9e9e, #bdbdbd);
+  color: #1a1a2e;
+}
+
+.signing-badge.critical {
+  background: linear-gradient(135deg, #d32f2f, #ff1744);
+  color: white;
+}
+
+.signing-badge.warning {
+  background: linear-gradient(135deg, #ff5722, #ff8a65);
+  color: white;
+}
+
+.certificate-details {
+  background: var(--code-bg);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid var(--accent-bg);
+}
+
+.cert-item {
+  display: flex;
+  margin-bottom: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--accent-bg);
+}
+
+.cert-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.cert-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 120px;
+  margin-right: 12px;
+  font-size: 0.85rem;
+}
+
+.cert-value {
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.cert-value.hash-value {
+  color: var(--barbie-accent);
+  font-size: 0.8rem;
+}
+
+.cert-item.warning-text .cert-value {
+  color: #ff9800;
+}
+
+.cert-item.trusted-text .cert-value {
+  color: #00c853;
+}
+
+.unsigned-warning {
+  background: rgba(158, 158, 158, 0.1);
+  border: 1px solid rgba(158, 158, 158, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+}
+
+.unsigned-warning p {
+  margin: 0 0 8px 0;
+  color: var(--text-secondary);
+}
+
+.unsigned-warning p:last-child {
+  margin-bottom: 0;
 }

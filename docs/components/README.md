@@ -137,7 +137,7 @@ Component/
 1. Check component-specific documentation
 2. Review [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
 3. Examine [ARCHITECTURE.md](../ARCHITECTURE.md) for system design
-4. Run component tests: `/scripts/athena` → Option 11
+4. Run component tests: `./athena.sh test`
 
 ---
 

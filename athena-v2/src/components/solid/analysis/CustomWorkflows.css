@@ -92,6 +92,8 @@
 .run-button {
   background: rgba(76, 175, 80, 0.2);
   color: #4caf50;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 .edit-button:hover, .run-button:hover {

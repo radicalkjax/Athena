@@ -88,12 +88,14 @@ sudo apt install libwebkit2gtk-4.1-dev \
 ## 🚀 Quick Start
 
 ### Using the Athena Launcher Script
-The easiest way to run Athena v2 is through the unified launcher:
+The easiest way to run Athena v2 is through the launcher script:
 
 ```bash
 cd .. # Go to Athena root directory
-./scripts/athena
-# Select option 11 for Tauri 2.0 App
+./athena.sh           # Start development mode
+./athena.sh build     # Build production app
+./athena.sh test      # Run all tests
+./athena.sh check     # Verify requirements
 ```
 
 ### Direct Commands

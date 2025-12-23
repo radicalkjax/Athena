@@ -4,6 +4,13 @@
   margin: 0 auto;
 }
 
+.container-sandbox .alert,
+.container-sandbox .alert-error {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
 .container-sandbox h2 {
   margin-bottom: 20px;
   color: #333;
@@ -20,17 +27,27 @@
   margin-bottom: 20px;
   border-radius: 4px;
   border-left: 4px solid;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 .alert-error {
   background-color: #fee;
   border-left-color: #d33;
   color: #a00;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 .alert strong {
   display: block;
   margin-bottom: 5px;
+  text-shadow: none !important;
+}
+
+.alert p {
+  text-shadow: none !important;
+  box-shadow: none !important;
 }
 
 .card {

@@ -41,17 +41,14 @@ We welcome contributions in the following areas:
 
 ### Initial Setup
 
-Use the provided setup script for automated environment configuration:
+Use the launcher script to verify your environment:
 
 ```bash
-./scripts/athena setup
+./athena.sh check    # Verify system requirements
+./athena.sh          # Start development mode
 ```
 
-This script will:
-- Install Rust toolchains and components
-- Install Node.js dependencies
-- Build WASM modules
-- Set up development environment
+Or for manual setup, see the Manual Setup section below.
 
 ### Manual Setup
 

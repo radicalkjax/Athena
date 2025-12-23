@@ -26,6 +26,47 @@ const StaticAnalysis: Component = () => {
   const [apiCalls, setApiCalls] = createSignal<Array<{name: string, description: string}>>([]);
   const [aiResults, setAiResults] = createSignal<Array<{provider: string, prediction: string, confidence?: number}>>([]);
 
+  // Code signing information
+  const [codeSigningInfo, setCodeSigningInfo] = createSignal<{
+    hasSigning: boolean;
+    trustLevel: string;
+    certSubject: string;
+    certOrganization: string;
+    certIssuer: string;
+    thumbprintSha1: string;
+    thumbprintSha256: string;
+    isSelfSigned: boolean;
+    isAppleRoot: boolean;
+    teamId: string;
+    identifier: string;
+    hashType: string;
+    cdHash: string;
+    hasEntitlements: boolean;
+    hasDangerousEntitlements: boolean;
+    knownBadCert: boolean;
+    knownBadCertName: string;
+    authenticodeValid: boolean | null;
+  }>({
+    hasSigning: false,
+    trustLevel: 'Unknown',
+    certSubject: '',
+    certOrganization: '',
+    certIssuer: '',
+    thumbprintSha1: '',
+    thumbprintSha256: '',
+    isSelfSigned: false,
+    isAppleRoot: false,
+    teamId: '',
+    identifier: '',
+    hashType: '',
+    cdHash: '',
+    hasEntitlements: false,
+    hasDangerousEntitlements: false,
+    knownBadCert: false,
+    knownBadCertName: '',
+    authenticodeValid: null,
+  });
+
   // Compute consensus from AI results
   const getConsensus = () => {
     const results = aiResults();
@@ -165,6 +206,68 @@ const StaticAnalysis: Component = () => {
         }]);
       }
     }
+
+    // Extract code signing information from metadata attributes
+    // Check multiple locations where the attributes could be:
+    // 1. Direct metadata.attributes (WASM ParsedFile format)
+    // 2. WASM analyses results from file-processor module
+    // 3. Basic analysis format_info for signature info
+    let attrs: Record<string, string> = {};
+
+    // Try direct metadata.attributes
+    if (result.metadata?.attributes) {
+      attrs = result.metadata.attributes;
+    }
+    // Try WASM file-processor results
+    else if (result.wasm_analyses) {
+      const fileProcessorResult = result.wasm_analyses.find(
+        (wa: { module_name: string; results: unknown }) => wa.module_name === 'file-processor'
+      );
+      if (fileProcessorResult?.results?.metadata?.attributes) {
+        attrs = fileProcessorResult.results.metadata.attributes;
+      }
+    }
+    // Fallback to direct attributes field
+    else if (result.attributes) {
+      attrs = result.attributes;
+    }
+
+    // Also check for signature info from basic analysis (FormatInfo)
+    const formatInfo = result.format_info || result.basic_analysis?.format_info;
+    const signatureInfo = formatInfo?.signature_info;
+
+    const hasSigning = attrs.has_code_signature === 'true' ||
+                       attrs.authenticode_present === 'true' ||
+                       signatureInfo != null;
+
+    setCodeSigningInfo({
+      hasSigning,
+      // Prefer WASM attrs, fallback to basic analysis signatureInfo
+      trustLevel: attrs.signature_trust_level || attrs.authenticode_trust_level ||
+                  (signatureInfo?.is_valid ? 'Valid' : signatureInfo ? 'Invalid' : 'Unknown'),
+      certSubject: attrs.cert_subject || attrs.authenticode_subject ||
+                   signatureInfo?.signer_name || '',
+      certOrganization: attrs.cert_organization || attrs.authenticode_organization || '',
+      certIssuer: attrs.cert_issuer || attrs.authenticode_issuer ||
+                  signatureInfo?.issuer_name || '',
+      thumbprintSha1: attrs.cert_thumbprint_sha1 || attrs.authenticode_thumbprint_sha1 ||
+                      signatureInfo?.thumbprint || '',
+      thumbprintSha256: attrs.cert_thumbprint_sha256 || attrs.authenticode_thumbprint_sha256 || '',
+      isSelfSigned: attrs.cert_is_self_signed === 'true' || attrs.authenticode_is_self_signed === 'true' ||
+                    signatureInfo?.is_self_signed || false,
+      isAppleRoot: attrs.cert_is_apple_root === 'true',
+      teamId: attrs.codesign_team_id || '',
+      identifier: attrs.codesign_identifier || '',
+      hashType: attrs.codesign_hash_type || '',
+      cdHash: attrs.cd_hash || '',
+      hasEntitlements: attrs.has_entitlements === 'true',
+      hasDangerousEntitlements: attrs.has_dangerous_entitlements === 'true',
+      knownBadCert: attrs.known_bad_certificate === 'true',
+      knownBadCertName: attrs.known_bad_cert_name || '',
+      authenticodeValid: attrs.authenticode_hash_valid === 'true' ? true :
+                         attrs.authenticode_hash_valid === 'false' ? false :
+                         signatureInfo?.hash_valid ?? null,
+    });
   };
 
   const isSuspiciousApi = (apiName: string): boolean => {
@@ -194,6 +297,16 @@ const StaticAnalysis: Component = () => {
       if (apiName.includes(key)) return desc;
     }
     return 'System API';
+  };
+
+  // Map trust level to CSS class for styling
+  const getTrustLevelClass = (trustLevel: string): string => {
+    const level = trustLevel.toLowerCase();
+    if (level.includes('apple') || level.includes('trusted')) return 'trusted';
+    if (level.includes('developer')) return 'developer';
+    if (level.includes('self') || level.includes('unknown')) return 'unknown';
+    if (level.includes('suspicious') || level.includes('invalid')) return 'suspicious';
+    return 'unknown';
   };
 
   return (
@@ -285,7 +398,7 @@ const StaticAnalysis: Component = () => {
                   <div class="string-item">{str}</div>
                 ))}
               </div>
-              
+
               <h4 style="color: var(--barbie-pink); margin: 20px 0 10px;">API Calls:</h4>
               <div class="api-list">
                 {apiCalls().map(api => (
@@ -295,6 +408,136 @@ const StaticAnalysis: Component = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </AnalysisPanel>
+
+          <AnalysisPanel title="Code Signing & Certificates" icon="🔏">
+            <div class="code-signing-section">
+              <div class="signing-status">
+                <div class={`signing-badge ${codeSigningInfo().hasSigning ? getTrustLevelClass(codeSigningInfo().trustLevel) : 'unsigned'}`}>
+                  {codeSigningInfo().hasSigning ? codeSigningInfo().trustLevel : 'Unsigned'}
+                </div>
+                <Show when={codeSigningInfo().knownBadCert}>
+                  <div class="signing-badge critical">
+                    Known Bad Certificate: {codeSigningInfo().knownBadCertName}
+                  </div>
+                </Show>
+                <Show when={codeSigningInfo().hasDangerousEntitlements}>
+                  <div class="signing-badge warning">
+                    Dangerous Entitlements Present
+                  </div>
+                </Show>
+              </div>
+
+              <Show when={codeSigningInfo().hasSigning}>
+                <div class="certificate-details">
+                  <h4 style="color: var(--barbie-pink); margin: 15px 0 10px;">Certificate Information</h4>
+
+                  <Show when={codeSigningInfo().certSubject}>
+                    <div class="cert-item">
+                      <span class="cert-label">Subject:</span>
+                      <span class="cert-value">{codeSigningInfo().certSubject}</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().certOrganization}>
+                    <div class="cert-item">
+                      <span class="cert-label">Organization:</span>
+                      <span class="cert-value">{codeSigningInfo().certOrganization}</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().certIssuer}>
+                    <div class="cert-item">
+                      <span class="cert-label">Issuer:</span>
+                      <span class="cert-value">{codeSigningInfo().certIssuer}</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().teamId}>
+                    <div class="cert-item">
+                      <span class="cert-label">Team ID:</span>
+                      <span class="cert-value">{codeSigningInfo().teamId}</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().identifier}>
+                    <div class="cert-item">
+                      <span class="cert-label">Bundle ID:</span>
+                      <span class="cert-value">{codeSigningInfo().identifier}</span>
+                    </div>
+                  </Show>
+
+                  <Show when={codeSigningInfo().isSelfSigned}>
+                    <div class="cert-item warning-text">
+                      <span class="cert-label">Self-Signed:</span>
+                      <span class="cert-value">Yes (not trusted by default)</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().isAppleRoot}>
+                    <div class="cert-item trusted-text">
+                      <span class="cert-label">Apple Root:</span>
+                      <span class="cert-value">Yes (Apple-signed binary)</span>
+                    </div>
+                  </Show>
+
+                  <h4 style="color: var(--barbie-pink); margin: 15px 0 10px;">Thumbprints</h4>
+                  <Show when={codeSigningInfo().thumbprintSha1}>
+                    <div class="cert-item">
+                      <span class="cert-label">SHA1:</span>
+                      <span class="cert-value hash-value">{codeSigningInfo().thumbprintSha1}</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().thumbprintSha256}>
+                    <div class="cert-item">
+                      <span class="cert-label">SHA256:</span>
+                      <span class="cert-value hash-value">{codeSigningInfo().thumbprintSha256}</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().cdHash}>
+                    <div class="cert-item">
+                      <span class="cert-label">CD Hash:</span>
+                      <span class="cert-value hash-value">{codeSigningInfo().cdHash}</span>
+                    </div>
+                  </Show>
+                  <Show when={codeSigningInfo().hashType}>
+                    <div class="cert-item">
+                      <span class="cert-label">Hash Type:</span>
+                      <span class="cert-value">{codeSigningInfo().hashType}</span>
+                    </div>
+                  </Show>
+
+                  <Show when={codeSigningInfo().authenticodeValid !== null}>
+                    <h4 style="color: var(--barbie-pink); margin: 15px 0 10px;">Integrity Verification</h4>
+                    <div class={`cert-item ${codeSigningInfo().authenticodeValid ? 'trusted-text' : 'warning-text'}`}>
+                      <span class="cert-label">Hash Valid:</span>
+                      <span class="cert-value">
+                        {codeSigningInfo().authenticodeValid ? 'Yes (file not modified)' : 'No (file may be tampered)'}
+                      </span>
+                    </div>
+                  </Show>
+
+                  <Show when={codeSigningInfo().hasEntitlements}>
+                    <h4 style="color: var(--barbie-pink); margin: 15px 0 10px;">Entitlements</h4>
+                    <div class="cert-item">
+                      <span class="cert-label">Present:</span>
+                      <span class="cert-value">Yes</span>
+                    </div>
+                    <Show when={codeSigningInfo().hasDangerousEntitlements}>
+                      <div class="cert-item warning-text">
+                        <span class="cert-label">Dangerous:</span>
+                        <span class="cert-value">Contains elevated permissions (task_for_pid, debugging, etc.)</span>
+                      </div>
+                    </Show>
+                  </Show>
+                </div>
+              </Show>
+
+              <Show when={!codeSigningInfo().hasSigning}>
+                <div class="unsigned-warning">
+                  <p>This binary is not digitally signed.</p>
+                  <p style="color: var(--text-secondary); font-size: 12px;">
+                    Unsigned binaries cannot verify their origin or integrity. This is common for malware samples
+                    but also for legitimate development builds and open-source software.
+                  </p>
+                </div>
+              </Show>
             </div>
           </AnalysisPanel>
         </div>

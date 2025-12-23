@@ -252,7 +252,7 @@ flowchart TD
 ### 🆕 First Time Setup
 
 1. [GETTING_STARTED.md](./GETTING_STARTED.md) - Get running quickly (2 min quick start)
-2. Run `/scripts/athena` → Option 2 (Check API Keys)
+2. Run `./athena.sh` to start the desktop application
 3. [USER_GUIDE.md](./USER_GUIDE.md) - Learn to use features
 
 ### 🐛 Troubleshooting Issues
@@ -290,24 +290,17 @@ flowchart TD
 - **UI Components**: [components/](./components/)
 - **WASM Integration**: [WASM-ARCHITECTURE-COMPLETE.md](./WASM-ARCHITECTURE-COMPLETE.md)
 
-## 📱 Interactive CLI Reference
+## 📱 Launcher Script Reference
 
-The new Athena CLI (`/scripts/athena`) provides a beautiful interactive menu:
+The `athena.sh` script in the project root provides simple access to Athena:
 
 ```bash
-/scripts/athena
+./athena.sh            # Start development mode (default)
+./athena.sh build      # Build production application
+./athena.sh test       # Run all tests
+./athena.sh check      # Verify system requirements
+./athena.sh help       # Show help
 ```
-
-**Main Options:**
-
-- **🚀 Option 1**: Launch Complete Athena (Docker Compose)
-- **🔑 Option 2**: Check API Keys
-- **📦 Option 3**: Update Everything
-- **🌐 Option 4-8**: Frontend/Mobile Options
-- **🐳 Option 9-10**: Docker/Kubernetes
-- **✨ Option 11**: Launch Tauri 2.0 App (NEW - Cross-platform desktop/mobile)
-- **🔧 Option 12**: Run Setup
-- **🧪 Option 16**: Run All Tests
 
 ### Tauri 2.0 Application
 
@@ -321,7 +314,7 @@ Athena is built with **Tauri 2.0** as a native desktop application:
 - **Build System**: Vite 7.1.10
 - **Documentation**: See [`athena-v2/README.md`](../athena-v2/README.md) for details
 
-**Quick Start:**
+**Direct Commands (from athena-v2 directory):**
 
 ```bash
 cd athena-v2

@@ -46,24 +46,22 @@ npm run tauri:build
 
 **That's it!** 🎉
 
-### Interactive CLI Options
+### Using the Launcher Script
 
-The interactive CLI will present you with a beautiful menu where you can:
+From the project root, you can use the simple launcher:
 
-- 🚀 **Launch Complete Athena (Option 1)** - Docker Compose stack
-- 🔑 **Check API Keys (Option 2)** - Setup your AI providers
-- 📦 **Update Everything (Option 3)** - Keep Athena current
-- ✨ **Launch Tauri 2.0 App (Option 11)** - Native desktop/mobile app
+```bash
+./athena.sh         # Start development mode (default)
+./athena.sh build   # Build production application
+./athena.sh test    # Run all tests
+./athena.sh check   # Verify system requirements
+```
 
 The script will automatically:
 
-- ✅ Check your system requirements
-- ✅ Install all dependencies
-- ✅ Configure web polyfills for browser compatibility
-- ✅ Set up environment files
-- ✅ Build the application (including WASM modules)
-- ✅ Load all WebAssembly security modules
-- ✅ Launch the web server at <http://localhost:3000>
+- ✅ Check your system requirements (Node.js, Rust, Cargo)
+- ✅ Install dependencies if needed
+- ✅ Start the Tauri desktop application
 
 ### Quick Start Process Flow
 
@@ -92,19 +90,19 @@ The script will automatically:
 flowchart TB
     Start([Start<br/>━━━━━━━━<br/>User wants to<br/>run Athena]) --> Clone[Clone Repository<br/>━━━━━━━━<br/>• git clone<br/>• cd athena]
 
-    Clone --> RunScript[Execute ./scripts/athena<br/>━━━━━━━━<br/>• Interactive menu<br/>• Auto-detects setup]
+    Clone --> RunScript[Execute ./athena.sh<br/>━━━━━━━━<br/>• Checks requirements<br/>• Auto-installs deps]
 
     RunScript --> FirstTime{First Time<br/>Setup?}
 
-    FirstTime -->|Yes| AutoSetup[Automated Setup<br/>━━━━━━━━<br/>• Check requirements<br/>• Install dependencies<br/>• Configure environment]
+    FirstTime -->|Yes| AutoSetup[Automated Setup<br/>━━━━━━━━<br/>• Check Node/Rust<br/>• Install dependencies]
 
-    FirstTime -->|No| Build[Build Application<br/>━━━━━━━━<br/>• Webpack build<br/>• Asset compilation]
+    FirstTime -->|No| Build[Build Application<br/>━━━━━━━━<br/>• Vite build<br/>• Rust compilation]
 
     AutoSetup --> Build
 
-    Build --> Launch[Launch Application<br/>━━━━━━━━<br/>• Start web server<br/>• Open browser<br/>• Port 3000]
+    Build --> Launch[Launch Application<br/>━━━━━━━━<br/>• Start Tauri app<br/>• Desktop window]
 
-    Launch --> Ready([Ready!<br/>━━━━━━━━<br/>Athena running at<br/>localhost:3000])
+    Launch --> Ready([Ready!<br/>━━━━━━━━<br/>Athena desktop<br/>running])
 
     style Start fill:#6d105a,color:#fff
     style Ready fill:#e8f4d4,color:#333
@@ -113,30 +111,24 @@ flowchart TB
 
 ### What Happens on First Run?
 
-When you run `./scripts/athena` for the first time, you'll see:
+When you run `./athena.sh` for the first time, you'll see:
 
 ```bash
-🔧 First time setup detected, running setup process...
+Pre-flight Checks
+━━━━━━━━━━━━━━━━━━
+✓ Node.js v22.14.0
+✓ Rust 1.88.0
+✓ Cargo installed
+✓ athena-v2 directory found
+✓ Dependencies installed
+✓ Xcode Command Line Tools (macOS)
 
-✓ Node.js is installed (v18.17.0)
-✓ npm is installed (9.6.7)
-✓ Git is installed (git version 2.39.2)
-✓ Root dependencies installed successfully
-✓ Athena dependencies installed successfully
-✓ Web polyfills installed successfully
-✓ Serve installed globally
-✓ Created .env file from template
-✓ Webpack configuration found
-✓ Metro configuration found
-✓ Package.json found
-✓ Web polyfills are configured
+✓ All requirements met
 
-✓ Setup complete!
-
-🚀 Setup complete! Now starting the application...
-
-✓ Build completed successfully
-Starting web server...
+🚀 Starting Development Mode
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Starting Tauri development server...
+This will open the Athena desktop application
 ```
 
 ### Next Steps After Quick Start
@@ -255,7 +247,7 @@ flowchart TB
 
     InstallGit --> Clone
 
-    Clone --> RunScript[Run ./scripts/athena]
+    Clone --> RunScript[Run ./athena.sh]
 
     RunScript --> CheckFirstTime{First Time Setup?}
 
@@ -372,17 +364,16 @@ Athena uses **Tauri 2.0** with **SolidJS** and follows strict dependency version
 git clone https://github.com/yourusername/athena.git
 cd athena
 
-# Launch interactive CLI
-./scripts/athena
+# Launch Athena
+./athena.sh
 ```
 
-The interactive CLI provides a beautiful menu to:
+The launcher script provides these commands:
 
-- 🚀 Start Athena Desktop App (with auto-setup on first run)
-- 🔑 Check and validate API keys
-- 📦 Update everything to latest versions
-- 🔧 Run setup, tests, and maintenance tasks
-- 🖥️ Build for Windows, macOS, or Linux
+- `./athena.sh` - Start development mode (default)
+- `./athena.sh build` - Build production application
+- `./athena.sh test` - Run all tests
+- `./athena.sh check` - Verify system requirements
 
 #### 2. Direct Commands (Alternative)
 
@@ -425,13 +416,13 @@ cd athena-v2/src-tauri && cargo test
 }}%%
 sequenceDiagram
     participant User
-    participant Script as athena CLI
+    participant Script as athena.sh
     participant System
     participant Setup
     participant Build
     participant Server
 
-    User->>Script: ./scripts/athena
+    User->>Script: ./athena.sh
     Script->>System: Check first-time setup
 
     alt First Time Setup
@@ -1149,9 +1140,8 @@ node -v
 
 #### API Key Issues
 ```bash
-# Validate API keys using the interactive CLI
-./scripts/athena
-# Select option 2: Check API Keys
+# Check that your .env file has API keys configured
+cat athena-v2/.env
 
 # Or check specific provider manually
 curl -H "Authorization: Bearer $CLAUDE_API_KEY" \
@@ -1181,8 +1171,9 @@ If you encounter persistent issues:
 
 ```bash
 # Force clean setup
-rm -rf node_modules Athena/node_modules
-./scripts/run.sh setup
+rm -rf athena-v2/node_modules
+cd athena-v2 && npm install
+./athena.sh check
 ```
 
 #### Debug Mode
@@ -1259,29 +1250,19 @@ Set up production monitoring:
 #### Essential Commands
 
 ```bash
-# Interactive CLI (recommended)
-./scripts/athena
+# Launcher script (recommended)
+./athena.sh            # Start development mode
+./athena.sh build      # Build production app
+./athena.sh test       # Run all tests
+./athena.sh check      # Verify requirements
 
-# Direct commands
-./scripts/run.sh web    # Start web version
-./scripts/run.sh setup  # Setup only
+# Direct commands (from athena-v2/ directory)
+cd athena-v2
+npm run tauri:dev      # Development mode
+npm run tauri:build    # Production build
 
-# Development (from Athena/ directory)
-npm run dev
-npm test
-npm run lint
-
-# Production
-npm run build
-npm run test:production
-
-# Database
-npm run db:init
-npm run db:migrate
-
-# Monitoring
-npm run monitor:start
-npm run load-test
+# Rust tests
+cd athena-v2/src-tauri && cargo test
 ```
 
 #### Configuration Reference

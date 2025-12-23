@@ -2,6 +2,8 @@
 
 <div align="center">
   <img src="./athena-v2/src-tauri/icons/logo.png" alt="Athena Logo" width="300" />
+
+  [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/radicalkjax/Athena)
 </div>
 
 Athena is a cross-platform application designed to help security researchers analyze and deobfuscate malware using various AI models. It provides a secure environment for malware analysis with features like isolated container execution and integration with the Metasploit database.
@@ -66,7 +68,7 @@ Athena is a high-performance native desktop application built with **Tauri 2.0**
   - **Backend**: Rust for performance and security
   - **Frontend**: SolidJS for reactive UI
   - **Analysis**: WebAssembly (WASM) modules for high-performance malware analysis
-- **Launch**: Use `./scripts/athena` → Option 11 (Tauri Desktop App)
+- **Launch**: Use `./athena.sh` to start the desktop application
 
 Athena leverages multiple AI providers including OpenAI, Claude, DeepSeek, Gemini, Mistral, and Groq to analyze malicious code, deobfuscate it, and identify potential vulnerabilities.
 
@@ -101,11 +103,11 @@ By building on Rust, Athena is prepared for future enhancements like autonomous 
 
 ## ✨ Features
 
-- **🎨 Beautiful Interactive CLI**: New `/scripts/athena` command provides a gorgeous menu-driven interface with:
-  - Visual ASCII art banner with trans colors
-  - One-click access to all Athena features  
-  - Automated setup and configuration
-  - System health checks and maintenance tools
+- **🎨 Simple Launcher Script**: The `./athena.sh` script provides easy access to:
+  - Development mode with hot reload
+  - Production builds for all platforms
+  - Pre-flight system checks
+  - Test execution
 - **⚡ WebAssembly (WASM) Integration**: 9 high-performance security analysis modules:
   - **Analysis Engine**: Core malware analysis with CFG, decompiler, and emulator
   - **Crypto Module**: Hash functions, AES/RSA encryption, S-box detection
@@ -175,35 +177,26 @@ Before you begin, ensure you have the following installed:
    cd athena
    ```
 
-2. **Launch Interactive CLI** (recommended):
+2. **Launch Athena** (recommended):
    ```bash
-   ./scripts/athena
+   ./athena.sh
    ```
 
-   The beautiful interactive CLI will:
-   - Show you a visual menu with all options
-   - Auto-detect and run setup on first use
-   - Guide you through API key configuration
-   - Provide easy access to all Athena features
+   This starts Athena in development mode with hot reload.
 
-   **Quick Start: Select Option 11 (🖥️ Tauri Desktop App)**
-   - Build and launch the desktop application
-
-   **That's it!** The script handles everything automatically.
-
-3. **Optional: Manual setup** (if you prefer manual control):
+   **Other commands:**
    ```bash
-   # Navigate to Tauri app directory
+   ./athena.sh build   # Build production application
+   ./athena.sh test    # Run all tests
+   ./athena.sh check   # Verify system requirements
+   ```
+
+3. **Manual setup** (if you prefer):
+   ```bash
    cd athena-v2
-
-   # Install frontend dependencies (SolidJS)
    npm install
-
-   # Run in development mode
-   npm run tauri:dev
-
-   # Or build for production
-   npm run tauri:build
+   npm run tauri:dev      # Development mode
+   npm run tauri:build    # Production build
    ```
 
 4. **Environment variables**:
@@ -243,30 +236,28 @@ REDIS_PORT=6379
 
 ### Starting the Application
 
-**Simplest approach** - Use the interactive CLI:
+**Simplest approach** - Use the launcher script:
 ```bash
-./scripts/athena
+./athena.sh
 ```
 
-Then select **Option 11: 🖥️ Tauri Desktop App**
+This will:
+- Check system requirements
+- Install dependencies if needed
+- Start the Tauri desktop application in development mode
 
-This will automatically:
-- 🔍 **Install** all dependencies if needed
-- 🔧 **Build** the Rust backend and SolidJS frontend
-- 🚀 **Launch** the desktop application
+**Other commands:**
+```bash
+./athena.sh build   # Build production application
+./athena.sh test    # Run all tests
+./athena.sh check   # Verify system requirements
+```
 
-**Manual commands** (if you prefer manual control):
+**Manual commands** (if you prefer):
 ```bash
 cd athena-v2
-
-# Development mode (hot reload)
-npm run tauri:dev
-
-# Production build
-npm run tauri:build
-
-# Web-only build (for testing UI)
-npm run build
+npm run tauri:dev      # Development mode (hot reload)
+npm run tauri:build    # Production build
 ```
 
 **Platform-specific builds**:
@@ -368,7 +359,7 @@ Athena comes with comprehensive documentation to help you understand and use the
 *Complete navigation guide with visual maps, role-based workflows, and quick access to all documentation.*
 
 ### 🚀 Quick Access
-- **[⚡ QUICKSTART](./docs/QUICKSTART.md)** - Get running in 2 minutes with the new interactive CLI
+- **[⚡ QUICKSTART](./docs/QUICKSTART.md)** - Get running in 2 minutes
 - **[🔧 Getting Started](./docs/GETTING_STARTED.md)** - Complete setup and configuration guide  
 - **[👤 User Guide](./docs/USER_GUIDE.md)** - How to use all features effectively
 - **[🐛 Troubleshooting](./docs/TROUBLESHOOTING.md)** - Visual decision trees for common issues

@@ -2,12 +2,23 @@
 
 This directory contains all scripts for building, testing, deploying, and maintaining the Athena malware analysis platform.
 
+> **Note:** The primary launcher script is now `./athena.sh` at the project root. See below for details.
+
+## Main Entry Point
+
+The primary way to run Athena is through the launcher script at the project root:
+
+```bash
+./athena.sh           # Start development mode (default)
+./athena.sh build     # Build production application
+./athena.sh test      # Run all tests
+./athena.sh check     # Verify system requirements
+```
+
 ## Directory Structure
 
 ```
 scripts/
-├── athena              # Main CLI entry point
-├── run.sh              # Primary runner script
 ├── dev/                # Development scripts
 ├── build/              # Build and optimization scripts
 ├── test/               # Testing and validation scripts
@@ -15,24 +26,6 @@ scripts/
 ├── maintenance/        # Backup, restore, and maintenance
 ├── security/           # Security-related scripts
 └── utils/              # Utility scripts and one-off fixes
-```
-
-## Main Entry Points
-
-### `athena`
-Main CLI script for Athena operations. This is the primary interface for users.
-
-**Usage:**
-```bash
-./scripts/athena [command]
-```
-
-### `run.sh`
-Comprehensive runner script for various Athena operations.
-
-**Usage:**
-```bash
-./scripts/run.sh
 ```
 
 ---
@@ -48,12 +41,11 @@ Scripts for running services during development.
 | `start-backend.sh` | Start only the backend services |
 | `start-logging.sh` | Start logging infrastructure |
 | `start-web-ui.sh` | Start web UI development server |
-| `launch-athena.sh` | Launch complete Athena environment |
 
 **Quick Start:**
 ```bash
-# Start all services for development
-./scripts/dev/start-all-services.sh
+# Use the main launcher (recommended)
+./athena.sh
 
 # Or start individual components
 ./scripts/dev/start-backend.sh
