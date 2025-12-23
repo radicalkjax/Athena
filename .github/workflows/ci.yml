@@ -1,47 +1,166 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main, develop, 'feature/*' ]
+    branches: [main, alpha, develop, 'feature/*']
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [ubuntu-latest]
-
-    runs-on: ${{ matrix.platform }}
+  # Frontend tests and linting
+  frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./athena-v2
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: athena-v2/package-lock.json
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Install Linux dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: TypeScript check
+        run: npx tsc --noEmit
 
-    - name: Install dependencies
-      working-directory: ./athena-v2
-      run: npm install
-      continue-on-error: true
+      - name: Run tests with coverage
+        run: npm test -- --reporter=verbose --coverage
 
-    - name: Build frontend
-      working-directory: ./athena-v2
-      run: npm run build
-      continue-on-error: true
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./athena-v2/coverage
+          flags: frontend
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-    - name: Build Tauri app
-      working-directory: ./athena-v2
-      run: npm run tauri build
-      continue-on-error: true
+      - name: Build frontend
+        run: npm run build
+
+  # Rust backend tests
+  backend:
+    name: Rust Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./athena-v2/src-tauri
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            athena-v2/src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run tests
+        run: cargo test --workspace
+
+  # Rust linting
+  clippy:
+    name: Clippy Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./athena-v2/src-tauri
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            athena-v2/src-tauri/target
+          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-clippy-
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  # Rust formatting check
+  rustfmt:
+    name: Rust Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./athena-v2/src-tauri
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  # Security audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run cargo audit
+        working-directory: ./athena-v2/src-tauri
+        run: cargo audit
+        continue-on-error: true  # Don't fail CI on audit warnings
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run npm audit
+        working-directory: ./athena-v2
+        run: npm audit --audit-level=high
+        continue-on-error: true  # Don't fail CI on audit warnings
