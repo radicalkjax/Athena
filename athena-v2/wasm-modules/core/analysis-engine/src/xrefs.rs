@@ -316,8 +316,14 @@ impl CallGraph {
     pub fn find_leaf_functions(&self) -> Vec<u64> {
         let mut leaves = Vec::new();
 
-        for (&func, callees) in &self.calls {
-            if callees.is_empty() {
+        // A leaf function is one that is called by others but doesn't call anyone
+        // Check functions that are callees (appear in callers map)
+        for &func in self.callers.keys() {
+            // If this function doesn't call anything (not in calls map or has empty callees)
+            let makes_no_calls = self.calls.get(&func)
+                .map(|callees| callees.is_empty())
+                .unwrap_or(true);
+            if makes_no_calls {
                 leaves.push(func);
             }
         }

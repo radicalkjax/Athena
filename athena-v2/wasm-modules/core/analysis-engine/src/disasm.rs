@@ -4,6 +4,7 @@ use iced_x86::{
     FlowControl, OpKind, InstructionInfoFactory, OpAccess, MemorySize
 };
 use std::collections::{HashMap, HashSet};
+use crate::arm_disasm;
 
 #[derive(Clone, Copy)]
 pub enum Architecture {
@@ -173,8 +174,11 @@ impl Disassembler {
                     count += 1;
                 }
             }
-            Architecture::Arm | Architecture::Arm64 => {
-                return Err("ARM disassembly not yet implemented - x86/x64 only".to_string());
+            Architecture::Arm => {
+                return arm_disasm::disassemble_arm(code, offset, max_instructions, &syntax);
+            }
+            Architecture::Arm64 => {
+                return arm_disasm::disassemble_arm64(code, offset, max_instructions, &syntax);
             }
         }
 

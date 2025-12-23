@@ -3,6 +3,7 @@ use crate::types::{
     SuspiciousIndicator, SuspiciousSeverity, FileIntegrity
 };
 use crate::extractor::ContentExtractor;
+use crate::parser::codesign;
 use std::collections::HashMap;
 use goblin::mach::{Mach, MachO};
 
@@ -134,12 +135,60 @@ fn parse_single_macho(buffer: &[u8], macho: &MachO, format: FileFormat) -> Proce
         }
     }
 
-    // Check code signature
-    let has_codesign = macho.load_commands.iter().any(|cmd| {
-        matches!(cmd.command, goblin::mach::load_command::CommandVariant::CodeSignature(_))
-    });
+    // Comprehensive code signature analysis
+    let codesign_analysis = codesign::analyze_code_signature(macho, buffer);
 
-    if !has_codesign {
+    // Add certificate and signature info to metadata attributes
+    let mut metadata = metadata; // Make mutable
+    if codesign_analysis.has_signature {
+        metadata.attributes.insert("has_code_signature".to_string(), "true".to_string());
+        metadata.attributes.insert("signature_trust_level".to_string(), format!("{:?}", codesign_analysis.trust_level));
+
+        if let Some(ref cd) = codesign_analysis.code_directory {
+            metadata.attributes.insert("codesign_identifier".to_string(),
+                cd.identifier.clone().unwrap_or_default());
+            if let Some(ref team) = cd.team_id {
+                metadata.attributes.insert("codesign_team_id".to_string(), team.clone());
+            }
+            metadata.attributes.insert("codesign_hash_type".to_string(), cd.hash_type_name.clone());
+            metadata.attributes.insert("codesign_version".to_string(), format!("{:#x}", cd.version));
+            metadata.attributes.insert("cd_hash".to_string(), cd.cd_hash.clone());
+        }
+
+        // Add signer certificate info
+        if let Some(signer) = codesign_analysis.certificate_chain.first() {
+            if let Some(ref cn) = signer.subject_cn {
+                metadata.attributes.insert("cert_subject".to_string(), cn.clone());
+            }
+            if let Some(ref org) = signer.organization {
+                metadata.attributes.insert("cert_organization".to_string(), org.clone());
+            }
+            if let Some(ref issuer) = signer.issuer_cn {
+                metadata.attributes.insert("cert_issuer".to_string(), issuer.clone());
+            }
+            metadata.attributes.insert("cert_thumbprint_sha1".to_string(), signer.thumbprint_sha1.clone());
+            metadata.attributes.insert("cert_thumbprint_sha256".to_string(), signer.thumbprint_sha256.clone());
+            metadata.attributes.insert("cert_is_self_signed".to_string(), signer.is_self_signed.to_string());
+            metadata.attributes.insert("cert_is_apple_root".to_string(), signer.is_apple_root.to_string());
+        }
+
+        // Check for known bad certificate
+        if codesign_analysis.known_bad_cert {
+            metadata.attributes.insert("known_bad_certificate".to_string(), "true".to_string());
+            if let Some(ref name) = codesign_analysis.known_bad_cert_name {
+                metadata.attributes.insert("known_bad_cert_name".to_string(), name.clone());
+            }
+        }
+
+        // Add entitlements info
+        if let Some(ref ent) = codesign_analysis.entitlements {
+            metadata.attributes.insert("has_entitlements".to_string(), "true".to_string());
+            metadata.attributes.insert("entitlements_format".to_string(), ent.format.clone());
+            if ent.has_dangerous_entitlements {
+                metadata.attributes.insert("has_dangerous_entitlements".to_string(), "true".to_string());
+            }
+        }
+    } else {
         suspicious_indicators.push(SuspiciousIndicator {
             indicator_type: "unsigned_binary".to_string(),
             description: "Binary is not code-signed".to_string(),
@@ -149,17 +198,52 @@ fn parse_single_macho(buffer: &[u8], macho: &MachO, format: FileFormat) -> Proce
         });
     }
 
+    // Add code signature suspicious indicators
+    for indicator in &codesign_analysis.suspicious_indicators {
+        let severity = match indicator.severity.as_str() {
+            "Critical" => SuspiciousSeverity::Critical,
+            "High" => SuspiciousSeverity::High,
+            "Medium" => SuspiciousSeverity::Medium,
+            _ => SuspiciousSeverity::Low,
+        };
+        suspicious_indicators.push(SuspiciousIndicator {
+            indicator_type: indicator.indicator_type.clone(),
+            description: indicator.description.clone(),
+            severity,
+            location: Some("Code Signature".to_string()),
+            evidence: indicator.evidence.clone(),
+        });
+    }
+
+    // Add parsing errors as indicators
+    for error in &codesign_analysis.errors {
+        suspicious_indicators.push(SuspiciousIndicator {
+            indicator_type: "codesign_parse_error".to_string(),
+            description: error.clone(),
+            severity: SuspiciousSeverity::Medium,
+            location: Some("Code Signature".to_string()),
+            evidence: "Failed to parse code signature structure".to_string(),
+        });
+    }
+
     // Extract strings
     let extractor = ContentExtractor::new();
     let strings = extractor.extract_strings(buffer, 4);
     let strings = strings.into_iter().take(100).collect();
 
-    // File integrity
+    // File integrity - use actual signature analysis
+    let signature_valid = if codesign_analysis.has_signature {
+        Some(codesign_analysis.hash_structure_valid &&
+             codesign_analysis.trust_level != codesign::TrustLevel::Invalid)
+    } else {
+        None
+    };
+
     let integrity = FileIntegrity {
         valid_structure: true, // goblin successfully parsed it
         checksum_valid: None,
-        signature_valid: if has_codesign { Some(false) } else { None }, // Placeholder
-        issues: Vec::new(),
+        signature_valid,
+        issues: codesign_analysis.errors.clone(),
     };
 
     Ok(ParsedFile {

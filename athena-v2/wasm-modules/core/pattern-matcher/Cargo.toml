@@ -20,6 +20,8 @@ rustc-hash = "2.1"
 strsim = "0.11"
 memchr = "2.7"
 sha2 = "0.10"
+sha1 = "0.10"
+md-5 = "0.10.6"
 
 [profile.release]
 opt-level = "z"

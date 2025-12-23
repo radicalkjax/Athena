@@ -6,6 +6,8 @@ pub mod elf;
 pub mod macho;
 pub mod pdf;
 pub mod script;
+pub mod authenticode;
+pub mod codesign;
 
 /// Parse a file based on its format
 pub fn parse_file(buffer: &[u8], format: FileFormat) -> ProcessorResult<ParsedFile> {

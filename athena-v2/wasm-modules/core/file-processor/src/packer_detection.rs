@@ -14,6 +14,8 @@ pub struct PackerDetectionResult {
     pub high_entropy_sections: Vec<String>,
     pub suspicious_indicators: Vec<String>,
     pub confidence: f64,
+    /// Detection method counts (e.g., "entry_point": 2, "section_name": 1)
+    pub detection_methods: HashMap<String, u32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -55,6 +57,7 @@ impl PackerDetector {
             high_entropy_sections: Vec::new(),
             suspicious_indicators: Vec::new(),
             confidence: 0.0,
+            detection_methods: HashMap::new(),
         };
 
         // Calculate overall entropy
@@ -104,6 +107,8 @@ impl PackerDetector {
                         indicators: vec!["Entry point signature match".to_string()],
                     });
                     result.is_packed = true;
+                    // Track detection method
+                    *result.detection_methods.entry("entry_point".to_string()).or_insert(0) += 1;
                 }
             }
         }
@@ -129,6 +134,8 @@ impl PackerDetector {
                             });
                             result.is_packed = true;
                         }
+                        // Track detection method
+                        *result.detection_methods.entry("section_name".to_string()).or_insert(0) += 1;
                     }
                 }
             }
@@ -138,6 +145,104 @@ impl PackerDetector {
                 result.high_entropy_sections.push(section_name);
             }
         }
+
+        // Check import patterns for known packer libraries
+        if let Some(imports) = self.extract_pe_imports(data) {
+            for sig in &self.signatures {
+                for import_pattern in &sig.import_patterns {
+                    if imports.iter().any(|imp| imp.to_lowercase().contains(&import_pattern.to_lowercase())) {
+                        result.suspicious_indicators.push(format!(
+                            "Suspicious import: {} (associated with {})",
+                            import_pattern, sig.name
+                        ));
+
+                        // Check if not already detected
+                        if !result.detected_packers.iter().any(|p| p.name == sig.name) {
+                            result.detected_packers.push(PackerSignature {
+                                name: sig.name.clone(),
+                                version: None,
+                                family: sig.family.clone(),
+                                confidence: 0.8,
+                                indicators: vec![format!("Import pattern: {}", import_pattern)],
+                            });
+                            result.is_packed = true;
+                        }
+                        // Track detection method
+                        *result.detection_methods.entry("import_pattern".to_string()).or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+
+        // Entropy-based detection using packer-specific thresholds
+        for sig in &self.signatures {
+            // If entropy exceeds the packer's minimum threshold, it's a hint
+            if result.entropy_score >= sig.min_entropy {
+                // Check if we have other indicators for this packer
+                if result.detected_packers.iter().any(|p| p.name == sig.name) {
+                    // Increase confidence if we already detected this packer and entropy matches
+                    if let Some(packer) = result.detected_packers.iter_mut().find(|p| p.name == sig.name) {
+                        packer.confidence = (packer.confidence + 0.1).min(1.0);
+                        packer.indicators.push(format!(
+                            "Entropy {:.2} >= threshold {:.2}",
+                            result.entropy_score, sig.min_entropy
+                        ));
+                        // Track detection method
+                        *result.detection_methods.entry("entropy_threshold".to_string()).or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    /// Extract PE imports (DLL names and function names)
+    fn extract_pe_imports(&self, data: &[u8]) -> Option<Vec<String>> {
+        if data.len() < 64 {
+            return None;
+        }
+
+        // Read e_lfanew
+        let e_lfanew = u32::from_le_bytes([
+            data[0x3c], data[0x3d], data[0x3e], data[0x3f]
+        ]) as usize;
+
+        if e_lfanew + 120 > data.len() {
+            return None;
+        }
+
+        // Import Directory RVA is at offset 0x80 from PE header
+        let import_dir_rva = u32::from_le_bytes([
+            data[e_lfanew + 0x80], data[e_lfanew + 0x81],
+            data[e_lfanew + 0x82], data[e_lfanew + 0x83]
+        ]) as usize;
+
+        if import_dir_rva == 0 {
+            return Some(Vec::new());
+        }
+
+        // Simplified: scan data for known import strings
+        // Real implementation would properly parse import table
+        let mut imports = Vec::new();
+        let search_patterns = ["OreansCRT", "VMProtect", "Themida", "ASPack"];
+
+        for pattern in &search_patterns {
+            if let Some(_) = self.find_string_in_data(data, pattern) {
+                imports.push(pattern.to_string());
+            }
+        }
+
+        Some(imports)
+    }
+
+    /// Find a string in binary data
+    fn find_string_in_data(&self, data: &[u8], search: &str) -> Option<usize> {
+        let search_bytes = search.as_bytes();
+        for i in 0..data.len().saturating_sub(search_bytes.len()) {
+            if &data[i..i + search_bytes.len()] == search_bytes {
+                return Some(i);
+            }
+        }
+        None
     }
 
     fn detect_elf_packers(&self, data: &[u8], result: &mut PackerDetectionResult) {

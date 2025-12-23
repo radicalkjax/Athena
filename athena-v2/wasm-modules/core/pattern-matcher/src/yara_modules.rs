@@ -356,17 +356,27 @@ pub struct HashModule {
 impl HashModule {
     pub fn compute(data: &[u8]) -> Self {
         use sha2::{Sha256, Digest};
+        use sha1::Sha1;
+        use md5::Md5;
+
+        // Compute MD5
+        let mut md5_hasher = Md5::new();
+        md5_hasher.update(data);
+        let md5 = format!("{:x}", md5_hasher.finalize());
+
+        // Compute SHA1
+        let mut sha1_hasher = Sha1::new();
+        sha1_hasher.update(data);
+        let sha1 = format!("{:x}", sha1_hasher.finalize());
 
         // Compute SHA256
-        let mut hasher = Sha256::new();
-        hasher.update(data);
-        let sha256 = format!("{:x}", hasher.finalize());
+        let mut sha256_hasher = Sha256::new();
+        sha256_hasher.update(data);
+        let sha256 = format!("{:x}", sha256_hasher.finalize());
 
-        // For now, use placeholder for MD5/SHA1
-        // In production, would use proper crypto libraries
         Self {
-            md5: String::new(),
-            sha1: String::new(),
+            md5,
+            sha1,
             sha256,
         }
     }
@@ -597,7 +607,14 @@ mod tests {
     fn test_hash_module() {
         let data = b"test data";
         let hash_mod = HashModule::compute(data);
-        assert!(!hash_mod.sha256.is_empty());
+        // Verify all three hashes are computed (not empty)
+        assert!(!hash_mod.md5.is_empty(), "MD5 should be computed");
+        assert!(!hash_mod.sha1.is_empty(), "SHA1 should be computed");
+        assert!(!hash_mod.sha256.is_empty(), "SHA256 should be computed");
+        // Verify hash lengths are correct
+        assert_eq!(hash_mod.md5.len(), 32, "MD5 should be 32 hex chars");
+        assert_eq!(hash_mod.sha1.len(), 40, "SHA1 should be 40 hex chars");
+        assert_eq!(hash_mod.sha256.len(), 64, "SHA256 should be 64 hex chars");
     }
 
     #[test]

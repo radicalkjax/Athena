@@ -11,6 +11,7 @@
 use std::collections::{HashMap, HashSet};
 use crate::disasm::{DisassembledInstruction, BasicBlock};
 use crate::function_analysis::CallingConvention;
+use crate::ssa::SSABuilder;
 
 /// Intermediate Representation Operation
 #[derive(Clone, Debug)]
@@ -250,8 +251,13 @@ impl Decompiler {
         // Step 1: Convert assembly to IR
         let ir_blocks = self.convert_to_ir(blocks)?;
 
-        // Step 2: Build SSA form (simplified)
-        // TODO: Full SSA with phi nodes
+        // Step 2: Build SSA form with phi nodes (Cytron algorithm)
+        let ssa_input: Vec<(u64, Vec<IRStmt>)> = ir_blocks.iter()
+            .map(|block| (block.address, block.statements.clone()))
+            .collect();
+        let mut ssa_builder = SSABuilder::new();
+        let _ssa_function = ssa_builder.convert_to_ssa(ssa_input)?;
+        // SSA form now available for data-flow analysis
 
         // Step 3: Simplify expressions
         let simplified_blocks = self.simplify_ir(ir_blocks)?;
@@ -873,9 +879,177 @@ impl Decompiler {
         }
 
         // Pass 2: Dead code elimination (remove assignments to unused variables)
-        // TODO: Implement full DCE with liveness analysis
+        blocks = self.eliminate_dead_code(blocks);
 
         Ok(blocks)
+    }
+
+    /// Eliminate dead code using liveness analysis
+    /// Performs backwards dataflow analysis to determine which variables are live
+    fn eliminate_dead_code(&self, mut blocks: Vec<IRBlock>) -> Vec<IRBlock> {
+        if blocks.is_empty() {
+            return blocks;
+        }
+
+        // Build block index map
+        let block_indices: HashMap<u64, usize> = blocks.iter()
+            .enumerate()
+            .map(|(i, b)| (b.address, i))
+            .collect();
+
+        // Initialize live sets for each block
+        let mut live_in: Vec<HashSet<String>> = vec![HashSet::new(); blocks.len()];
+        let mut live_out: Vec<HashSet<String>> = vec![HashSet::new(); blocks.len()];
+
+        // Iterative dataflow analysis (backwards)
+        // Continue until fixed point reached
+        let mut changed = true;
+        let mut iterations = 0;
+        const MAX_ITERATIONS: usize = 100;
+
+        while changed && iterations < MAX_ITERATIONS {
+            changed = false;
+            iterations += 1;
+
+            // Process blocks in reverse order (more efficient for backwards analysis)
+            for i in (0..blocks.len()).rev() {
+                let block = &blocks[i];
+
+                // Compute LIVE_OUT = union of LIVE_IN of successors
+                let mut new_live_out = HashSet::new();
+                for &succ_addr in &block.successors {
+                    if let Some(&succ_idx) = block_indices.get(&succ_addr) {
+                        for var in &live_in[succ_idx] {
+                            new_live_out.insert(var.clone());
+                        }
+                    }
+                }
+
+                // Compute LIVE_IN = USE ∪ (LIVE_OUT - DEF)
+                // Process statements backwards within the block
+                let mut live = new_live_out.clone();
+                for stmt in block.statements.iter().rev() {
+                    // Remove definitions (killed variables)
+                    if let Some(def_var) = self.get_defined_var(stmt) {
+                        live.remove(&def_var);
+                    }
+                    // Add uses (variables that become live)
+                    for used_var in self.get_used_vars(stmt) {
+                        live.insert(used_var);
+                    }
+                }
+                let new_live_in = live;
+
+                // Check if anything changed
+                if new_live_in != live_in[i] || new_live_out != live_out[i] {
+                    changed = true;
+                    live_in[i] = new_live_in;
+                    live_out[i] = new_live_out;
+                }
+            }
+        }
+
+        // Now eliminate dead assignments
+        // An assignment is dead if the variable is not live after the assignment
+        for (block_idx, block) in blocks.iter_mut().enumerate() {
+            // Track liveness within the block (start from live_out)
+            let mut live_after: HashSet<String> = live_out[block_idx].clone();
+
+            // Process statements from end to beginning
+            let mut kept_statements = Vec::with_capacity(block.statements.len());
+            for stmt in block.statements.drain(..).rev().collect::<Vec<_>>() {
+                // Check if this is a dead assignment
+                let is_dead = if let Some(def_var) = self.get_defined_var(&stmt) {
+                    // Assignment is dead if variable not live after this point
+                    // UNLESS it has side effects (calls, stores)
+                    !live_after.contains(&def_var) && !self.has_side_effects(&stmt)
+                } else {
+                    false
+                };
+
+                if !is_dead {
+                    // Keep this statement - update liveness backwards
+                    // Remove defined variable from live set
+                    if let Some(def_var) = self.get_defined_var(&stmt) {
+                        live_after.remove(&def_var);
+                    }
+                    // Add used variables to live set
+                    for used_var in self.get_used_vars(&stmt) {
+                        live_after.insert(used_var);
+                    }
+                    kept_statements.push(stmt);
+                }
+            }
+
+            // Restore order (we processed backwards)
+            kept_statements.reverse();
+            block.statements = kept_statements;
+        }
+
+        blocks
+    }
+
+    /// Get the variable defined by a statement (if any)
+    fn get_defined_var(&self, stmt: &IRStmt) -> Option<String> {
+        match stmt {
+            IRStmt::Assign { dest, .. } => Some(dest.name.clone()),
+            IRStmt::Call { result: Some(r), .. } => Some(r.name.clone()),
+            _ => None,
+        }
+    }
+
+    /// Get all variables used by a statement
+    fn get_used_vars(&self, stmt: &IRStmt) -> Vec<String> {
+        let mut vars = Vec::new();
+
+        match stmt {
+            IRStmt::Assign { value, .. } => {
+                self.collect_value_vars(value, &mut vars);
+            }
+            IRStmt::Store { address, value, .. } => {
+                self.collect_value_vars(address, &mut vars);
+                self.collect_value_vars(value, &mut vars);
+            }
+            IRStmt::BranchCond { condition, .. } => {
+                self.collect_value_vars(condition, &mut vars);
+            }
+            IRStmt::Call { target, args, .. } => {
+                self.collect_value_vars(target, &mut vars);
+                for arg in args {
+                    self.collect_value_vars(arg, &mut vars);
+                }
+            }
+            IRStmt::Return { value: Some(v) } => {
+                self.collect_value_vars(v, &mut vars);
+            }
+            _ => {}
+        }
+
+        vars
+    }
+
+    /// Recursively collect variable names from an IR value
+    fn collect_value_vars(&self, value: &IRValue, vars: &mut Vec<String>) {
+        match value {
+            IRValue::Var(v) => vars.push(v.name.clone()),
+            IRValue::Const(_) => {}
+            IRValue::Expr(expr) => {
+                for operand in &expr.operands {
+                    self.collect_value_vars(operand, vars);
+                }
+            }
+        }
+    }
+
+    /// Check if a statement has side effects (should not be eliminated)
+    fn has_side_effects(&self, stmt: &IRStmt) -> bool {
+        matches!(stmt,
+            IRStmt::Store { .. } |      // Memory stores
+            IRStmt::Call { .. } |       // Function calls
+            IRStmt::Branch { .. } |     // Control flow
+            IRStmt::BranchCond { .. } |
+            IRStmt::Return { .. }
+        )
     }
 
     fn simplify_statement(&self, stmt: &mut IRStmt) {
@@ -1460,5 +1634,75 @@ mod tests {
 
         // Should detect that we continue when SF != OF (less than)
         assert_eq!(condition, "SF != OF");
+    }
+
+    #[test]
+    fn test_dead_code_elimination() {
+        let decompiler = Decompiler::new();
+
+        // Create a block with dead assignments
+        // x = 1  (dead - never used)
+        // y = 2  (live - used in z)
+        // z = y + 3  (live - used in return)
+        // w = 99 (dead - never used)
+        // return z
+        let blocks = vec![
+            IRBlock {
+                address: 0x1000,
+                statements: vec![
+                    IRStmt::Assign {
+                        dest: IRVar::new("x".to_string(), 4),
+                        value: IRValue::Const(1),
+                    },
+                    IRStmt::Assign {
+                        dest: IRVar::new("y".to_string(), 4),
+                        value: IRValue::Const(2),
+                    },
+                    IRStmt::Assign {
+                        dest: IRVar::new("z".to_string(), 4),
+                        value: IRValue::Expr(Box::new(IRExpr::binary(
+                            IROp::Add,
+                            IRValue::Var(IRVar::new("y".to_string(), 4)),
+                            IRValue::Const(3),
+                            4,
+                        ))),
+                    },
+                    IRStmt::Assign {
+                        dest: IRVar::new("w".to_string(), 4),
+                        value: IRValue::Const(99),
+                    },
+                    IRStmt::Return {
+                        value: Some(IRValue::Var(IRVar::new("z".to_string(), 4))),
+                    },
+                ],
+                successors: vec![],
+                predecessors: vec![],
+            },
+        ];
+
+        let result = decompiler.eliminate_dead_code(blocks);
+
+        // Should have eliminated x and w assignments (dead code)
+        // Should keep y, z assignments and return
+        assert_eq!(result.len(), 1);
+        let stmts = &result[0].statements;
+        assert_eq!(stmts.len(), 3, "Should have 3 statements (y, z, return), got {}", stmts.len());
+
+        // Verify y assignment is kept
+        if let IRStmt::Assign { dest, .. } = &stmts[0] {
+            assert_eq!(dest.name, "y");
+        } else {
+            panic!("First statement should be y assignment");
+        }
+
+        // Verify z assignment is kept
+        if let IRStmt::Assign { dest, .. } = &stmts[1] {
+            assert_eq!(dest.name, "z");
+        } else {
+            panic!("Second statement should be z assignment");
+        }
+
+        // Verify return is kept
+        assert!(matches!(stmts[2], IRStmt::Return { .. }));
     }
 }

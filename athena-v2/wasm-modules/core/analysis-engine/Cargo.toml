@@ -41,6 +41,10 @@ iced-x86 = { version = "1.21", default-features = false, features = [
     "code_asm"        # Programmatic instruction creation
 ] }
 
+# ARM disassembly - pure Rust, WASM-compatible
+yaxpeax-arm = "0.3"
+yaxpeax-arch = "0.3"
+
 # Error handling
 thiserror = "1.0"
 anyhow = "1.0"

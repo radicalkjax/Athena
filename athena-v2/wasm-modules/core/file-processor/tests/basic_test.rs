@@ -1,4 +1,4 @@
-use file_processor::{FileProcessor, get_version};
+use athena_file_processor::{FileProcessor, get_version};
 
 #[test]
 fn test_file_processor_creation() {

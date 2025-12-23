@@ -3,6 +3,7 @@ use crate::types::{
     SuspiciousIndicator, SuspiciousSeverity, FileIntegrity
 };
 use crate::extractor::ContentExtractor;
+use crate::parser::authenticode;
 use std::collections::HashMap;
 use goblin::pe::PE;
 
@@ -37,7 +38,7 @@ pub fn parse_pe(buffer: &[u8], format: FileFormat) -> ProcessorResult<ParsedFile
     let is_dll = pe.is_lib;
     attributes.insert("is_dll".to_string(), is_dll.to_string());
 
-    let metadata = FileMetadata {
+    let mut metadata = FileMetadata {
         size: buffer.len(),
         hash: super::calculate_sha256(buffer),
         mime_type: crate::detector::FileDetector::new().get_mime_type(format.clone()),
@@ -175,23 +176,108 @@ pub fn parse_pe(buffer: &[u8], format: FileFormat) -> ProcessorResult<ParsedFile
         }
     }
 
-    // Check certificates (Authenticode signatures)
+    // Check certificates (Authenticode signatures) - comprehensive malware analysis
     let signature_valid = if !pe.certificates.is_empty() {
-        // Signature present - would need actual validation
-        Some(false) // Placeholder - real validation requires crypto
-    } else {
-        None // No signature
-    };
+        // Use comprehensive Authenticode analysis for malware detection
+        let auth_result = authenticode::analyze_authenticode(&pe, buffer);
 
-    if pe.certificates.is_empty() && !is_dll {
-        suspicious_indicators.push(SuspiciousIndicator {
-            indicator_type: "unsigned_executable".to_string(),
-            description: "Executable is not digitally signed".to_string(),
-            severity: SuspiciousSeverity::Low,
-            location: None,
-            evidence: "No certificate table found".to_string(),
-        });
-    }
+        // Add signer certificate info to attributes
+        if let Some(signer) = auth_result.certificate_chain.first() {
+            if let Some(ref cn) = signer.subject_cn {
+                metadata.attributes.insert("cert_subject".to_string(), cn.clone());
+            }
+            if let Some(ref org) = signer.organization {
+                metadata.attributes.insert("cert_organization".to_string(), org.clone());
+            }
+            if let Some(ref issuer) = signer.issuer_cn {
+                metadata.attributes.insert("cert_issuer".to_string(), issuer.clone());
+            }
+            metadata.attributes.insert("cert_serial".to_string(), signer.serial_number.clone());
+            if let Some(ref not_before) = signer.not_before {
+                metadata.attributes.insert("cert_not_before".to_string(), not_before.clone());
+            }
+            if let Some(ref not_after) = signer.not_after {
+                metadata.attributes.insert("cert_not_after".to_string(), not_after.clone());
+            }
+            metadata.attributes.insert("cert_thumbprint_sha1".to_string(), signer.thumbprint_sha1.clone());
+            metadata.attributes.insert("cert_thumbprint_sha256".to_string(), signer.thumbprint_sha256.clone());
+            metadata.attributes.insert("cert_has_code_signing_eku".to_string(), signer.has_code_signing_eku.to_string());
+            metadata.attributes.insert("cert_is_self_signed".to_string(), signer.is_self_signed.to_string());
+        }
+
+        metadata.attributes.insert("cert_chain_length".to_string(), auth_result.chain_length.to_string());
+        metadata.attributes.insert("cert_chain_complete".to_string(), auth_result.chain_complete.to_string());
+        metadata.attributes.insert("cert_trust_level".to_string(), format!("{:?}", auth_result.trust_level));
+
+        // Add hash verification results
+        if let Some(valid) = auth_result.hash_valid {
+            metadata.attributes.insert("authenticode_hash_valid".to_string(), valid.to_string());
+        }
+        if let Some(ref algo) = auth_result.hash_algorithm {
+            metadata.attributes.insert("authenticode_hash_algorithm".to_string(), algo.clone());
+        }
+
+        // Add counter-signature info if present
+        if let Some(ref cs) = auth_result.counter_signature {
+            if let Some(ref ts) = cs.timestamp {
+                metadata.attributes.insert("cert_timestamp".to_string(), ts.clone());
+            }
+            if let Some(ref signer) = cs.signer_cn {
+                metadata.attributes.insert("timestamp_signer".to_string(), signer.clone());
+            }
+        }
+
+        // Add all suspicious indicators from Authenticode analysis
+        for indicator in &auth_result.suspicious_indicators {
+            let severity = match indicator.severity.as_str() {
+                "Critical" => SuspiciousSeverity::Critical,
+                "High" => SuspiciousSeverity::High,
+                "Medium" => SuspiciousSeverity::Medium,
+                _ => SuspiciousSeverity::Low,
+            };
+            suspicious_indicators.push(SuspiciousIndicator {
+                indicator_type: indicator.indicator_type.clone(),
+                description: indicator.description.clone(),
+                severity,
+                location: Some("Authenticode signature".to_string()),
+                evidence: indicator.evidence.clone(),
+            });
+        }
+
+        // Add any errors as indicators
+        for error in &auth_result.errors {
+            suspicious_indicators.push(SuspiciousIndicator {
+                indicator_type: "certificate_error".to_string(),
+                description: error.clone(),
+                severity: SuspiciousSeverity::Medium,
+                location: Some("Certificate table".to_string()),
+                evidence: format!("Chain length: {}", auth_result.chain_length),
+            });
+        }
+
+        // Check for known bad certificate
+        if auth_result.known_bad_cert {
+            metadata.attributes.insert("known_bad_certificate".to_string(), "true".to_string());
+            if let Some(ref name) = auth_result.known_bad_cert_name {
+                metadata.attributes.insert("known_bad_cert_name".to_string(), name.clone());
+            }
+        }
+
+        // Determine signature validity
+        Some(auth_result.hash_valid.unwrap_or(false) && auth_result.structure_valid)
+    } else {
+        // No signature
+        if !is_dll {
+            suspicious_indicators.push(SuspiciousIndicator {
+                indicator_type: "unsigned_executable".to_string(),
+                description: "Executable is not digitally signed".to_string(),
+                severity: SuspiciousSeverity::Low,
+                location: None,
+                evidence: "No certificate table found".to_string(),
+            });
+        }
+        None
+    };
 
     // Extract strings
     let extractor = ContentExtractor::new();
