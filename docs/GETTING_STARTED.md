@@ -1,6 +1,8 @@
 # Getting Started with Athena
 
-**Version:** 2.0 (Tauri) | **Last Updated:** December 2025 | **Status:** In Development
+**Version:** 2.0 (Tauri) | **Last Updated:** December 2025 | **Status:** Implementation Complete
+
+> **Update Notice (December 2025):** This documentation has been updated for Tauri 2.0 desktop application. Some diagrams and scripts may still reference legacy web/mobile patterns - the primary launch method is `npm run tauri:dev` in the athena-v2 directory.
 
 ## Table of Contents
 
@@ -330,14 +332,15 @@ Obtain API keys from:
 
 #### Dependency Management
 
-Athena uses **Expo SDK 52** and follows strict dependency versioning to ensure compatibility:
+Athena uses **Tauri 2.0** with **SolidJS** and follows strict dependency versioning to ensure compatibility:
 
-- **React Native**: 0.76.9
-- **React**: 18.3.1
-- **React Navigation**: v7.x (upgraded from v6)
-- **Expo Packages**: Aligned with SDK 52 requirements
+- **Tauri**: 2.0
+- **SolidJS**: 1.9.5
+- **Vite**: 7.1.10
+- **Rust**: 1.75+ (edition 2021)
+- **Wasmtime**: 38.0
 
-> **Note**: When updating dependencies, always use `npx expo install --fix` to maintain compatibility with Expo SDK.
+> **Note**: When updating dependencies, use `npm update` in the athena-v2 directory and `cargo update` in src-tauri for Rust dependencies.
 
 ### Installation
 
@@ -354,22 +357,25 @@ cd athena
 
 The interactive CLI provides a beautiful menu to:
 
-- 🚀 Start Athena Web (with auto-setup on first run)
+- 🚀 Start Athena Desktop App (with auto-setup on first run)
 - 🔑 Check and validate API keys
 - 📦 Update everything to latest versions
 - 🔧 Run setup, tests, and maintenance tasks
-- 📱 Launch iOS/Android versions
+- 🖥️ Build for Windows, macOS, or Linux
 
 #### 2. Direct Commands (Alternative)
 
 If you prefer direct commands over the interactive menu:
 
 ```bash
-./scripts/run.sh web      # Web version
-./scripts/run.sh ios      # iOS simulator
-./scripts/run.sh android  # Android emulator
-./scripts/run.sh setup    # Setup only
-./scripts/run.sh help     # Help info
+# Development
+cd athena-v2 && npm run tauri:dev
+
+# Production build
+cd athena-v2 && npm run tauri:build
+
+# Run tests
+cd athena-v2/src-tauri && cargo test
 ```
 
 #### Automated Setup Process
@@ -990,8 +996,8 @@ featureFlags.setOverride('enableRedisCache', true);
 }}%%
 graph TB
     subgraph "Frontend"
-        UI[React Native UI]
-        Store[Zustand Store]
+        UI[SolidJS UI]
+        Store[SolidJS Store]
     end
 
     subgraph "Gateway Layer"

@@ -1,5 +1,7 @@
 # Container Monitoring Component
 
+> **Update Notice (December 2025):** This documentation references React Native patterns. The current implementation uses SolidJS. See `athena-v2/src/components/solid/analysis/ContainerSandbox.tsx` for the actual implementation. Conceptual information (architecture diagrams, data flow) remains valid.
+
 The `ContainerMonitoring` component provides a comprehensive UI for monitoring container activity during malware analysis. This document describes the component's features, usage, and integration with the monitoring system.
 
 ## Overview

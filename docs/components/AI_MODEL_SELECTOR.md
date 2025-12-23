@@ -1,5 +1,7 @@
 # AIModelSelector Component
 
+> **Update Notice (December 2025):** This documentation references React Native patterns. The current implementation uses SolidJS. See `athena-v2/src/components/solid/providers/AIProviderStatus.tsx` for the actual implementation. Conceptual information (architecture diagrams, data flow) remains valid.
+
 The AIModelSelector component allows users to select from available AI models for malware analysis, featuring intelligent failover, health monitoring, and seamless integration with the AI Manager service.
 
 ## Table of Contents
@@ -59,7 +61,7 @@ graph TD
     end
     
     subgraph "State Management"
-        C[Zustand Store<br/>━━━━━━━━<br/>• AI Models List<br/>• Selected Model<br/>• Update Actions]
+        C[SolidJS Store<br/>━━━━━━━━<br/>• AI Models List<br/>• Selected Model<br/>• Update Actions]
     end
     
     subgraph "AI Services"
@@ -107,7 +109,7 @@ graph TD
 }}%%
 graph LR
     subgraph "Component Layer"
-        A[AIModelSelector<br/>━━━━━━━━<br/>• React Component<br/>• UI Rendering<br/>• Event Handling]
+        A[AIModelSelector<br/>━━━━━━━━<br/>• SolidJS Component<br/>• UI Rendering<br/>• Event Handling]
     end
     
     subgraph "Hook Layer"
@@ -299,7 +301,7 @@ graph TD
 }}%%
 sequenceDiagram
     participant Component as AIModelSelector
-    participant Store as Zustand Store
+    participant Store as SolidJS Store
     participant Env as Environment Config
     participant Services as AI Services
     participant UI as User Interface

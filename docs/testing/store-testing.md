@@ -1,8 +1,10 @@
 # Store Testing Guide
 
+> **Update Notice (December 2025):** This documentation references Zustand patterns. The current implementation uses **SolidJS reactive primitives** (createSignal, createStore). See `athena-v2/src/` for the actual implementation. The testing concepts below remain valid but use different APIs.
+
 ## Overview
 
-This guide covers testing Zustand stores in the Athena project, including state management, actions, and middleware.
+This guide covers testing state management in the Athena project.
 
 ## Basic Store Testing
 

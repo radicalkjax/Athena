@@ -1,14 +1,21 @@
 # API Keys Setup Guide
 
+**Last Updated:** December 22, 2025
+
 This guide will help you obtain and configure the required API keys for Athena v2.
 
 ## Required API Keys
 
-Athena v2 uses multiple AI providers for comprehensive malware analysis:
+Athena v2 supports **6 AI providers** for comprehensive malware analysis. You need at least one configured:
 
-1. **Claude (Anthropic)** - Advanced code analysis and threat detection
-2. **DeepSeek** - Specialized deep learning analysis
-3. **OpenAI** - GPT-based pattern recognition
+| Provider | Primary Use | Required |
+|----------|-------------|----------|
+| Claude (Anthropic) | Advanced code analysis and threat detection | Recommended |
+| OpenAI | GPT-based pattern recognition | Optional |
+| DeepSeek | Specialized deep learning analysis | Optional |
+| Gemini (Google) | Multi-modal analysis | Optional |
+| Mistral | Fast inference analysis | Optional |
+| Groq | High-speed inference | Optional |
 
 ## Obtaining API Keys
 
@@ -22,17 +29,7 @@ Athena v2 uses multiple AI providers for comprehensive malware analysis:
 
 **Pricing**: Pay-per-use, see [Anthropic Pricing](https://www.anthropic.com/pricing)
 
-### 2. DeepSeek API Key
-
-1. Visit [DeepSeek Platform](https://platform.deepseek.com/)
-2. Create an account or sign in
-3. Go to "API Keys" in your dashboard
-4. Generate a new API key
-5. Copy your API key
-
-**Pricing**: Check DeepSeek platform for current rates
-
-### 3. OpenAI API Key
+### 2. OpenAI API Key
 
 1. Visit [OpenAI Platform](https://platform.openai.com/)
 2. Sign up or log in
@@ -42,43 +39,88 @@ Athena v2 uses multiple AI providers for comprehensive malware analysis:
 
 **Pricing**: Pay-per-use, see [OpenAI Pricing](https://openai.com/pricing)
 
+### 3. DeepSeek API Key
+
+1. Visit [DeepSeek Platform](https://platform.deepseek.com/)
+2. Create an account or sign in
+3. Go to "API Keys" in your dashboard
+4. Generate a new API key
+5. Copy your API key
+
+**Pricing**: Check DeepSeek platform for current rates
+
+### 4. Gemini API Key (Google)
+
+1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Select or create a Google Cloud project
+5. Copy your API key
+
+**Pricing**: Free tier available, see [Gemini Pricing](https://ai.google.dev/pricing)
+
+### 5. Mistral API Key
+
+1. Visit [Mistral Console](https://console.mistral.ai/)
+2. Create an account or sign in
+3. Go to "API Keys" section
+4. Click "Create new key"
+5. Copy your API key
+
+**Pricing**: Pay-per-use, see [Mistral Pricing](https://mistral.ai/pricing/)
+
+### 6. Groq API Key
+
+1. Visit [Groq Console](https://console.groq.com/)
+2. Create an account or sign in
+3. Navigate to "API Keys"
+4. Click "Create API Key"
+5. Copy your API key
+
+**Pricing**: Free tier available, see [Groq Pricing](https://groq.com/pricing/)
+
 ## Configuration
 
 ### Step 1: Edit the .env file
 
 ```bash
-cd /Users/radicalkjax/Athena
+cd /Users/kali/Athena/Athena
 nano .env  # or use your preferred editor
 ```
 
 ### Step 2: Add your API keys
 
 ```env
-# AI Provider Keys
+# AI Provider Keys (at least one required)
 CLAUDE_API_KEY=sk-ant-your-key-here
-DEEPSEEK_API_KEY=your-deepseek-key-here
 OPENAI_API_KEY=sk-your-openai-key-here
+DEEPSEEK_API_KEY=your-deepseek-key-here
+GEMINI_API_KEY=your-gemini-key-here
+MISTRAL_API_KEY=your-mistral-key-here
+GROQ_API_KEY=your-groq-key-here
+
+# Optional: Redis for caching
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
-### Step 3: Restart the backend
+### Step 3: Launch the Application
 
 ```bash
-docker-compose -f docker-compose.dev.yml restart api
+# Development mode
+cd athena-v2 && npm run tauri:dev
+
+# Or production build
+cd athena-v2 && npm run tauri:build
 ```
 
 ### Step 4: Verify configuration
 
-```bash
-node test-api-keys.js
-```
+The application will show provider status in the AI Provider Status panel:
 
-You should see:
-
-```text
-✅ CLAUDE_API_KEY is configured
-✅ DEEPSEEK_API_KEY is configured
-✅ OPENAI_API_KEY is configured
-```
+- Green indicator = Provider configured and healthy
+- Yellow indicator = Provider configured but rate limited
+- Red indicator = Provider not configured or erroring
 
 ## Security Best Practices
 
@@ -98,6 +140,17 @@ You should see:
    - Different keys for development/staging/production
    - Restrict production keys to specific IPs if possible
 
+## Provider Features
+
+| Provider | Streaming | Tools | Circuit Breaker | Retry |
+|----------|-----------|-------|-----------------|-------|
+| Claude | Yes | Yes | Yes | Exponential |
+| OpenAI | Yes | Yes | Yes | Exponential |
+| DeepSeek | Yes | No | Yes | Exponential |
+| Gemini | Yes | Yes | Yes | Exponential |
+| Mistral | Yes | Yes | Yes | Exponential |
+| Groq | Yes | No | Yes | Exponential |
+
 ## Troubleshooting
 
 ### API Key Not Working
@@ -110,32 +163,42 @@ You should see:
 ### Provider-Specific Issues
 
 **Claude errors:**
-
 - "x-api-key header is required" - Key not set in .env
 - "Invalid API key" - Check key format (should start with `sk-ant-`)
 
 **OpenAI errors:**
-
 - "You didn't provide an API key" - Key not set in .env
 - "Incorrect API key provided" - Verify key is correct
 
 **DeepSeek errors:**
-
 - "Authentication failed" - Check key validity
+
+**Gemini errors:**
+- "API key not valid" - Ensure key is from AI Studio
+- "Quota exceeded" - Check your free tier limits
+
+**Mistral errors:**
+- "Unauthorized" - Verify key is active
+- "Rate limited" - Wait and retry
+
+**Groq errors:**
+- "Invalid API Key" - Regenerate key in console
 
 ## Cost Optimization
 
-1. **Use caching** - Athena caches results in Redis
-2. **Batch requests** - Process multiple files together
+1. **Use caching** - Athena caches results to reduce API calls
+2. **Use ensemble mode** - Get consensus from multiple providers
 3. **Monitor usage** - Check provider dashboards regularly
 4. **Set alerts** - Configure spending alerts in each platform
+5. **Use Groq for speed** - Fast inference for initial triage
 
 ## Next Steps
 
 After configuring API keys:
 
-1. Test file analysis: Upload a test file through the UI
-2. Monitor logs: `docker logs -f athena-api-dev`
-3. Check metrics: Visit <http://localhost:9091> (Prometheus)
+1. Launch the application: `cd athena-v2 && npm run tauri:dev`
+2. Upload a test file through the UI
+3. Check the AI Provider Status panel for provider health
+4. Run an analysis to verify connectivity
 
 For support, check the [Issues page](https://github.com/anthropics/claude-code/issues).

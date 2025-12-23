@@ -1,6 +1,8 @@
 # Athena User Guide
 
-This comprehensive guide provides detailed instructions for using Athena, the AI-powered malware analysis platform. It's designed for all users, from security analysts to researchers, covering both basic and advanced features including multi-AI provider support, distributed caching, streaming analysis, and comprehensive monitoring.
+> **Update Notice (December 2025):** Athena is now a **Tauri 2.0 desktop application** (Windows, macOS, Linux). References to mobile platforms and Expo have been deprecated. The primary launch method is `npm run tauri:dev` in the athena-v2 directory.
+
+This comprehensive guide provides detailed instructions for using Athena, the AI-powered malware analysis platform. It's designed for all users, from security analysts to researchers, covering both basic and advanced features including multi-AI provider support (6 providers), distributed caching, streaming analysis, and comprehensive monitoring.
 
 ## 🧭 Navigation
 - **📖 [Documentation Hub](./README.md)** ← Main navigation
@@ -42,7 +44,7 @@ This comprehensive guide provides detailed instructions for using Athena, the AI
 
 Athena is an enterprise-grade malware analysis platform that combines the power of multiple AI providers with advanced security features. Key capabilities include:
 
-- **Multi-AI Analysis**: Leverage Claude, OpenAI, and DeepSeek for comprehensive analysis
+- **Multi-AI Analysis**: Leverage 6 AI providers (Claude, OpenAI, DeepSeek, Gemini, Mistral, Groq) for comprehensive analysis
 - **Real-time Streaming**: Get immediate feedback as analysis progresses
 - **Container Isolation**: Safely execute malware in isolated environments
 - **Advanced Caching**: Fast response times with multi-tier caching
@@ -185,11 +187,11 @@ graph TB
 
 ## Installation
 
-Athena can be run as a web application or as a mobile app on iOS and Android devices.
+Athena is a **Tauri 2.0 desktop application** available for Windows, macOS, and Linux.
 
-### Web Version
+### Desktop Application (Primary Method)
 
-The web version is the easiest way to get started with Athena. You don't need to install anything on your computer except a modern web browser.
+The desktop application provides the best performance and security for malware analysis.
 
 1. **Clone the Repository**:
    - If you have Git installed, open a terminal and run:
@@ -208,42 +210,32 @@ The web version is the easiest way to get started with Athena. You don't need to
    - This will install all the necessary dependencies for the application.
 
 3. **Set Up Environment Variables**:
-   - Create a file named `.env` in the Athena directory
+   - Create a file named `.env` in the athena-v2 directory
    - Add your API keys (see [Setting Up API Keys](#setting-up-api-keys) for details)
 
-4. **Start the Web Application**:
+4. **Start the Desktop Application**:
    - In the terminal, run:
      ```bash
-     npx serve dist
+     cd athena-v2
+     npm run tauri:dev
      ```
-   - This will serve the built app from the dist directory using a static file server
-   - Open your web browser and navigate to `http://localhost:3000` (or the URL shown in the terminal)
+   - This will build the Rust backend and launch the desktop application
+   - For production builds: `npm run tauri:build`
 
-### Mobile Version
+### Platform-Specific Builds
 
-> **Important:** The Expo launch method is currently not working. Please use the web version with `npx serve dist` instead.
+Build for specific platforms:
 
-When working, to run Athena on a mobile device, you'll need to use the Expo Go app.
+```bash
+# macOS
+npm run tauri:build:macos
 
-1. **Install Expo Go on Your Device**:
-   - iOS: [Download from App Store](https://apps.apple.com/app/expo-go/id982107779)
-   - Android: [Download from Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent)
+# Windows
+npm run tauri:build:windows
 
-2. **Clone and Set Up the Repository** (same as steps 1-3 for Web Version)
-
-3. **Start the Expo Development Server**:
-   - In the terminal, run:
-     ```bash
-     npx expo start
-     ```
-   - This will start the Expo development server and display a QR code in the terminal
-
-4. **Connect Your Device**:
-   - Open the Expo Go app on your device
-   - Scan the QR code displayed in the terminal:
-     - iOS: Use the device's camera
-     - Android: Use the Expo Go app's QR code scanner
-   - The app will load on your device
+# Linux
+npm run tauri:build:linux
+```
 
 ### Database Setup
 

@@ -107,7 +107,7 @@ These methods map to the backend's session-based WASM runtime commands.
 
 ### 3. Created High-Level Module Bindings
 
-Added typed module binding classes for all 7 WASM modules:
+Added typed module binding classes for all 9 WASM modules:
 
 #### Base Class
 ```typescript
@@ -159,7 +159,7 @@ Added `module_name` field to `WasmMetrics` interface in `athena-v2/src/types/was
 Created `WASM_USAGE.md` with:
 - Architecture overview
 - Basic usage examples
-- Module-specific examples for all 7 modules
+- Module-specific examples for all 9 modules
 - Session-based execution guide
 - Metrics and monitoring
 - Error handling patterns

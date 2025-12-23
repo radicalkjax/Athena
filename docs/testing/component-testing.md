@@ -1,8 +1,37 @@
 # Component Testing Guide
 
+> **Update Notice (December 2025):** This documentation references React Native Testing Library patterns. The current implementation uses **SolidJS with Vitest**. See `athena-v2/src/` for the actual SolidJS components and `athena-v2/vitest.config.ts` for test configuration. The testing patterns below are conceptually valid but use different APIs.
+
 ## Overview
 
-This guide covers testing React Native components in the Athena project using React Native Testing Library.
+This guide covers testing components in the Athena project.
+
+### Current Stack (SolidJS)
+
+For SolidJS components, use:
+- **Testing Library**: `@solidjs/testing-library`
+- **Test Runner**: Vitest
+- **Location**: `athena-v2/src/`
+
+```typescript
+// SolidJS testing example
+import { render, fireEvent } from '@solidjs/testing-library';
+import { describe, it, expect } from 'vitest';
+import { MyComponent } from './MyComponent';
+
+describe('MyComponent', () => {
+  it('should render correctly', () => {
+    const { getByText } = render(() => <MyComponent />);
+    expect(getByText('Hello')).toBeTruthy();
+  });
+});
+```
+
+---
+
+## Legacy Documentation (React Native)
+
+The following documentation is preserved for reference but applies to the deprecated React Native version.
 
 ## Setup
 

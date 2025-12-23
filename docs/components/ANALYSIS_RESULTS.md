@@ -1,5 +1,7 @@
 # AnalysisResults Component
 
+> **Update Notice (December 2025):** This documentation references React Native patterns. The current implementation uses SolidJS. See `athena-v2/src/components/solid/analysis/AnalysisDashboard.tsx` for the actual implementation. Conceptual information (architecture diagrams, data flow) remains valid.
+
 The AnalysisResults component provides a sophisticated interface for displaying malware analysis results, featuring tabbed navigation, real-time updates, syntax highlighting, vulnerability visualization, and export functionality.
 
 ## Table of Contents

@@ -55,7 +55,7 @@ Athena's container isolation feature provides a secure, sandboxed environment fo
 graph TB
     subgraph "Athena Application Layer"
         UI[UI Components<br/>━━━━━━━━<br/>• Container Config<br/>• Resource Settings<br/>• OS Selection]
-        Store[Zustand Store<br/>━━━━━━━━<br/>• Container State<br/>• Analysis Results<br/>• Resource Metrics]
+        Store[SolidJS Store<br/>━━━━━━━━<br/>• Container State<br/>• Analysis Results<br/>• Resource Metrics]
     end
     
     subgraph "Service Layer"

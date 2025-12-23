@@ -84,13 +84,13 @@ Successfully implemented comprehensive testing infrastructure across all layers 
 ✅ Module loading from bytes and files
 ✅ Function execution with metrics tracking
 ✅ Module management (list, unload, memory)
-✅ High-level bindings (7 modules)
+✅ High-level bindings (9 modules)
 ✅ Session management (create, execute, destroy, list)
 ✅ Metrics tracking (per-module and global)
 ✅ Error handling for all operations
 
 **Key Coverage:**
-- All 7 WASM modules: analysis-engine, crypto, deobfuscator, file-processor, network, pattern-matcher, sandbox
+- All 9 WASM modules: analysis-engine, crypto, deobfuscator, disassembler, file-processor, network, pattern-matcher, sandbox, security
 - Component Model integration
 - Memory allocation/deallocation
 - Performance monitoring
