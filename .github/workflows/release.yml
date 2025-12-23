@@ -19,8 +19,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     outputs:
-      release_id: ${{ steps.create_release.outputs.id }}
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
     permissions:
       contents: write
 
@@ -37,7 +36,6 @@ jobs:
           fi
 
       - name: Create Release
-        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
@@ -61,24 +59,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-release:
-    name: Build (${{ matrix.platform }})
+    name: Build (${{ matrix.platform }} ${{ matrix.target }})
     needs: create-release
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            target: 'aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            target: 'x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04'
-            args: ''
-            target: ''
-          - platform: 'windows-latest'
-            args: ''
-            target: ''
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            rust_targets: aarch64-apple-darwin
+            artifact_name: athena-macos-aarch64
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            rust_targets: x86_64-apple-darwin
+            artifact_name: athena-macos-x86_64
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            rust_targets: ''
+            artifact_name: athena-linux-x86_64
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            rust_targets: ''
+            artifact_name: athena-windows-x86_64
 
     runs-on: ${{ matrix.platform }}
     permissions:
@@ -97,7 +99,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.rust_targets }}
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -120,14 +122,50 @@ jobs:
         working-directory: ./athena-v2
         run: npm ci
 
-      - name: Build and upload release
-        uses: tauri-apps/tauri-action@v0
+      - name: Build frontend
+        working-directory: ./athena-v2
+        run: npm run build
+
+      - name: Build Tauri app (macOS)
+        if: matrix.platform == 'macos-latest'
+        working-directory: ./athena-v2
+        run: npm run tauri build -- --target ${{ matrix.target }}
+
+      - name: Build Tauri app (Linux/Windows)
+        if: matrix.platform != 'macos-latest'
+        working-directory: ./athena-v2
+        run: npm run tauri build
+
+      - name: Upload release assets (macOS DMG)
+        if: matrix.platform == 'macos-latest'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.version }}
+          files: athena-v2/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release assets (Windows MSI)
+        if: matrix.platform == 'windows-latest'
+        uses: softprops/action-gh-release@v1
         with:
-          projectPath: ./athena-v2
-          releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: ${{ matrix.args }}
+          tag_name: ${{ needs.create-release.outputs.version }}
+          files: |
+            athena-v2/src-tauri/target/release/bundle/msi/*.msi
+            athena-v2/src-tauri/target/release/bundle/nsis/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release assets (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.version }}
+          files: |
+            athena-v2/src-tauri/target/release/bundle/deb/*.deb
+            athena-v2/src-tauri/target/release/bundle/appimage/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-release:
     name: Publish Release
@@ -141,9 +179,16 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.repos.updateRelease({
+            const { data: releases } = await github.rest.repos.listReleases({
               owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: ${{ needs.create-release.outputs.release_id }},
-              draft: false
+              repo: context.repo.repo
             });
+            const draftRelease = releases.find(r => r.tag_name === '${{ needs.create-release.outputs.version }}' && r.draft);
+            if (draftRelease) {
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: draftRelease.id,
+                draft: false
+              });
+            }
