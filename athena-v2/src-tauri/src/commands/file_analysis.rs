@@ -5,7 +5,7 @@ use sha2::Digest;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 use base64::{Engine as _, engine::general_purpose};
 use flate2::write::GzEncoder;
@@ -14,8 +14,47 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce, Key
 };
+use tauri::path::SafePathBuf;
 use crate::signature_verify::{verify_pe_signature, verify_elf_signature, SignatureInfo};
 use crate::metrics::{FILE_OPERATION_DURATION, FILE_OPERATION_COUNTER, FILE_SIZE_HISTOGRAM};
+use crate::commands::ai_analysis;
+
+/// Configuration for file analysis
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct AnalysisConfig {
+    // Analysis types
+    #[serde(default = "default_true")]
+    pub static_analysis: bool,
+    #[serde(default)]
+    pub dynamic_analysis: bool,
+    #[serde(default)]
+    pub ai_ensemble: bool,
+    #[serde(default)]
+    pub reverse_engineering: bool,
+    // Sandbox configuration
+    #[serde(default = "default_linux")]
+    pub sandbox_os: String,
+    #[serde(default = "default_arch")]
+    pub sandbox_arch: String,
+    #[serde(default = "default_image")]
+    pub sandbox_image: String,
+    #[serde(default = "default_timeout")]
+    pub sandbox_timeout: u64,
+    #[serde(default = "default_memory")]
+    pub sandbox_memory: u64,
+    #[serde(default = "default_cpu")]
+    pub sandbox_cpu: f64,
+    #[serde(default = "default_true")]
+    pub capture_network: bool,
+}
+
+fn default_true() -> bool { true }
+fn default_linux() -> String { "linux".to_string() }
+fn default_arch() -> String { "x86_64".to_string() }
+fn default_image() -> String { "ubuntu:22.04".to_string() }
+fn default_timeout() -> u64 { 120 }
+fn default_memory() -> u64 { 512 }
+fn default_cpu() -> f64 { 1.0 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileAnalysisResult {
@@ -256,13 +295,59 @@ fn categorize_string(s: &str) -> Option<String> {
     }
 }
 
+/// Check if data appears to be a text file (high ratio of printable ASCII)
+fn is_likely_text_file(data: &[u8]) -> bool {
+    if data.is_empty() || data.len() < 16 {
+        return false;
+    }
+
+    // Sample first 4KB for efficiency
+    let sample_size = data.len().min(4096);
+    let sample = &data[..sample_size];
+
+    // Count printable ASCII and common control characters
+    let printable_count = sample.iter().filter(|&&b| {
+        b.is_ascii_graphic() || b.is_ascii_whitespace() || b == b'\r' || b == b'\n' || b == b'\t'
+    }).count();
+
+    // If >85% is printable, likely text - skip ssdeep
+    let ratio = printable_count as f64 / sample_size as f64;
+    ratio > 0.85
+}
+
+/// Check if file is suitable for ssdeep (binary files only, adequate size)
+fn should_calculate_ssdeep(data: &[u8]) -> bool {
+    // ssdeep needs at least ~4KB to produce meaningful results
+    // and crashes on text files like SVG, XML, scripts
+    if data.len() < 4096 {
+        return false;
+    }
+
+    // Skip text files - ssdeep is designed for binary similarity
+    if is_likely_text_file(data) {
+        return false;
+    }
+
+    true
+}
+
 pub fn calculate_hashes(data: &[u8]) -> FileHashes {
     let md5 = format!("{:x}", md5::compute(data));
     let sha1 = format!("{:x}", sha1::Sha1::digest(data));
     let sha256 = format!("{:x}", sha2::Sha256::digest(data));
 
-    // Calculate ssdeep fuzzy hash
-    let ssdeep = ssdeep::hash(data).ok();
+    // Calculate ssdeep fuzzy hash only for suitable binary files
+    let ssdeep = if should_calculate_ssdeep(data) {
+        // Wrap in catch_unwind as additional safety
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            ssdeep::hash(data).ok()
+        })).unwrap_or_else(|_| {
+            eprintln!("Warning: ssdeep hash calculation panicked, skipping");
+            None
+        })
+    } else {
+        None
+    };
 
     FileHashes {
         md5,
@@ -274,9 +359,23 @@ pub fn calculate_hashes(data: &[u8]) -> FileHashes {
 }
 
 #[tauri::command]
-pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, String> {
+pub async fn analyze_file(
+    file_path: SafePathBuf,
+    config: Option<AnalysisConfig>
+) -> Result<FileAnalysisResult, String> {
     let start_time = Instant::now();
-    let path = Path::new(&file_path);
+
+    // SafePathBuf automatically validates that path doesn't contain ".." to prevent traversal
+    let path = file_path.as_ref();
+
+    // Use provided config or defaults
+    let _config = config.unwrap_or_default();
+
+    // Log the analysis configuration
+    let filename = path.file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+    println!("Analyzing file: {} with config: {:?}", filename, _config);
 
     // Read file metadata
     let metadata = std::fs::metadata(&path)
@@ -284,9 +383,12 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
             FILE_OPERATION_COUNTER
                 .with_label_values(&["analyze_file", "error"])
                 .inc();
+            let filename = path.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| "unknown".to_string());
             format!(
                 "Could not read file '{}'. Please ensure the file exists and you have permission to access it. Error: {}",
-                path.display(),
+                filename,
                 e
             )
         })?;
@@ -295,27 +397,36 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
 
     // Check for empty files
     if file_size == 0 {
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
         return Err(format!(
             "File '{}' is empty (0 bytes). Please ensure you have selected a valid file with content.",
-            path.display()
+            filename
         ));
     }
 
     // Check for very large files (>100MB)
     const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100MB
     if file_size > MAX_FILE_SIZE {
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
         return Err(format!(
             "File '{}' is too large ({} MB). Maximum supported file size is 100 MB.\n\nFor large files:\n- Consider analyzing specific sections\n- Use streaming analysis tools\n- Split the file into smaller chunks",
-            path.display(),
+            filename,
             file_size / 1024 / 1024
         ));
     }
 
     // Warn for large files (>50MB) but allow processing
     if file_size > 50 * 1024 * 1024 {
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
         eprintln!(
             "Warning: Analyzing large file '{}' ({} MB). This may take several minutes and consume significant memory.",
-            path.display(),
+            filename,
             file_size / 1024 / 1024
         );
     }
@@ -326,9 +437,12 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
             FILE_OPERATION_COUNTER
                 .with_label_values(&["analyze_file", "error"])
                 .inc();
+            let filename = path.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| "unknown".to_string());
             format!(
                 "Could not open file '{}'. Please check that the file is not locked by another program. Error: {}",
-                path.display(),
+                filename,
                 e
             )
         })?;
@@ -339,9 +453,12 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
             FILE_OPERATION_COUNTER
                 .with_label_values(&["analyze_file", "error"])
                 .inc();
+            let filename = path.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| "unknown".to_string());
             format!(
                 "Could not read file '{}'. The file may be corrupted or too large to process. Error: {}",
-                path.display(),
+                filename,
                 e
             )
         })?;
@@ -382,11 +499,11 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
     // Parse binary format
     let (format_info, sections, imports, exports, anomalies, imphash) = match Object::parse(&buffer) {
         Ok(Object::PE(pe)) => {
-            let (fi, s, i, e, a, ih) = parse_pe(pe, &buffer, path);
+            let (fi, s, i, e, a, ih) = parse_pe(pe, &buffer, &path);
             (fi, s, i, e, a, ih)
         },
         Ok(Object::Elf(elf)) => {
-            let (fi, s, i, e, a) = parse_elf(elf, &buffer, path);
+            let (fi, s, i, e, a) = parse_elf(elf, &buffer, &path);
             (fi, s, i, e, a, None)
         },
         Ok(Object::Mach(mach)) => {
@@ -445,6 +562,9 @@ pub async fn analyze_file(file_path: String) -> Result<FileAnalysisResult, Strin
     FILE_SIZE_HISTOGRAM
         .with_label_values(&["analyze_file"])
         .observe(file_size as f64);
+
+    // Record analysis statistics
+    record_analysis(duration.as_millis() as u64);
 
     Ok(FileAnalysisResult {
         file_info,
@@ -917,7 +1037,9 @@ fn detect_signatures(data: &[u8]) -> Vec<Signature> {
 }
 
 #[tauri::command]
-pub async fn generate_pdf_report(data: serde_json::Value, output_path: String) -> Result<(), String> {
+pub async fn generate_pdf_report(data: serde_json::Value, output_path: SafePathBuf) -> Result<(), String> {
+    // SafePathBuf automatically validates that path doesn't contain ".." to prevent traversal
+    let validated_path = output_path.as_ref();
     use printpdf::*;
     use std::fs::File;
     use std::io::BufWriter;
@@ -945,9 +1067,9 @@ pub async fn generate_pdf_report(data: serde_json::Value, output_path: String) -
     }
     
     current_layer.end_text_section();
-    
+
     // Save the PDF
-    let file = File::create(&output_path).map_err(|e| e.to_string())?;
+    let file = File::create(&validated_path).map_err(|e| e.to_string())?;
     let mut writer = BufWriter::new(file);
     doc.save(&mut writer).map_err(|e| e.to_string())?;
     
@@ -955,10 +1077,13 @@ pub async fn generate_pdf_report(data: serde_json::Value, output_path: String) -
 }
 
 #[tauri::command]
-pub async fn generate_excel_report(data: serde_json::Value, output_path: String) -> Result<(), String> {
+pub async fn generate_excel_report(data: serde_json::Value, output_path: SafePathBuf) -> Result<(), String> {
+    // SafePathBuf automatically validates that path doesn't contain ".." to prevent traversal
+    let validated_path = output_path.as_ref();
+
     use xlsxwriter::*;
-    
-    let workbook = Workbook::new(&output_path).map_err(|e| e.to_string())?;
+
+    let workbook = Workbook::new(validated_path.to_str().ok_or("Invalid path")?).map_err(|e| e.to_string())?;
     let mut sheet = workbook.add_worksheet(Some("Analysis Results")).map_err(|e| e.to_string())?;
     
     // Add headers with simple formatting
@@ -1071,8 +1196,7 @@ pub async fn generate_report(
     let reports_dir = app_data_dir.join("reports");
     std::fs::create_dir_all(&reports_dir)
         .map_err(|e| format!(
-            "Could not create reports directory at '{}'. Please ensure you have write permissions. Error: {}",
-            reports_dir.display(),
+            "Could not create reports directory. Please ensure you have write permissions. Error: {}",
             e
         ))?;
 
@@ -1080,17 +1204,21 @@ pub async fn generate_report(
     let (extension, output_path) = match format.to_lowercase().as_str() {
         "pdf" => {
             let path = reports_dir.join(format!("{}.pdf", file_name));
-            generate_pdf_report(content.clone(), path.to_string_lossy().to_string()).await?;
+            let safe_path = SafePathBuf::new(path.clone())
+                .map_err(|e| format!("Invalid output path: {}", e))?;
+            generate_pdf_report(content.clone(), safe_path).await?;
             ("pdf", path)
         },
         "html" => {
             let path = reports_dir.join(format!("{}.html", file_name));
-            generate_html_report(content.clone(), path.to_string_lossy().to_string()).await?;
+            generate_html_report(content.clone(), path.clone()).await?;
             ("html", path)
         },
         "xlsx" | "excel" => {
             let path = reports_dir.join(format!("{}.xlsx", file_name));
-            generate_excel_report(content.clone(), path.to_string_lossy().to_string()).await?;
+            let safe_path = SafePathBuf::new(path.clone())
+                .map_err(|e| format!("Invalid output path: {}", e))?;
+            generate_excel_report(content.clone(), safe_path).await?;
             ("xlsx", path)
         },
         _ => return Err(format!(
@@ -1114,7 +1242,8 @@ pub async fn generate_report(
 }
 
 /// Generate an HTML report from analysis data
-async fn generate_html_report(data: serde_json::Value, output_path: String) -> Result<(), String> {
+/// Note: output_path must already be validated by the caller
+async fn generate_html_report(data: serde_json::Value, output_path: PathBuf) -> Result<(), String> {
     let metadata = data.get("metadata").cloned().unwrap_or(serde_json::json!({}));
     let sections = data.get("sections").cloned().unwrap_or(serde_json::json!({}));
 
@@ -1164,6 +1293,100 @@ async fn generate_html_report(data: serde_json::Value, output_path: String) -> R
         .map_err(|e| format!("Failed to write HTML report: {}", e))?;
 
     Ok(())
+}
+
+/// Analysis statistics response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AnalysisStats {
+    pub samples_analyzed_today: u64,
+    pub total_samples: u64,
+    pub avg_analysis_time_ms: u64,
+    pub ai_provider_accuracy: f64,
+    pub cache_hit_rate: f64,
+    pub active_analyses: u64,
+}
+
+/// Global analysis counter (thread-safe)
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::OnceLock;
+
+static ANALYSIS_COUNTER: OnceLock<AtomicU64> = OnceLock::new();
+static ANALYSIS_TIME_TOTAL_MS: OnceLock<AtomicU64> = OnceLock::new();
+static AI_REQUESTS_SUCCESS: OnceLock<AtomicU64> = OnceLock::new();
+static AI_REQUESTS_TOTAL: OnceLock<AtomicU64> = OnceLock::new();
+
+fn get_analysis_counter() -> &'static AtomicU64 {
+    ANALYSIS_COUNTER.get_or_init(|| AtomicU64::new(0))
+}
+
+fn get_analysis_time_total() -> &'static AtomicU64 {
+    ANALYSIS_TIME_TOTAL_MS.get_or_init(|| AtomicU64::new(0))
+}
+
+fn get_ai_success_counter() -> &'static AtomicU64 {
+    AI_REQUESTS_SUCCESS.get_or_init(|| AtomicU64::new(0))
+}
+
+fn get_ai_total_counter() -> &'static AtomicU64 {
+    AI_REQUESTS_TOTAL.get_or_init(|| AtomicU64::new(0))
+}
+
+/// Increment analysis counter (call this after each successful analysis)
+pub fn record_analysis(duration_ms: u64) {
+    get_analysis_counter().fetch_add(1, Ordering::SeqCst);
+    get_analysis_time_total().fetch_add(duration_ms, Ordering::SeqCst);
+}
+
+/// Record AI provider request result
+pub fn record_ai_request(success: bool) {
+    get_ai_total_counter().fetch_add(1, Ordering::SeqCst);
+    if success {
+        get_ai_success_counter().fetch_add(1, Ordering::SeqCst);
+    }
+}
+
+/// Get current analysis statistics
+#[tauri::command]
+pub fn get_analysis_stats() -> Result<AnalysisStats, String> {
+    let samples_today = get_analysis_counter().load(Ordering::SeqCst);
+    let total_time = get_analysis_time_total().load(Ordering::SeqCst);
+    let ai_success = get_ai_success_counter().load(Ordering::SeqCst);
+    let ai_total = get_ai_total_counter().load(Ordering::SeqCst);
+
+    let avg_time = if samples_today > 0 {
+        total_time / samples_today
+    } else {
+        0
+    };
+
+    // Calculate AI provider success rate (accuracy proxy)
+    let ai_accuracy = if ai_total > 0 {
+        (ai_success as f64 / ai_total as f64) * 100.0
+    } else {
+        0.0 // No AI requests yet
+    };
+
+    // Get cache hit rate from cache stats
+    let cache_hit_rate = match ai_analysis::get_cache_stats() {
+        Ok(stats) => {
+            let total = stats.hits + stats.misses;
+            if total > 0 {
+                (stats.hits as f64 / total as f64) * 100.0
+            } else {
+                0.0 // No cache operations yet
+            }
+        }
+        Err(_) => 0.0, // Cache unavailable or error, default to 0
+    };
+
+    Ok(AnalysisStats {
+        samples_analyzed_today: samples_today,
+        total_samples: samples_today, // In production, load from DB
+        avg_analysis_time_ms: avg_time,
+        ai_provider_accuracy: ai_accuracy,
+        cache_hit_rate,
+        active_analyses: 0,
+    })
 }
 
 #[cfg(test)]

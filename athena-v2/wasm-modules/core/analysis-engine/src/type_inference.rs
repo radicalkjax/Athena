@@ -35,6 +35,8 @@ pub struct TypeInference {
     type_map: HashMap<String, InferredType>,
     /// Constraints collected during analysis
     constraints: Vec<TypeConstraint>,
+    /// Variable -> Known constant value mapping (from constant propagation)
+    value_map: HashMap<String, i64>,
 }
 
 #[derive(Clone, Debug)]
@@ -66,6 +68,7 @@ impl TypeInference {
         Self {
             type_map: HashMap::new(),
             constraints: Vec::new(),
+            value_map: HashMap::new(),
         }
     }
 
@@ -83,6 +86,11 @@ impl TypeInference {
     fn collect_constraints(&mut self, stmt: &IRStmt) {
         match stmt {
             IRStmt::Assign { dest, value } => {
+                // Track constant values for pointer detection
+                if let IRValue::Const(c) = value {
+                    self.value_map.insert(dest.name.clone(), *c);
+                }
+
                 // Infer type from value
                 let value_type = self.infer_value_type(value);
                 self.set_type(&dest.name, value_type);
@@ -284,9 +292,61 @@ impl TypeInference {
         }
     }
 
-    fn is_likely_pointer(&self, _var: &str) -> Option<bool> {
-        // Heuristic: check if value is in typical address range
-        // TODO: Implement based on actual values
+    fn is_likely_pointer(&self, var: &str) -> Option<bool> {
+        // Check if we have a known value for this variable
+        let value = self.value_map.get(var)?;
+
+        // Convert to unsigned for address range checking
+        let addr = *value as u64;
+
+        // Typical address ranges (heuristic-based detection):
+
+        // 1. Very small values (0-4095) are likely null or small integers, not pointers
+        if addr < 0x1000 {
+            return Some(false);
+        }
+
+        // 2. x86 32-bit typical ranges
+        // Code section: 0x00400000 - 0x01000000
+        // Heap: 0x01000000 - 0x80000000
+        // Stack: 0xbf000000 - 0xc0000000
+        if addr >= 0x00400000 && addr < 0xc0000000 {
+            return Some(true);
+        }
+
+        // 3. x64 typical user-space ranges
+        // Code/data: 0x0000000000400000 - 0x0000800000000000
+        // Stack (Linux): 0x00007fff00000000 - 0x00007fffffffffff
+        // Heap: varies, typically in lower addresses
+        if addr >= 0x0000000000400000 && addr < 0x0000800000000000 {
+            return Some(true);
+        }
+
+        // Stack range (x64 Linux/BSD)
+        if addr >= 0x00007fff00000000 && addr <= 0x00007fffffffffff {
+            return Some(true);
+        }
+
+        // 4. Windows x64 typical ranges
+        // User-space: 0x0000000000010000 - 0x00007fffffffffff
+        // Image base often: 0x0000000140000000
+        if addr >= 0x0000000000010000 && addr < 0x0000800000000000 {
+            return Some(true);
+        }
+
+        // 5. Kernel addresses (invalid for userspace - definitely not valid pointers)
+        // x64 kernel: 0xffff800000000000 and above
+        if addr >= 0xffff800000000000 {
+            return Some(false);
+        }
+
+        // 6. If we're in middle ranges that are uncommon for addresses
+        // but too large to be typical integers, lean towards pointer
+        if addr >= 0x10000 {
+            return Some(true);
+        }
+
+        // Unknown - value doesn't fit clear patterns
         None
     }
 
@@ -368,5 +428,128 @@ mod tests {
             ti.format_type(&InferredType::Pointer(Box::new(InferredType::Integer(IntegerType::U8)))),
             "uint8_t*"
         );
+    }
+
+    #[test]
+    fn test_pointer_detection_small_values() {
+        let mut ti = TypeInference::new();
+
+        // NULL and small values should not be pointers
+        ti.value_map.insert("v1".to_string(), 0);
+        ti.value_map.insert("v2".to_string(), 1);
+        ti.value_map.insert("v3".to_string(), 42);
+        ti.value_map.insert("v4".to_string(), 0xfff);
+
+        assert_eq!(ti.is_likely_pointer("v1"), Some(false));
+        assert_eq!(ti.is_likely_pointer("v2"), Some(false));
+        assert_eq!(ti.is_likely_pointer("v3"), Some(false));
+        assert_eq!(ti.is_likely_pointer("v4"), Some(false));
+    }
+
+    #[test]
+    fn test_pointer_detection_x86_32bit() {
+        let mut ti = TypeInference::new();
+
+        // Typical x86 32-bit code section
+        ti.value_map.insert("v1".to_string(), 0x00400000);
+        ti.value_map.insert("v2".to_string(), 0x00401234);
+
+        // Heap
+        ti.value_map.insert("v3".to_string(), 0x01000000);
+        ti.value_map.insert("v4".to_string(), 0x12345678);
+
+        // Stack
+        ti.value_map.insert("v5".to_string(), 0xbf000000 as i64);
+        ti.value_map.insert("v6".to_string(), 0xbfffffff as i64);
+
+        assert_eq!(ti.is_likely_pointer("v1"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v2"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v3"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v4"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v5"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v6"), Some(true));
+    }
+
+    #[test]
+    fn test_pointer_detection_x64() {
+        let mut ti = TypeInference::new();
+
+        // Typical x64 code section
+        ti.value_map.insert("v1".to_string(), 0x0000000000400000);
+        ti.value_map.insert("v2".to_string(), 0x0000555555554000);
+
+        // Heap
+        ti.value_map.insert("v3".to_string(), 0x0000000001000000);
+
+        // Stack (Linux x64)
+        ti.value_map.insert("v4".to_string(), 0x00007fff00000000u64 as i64);
+        ti.value_map.insert("v5".to_string(), 0x00007ffffffffffff0u64 as i64);
+
+        // Windows typical image base
+        ti.value_map.insert("v6".to_string(), 0x0000000140000000);
+
+        assert_eq!(ti.is_likely_pointer("v1"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v2"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v3"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v4"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v5"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v6"), Some(true));
+    }
+
+    #[test]
+    fn test_pointer_detection_kernel_addresses() {
+        let mut ti = TypeInference::new();
+
+        // Kernel addresses should be detected as non-pointers (invalid for userspace)
+        ti.value_map.insert("v1".to_string(), 0xffff800000000000u64 as i64);
+        ti.value_map.insert("v2".to_string(), 0xffffffffffffffffu64 as i64);
+
+        assert_eq!(ti.is_likely_pointer("v1"), Some(false));
+        assert_eq!(ti.is_likely_pointer("v2"), Some(false));
+    }
+
+    #[test]
+    fn test_pointer_detection_unknown_variable() {
+        let ti = TypeInference::new();
+
+        // Variable not in value_map should return None
+        assert_eq!(ti.is_likely_pointer("unknown"), None);
+    }
+
+    #[test]
+    fn test_pointer_detection_medium_values() {
+        let mut ti = TypeInference::new();
+
+        // Values above 0x10000 but not clearly in OS-specific ranges
+        // should lean towards being pointers
+        ti.value_map.insert("v1".to_string(), 0x10000);
+        ti.value_map.insert("v2".to_string(), 0x20000);
+        ti.value_map.insert("v3".to_string(), 0x100000);
+
+        assert_eq!(ti.is_likely_pointer("v1"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v2"), Some(true));
+        assert_eq!(ti.is_likely_pointer("v3"), Some(true));
+    }
+
+    #[test]
+    fn test_constant_value_tracking() {
+        let mut ti = TypeInference::new();
+
+        // Test that constant assignments are tracked
+        let statements = vec![
+            IRStmt::Assign {
+                dest: IRVar::new("ptr1".to_string(), 8),
+                value: IRValue::Const(0x0000555555554000),
+            },
+            IRStmt::Assign {
+                dest: IRVar::new("small".to_string(), 4),
+                value: IRValue::Const(42),
+            },
+        ];
+
+        ti.infer_types(&statements);
+
+        assert_eq!(ti.value_map.get("ptr1"), Some(&0x0000555555554000));
+        assert_eq!(ti.value_map.get("small"), Some(&42));
     }
 }

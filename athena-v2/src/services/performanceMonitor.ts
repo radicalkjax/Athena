@@ -5,6 +5,16 @@ interface PerformanceMetric {
   timestamp: number;
 }
 
+interface PerformanceMemory {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
+interface ExtendedPerformance extends Performance {
+  memory?: PerformanceMemory;
+}
+
 interface PerformanceSnapshot {
   id: string;
   timestamp: number;
@@ -64,20 +74,22 @@ class PerformanceMonitor {
 
     // Capture memory usage (if available)
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      metrics.push({
-        name: 'JS Heap Size',
-        value: memory.usedJSHeapSize,
-        unit: 'bytes',
-        timestamp,
-      });
+      const extendedPerf = performance as ExtendedPerformance;
+      if (extendedPerf.memory) {
+        metrics.push({
+          name: 'JS Heap Size',
+          value: extendedPerf.memory.usedJSHeapSize,
+          unit: 'bytes',
+          timestamp,
+        });
 
-      metrics.push({
-        name: 'JS Heap Limit',
-        value: memory.jsHeapSizeLimit,
-        unit: 'bytes',
-        timestamp,
-      });
+        metrics.push({
+          name: 'JS Heap Limit',
+          value: extendedPerf.memory.jsHeapSizeLimit,
+          unit: 'bytes',
+          timestamp,
+        });
+      }
     }
 
     // Capture navigation timing
@@ -128,12 +140,14 @@ class PerformanceMonitor {
   // Get memory usage
   private getMemoryUsage(): PerformanceSnapshot['memoryUsage'] {
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      return {
-        heapTotal: memory.totalJSHeapSize || 0,
-        heapUsed: memory.usedJSHeapSize || 0,
-        external: memory.jsHeapSizeLimit || 0,
-      };
+      const extendedPerf = performance as ExtendedPerformance;
+      if (extendedPerf.memory) {
+        return {
+          heapTotal: extendedPerf.memory.totalJSHeapSize || 0,
+          heapUsed: extendedPerf.memory.usedJSHeapSize || 0,
+          external: extendedPerf.memory.jsHeapSizeLimit || 0,
+        };
+      }
     }
 
     return {

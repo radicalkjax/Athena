@@ -230,11 +230,25 @@
   margin-bottom: 8px;
   cursor: grab;
   transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .palette-node:hover {
   background: rgba(255, 107, 157, 0.1);
   border-color: var(--barbie-pink);
+}
+
+.palette-node.selected {
+  background: rgba(255, 107, 157, 0.3);
+  border-color: var(--barbie-pink);
+  box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+}
+
+.palette-node:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+  opacity: 0.8;
 }
 
 .palette-node.condition {
@@ -268,11 +282,34 @@
   flex: 1;
   position: relative;
   background: var(--panel-bg);
-  background-image: 
+  background-image:
     linear-gradient(rgba(255, 107, 157, 0.1) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 107, 157, 0.1) 1px, transparent 1px);
   background-size: 50px 50px;
   overflow: auto;
+  min-height: 400px;
+  min-width: 400px;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.workflow-canvas.drag-over,
+.workflow-canvas.placing-node {
+  background-color: rgba(255, 107, 157, 0.05);
+  border: 2px dashed var(--barbie-pink);
+  cursor: crosshair;
+}
+
+.workflow-canvas.drag-over::after {
+  content: 'Drop node here';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--barbie-pink);
+  font-size: 18px;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0.7;
 }
 
 .connections-svg {
@@ -283,6 +320,7 @@
   height: 100%;
   pointer-events: none;
   z-index: 1;
+  overflow: visible;
 }
 
 .workflow-node {
@@ -290,7 +328,8 @@
   background: var(--secondary-bg);
   border: 2px solid rgba(255, 107, 157, 0.3);
   border-radius: 8px;
-  min-width: 150px;
+  width: 150px;
+  height: 70px;
   cursor: move;
   z-index: 2;
   transition: border-color 0.2s;
@@ -301,11 +340,18 @@
   box-shadow: 0 0 20px rgba(255, 107, 157, 0.3);
 }
 
+.workflow-node.dragging {
+  opacity: 0.9;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  cursor: grabbing;
+}
+
 .node-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
+  padding: 8px 12px;
   background: rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid rgba(255, 107, 157, 0.2);
   border-radius: 6px 6px 0 0;
@@ -331,40 +377,77 @@
   justify-content: center;
 }
 
-.node-ports {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-}
-
-.input-ports, .output-ports {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.port {
-  width: 12px;
-  height: 12px;
+/* Connection dots on all four sides */
+.connector {
+  position: absolute;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #666;
-  border: 2px solid #333;
-  cursor: pointer;
+  border: 2px solid #444;
+  cursor: crosshair;
   transition: all 0.2s;
+  z-index: 10;
 }
 
-.port.input {
-  margin-left: -16px;
-}
-
-.port.output {
-  margin-right: -16px;
-}
-
-.port:hover {
+.connector:hover {
   background: var(--barbie-pink);
   border-color: var(--barbie-pink);
-  transform: scale(1.2);
+  transform: scale(1.3);
+  box-shadow: 0 0 10px rgba(255, 107, 157, 0.6);
+}
+
+.connector-top {
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.connector-right {
+  right: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.connector-bottom {
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.connector-left {
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.connector-top:hover {
+  transform: translateX(-50%) scale(1.3);
+}
+
+.connector-right:hover {
+  transform: translateY(-50%) scale(1.3);
+}
+
+.connector-bottom:hover {
+  transform: translateX(-50%) scale(1.3);
+}
+
+.connector-left:hover {
+  transform: translateY(-50%) scale(1.3);
+}
+
+/* Node body */
+.node-body {
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.node-type-badge {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .node-config {

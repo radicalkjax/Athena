@@ -217,8 +217,53 @@
 
 /* Config panels now use global scrollbar styling */
 
+/* Platform Monitoring Sidebar */
+.platform-sidebar {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.stats-grid .stat-card {
+  padding: 12px;
+  background: var(--code-bg);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.stats-grid .stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--barbie-pink);
+}
+
+.stats-grid .stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
 @media (max-width: 1024px) {
   .config-grid {
     grid-template-columns: 1fr;
+  }
+
+  .platform-sidebar {
+    position: static;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

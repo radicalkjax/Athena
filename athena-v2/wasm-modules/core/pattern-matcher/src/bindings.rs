@@ -2106,12 +2106,12 @@ mod _rt {
         let layout = alloc::Layout::from_size_align_unchecked(size, align);
         alloc::dealloc(ptr, layout);
     }
+    // SAFETY NOTE: Modified from generated code to prevent panics on invalid UTF-8.
+    // For malware analysis, we must handle potentially malicious/corrupted data gracefully.
     pub unsafe fn string_lift(bytes: Vec<u8>) -> String {
-        if cfg!(debug_assertions) {
-            String::from_utf8(bytes).unwrap()
-        } else {
-            String::from_utf8_unchecked(bytes)
-        }
+        String::from_utf8(bytes).unwrap_or_else(|e| {
+            String::from_utf8_lossy(&e.into_bytes()).into_owned()
+        })
     }
     pub fn as_i64<T: AsI64>(t: T) -> i64 {
         t.as_i64()

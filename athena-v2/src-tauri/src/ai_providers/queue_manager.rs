@@ -45,14 +45,12 @@ impl QueueManager {
     }
 
     /// Get current queue size for a provider
-    #[allow(dead_code)]
     pub async fn get_queue_size(&self, provider: &str) -> usize {
         let counts = self.pending_counts.read().await;
         counts.get(provider).copied().unwrap_or(0)
     }
 
     /// Reset queue size for a provider (useful for error recovery)
-    #[allow(dead_code)]
     pub async fn reset_queue(&self, provider: &str) {
         let mut counts = self.pending_counts.write().await;
         counts.insert(provider.to_string(), 0);

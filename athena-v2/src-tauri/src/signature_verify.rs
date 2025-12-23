@@ -64,15 +64,11 @@ pub fn verify_pe_signature(file_path: &Path, data: &[u8]) -> Result<SignatureInf
         .as_ref()
         .and_then(|opt| opt.data_directories.get_certificate_table());
 
-    // If no certificate table, return unsigned
-    if cert_table.is_none() {
-        return Ok(SignatureInfo::default());
-    }
-
-    let cert_table = cert_table.unwrap();
-    if cert_table.virtual_address == 0 || cert_table.size == 0 {
-        return Ok(SignatureInfo::default());
-    }
+    // If no certificate table or empty, return unsigned
+    let cert_table = match cert_table {
+        Some(table) if table.virtual_address != 0 && table.size != 0 => table,
+        _ => return Ok(SignatureInfo::default()),
+    };
 
     // Extract certificate data
     let cert_offset = cert_table.virtual_address as usize;

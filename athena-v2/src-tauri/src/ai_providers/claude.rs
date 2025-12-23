@@ -1,4 +1,4 @@
-use super::{AIProvider, AIProviderConfig, AnalysisRequest, AnalysisResponse, IOCs, ThreatLevel};
+use super::{AIProvider, AIProviderConfig, AnalysisRequest, AnalysisResponse, IOCs, ThreatLevel, ModelInfo, register_circuit_breaker};
 use crate::ai_providers::circuit_breaker::CircuitBreaker;
 use crate::ai_providers::retry::{RetryConfig, with_retry};
 use crate::metrics::{AI_REQUEST_DURATION, AI_REQUEST_COUNTER, AI_TOKEN_USAGE, AI_COST_ESTIMATE};
@@ -7,12 +7,13 @@ use chrono::Utc;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::sync::Arc;
 use std::time::Instant;
 
 pub struct ClaudeProvider {
     config: AIProviderConfig,
     client: Client,
-    circuit_breaker: CircuitBreaker,
+    circuit_breaker: Arc<CircuitBreaker>,
     retry_config: RetryConfig,
 }
 
@@ -53,7 +54,13 @@ impl ClaudeProvider {
             .build()
             .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
 
-        let circuit_breaker = CircuitBreaker::new_with_name("claude".to_string(), 3, 2, 60);
+        let circuit_breaker = Arc::new(CircuitBreaker::new_with_name("claude".to_string(), 3, 2, 60));
+
+        // Register with global registry (spawn to avoid blocking)
+        let breaker_clone = circuit_breaker.clone();
+        tokio::spawn(async move {
+            register_circuit_breaker("claude", breaker_clone).await;
+        });
 
         // Configure retry with 5 attempts, 1s initial delay, exponential backoff
         let retry_config = RetryConfig {
@@ -308,7 +315,7 @@ impl AIProvider for ClaudeProvider {
             temperature: 0.0,
             system: "Reply with 'OK'".to_string(),
         };
-        
+
         let base_url = self.config.base_url.as_deref().unwrap_or("https://api.anthropic.com");
         let response = self.client
             .post(format!("{}/v1/messages", base_url))
@@ -320,6 +327,76 @@ impl AIProvider for ClaudeProvider {
             .await?;
 
         Ok(response.status().is_success())
+    }
+
+    async fn list_models(&self) -> Result<Vec<ModelInfo>, Box<dyn Error + Send + Sync>> {
+        let base_url = self.config.base_url.as_deref().unwrap_or("https://api.anthropic.com");
+        let response = self.client
+            .get(format!("{}/v1/models", base_url))
+            .header("x-api-key", &self.config.api_key)
+            .header("anthropic-version", "2023-06-01")
+            .send()
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
+
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to fetch Claude models: {}", error_text)
+            )));
+        }
+
+        let models_response: ClaudeModelsResponse = response.json().await
+            .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
+
+        let mut models: Vec<ModelInfo> = models_response.data
+            .into_iter()
+            .map(|m| ModelInfo {
+                id: m.id.clone(),
+                name: m.display_name.unwrap_or_else(|| format_claude_model_name(&m.id)),
+                description: Some(format!("Anthropic Claude model created {}", m.created_at.unwrap_or_default())),
+                context_window: None, // API doesn't return this, could be added via lookup
+                max_output_tokens: None,
+            })
+            .collect();
+
+        models.sort_by(|a, b| b.id.cmp(&a.id)); // Sort descending so newest models first
+        Ok(models)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct ClaudeModelsResponse {
+    data: Vec<ClaudeModelData>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ClaudeModelData {
+    id: String,
+    display_name: Option<String>,
+    created_at: Option<String>,
+}
+
+fn format_claude_model_name(id: &str) -> String {
+    // Convert claude-3-5-sonnet-20241022 to "Claude 3.5 Sonnet"
+    let parts: Vec<&str> = id.split('-').collect();
+    if parts.len() >= 4 && parts[0] == "claude" {
+        let version = if parts[2] == "5" {
+            format!("{}.{}", parts[1], parts[2])
+        } else {
+            parts[1].to_string()
+        };
+        let model_type = parts.get(3).map(|s| {
+            let mut chars = s.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().chain(chars).collect(),
+            }
+        }).unwrap_or_default();
+        format!("Claude {} {}", version, model_type)
+    } else {
+        id.to_string()
     }
 }
 

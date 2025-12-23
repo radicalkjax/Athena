@@ -7,7 +7,13 @@
 
 ## Overview
 
-Athena's WebAssembly (WASM) architecture provides military-grade security isolation for malware analysis while maintaining exceptional performance. The platform implements 7 security-critical WASM modules that work together to create a comprehensive malware analysis environment.
+Athena's WebAssembly (WASM) architecture provides military-grade security isolation for malware analysis while maintaining exceptional performance. Built as a **Tauri 2.0 desktop application** with a Rust backend, the platform implements 7 security-critical WASM modules using the **Wasmtime 29.0 Component Model** that work together to create a comprehensive malware analysis environment.
+
+**Architecture**: Tauri 2.0 desktop application (no web/React Native)
+**WASM Runtime**: Wasmtime 29.0 with Component Model (WASI Preview 2)
+**Backend**: Rust with embedded axum API server (port 3000)
+**Frontend**: SolidJS with TypeScript
+**Status**: December 2025 - In Development
 
 ## Key Achievements
 
@@ -43,7 +49,7 @@ Athena's WebAssembly (WASM) architecture provides military-grade security isolat
 }}%%
 graph TB
     subgraph "Frontend Layer"
-        UI[React Native UI]
+        UI[Tauri 2.0 Desktop UI<br/>SolidJS Frontend]
         Bridge[WASM Bridge Layer]
     end
     
@@ -316,49 +322,126 @@ graph TD
 
 ### Initialization
 
-```typescript
-import { initializeWASMModules } from '@/services/analysisService';
+WASM modules are initialized automatically when the Tauri application starts via the embedded Rust backend:
 
-// Initialize all WASM modules on app start
-await initializeWASMModules();
+```rust
+// In main.rs - automatic initialization on startup
+tauri::async_runtime::spawn(async move {
+    println!("Initializing WASM runtime...");
+    match crate::commands::wasm_runtime::initialize_wasm_runtime(
+        init_handle.state()
+    ).await {
+        Ok(msg) => println!("{}", msg),
+        Err(e) => eprintln!("Failed to initialize WASM runtime: {}", e),
+    }
+
+    // Load security modules
+    println!("Loading WASM security modules...");
+    match crate::commands::wasm_file_bridge::load_wasm_security_modules(
+        init_handle.state()
+    ).await {
+        Ok(modules) => println!("Loaded {} WASM modules: {:?}", modules.len(), modules),
+        Err(e) => eprintln!("Failed to load WASM modules: {}", e),
+    }
+});
+```
+
+Frontend can also initialize via Tauri commands:
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+// Initialize WASM runtime
+await invoke('initialize_wasm_runtime');
+
+// Load security modules
+const modules = await invoke('load_wasm_security_modules');
+console.log('Loaded modules:', modules);
 ```
 
 ### Using Individual Modules
 
+WASM modules are accessed through Tauri commands that invoke Wasmtime Component Model instances:
+
 ```typescript
-import { 
-  AnalysisEngineBridge,
-  CryptoBridge,
-  NetworkBridge,
-  SandboxBridge 
-} from '@/wasm-modules/bridge';
+import { invoke } from '@tauri-apps/api/core';
 
-// Get module instances
-const analysis = AnalysisEngineBridge.getInstance();
-const crypto = CryptoBridge.getInstance();
-const network = NetworkBridge.getInstance();
-const sandbox = SandboxBridge.getInstance();
+// Analyze file with WASM modules
+const result = await invoke('analyze_file_with_wasm', {
+  path: filePath
+});
 
-// Use modules
-const result = await analysis.analyzeCode(suspiciousCode);
-const hash = await crypto.hashData(data, 'SHA-256');
-const traffic = await network.analyzePacket(packetData);
-const exec = await sandbox.executeCode(untrustedCode);
+// Execute specific WASM function
+const output = await invoke('execute_wasm_function', {
+  moduleId: 'crypto',
+  functionName: 'hash_data',
+  args: [data, 'SHA-256']
+});
+
+// Get WASM module metrics
+const metrics = await invoke('get_wasm_metrics', {
+  moduleId: 'analysis-engine'
+});
+```
+
+Or via the embedded HTTP API server (port 3000):
+
+```bash
+# Analyze file
+curl -X POST http://localhost:3000/api/v1/wasm/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"file_path": "/path/to/file"}'
+
+# Execute WASM function
+curl -X POST http://localhost:3000/api/v1/wasm/execute \
+  -H "Content-Type: application/json" \
+  -d '{"module_id": "crypto", "function_name": "hash_data", "args": ["data", "SHA-256"]}'
 ```
 
 ### Error Handling
 
-All WASM modules use consistent error handling:
+All WASM modules use consistent error handling via Rust `Result` types:
 
 ```typescript
+import { invoke } from '@tauri-apps/api/core';
+
 try {
-  const result = await module.operation(data);
+  const result = await invoke('execute_wasm_function', {
+    moduleId: 'analysis-engine',
+    functionName: 'analyze_code',
+    args: [code]
+  });
 } catch (error) {
-  if (error.code === 'WASM_MEMORY_ERROR') {
-    // Handle memory allocation failure
-  } else if (error.code === 'WASM_TIMEOUT') {
-    // Handle execution timeout
-  }
+  // Error string returned from Rust backend
+  console.error('WASM operation failed:', error);
+
+  // Common error patterns:
+  // - "WASM memory limit exceeded"
+  // - "WASM fuel exhausted (timeout)"
+  // - "Module not loaded"
+  // - "Function not found"
+}
+```
+
+Rust backend error handling:
+
+```rust
+// All Tauri commands return Result<T, String>
+#[tauri::command]
+pub async fn execute_wasm_function(
+    runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
+    module_id: String,
+    function_name: String,
+    args: Vec<serde_json::Value>,
+) -> Result<serde_json::Value, String> {
+    // Proper error propagation with ?
+    let mut rt = runtime.lock()
+        .map_err(|e| format!("Runtime lock error: {}", e))?;
+
+    rt.as_mut()
+        .ok_or("WASM runtime not initialized")?
+        .execute_function(&module_id, &function_name, args)
+        .map_err(|e| format!("Execution failed: {}", e))
 }
 ```
 
@@ -366,11 +449,24 @@ try {
 
 ### Module Loading
 
-Modules are lazy-loaded to improve startup time:
+Modules are loaded via Wasmtime Component Model during application startup or on-demand:
+
+```rust
+// Automatic loading on startup (main.rs)
+match crate::commands::wasm_file_bridge::load_wasm_security_modules(
+    init_handle.state()
+).await {
+    Ok(modules) => println!("Loaded {} WASM modules", modules.len()),
+    Err(e) => eprintln!("Failed to load WASM modules: {}", e),
+}
+```
 
 ```typescript
-// Modules load on first use
-const crypto = CryptoBridge.getInstance(); // Loads crypto.wasm
+// Or load on-demand from frontend
+import { invoke } from '@tauri-apps/api/core';
+
+const modules = await invoke('load_wasm_security_modules');
+// Returns: ["analysis-engine", "crypto", "deobfuscator", ...]
 ```
 
 ### Memory Management
@@ -389,18 +485,23 @@ const crypto = CryptoBridge.getInstance(); // Loads crypto.wasm
 
 ### Building Modules
 
+All modules use the Wasmtime Component Model with `cargo-component`:
+
 ```bash
 # Build individual module
-cd wasm-modules/core/[module-name]
-wasm-pack build --target web
+cd athena-v2/wasm-modules/core/[module-name]
+cargo component build --release
 
 # Build all modules
-cd wasm-modules
-./build-all.sh
+cd athena-v2/wasm-modules/core
+for module in analysis-engine crypto deobfuscator disassembler file-processor network pattern-matcher sandbox security; do
+  cd $module && cargo component build --release && cd ..
+done
 
-# Optimize for production
-wasm-opt -O3 -o optimized.wasm pkg/module_bg.wasm
+# Output: target/wasm32-wasip2/release/[module].wasm
 ```
+
+The built `.wasm` files are loaded by Wasmtime at runtime with Component Model bindings.
 
 ### Testing
 

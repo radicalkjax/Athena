@@ -218,6 +218,9 @@ fn convert_technique_to_wit(technique: &ObfuscationTechnique) -> exports::athena
         ObfuscationTechnique::XorEncryption { key } => WitTech::XorEncryption(key.clone()),
         ObfuscationTechnique::Rc4Encryption => WitTech::Rc4Encryption,
         ObfuscationTechnique::SimpleSubstitution => WitTech::SimpleSubstitution,
+        ObfuscationTechnique::AesEncryption => WitTech::BinaryEncrypted, // Map to generic binary encrypted
+        ObfuscationTechnique::DesEncryption => WitTech::BinaryEncrypted, // Map to generic binary encrypted
+        ObfuscationTechnique::CryptoConstants { algorithm } => WitTech::CustomEncoding(format!("crypto:{}", algorithm)),
         ObfuscationTechnique::JsEvalChain => WitTech::JsEvalChain,
         ObfuscationTechnique::JsPackedCode => WitTech::JsPackedCode,
         ObfuscationTechnique::JsObfuscatorIo => WitTech::JsObfuscatorIo,

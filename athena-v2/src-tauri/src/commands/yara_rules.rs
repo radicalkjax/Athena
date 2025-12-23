@@ -1,7 +1,6 @@
 // Additional YARA rule sets for malware detection
-// These can be loaded via load_yara_rules() for extended detection capabilities
+// These are automatically loaded by initialize_yara_scanner()
 
-#[allow(dead_code)]
 pub const RANSOMWARE_RULES: &str = r#"
 rule Generic_Ransomware {
     meta:
@@ -35,7 +34,6 @@ rule Ransomware_Note {
 }
 "#;
 
-#[allow(dead_code)]
 pub const TROJAN_RULES: &str = r#"
 rule Trojan_Generic {
     meta:
@@ -69,7 +67,6 @@ rule Backdoor_Commands {
 }
 "#;
 
-#[allow(dead_code)]
 pub const EXPLOIT_RULES: &str = r#"
 rule Exploit_Shellcode {
     meta:
@@ -99,7 +96,6 @@ rule CVE_Pattern {
 }
 "#;
 
-#[allow(dead_code)]
 pub const PACKER_RULES: &str = r#"
 rule UPX_Packer {
     meta:

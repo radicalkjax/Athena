@@ -73,7 +73,8 @@ node test-api-keys.js
 ```
 
 You should see:
-```
+
+```text
 ✅ CLAUDE_API_KEY is configured
 ✅ DEEPSEEK_API_KEY is configured
 ✅ OPENAI_API_KEY is configured
@@ -109,14 +110,17 @@ You should see:
 ### Provider-Specific Issues
 
 **Claude errors:**
+
 - "x-api-key header is required" - Key not set in .env
 - "Invalid API key" - Check key format (should start with `sk-ant-`)
 
 **OpenAI errors:**
+
 - "You didn't provide an API key" - Key not set in .env
 - "Incorrect API key provided" - Verify key is correct
 
 **DeepSeek errors:**
+
 - "Authentication failed" - Check key validity
 
 ## Cost Optimization
@@ -132,6 +136,6 @@ After configuring API keys:
 
 1. Test file analysis: Upload a test file through the UI
 2. Monitor logs: `docker logs -f athena-api-dev`
-3. Check metrics: Visit http://localhost:9091 (Prometheus)
+3. Check metrics: Visit <http://localhost:9091> (Prometheus)
 
 For support, check the [Issues page](https://github.com/anthropics/claude-code/issues).

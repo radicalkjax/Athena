@@ -1,6 +1,6 @@
 use crate::types::{
     FileFormat, ParsedFile, FileMetadata, FileSection, ProcessorResult, FileProcessorError,
-    SuspiciousIndicator, SuspiciousSeverity, FileIntegrity, EmbeddedFile
+    SuspiciousIndicator, SuspiciousSeverity, FileIntegrity
 };
 use crate::extractor::ContentExtractor;
 use std::collections::HashMap;
@@ -55,8 +55,19 @@ pub fn parse_pe(buffer: &[u8], format: FileFormat) -> ProcessorResult<ParsedFile
         let offset = section.pointer_to_raw_data as usize;
         let size = section.size_of_raw_data as usize;
 
-        // Calculate entropy for this section
-        let section_data = buffer.get(offset as usize..(offset + size) as usize)
+        // Calculate entropy for this section with overflow protection
+        let end = offset.checked_add(size).unwrap_or(usize::MAX);
+        if end > buffer.len() {
+            // Section extends beyond file bounds - skip or use available data
+            suspicious_indicators.push(SuspiciousIndicator {
+                indicator_type: "malformed_section".to_string(),
+                description: format!("Section '{}' extends beyond file bounds", name),
+                severity: SuspiciousSeverity::High,
+                location: Some(format!("Section: {}", name)),
+                evidence: format!("Offset: {:#x}, Size: {:#x}, File size: {:#x}", offset, size, buffer.len()),
+            });
+        }
+        let section_data = buffer.get(offset..end.min(buffer.len()))
             .unwrap_or(&[]);
         let entropy = calculate_entropy(section_data);
 
@@ -144,19 +155,22 @@ pub fn parse_pe(buffer: &[u8], format: FileFormat) -> ProcessorResult<ParsedFile
         }
     }
 
-    // Check for overlay (data after last section)
+    // Check for overlay (data after last section) with overflow protection
     if let Some(last_section) = pe.sections.last() {
-        let last_section_end = (last_section.pointer_to_raw_data + last_section.size_of_raw_data) as usize;
-        if last_section_end < buffer.len() {
-            let overlay_size = buffer.len() - last_section_end;
-            if overlay_size > 1024 { // More than 1KB overlay is suspicious
-                suspicious_indicators.push(SuspiciousIndicator {
-                    indicator_type: "overlay_data".to_string(),
-                    description: format!("PE has {} bytes of overlay data after last section", overlay_size),
-                    severity: SuspiciousSeverity::Medium,
-                    location: Some(format!("Offset: {:#x}", last_section_end)),
-                    evidence: format!("Overlay size: {} bytes", overlay_size),
-                });
+        let offset = last_section.pointer_to_raw_data as usize;
+        let size = last_section.size_of_raw_data as usize;
+        if let Some(last_section_end) = offset.checked_add(size) {
+            if last_section_end < buffer.len() {
+                let overlay_size = buffer.len() - last_section_end;
+                if overlay_size > 1024 { // More than 1KB overlay is suspicious
+                    suspicious_indicators.push(SuspiciousIndicator {
+                        indicator_type: "overlay_data".to_string(),
+                        description: format!("PE has {} bytes of overlay data after last section", overlay_size),
+                        severity: SuspiciousSeverity::Medium,
+                        location: Some(format!("Offset: {:#x}", last_section_end)),
+                        evidence: format!("Overlay size: {} bytes", overlay_size),
+                    });
+                }
             }
         }
     }

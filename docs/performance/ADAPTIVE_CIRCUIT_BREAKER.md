@@ -1,26 +1,37 @@
 # Adaptive Circuit Breaker Implementation
 
+**Last Updated:** December 2025
+**Architecture:** Tauri 2.0 Desktop Application
+**Implementation:** Rust (`src-tauri/src/ai_providers/circuit_breaker.rs`)
+**Status:** In Development
+
 ## Overview
 
-The Athena platform features an enhanced circuit breaker implementation with adaptive thresholds, advanced backoff strategies, and per-endpoint configuration. This provides sophisticated resilience patterns for handling failures in AI services and external dependencies.
+The Athena platform implements a **Rust-based circuit breaker pattern** with automatic failure detection, state management, and recovery testing. The implementation protects AI provider integrations from cascading failures using three states (Closed, Open, HalfOpen) with configurable thresholds and Prometheus metrics integration.
 
-## Key Features
+## Key Features (December 2025)
 
-### 1. Adaptive Thresholds
-- **Response Time Monitoring**: Automatically opens circuit based on degraded performance
-- **Volume-Based Protection**: Requires minimum request volume before opening
-- **Dynamic Adjustment**: Adapts to changing load patterns
+### 1. Rust Implementation
+- **Thread-Safe**: Uses `Arc<RwLock<CircuitState>>` for concurrent access
+- **Atomic Counters**: `AtomicU32` for lock-free failure/success tracking
+- **Type-Safe**: Leverages Rust's type system for state management
+- **Zero-Cost Abstractions**: No runtime overhead
 
-### 2. Advanced Backoff Strategies
-- **Exponential Backoff**: Default strategy with configurable multiplier
-- **Linear Backoff**: Simple incremental delays
-- **Fibonacci Backoff**: Balanced growth pattern
-- **Jitter**: Random variation to prevent thundering herd
+### 2. Three-State Machine
+- **Closed**: Normal operation, tracks failures
+- **Open**: Blocks requests, returns fast-fail errors
+- **HalfOpen**: Tests recovery with limited requests
 
-### 3. Per-Endpoint Configuration
-- Different settings for each AI provider
-- Customized thresholds based on service characteristics
-- Centralized management through factory pattern
+### 3. Automatic Recovery
+- **Failure Threshold**: Opens after 3 consecutive failures
+- **Success Threshold**: Closes after 2 successes in HalfOpen
+- **Reset Timeout**: 30 seconds before HalfOpen retry
+- **Provider-Specific**: Separate circuit per AI provider (Claude, OpenAI, DeepSeek, Gemini, Mistral, Groq)
+
+### 4. Prometheus Metrics
+- **AI_RATE_LIMIT_HITS**: Counter per provider when circuit is open
+- **State Changes**: Logged for monitoring
+- **Failure Counts**: Tracked for alerting
 
 ## Architecture
 

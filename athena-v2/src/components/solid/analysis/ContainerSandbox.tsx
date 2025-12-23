@@ -1,5 +1,6 @@
 import { Component, createSignal, createEffect, onCleanup, For } from 'solid-js';
 import { ContainerService, ContainerInfo, ContainerExecutionResult } from '../../../services/containerService';
+import './ContainerSandbox.css';
 
 interface SandboxState {
   dockerAvailable: boolean;
@@ -9,6 +10,9 @@ interface SandboxState {
   logs: string;
   executing: boolean;
   lastResult?: ContainerExecutionResult;
+  viewingLogsFor?: string;
+  containerLogs: string;
+  loadingLogs: boolean;
 }
 
 const ContainerSandbox: Component = () => {
@@ -18,6 +22,8 @@ const ContainerSandbox: Component = () => {
     containers: [],
     logs: '',
     executing: false,
+    containerLogs: '',
+    loadingLogs: false,
   });
 
   const [command, setCommand] = createSignal('');
@@ -140,38 +146,100 @@ const ContainerSandbox: Component = () => {
       await ContainerService.stopContainer(containerId);
       setState((prev) => ({
         ...prev,
-        logs: prev.logs + `Container ${containerId} stopped\n`,
+        logs: prev.logs + `Container ${containerId.substring(0, 12)} stopped\n`,
       }));
       await refreshContainerList();
     } catch (error) {
       console.error('Failed to stop container:', error);
+      setState((prev) => ({
+        ...prev,
+        logs: prev.logs + `Error stopping container: ${error}\n`,
+      }));
     }
   };
 
   const removeContainer = async (containerId: string) => {
+    const shortId = containerId.substring(0, 12);
+    if (!confirm(`Are you sure you want to remove container ${shortId}?`)) {
+      return;
+    }
+
     try {
       await ContainerService.removeContainer(containerId);
       setState((prev) => ({
         ...prev,
-        logs: prev.logs + `Container ${containerId} removed\n`,
+        logs: prev.logs + `Container ${shortId} removed\n`,
         selectedContainer: prev.selectedContainer?.id === containerId ? undefined : prev.selectedContainer,
+        viewingLogsFor: prev.viewingLogsFor === containerId ? undefined : prev.viewingLogsFor,
       }));
       await refreshContainerList();
     } catch (error) {
       console.error('Failed to remove container:', error);
+      setState((prev) => ({
+        ...prev,
+        logs: prev.logs + `Error removing container: ${error}\n`,
+      }));
     }
   };
 
   const viewLogs = async (containerId: string) => {
     try {
+      setState((prev) => ({ ...prev, loadingLogs: true, viewingLogsFor: containerId }));
       const logs = await ContainerService.getContainerLogs(containerId);
       setState((prev) => ({
         ...prev,
-        logs: prev.logs + `\n=== Container Logs ===\n${logs}\n`,
+        containerLogs: logs || 'No logs available',
+        loadingLogs: false,
       }));
+
+      // Auto-scroll to logs section
+      setTimeout(() => {
+        const logsElement = document.getElementById('container-logs-viewer');
+        if (logsElement) {
+          logsElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
     } catch (error) {
       console.error('Failed to get logs:', error);
+      setState((prev) => ({
+        ...prev,
+        containerLogs: `Error loading logs: ${error}`,
+        loadingLogs: false,
+      }));
     }
+  };
+
+  const closeLogs = () => {
+    setState((prev) => ({ ...prev, viewingLogsFor: undefined, containerLogs: '' }));
+  };
+
+  const copyLogs = () => {
+    navigator.clipboard.writeText(state().containerLogs)
+      .then(() => alert('Logs copied to clipboard'))
+      .catch((error) => console.error('Failed to copy logs:', error));
+  };
+
+  const formatTimestamp = (timestamp: number): string => {
+    const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return `${seconds}s ago`;
+  };
+
+  const getStatusClass = (status: string): string => {
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('running') || statusLower.includes('up')) return 'status-running';
+    if (statusLower.includes('exited')) return 'status-exited';
+    if (statusLower.includes('created')) return 'status-created';
+    return 'status-stopped';
   };
 
   return (
@@ -269,47 +337,93 @@ const ContainerSandbox: Component = () => {
             <h3>Running Containers ({state().containers.length})</h3>
             <div class="container-list">
               <For each={state().containers} fallback={<p>No containers running</p>}>
-                {(container) => (
-                  <div class="container-item">
-                    <div class="container-info">
-                      <strong>{container.name}</strong>
-                      <span class="container-id">{container.id.substring(0, 12)}</span>
-                      <span class="container-image">{container.image}</span>
-                      <span class={`container-status ${container.status.toLowerCase()}`}>
-                        {container.status}
-                      </span>
+                {(container) => {
+                  const isRunning = container.status.toLowerCase().includes('running') ||
+                                   container.status.toLowerCase().includes('up');
+                  const isStopped = container.status.toLowerCase().includes('exited') ||
+                                   container.status.toLowerCase().includes('created');
+
+                  return (
+                    <div class="container-item">
+                      <div class="container-info">
+                        <div class="container-header">
+                          <strong>{container.name}</strong>
+                          <span class="container-id" title={container.id}>
+                            {container.id.substring(0, 12)}
+                          </span>
+                        </div>
+                        <div class="container-details">
+                          <span class="container-image" title={container.image}>
+                            {container.image}
+                          </span>
+                          <span class={`container-status ${getStatusClass(container.status)}`}>
+                            {container.status}
+                          </span>
+                          <span class="container-created" title={new Date(container.created * 1000).toLocaleString()}>
+                            {formatTimestamp(container.created)}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="container-actions">
+                        <button
+                          onClick={() => setState((prev) => ({ ...prev, selectedContainer: container }))}
+                          class="btn-small"
+                          disabled={!isRunning}
+                          title={isRunning ? "Select this container for command execution" : "Container must be running"}
+                        >
+                          Select
+                        </button>
+                        <button
+                          onClick={() => viewLogs(container.id)}
+                          class="btn-small btn-info"
+                        >
+                          View Logs
+                        </button>
+                        {isRunning && (
+                          <button
+                            onClick={() => stopContainer(container.id)}
+                            class="btn-small btn-warning"
+                          >
+                            Stop
+                          </button>
+                        )}
+                        {isStopped && (
+                          <button
+                            onClick={() => removeContainer(container.id)}
+                            class="btn-small btn-danger"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div class="container-actions">
-                      <button
-                        onClick={() => setState((prev) => ({ ...prev, selectedContainer: container }))}
-                        class="btn-small"
-                      >
-                        Select
-                      </button>
-                      <button
-                        onClick={() => viewLogs(container.id)}
-                        class="btn-small"
-                      >
-                        Logs
-                      </button>
-                      <button
-                        onClick={() => stopContainer(container.id)}
-                        class="btn-small btn-warning"
-                      >
-                        Stop
-                      </button>
-                      <button
-                        onClick={() => removeContainer(container.id)}
-                        class="btn-small btn-danger"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  );
+                }}
               </For>
             </div>
           </div>
+
+          {/* Container Logs Viewer */}
+          {state().viewingLogsFor && (
+            <div class="card" id="container-logs-viewer">
+              <div class="logs-header">
+                <h3>Container Logs - {state().containers.find(c => c.id === state().viewingLogsFor)?.name || state().viewingLogsFor?.substring(0, 12)}</h3>
+                <div class="logs-actions">
+                  <button onClick={copyLogs} class="btn-small" disabled={state().loadingLogs}>
+                    Copy Logs
+                  </button>
+                  <button onClick={closeLogs} class="btn-small">
+                    Close
+                  </button>
+                </div>
+              </div>
+              {state().loadingLogs ? (
+                <div class="logs-loading">Loading logs...</div>
+              ) : (
+                <pre class="logs-output logs-container-viewer">{state().containerLogs}</pre>
+              )}
+            </div>
+          )}
 
           {/* Logs */}
           <div class="card">

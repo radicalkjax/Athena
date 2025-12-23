@@ -110,7 +110,7 @@ impl CircuitBreaker {
                     self.last_failure_time.store(
                         std::time::SystemTime::now()
                             .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap()
+                            .unwrap_or(std::time::Duration::from_secs(0))
                             .as_secs(),
                         Ordering::SeqCst,
                     );
@@ -131,21 +131,10 @@ impl CircuitBreaker {
         self.success_count.store(0, Ordering::SeqCst);
     }
 
-    #[allow(dead_code)]
     pub async fn is_open(&self) -> bool {
         matches!(*self.state.read().await, CircuitState::Open(_))
     }
 
-    /// Get the current state as a string for status reporting
-    pub async fn get_state_string(&self) -> String {
-        match *self.state.read().await {
-            CircuitState::Closed => "closed".to_string(),
-            CircuitState::Open(_) => "open".to_string(),
-            CircuitState::HalfOpen => "half_open".to_string(),
-        }
-    }
-
-    #[allow(dead_code)]
     pub async fn reset(&self) {
         let mut state = self.state.write().await;
         *state = CircuitState::Closed;

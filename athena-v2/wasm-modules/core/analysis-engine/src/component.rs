@@ -99,6 +99,13 @@ impl exports::athena::analysis_engine::analyzer::Guest for Component {
 
 impl exports::athena::analysis_engine::pattern_matcher::Guest for Component {
     fn scan(content: Vec<u8>) -> Vec<exports::athena::analysis_engine::pattern_matcher::PatternMatch> {
+        // Security: Validate input size
+        const MAX_INPUT_SIZE: usize = 100 * 1024 * 1024; // 100MB
+        if content.len() > MAX_INPUT_SIZE {
+            // Return empty vec for oversized input rather than panicking
+            return Vec::new();
+        }
+
         let pattern_matcher = PatternMatcher::new();
         let matches = pattern_matcher.scan(&content);
 
@@ -125,6 +132,12 @@ impl exports::athena::analysis_engine::deobfuscator::Guest for Component {
         content: String,
         _options: Option<exports::athena::analysis_engine::deobfuscator::DeobfuscationOptions>,
     ) -> Result<exports::athena::analysis_engine::deobfuscator::DeobfuscationResult, String> {
+        // Security: Validate input size
+        const MAX_INPUT_SIZE: usize = 100 * 1024 * 1024; // 100MB
+        if content.len() > MAX_INPUT_SIZE {
+            return Err(format!("Input too large: {} bytes exceeds maximum of {} bytes", content.len(), MAX_INPUT_SIZE));
+        }
+
         let deobfuscator = Deobfuscator::new();
         let result = deobfuscator.deobfuscate(&content);
 
@@ -140,6 +153,12 @@ impl exports::athena::analysis_engine::deobfuscator::Guest for Component {
     }
 
     fn is_obfuscated(content: String) -> bool {
+        // Security: Validate input size
+        const MAX_INPUT_SIZE: usize = 100 * 1024 * 1024; // 100MB
+        if content.len() > MAX_INPUT_SIZE {
+            return false; // Return safe default for oversized input
+        }
+
         let deobfuscator = Deobfuscator::new();
         let result = deobfuscator.deobfuscate(&content);
         result.confidence > 0.3

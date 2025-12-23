@@ -7,7 +7,17 @@
 
 ## Overview
 
-This directory contains documentation for all UI components in Athena. Each component is thoroughly documented with architecture diagrams, usage examples, and integration patterns.
+This directory contains documentation for all UI components in Athena. Each component is built with **SolidJS** (not React) and follows reactive programming patterns with TypeScript strict typing.
+
+**Technology Stack (December 2025):**
+- **Framework:** SolidJS 1.9.5
+- **Backend:** Tauri 2.0
+- **Language:** TypeScript 5.x
+- **Build Tool:** Vite 7.1.10
+- **State Management:** SolidJS Stores
+- **Security:** DOMPurify for XSS protection
+
+All components use SolidJS primitives (`createSignal`, `createEffect`, `Show`, `For`, etc.) and integrate with Tauri backend commands for real-time malware analysis.
 
 ## 🧩 Component Map
 
@@ -83,22 +93,29 @@ flowchart TD
 ## 🎯 Component Architecture Patterns
 
 ### 🔄 Data Flow Pattern
-All components follow a consistent data flow pattern:
-1. **Props Input** - Configuration and data from parent
-2. **State Management** - Local state with Redux integration  
-3. **Service Integration** - API calls and business logic
-4. **Event Handling** - User interactions and callbacks
-5. **Render Output** - UI presentation with styling
+All components follow a consistent SolidJS reactive data flow:
+1. **Props Input** - Configuration and data from parent (read-only)
+2. **Reactive State** - `createSignal()` for local state, SolidJS stores for global state
+3. **Side Effects** - `createEffect()` for reactive computations and subscriptions
+4. **Tauri Integration** - Direct Tauri command invocation via `@tauri-apps/api`
+5. **Reactive Rendering** - JSX with reactive primitives (`Show`, `For`, `Switch`)
 
-### 🏗️ Component Structure
+### 🏗️ Component Structure (SolidJS)
 ```
 Component/
-├── Component.tsx          # Main component file
-├── Component.test.tsx     # Unit tests
-├── Component.styles.ts    # Styling (if separate)
-└── hooks/                 # Custom hooks (if any)
-    └── useComponent.ts
+├── Component.tsx          # Main SolidJS component
+├── Component.test.tsx     # Vitest unit tests (if available)
+├── Component.css          # Component-specific styles
+└── types.ts               # TypeScript interfaces
 ```
+
+### SolidJS Patterns Used
+- **Signals:** `createSignal()` for reactive primitive values
+- **Effects:** `createEffect()` for side effects and subscriptions
+- **Memos:** `createMemo()` for derived computed values
+- **Resources:** `createResource()` for async data fetching
+- **Stores:** SolidJS stores for complex state objects
+- **Cleanup:** `onCleanup()` for resource cleanup
 
 ## 🚀 Quick Reference
 

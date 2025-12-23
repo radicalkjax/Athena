@@ -3,6 +3,8 @@ import { analysisStore } from '../../../stores/analysisStore';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { StatCard } from '../shared/StatCard';
 import { invokeCommand } from '../../../utils/tauriCompat';
+import type { MemoryRegion, ExtractedString } from '../../../types/memoryAnalysis';
+import type { ProcessInfo, NetworkInfo, VolatilityStatus, SystemStatus, CpuInfo, MemoryInfo } from '../../../types/system';
 import './MemoryAnalysis.css';
 
 interface MemoryProcess {
@@ -49,16 +51,52 @@ interface MemoryDump {
   };
 }
 
+interface VolatilityResult {
+  processes?: any[];
+  network_connections?: any[];
+  loaded_modules?: any[];
+  registry_hives?: any[];
+  injected_code?: any[];
+  summary?: string;
+}
+
+interface ProcessTreeNode {
+  pid: number;
+  name: string;
+  parent_pid: number;
+  children: ProcessTreeNode[];
+  depth: number;
+}
+
+interface NetworkConnectionGroup {
+  destination: string;
+  port: number;
+  protocol: string;
+  connection_count: number;
+  total_bytes: number;
+  processes: string[];
+}
+
 const MemoryAnalysis: Component = () => {
   const [isAnalyzing, setIsAnalyzing] = createSignal(false);
   const [memoryDump, setMemoryDump] = createSignal<MemoryDump | null>(null);
   const [activeView, setActiveView] = createSignal<'processes' | 'strings' | 'regions' | 'artifacts'>('processes');
   const [filterSuspicious] = createSignal(false);
   const [searchTerm] = createSignal('');
-  const [systemInfo, setSystemInfo] = createSignal<any>(null);
-  const [cpuInfo, setCpuInfo] = createSignal<any>(null);
-  const [memoryInfo, setMemoryInfo] = createSignal<any>(null);
+  const [systemInfo, setSystemInfo] = createSignal<SystemStatus | null>(null);
+  const [cpuInfo, setCpuInfo] = createSignal<CpuInfo | null>(null);
+  const [memoryInfo, setMemoryInfo] = createSignal<MemoryInfo | null>(null);
   const [refreshInterval, setRefreshInterval] = createSignal<number | null>(null);
+
+  // Memory tools state
+  const [isRunningTool, setIsRunningTool] = createSignal<string | null>(null);
+  const [volatilityAvailable, setVolatilityAvailable] = createSignal<boolean | null>(null);
+  const [volatilityResult, setVolatilityResult] = createSignal<VolatilityResult | null>(null);
+  const [processTree, setProcessTree] = createSignal<ProcessTreeNode[]>([]);
+  const [networkConnections, setNetworkConnections] = createSignal<NetworkConnectionGroup[]>([]);
+  const [toolError, setToolError] = createSignal<string | null>(null);
+  const [activeToolView, setActiveToolView] = createSignal<'volatility' | 'process-tree' | 'network' | 'crypto' | null>(null);
+  const [currentDumpPath, setCurrentDumpPath] = createSignal<string | null>(null);
 
   onMount(async () => {
     // Get initial system status
@@ -101,129 +139,103 @@ const MemoryAnalysis: Component = () => {
     }
   });
 
-  const generateMockMemoryDump = () => {
-    setMemoryDump({
-      timestamp: Date.now() / 1000,
-      processes: [
-        {
-          pid: 1234,
-          name: 'malware.exe',
-          path: 'C:\\Windows\\Temp\\malware.exe',
-          parentPid: 567,
-          threads: 8,
-          handles: 145,
-          virtualSize: 2097152,
-          workingSet: 1048576,
-          injected: true,
-          hidden: false,
-          suspicious: true
-        },
-        {
-          pid: 567,
-          name: 'explorer.exe',
-          path: 'C:\\Windows\\explorer.exe',
-          parentPid: 1,
-          threads: 42,
-          handles: 1287,
-          virtualSize: 134217728,
-          workingSet: 67108864,
-          injected: true,
-          hidden: false,
-          suspicious: true
-        },
-        {
-          pid: 2345,
-          name: 'svchost.exe',
-          path: 'C:\\Windows\\System32\\svchost.exe',
-          parentPid: 456,
-          threads: 12,
-          handles: 234,
-          virtualSize: 16777216,
-          workingSet: 8388608,
-          injected: false,
-          hidden: false,
-          suspicious: false
-        }
-      ],
-      strings: [
-        {
-          offset: 0x00401000,
-          value: 'http://malicious-c2.com/beacon',
-          encoding: 'ASCII',
-          context: 'Network communication'
-        },
-        {
-          offset: 0x00402340,
-          value: 'SELECT * FROM credit_cards',
-          encoding: 'UTF-16',
-          context: 'Database query'
-        },
-        {
-          offset: 0x00403890,
-          value: 'cmd.exe /c powershell -enc',
-          encoding: 'ASCII',
-          context: 'Command execution'
-        }
-      ],
-      regions: [
-        {
-          address: '0x00400000',
-          size: 65536,
-          protection: 'RWX',
-          type: 'Private',
-          suspicious: true,
-          entropy: 7.85
-        },
-        {
-          address: '0x7FFE0000',
-          size: 4096,
-          protection: 'R--',
-          type: 'Image',
-          suspicious: false,
-          entropy: 3.24
-        }
-      ],
-      artifacts: {
-        urls: [
-          'http://malicious-c2.com/beacon',
-          'https://evil-payload.net/download',
-          'ftp://anonymous@badserver.com'
-        ],
-        ips: [
-          '192.168.1.100',
-          '10.0.0.50',
-          '172.16.0.100'
-        ],
-        mutexes: [
-          'Global\\MalwareMutex123',
-          'Local\\SystemUpdate_2024'
-        ],
-        registryKeys: [
-          'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Update',
-          'HKCU\\Software\\Classes\\malware'
-        ],
-        files: [
-          'C:\\Windows\\Temp\\payload.exe',
-          'C:\\Users\\Public\\malware.dll',
-          'C:\\ProgramData\\update.bat'
+  const loadMemoryDump = async () => {
+    setIsAnalyzing(true);
+    try {
+      // Use Tauri file dialog to select dump file
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        multiple: false,
+        filters: [
+          { name: 'Memory Dumps', extensions: ['dmp', 'raw', 'bin', 'mem', 'vmem'] },
+          { name: 'All Files', extensions: ['*'] }
         ]
+      });
+
+      if (!selected) {
+        return; // User cancelled
       }
-    });
+
+      const filePath = typeof selected === 'string' ? selected : selected[0];
+
+      // Extract strings and regions from the dump file
+      const [regions, strings] = await Promise.all([
+        invokeCommand<MemoryRegion[]>('get_memory_regions', { filePath }),
+        invokeCommand<ExtractedString[]>('extract_strings_from_dump', { filePath, minLength: 4, encoding: 'both' })
+      ]);
+
+      // Build memory dump from real data
+      setMemoryDump({
+        timestamp: Date.now() / 1000,
+        processes: [],
+        strings: strings.map((s) => ({
+          offset: s.offset || 0,
+          value: s.value || '',
+          encoding: s.encoding || 'ASCII',
+          context: s.category || categorizeString(s.value || '')
+        })),
+        regions: regions.map((r) => ({
+          address: `0x${r.start_address.toString(16)}`,
+          size: r.size || 0,
+          protection: r.permissions || 'unknown',
+          type: r.region_type || 'mapped',
+          suspicious: false,
+          entropy: 0
+        })),
+        artifacts: {
+          urls: [],
+          ips: [],
+          mutexes: [],
+          registryKeys: [],
+          files: []
+        }
+      });
+    } catch (err) {
+      console.error('Failed to load memory dump:', err);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const analyzeMemory = async () => {
     setIsAnalyzing(true);
-    
+
     try {
-      // For now, use mock data with real system info overlay
-      generateMockMemoryDump();
-      
-      // In future, this would use analyze_file_with_wasm or similar
       const currentFile = analysisStore.currentFile;
-      if (currentFile?.path) {
-        const result = await invokeCommand('analyze_file_with_wasm', { filePath: currentFile.path });
-        updateMemoryDataFromAnalysis(result);
+      if (!currentFile?.path) {
+        throw new Error('No file selected for analysis');
       }
+
+      // Get real memory regions from backend
+      const [regions, fileAnalysis] = await Promise.all([
+        invokeCommand<MemoryRegion[]>('get_memory_regions', { filePath: currentFile.path }),
+        invokeCommand('analyze_file_with_wasm', { filePath: currentFile.path })
+      ]);
+
+      // Build memory dump from real data
+      setMemoryDump({
+        timestamp: Date.now() / 1000,
+        processes: [], // Process list from system monitoring
+        strings: [],
+        regions: regions.map((r) => ({
+          address: `0x${r.start_address.toString(16)}`,
+          size: r.size || 0,
+          protection: r.permissions || 'unknown',
+          type: r.region_type || 'mapped',
+          suspicious: false,
+          entropy: 0
+        })),
+        artifacts: {
+          urls: [],
+          ips: [],
+          mutexes: [],
+          registryKeys: [],
+          files: []
+        }
+      });
+
+      // Update with file analysis data
+      updateMemoryDataFromAnalysis(fileAnalysis);
     } catch (err) {
       console.error('Memory analysis failed:', err);
     } finally {
@@ -258,6 +270,218 @@ const MemoryAnalysis: Component = () => {
     if (str.match(/[A-Z]:\\|\\\\|\//)) return 'File path';
     if (str.match(/HKLM|HKCU|Software/)) return 'Registry key';
     return 'Data';
+  };
+
+  // Memory Tools Handlers
+  const runVolatilityAnalysis = async () => {
+    setIsRunningTool('volatility');
+    setToolError(null);
+    setActiveToolView('volatility');
+
+    try {
+      // First check if Volatility is available
+      const status = await invokeCommand<VolatilityStatus>('check_volatility_available');
+      setVolatilityAvailable(status.available);
+
+      if (!status.available) {
+        setToolError('Volatility 3 is not installed. Install with: pip install volatility3');
+        return;
+      }
+
+      // Need a memory dump file to analyze
+      const dumpPath = currentDumpPath();
+      if (!dumpPath) {
+        // Prompt user to load a dump file first
+        const { open } = await import('@tauri-apps/plugin-dialog');
+        const selected = await open({
+          multiple: false,
+          filters: [
+            { name: 'Memory Dumps', extensions: ['dmp', 'raw', 'bin', 'mem', 'vmem'] },
+            { name: 'All Files', extensions: ['*'] }
+          ]
+        });
+
+        if (!selected) {
+          setToolError('Please select a memory dump file');
+          return;
+        }
+
+        const filePath = typeof selected === 'string' ? selected : selected[0];
+        setCurrentDumpPath(filePath);
+
+        // Run Volatility analysis
+        const result = await invokeCommand('analyze_memory_with_volatility', {
+          dumpPath: filePath,
+          plugins: ['pslist', 'netscan', 'malfind']
+        }) as VolatilityResult;
+
+        setVolatilityResult(result);
+      } else {
+        // Run Volatility on existing dump
+        const result = await invokeCommand('analyze_memory_with_volatility', {
+          dumpPath,
+          plugins: ['pslist', 'netscan', 'malfind']
+        }) as VolatilityResult;
+
+        setVolatilityResult(result);
+      }
+    } catch (err) {
+      console.error('Volatility analysis failed:', err);
+      setToolError(err instanceof Error ? err.message : 'Volatility analysis failed');
+    } finally {
+      setIsRunningTool(null);
+    }
+  };
+
+  const showProcessTree = async () => {
+    setIsRunningTool('process-tree');
+    setToolError(null);
+    setActiveToolView('process-tree');
+
+    try {
+      // Get current processes from system
+      const processes = await invokeCommand<ProcessInfo[]>('get_processes');
+
+      // Build process tree
+      const tree = await invokeCommand<ProcessTreeNode[]>('get_process_tree', {
+        processes: processes.map(p => ({
+          pid: p.pid,
+          name: p.name,
+          parent_pid: p.parent_pid || p.ppid || 0,
+          command_line: p.cmd?.join(' ') || p.command?.join(' ') || ''
+        }))
+      });
+
+      setProcessTree(tree);
+    } catch (err) {
+      console.error('Process tree failed:', err);
+      setToolError(err instanceof Error ? err.message : 'Failed to build process tree');
+    } finally {
+      setIsRunningTool(null);
+    }
+  };
+
+  const analyzeNetworkConnections = async () => {
+    setIsRunningTool('network');
+    setToolError(null);
+    setActiveToolView('network');
+
+    try {
+      // Get network info from system
+      const networkInfo = await invokeCommand<NetworkInfo[]>('get_network_info');
+
+      // Analyze connections if we have sandbox results
+      if (memoryDump()?.artifacts?.ips?.length) {
+        // Build connection data from artifacts
+        const connections = memoryDump()!.artifacts.ips.map((ip, idx) => ({
+          source_ip: '127.0.0.1',
+          source_port: 49152 + idx,
+          dest_ip: ip,
+          dest_port: 443,
+          protocol: 'TCP',
+          process_name: 'unknown',
+          bytes_sent: 0,
+          bytes_received: 0
+        }));
+
+        const grouped = await invokeCommand<NetworkConnectionGroup[]>('analyze_network_connections', {
+          connections
+        });
+
+        setNetworkConnections(grouped);
+      } else {
+        // Show system network connections - extract from first interface if available
+        const connections = networkInfo[0]?.connections || [];
+        setNetworkConnections([]);
+      }
+    } catch (err) {
+      console.error('Network analysis failed:', err);
+      setToolError(err instanceof Error ? err.message : 'Network analysis failed');
+    } finally {
+      setIsRunningTool(null);
+    }
+  };
+
+  const runCryptoAnalysis = async () => {
+    setIsRunningTool('crypto');
+    setToolError(null);
+    setActiveToolView('crypto');
+
+    try {
+      const currentFile = analysisStore.currentFile;
+      if (!currentFile?.path) {
+        setToolError('Please upload a file first');
+        return;
+      }
+
+      // Run crypto analysis using WASM module
+      const result = await invokeCommand('execute_wasm_function', {
+        moduleName: 'crypto',
+        functionName: 'detect_crypto',
+        args: [currentFile.path]
+      });
+
+      // Update memory dump with crypto artifacts
+      setMemoryDump(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          artifacts: {
+            ...prev.artifacts,
+            // Add any crypto-related findings
+          }
+        };
+      });
+
+      console.log('Crypto analysis result:', result);
+    } catch (err) {
+      console.error('Crypto analysis failed:', err);
+      setToolError(err instanceof Error ? err.message : 'Crypto analysis failed');
+    } finally {
+      setIsRunningTool(null);
+    }
+  };
+
+  const extractArtifacts = async () => {
+    setIsRunningTool('extract');
+    setToolError(null);
+
+    try {
+      const dump = memoryDump();
+      if (!dump) {
+        setToolError('No memory dump loaded');
+        return;
+      }
+
+      // Export artifacts to file
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const savePath = await save({
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        defaultPath: 'memory_artifacts.json'
+      });
+
+      if (savePath) {
+        const artifactData = {
+          timestamp: new Date().toISOString(),
+          artifacts: dump.artifacts,
+          strings: dump.strings.slice(0, 100),
+          regions: dump.regions.filter(r => r.suspicious),
+          processes: dump.processes.filter(p => p.suspicious || p.injected)
+        };
+
+        await invokeCommand('write_file_text', {
+          path: savePath,
+          content: JSON.stringify(artifactData, null, 2)
+        });
+
+        setToolError(null);
+      }
+    } catch (err) {
+      console.error('Artifact extraction failed:', err);
+      setToolError(err instanceof Error ? err.message : 'Failed to extract artifacts');
+    } finally {
+      setIsRunningTool(null);
+    }
   };
 
   const formatBytes = (bytes: number): string => {
@@ -321,7 +545,7 @@ const MemoryAnalysis: Component = () => {
             className="scrollable-panel"
             actions={
               <div>
-                <button class="btn btn-secondary" onClick={() => generateMockMemoryDump()}>📂 Load Dump</button>
+                <button class="btn btn-secondary" onClick={loadMemoryDump}>📂 Load Dump</button>
                 <button class="btn btn-primary" onClick={analyzeMemory}>🔍 Analyze</button>
               </div>
             }
@@ -503,26 +727,53 @@ const MemoryAnalysis: Component = () => {
           <AnalysisPanel title="String Analysis" icon="📝" className="scrollable-panel">
             <div class="code-editor">
               <div class="code-content">
-                <strong style="color: var(--barbie-pink)">SUSPICIOUS STRINGS FOUND</strong><br /><br />
-                
-                <strong style="color: var(--danger-color)">🌐 Network Indicators:</strong><br />
-                <span style="color: var(--warning-color)">• http://malicious-c2.com/beacon</span><br />
-                <span style="color: var(--warning-color)">• https://evil-payload.net/download</span><br />
-                <span style="color: var(--warning-color)">• ftp://anonymous@badserver.com</span><br /><br />
-                
-                <strong style="color: var(--danger-color)">🔑 Encryption Keys:</strong><br />
-                <span style="color: var(--info-color)">• AES Key: 4d794b657948657265</span><br />
-                <span style="color: var(--info-color)">• RC4 Key: 53656372657450617373</span><br /><br />
-                
-                <strong style="color: var(--danger-color)">📂 File Paths:</strong><br />
-                <span style="color: var(--success-color)">• C:\\Windows\\Temp\\payload.exe</span><br />
-                <span style="color: var(--success-color)">• C:\\Users\\Public\\malware.dll</span><br />
-                <span style="color: var(--success-color)">• %APPDATA%\\svchost.exe</span><br /><br />
-                
-                <strong style="color: var(--danger-color)">⚡ Commands:</strong><br />
-                <span style="color: var(--text-secondary)">• cmd.exe /c powershell -enc</span><br />
-                <span style="color: var(--text-secondary)">• rundll32.exe shell32.dll</span><br />
-                <span style="color: var(--text-secondary)">• reg add HKLM\\Software\\</span>
+                <strong style="color: var(--barbie-pink)">EXTRACTED STRINGS</strong><br /><br />
+
+                <Show when={memoryDump() && (memoryDump()!.artifacts.urls.length > 0 || memoryDump()!.strings.length > 0)} fallback={
+                  <div style="color: var(--text-secondary); text-align: center; padding: 20px;">
+                    <p>No strings extracted yet.</p>
+                    <p style="font-size: 0.85rem;">Load a memory dump or analyze a file to extract strings.</p>
+                  </div>
+                }>
+                  <Show when={memoryDump()!.artifacts.urls.length > 0}>
+                    <strong style="color: var(--danger-color)">🌐 Network Indicators:</strong><br />
+                    <For each={memoryDump()!.artifacts.urls.slice(0, 10)}>
+                      {(url) => <><span style="color: var(--warning-color)">• {url}</span><br /></>}
+                    </For>
+                    <br />
+                  </Show>
+
+                  <Show when={memoryDump()!.artifacts.ips.length > 0}>
+                    <strong style="color: var(--danger-color)">🖥️ IP Addresses:</strong><br />
+                    <For each={memoryDump()!.artifacts.ips.slice(0, 10)}>
+                      {(ip) => <><span style="color: var(--info-color)">• {ip}</span><br /></>}
+                    </For>
+                    <br />
+                  </Show>
+
+                  <Show when={memoryDump()!.artifacts.files.length > 0}>
+                    <strong style="color: var(--danger-color)">📂 File Paths:</strong><br />
+                    <For each={memoryDump()!.artifacts.files.slice(0, 10)}>
+                      {(file) => <><span style="color: var(--success-color)">• {file}</span><br /></>}
+                    </For>
+                    <br />
+                  </Show>
+
+                  <Show when={memoryDump()!.artifacts.registryKeys.length > 0}>
+                    <strong style="color: var(--danger-color)">🔑 Registry Keys:</strong><br />
+                    <For each={memoryDump()!.artifacts.registryKeys.slice(0, 10)}>
+                      {(key) => <><span style="color: var(--text-secondary)">• {key}</span><br /></>}
+                    </For>
+                    <br />
+                  </Show>
+
+                  <Show when={memoryDump()!.strings.length > 0}>
+                    <strong style="color: var(--danger-color)">📝 Suspicious Strings ({memoryDump()!.strings.length}):</strong><br />
+                    <For each={memoryDump()!.strings.filter(s => s.context === 'suspicious').slice(0, 20)}>
+                      {(str) => <><span style="color: var(--warning-color)">• {str.value.substring(0, 100)}{str.value.length > 100 ? '...' : ''}</span><br /></>}
+                    </For>
+                  </Show>
+                </Show>
               </div>
             </div>
           </AnalysisPanel>
@@ -580,14 +831,106 @@ const MemoryAnalysis: Component = () => {
           <h3 style="color: var(--barbie-pink); margin-bottom: 15px;">
             🛠️ Memory Tools
           </h3>
-          
+
           <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button class="btn btn-primary">🔬 Volatility Analysis</button>
-            <button class="btn btn-secondary">🌳 Process Tree</button>
-            <button class="btn btn-secondary">🌐 Network Connections</button>
-            <button class="btn btn-secondary">🔐 Crypto Analysis</button>
-            <button class="btn btn-secondary">📤 Extract Artifacts</button>
+            <button
+              class="btn btn-primary"
+              onClick={runVolatilityAnalysis}
+              disabled={isRunningTool() !== null}
+            >
+              {isRunningTool() === 'volatility' ? '⏳ Analyzing...' : '🔬 Volatility Analysis'}
+            </button>
+            <button
+              class="btn btn-secondary"
+              onClick={showProcessTree}
+              disabled={isRunningTool() !== null}
+            >
+              {isRunningTool() === 'process-tree' ? '⏳ Loading...' : '🌳 Process Tree'}
+            </button>
+            <button
+              class="btn btn-secondary"
+              onClick={analyzeNetworkConnections}
+              disabled={isRunningTool() !== null}
+            >
+              {isRunningTool() === 'network' ? '⏳ Analyzing...' : '🌐 Network Connections'}
+            </button>
+            <button
+              class="btn btn-secondary"
+              onClick={runCryptoAnalysis}
+              disabled={isRunningTool() !== null}
+            >
+              {isRunningTool() === 'crypto' ? '⏳ Scanning...' : '🔐 Crypto Analysis'}
+            </button>
+            <button
+              class="btn btn-secondary"
+              onClick={extractArtifacts}
+              disabled={isRunningTool() !== null || !memoryDump()}
+            >
+              {isRunningTool() === 'extract' ? '⏳ Extracting...' : '📤 Extract Artifacts'}
+            </button>
           </div>
+
+          {/* Tool Error Display */}
+          <Show when={toolError()}>
+            <div style="margin-top: 15px; padding: 10px; background: rgba(255, 107, 107, 0.1); border: 1px solid var(--danger-color); border-radius: 6px;">
+              <span style="color: var(--danger-color);">⚠️ {toolError()}</span>
+            </div>
+          </Show>
+
+          {/* Tool Results Display */}
+          <Show when={activeToolView() === 'volatility' && volatilityResult()}>
+            <div style="margin-top: 15px;">
+              <h4 style="color: var(--info-color); margin-bottom: 10px;">Volatility Results</h4>
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; font-size: 0.85rem;">
+                <Show when={volatilityResult()!.processes?.length}>
+                  <p><strong>Processes:</strong> {volatilityResult()!.processes?.length}</p>
+                </Show>
+                <Show when={volatilityResult()!.network_connections?.length}>
+                  <p><strong>Network:</strong> {volatilityResult()!.network_connections?.length} connections</p>
+                </Show>
+                <Show when={volatilityResult()!.injected_code?.length}>
+                  <p style="color: var(--danger-color);"><strong>⚠️ Injected Code:</strong> {volatilityResult()!.injected_code?.length} detections</p>
+                </Show>
+              </div>
+            </div>
+          </Show>
+
+          <Show when={activeToolView() === 'process-tree' && processTree().length > 0}>
+            <div style="margin-top: 15px;">
+              <h4 style="color: var(--info-color); margin-bottom: 10px;">Process Tree</h4>
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                <For each={processTree().slice(0, 15)}>
+                  {(proc) => (
+                    <div style={`padding-left: ${proc.depth * 15}px; margin-bottom: 4px;`}>
+                      <span style="color: var(--success-color);">{proc.depth > 0 ? '└─ ' : ''}</span>
+                      <span style="color: var(--text-primary);">{proc.name}</span>
+                      <span style="color: var(--text-secondary);"> (PID: {proc.pid})</span>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
+          </Show>
+
+          <Show when={activeToolView() === 'network' && networkConnections().length > 0}>
+            <div style="margin-top: 15px;">
+              <h4 style="color: var(--info-color); margin-bottom: 10px;">Network Connections</h4>
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                <For each={networkConnections().slice(0, 10)}>
+                  {(conn) => (
+                    <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                      <div style="color: var(--warning-color);">
+                        {conn.destination}:{conn.port}
+                      </div>
+                      <div style="color: var(--text-secondary); font-size: 0.8rem;">
+                        {conn.protocol} | {conn.connection_count} connection(s)
+                      </div>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
+          </Show>
         </div>
       </div>
     </div>

@@ -1,23 +1,20 @@
-import { Component, createSignal, onMount, onCleanup, For, Show, createEffect } from 'solid-js';
+import { Component, createSignal, onMount, onCleanup, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { useRealtimeData, useAnimatedValue, realtimeService } from '../../../services/realtimeService';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { logger } from '../../../services/loggingService';
 import './NetworkTraffic.css';
 
 interface NetworkPacket {
   id: string;
   timestamp: number;
-  protocol: 'TCP' | 'UDP' | 'HTTP' | 'HTTPS' | 'DNS' | 'Other';
-  source: {
-    ip: string;
-    port: number;
-  };
-  destination: {
-    ip: string;
-    port: number;
-  };
+  protocol: string;
+  source_ip: string;
+  source_port: number;
+  destination_ip: string;
+  destination_port: number;
   size: number;
-  direction: 'inbound' | 'outbound';
+  direction: string;
   data?: string;
   flags?: string[];
   suspicious?: boolean;
@@ -50,10 +47,61 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
   const [filter, setFilter] = createSignal('');
   const [protocolFilter, setProtocolFilter] = createSignal<string>('All');
   const [useRealData, setUseRealData] = createSignal(true);
-  
+  const [captureId, setCaptureId] = createSignal<string | null>(null);
+  const [captureError, setCaptureError] = createSignal<string | null>(null);
+  const [hasPermission, setHasPermission] = createSignal<boolean | null>(null);
+  const [canRequestPermission, setCanRequestPermission] = createSignal(false);
+  const [isRequestingPermission, setIsRequestingPermission] = createSignal(false);
+
   let intervalId: number | null = null;
   let packetsInLastSecond: NetworkPacket[] = [];
-  let realtimeSubscription: any = null;
+  let packetEventUnlisten: UnlistenFn | null = null;
+
+  // Check capture permissions on component mount
+  const checkPermissions = async () => {
+    try {
+      const status = await invoke<{
+        has_permission: boolean;
+        platform: string;
+        message: string;
+        can_request_elevation: boolean;
+      }>('check_capture_permissions');
+
+      setHasPermission(status.has_permission);
+      setCanRequestPermission(status.can_request_elevation);
+
+      if (!status.has_permission) {
+        setCaptureError(status.message);
+      }
+    } catch (error) {
+      logger.error('Failed to check capture permissions', error);
+      setHasPermission(false);
+    }
+  };
+
+  // Request elevated permissions for packet capture
+  const requestPermissions = async () => {
+    setIsRequestingPermission(true);
+    setCaptureError(null);
+
+    try {
+      const result = await invoke<string>('request_capture_permissions');
+      logger.info('Permission request result:', result);
+
+      // Re-check permissions after granting
+      await checkPermissions();
+
+      if (hasPermission()) {
+        setCaptureError(null);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      setCaptureError(errorMsg);
+      logger.error('Failed to request permissions', error);
+    } finally {
+      setIsRequestingPermission(false);
+    }
+  };
 
   const protocolColors: Record<string, string> = {
     TCP: '#ff6b9d',
@@ -86,57 +134,83 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
     });
   };
 
-  const startCapture = () => {
-    setIsCapturing(true);
-    
+  const startCapture = async () => {
+    setCaptureError(null);
+
     if (useRealData()) {
-      // Subscribe to real-time network data
-      realtimeSubscription = realtimeService.subscribe('network', (data: NetworkPacket[] | NetworkPacket) => {
-        const packets = Array.isArray(data) ? data : [data];
-        
-        packets.forEach(packet => {
+      try {
+        // First, set up the event listener
+        packetEventUnlisten = await listen<NetworkPacket>('packet-captured', (event) => {
+          const packet = event.payload;
+
           packetsInLastSecond.push(packet);
-          
+
           setPackets(prev => {
             const updated = [...prev, packet];
             // Keep only last 1000 packets for performance
             return updated.slice(-1000);
           });
-        });
-        
-        updateStats();
-      });
-      
-      // Also subscribe to network-stream events for streaming data
-      realtimeService.subscribe('network-stream', (streamData: any) => {
-        if (streamData.packets) {
-          streamData.packets.forEach((packet: NetworkPacket) => {
-            packetsInLastSecond.push(packet);
-            
-            setPackets(prev => {
-              const updated = [...prev, packet];
-              return updated.slice(-1000);
-            });
-          });
-          
+
           updateStats();
+        });
+
+        // Then start the actual packet capture on the backend
+        const result = await invoke<string>('start_packet_capture', { interface: null });
+        logger.info('Packet capture started:', result);
+
+        // Extract capture ID from result (format: "Capture started on interface: X (ID: uuid)")
+        const idMatch = result.match(/ID: ([a-f0-9-]+)/);
+        console.log('Start capture result:', result, 'ID match:', idMatch);
+        if (idMatch && idMatch[1]) {
+          setCaptureId(idMatch[1]);
+          console.log('Capture ID set to:', idMatch[1]);
+        } else {
+          console.warn('Could not extract capture ID from result');
         }
-      });
+
+        setIsCapturing(true);
+      } catch (error) {
+        logger.error('Failed to start packet capture', error);
+        setCaptureError(error instanceof Error ? error.message : String(error));
+        // Clean up listener if capture failed
+        if (packetEventUnlisten) {
+          packetEventUnlisten();
+          packetEventUnlisten = null;
+        }
+      }
     } else {
       // No real-time data available
-      logger.info('Real-time network data not available');
+      setIsCapturing(true);
+      logger.info('Real-time network data not available - mock mode');
     }
   };
 
-  const stopCapture = () => {
+  const stopCapture = async () => {
+    console.log('stopCapture called, captureId:', captureId());
     setIsCapturing(false);
     if (intervalId) {
       clearInterval(intervalId);
       intervalId = null;
     }
-    if (realtimeSubscription) {
-      realtimeSubscription.unsubscribe();
-      realtimeSubscription = null;
+    if (packetEventUnlisten) {
+      packetEventUnlisten();
+      packetEventUnlisten = null;
+    }
+    // Stop the backend capture
+    const currentCaptureId = captureId();
+    if (currentCaptureId) {
+      try {
+        console.log('Calling stop_packet_capture with ID:', currentCaptureId);
+        const result = await invoke('stop_packet_capture', { captureId: currentCaptureId });
+        console.log('Stop capture result:', result);
+        logger.info('Packet capture stopped');
+      } catch (error) {
+        console.error('Failed to stop capture:', error);
+        logger.error('Failed to stop packet capture', error);
+      }
+      setCaptureId(null);
+    } else {
+      console.warn('No capture ID available to stop');
     }
   };
 
@@ -157,9 +231,9 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
     // Text filter
     const filterText = filter().toLowerCase();
     if (filterText) {
-      result = result.filter(p => 
-        p.source?.ip?.includes(filterText) ||
-        p.destination?.ip?.includes(filterText) ||
+      result = result.filter(p =>
+        p.source_ip?.toLowerCase().includes(filterText) ||
+        p.destination_ip?.toLowerCase().includes(filterText) ||
         p.protocol?.toLowerCase().includes(filterText)
       );
     }
@@ -196,17 +270,14 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
   };
 
   onMount(() => {
-    // Do not auto-start capture - wait for user action
-    
-    // Check if real-time network data is available
-    realtimeService.subscribe('network', () => {
-      setUseRealData(true);
-    });
+    // Real-time packet data is available via Tauri events when capture is active
+    setUseRealData(true);
+    // Check if we have packet capture permissions
+    checkPermissions();
   });
 
   onCleanup(() => {
     stopCapture();
-    realtimeService.cleanup();
   });
 
   return (
@@ -214,9 +285,9 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
       <div style="background: #2a2a2a; border-bottom: 2px solid #ff6b9d; padding: 16px; flex-shrink: 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
           <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <button 
-              style={`padding: 8px 16px; background: ${isCapturing() ? '#e74c3c' : '#ff6b9d'}; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; ${isCapturing() ? 'animation: pulse 1s ease-in-out infinite;' : ''}`}
-              onClick={() => isCapturing() ? stopCapture() : startCapture()}
+            <button
+              style={`padding: 8px 16px; background: ${isCapturing() ? '#e74c3c' : '#ff6b9d'}; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;`}
+              onClick={() => { isCapturing() ? stopCapture() : startCapture(); }}
             >
               {isCapturing() ? '⏸ Stop' : '▶ Capture'}
             </button>
@@ -246,6 +317,22 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
               value={filter()}
               onInput={(e) => setFilter(e.currentTarget.value)}
             />
+            <Show when={captureError()}>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: #e74c3c; font-size: 11px; padding: 4px 8px; background: rgba(231, 76, 60, 0.2); border-radius: 4px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={captureError() || ''}>
+                  ⚠ {captureError()?.split('.')[0]}
+                </span>
+                <Show when={canRequestPermission() && !hasPermission()}>
+                  <button
+                    style={`padding: 6px 12px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.3s ease; ${isRequestingPermission() ? 'opacity: 0.7; cursor: wait;' : ''}`}
+                    onClick={requestPermissions}
+                    disabled={isRequestingPermission()}
+                  >
+                    {isRequestingPermission() ? '⏳ Requesting...' : '🔓 Grant Access'}
+                  </button>
+                </Show>
+              </div>
+            </Show>
           </div>
           
           <div style="display: flex; gap: 24px; align-items: center;">
@@ -349,8 +436,8 @@ const NetworkTraffic: Component<NetworkTrafficProps> = (props) => {
                     {packet.protocol}
                   </span>
                 </div>
-                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.source?.ip || 'Unknown'}:{packet.source?.port || '???'}</div>
-                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.destination?.ip || 'Unknown'}:{packet.destination?.port || '???'}</div>
+                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.source_ip || '(no IP)'}:{packet.source_port ?? '-'}</div>
+                <div style="flex: 1; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;">{packet.destination_ip || '(no IP)'}:{packet.destination_port ?? '-'}</div>
                 <div style="width: 80px; text-align: right; color: #74b9ff;">{packet.size} B</div>
                 <div style="width: 100px; text-align: center;">
                   <span style={`display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; ${packet.direction === 'inbound' ? 'background-color: rgba(116, 185, 255, 0.2); color: #74b9ff;' : 'background-color: rgba(255, 107, 157, 0.2); color: #ff6b9d;'}`}>

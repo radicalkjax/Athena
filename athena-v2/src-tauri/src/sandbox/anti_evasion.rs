@@ -474,7 +474,7 @@ echo "[ANTI-EVASION] Tier 2 behavioral simulation active"
         }
 
         // Check for sleep evasion
-        if (syscall == "nanosleep" || syscall == "clock_nanosleep") {
+        if syscall == "nanosleep" || syscall == "clock_nanosleep" {
             // Parse sleep duration from args if possible
             if args.contains("1000000000") || args.contains("tv_sec=") {
                 return Some(EvasionAttempt {

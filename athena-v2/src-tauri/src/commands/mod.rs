@@ -14,3 +14,5 @@ pub mod workflow;
 pub mod logging;
 pub mod container;
 pub mod sandbox_commands;
+pub mod memory_analysis;
+pub mod samples;

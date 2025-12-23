@@ -52,6 +52,9 @@ RUN chmod +x /usr/local/bin/monitor_agent.sh /usr/local/bin/anti_evasion.sh
 RUN echo '#!/bin/bash\n/usr/local/bin/anti_evasion.sh\nexec "$@"' > /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
 
+# Switch to non-root user for execution
+USER sandbox
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Default command: sleep (keeps container alive)

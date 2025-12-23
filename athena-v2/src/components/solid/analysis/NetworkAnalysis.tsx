@@ -1,10 +1,9 @@
-import { Component, createSignal, Show, For } from 'solid-js';
+import { Component, createSignal, Show, For, onMount, onCleanup, createEffect } from 'solid-js';
 import NetworkTraffic from '../visualization/NetworkTraffic';
 import { invokeCommand } from '../../../utils/tauriCompat';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import CodeEditor from '../shared/CodeEditor';
 import { StatCard } from '../shared/StatCard';
-import { config } from '../../../services/configService';
 import './NetworkAnalysis.css';
 
 interface NetworkAnalysisProps {
@@ -15,19 +14,21 @@ interface NetworkPacket {
   id: string;
   timestamp: number;
   protocol: string;
-  source: {
-    ip: string;
-    port: number;
-  };
-  destination: {
-    ip: string;
-    port: number;
-  };
+  source_ip: string;
+  source_port: number;
+  destination_ip: string;
+  destination_port: number;
   size: number;
-  direction: 'inbound' | 'outbound';
+  direction: string;
   data?: string;
   flags?: string[];
   suspicious?: boolean;
+}
+
+interface ActiveCaptureInfo {
+  capture_id: string;
+  interface_name: string;
+  packet_count: number;
 }
 
 const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
@@ -35,6 +36,12 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
   const [analysisResult, setAnalysisResult] = createSignal<string>('');
   const [isAnalyzing, setIsAnalyzing] = createSignal(false);
   const [hasTimedOut, setHasTimedOut] = createSignal(false);
+
+  // Packet capture state
+  const [selectedInterface, setSelectedInterface] = createSignal<string>('');
+  const [isCapturing, setIsCapturing] = createSignal(false);
+  const [currentCaptureId, setCurrentCaptureId] = createSignal<string | null>(null);
+  const [activeCaptures, setActiveCaptures] = createSignal<ActiveCaptureInfo[]>([]);
 
   const handlePacketSelect = (packet: NetworkPacket) => {
     setSelectedPacket(packet);
@@ -52,29 +59,11 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
     }, 30000);
 
     try {
-      // Simulate packet analysis
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      let analysis = `Packet Analysis Results:\n\n`;
-      analysis += `Protocol: ${packet.protocol}\n`;
-      analysis += `Direction: ${packet.direction}\n`;
-      analysis += `Size: ${packet.size} bytes\n`;
-      analysis += `Source: ${packet.source.ip}:${packet.source.port}\n`;
-      analysis += `Destination: ${packet.destination.ip}:${packet.destination.port}\n\n`;
-
-      if (packet.suspicious) {
-        analysis += `⚠️ SUSPICIOUS ACTIVITY DETECTED!\n`;
-        analysis += `Flags: ${packet.flags?.join(', ') || 'None'}\n\n`;
-        analysis += `Recommendations:\n`;
-        analysis += `- Block source IP address\n`;
-        analysis += `- Investigate process communicating with this endpoint\n`;
-        analysis += `- Check for data exfiltration patterns\n`;
-      } else {
-        analysis += `✅ No suspicious patterns detected.\n`;
-      }
-
-      // In a real implementation, this would call a Rust command for deep packet inspection
-      // const result = await invoke<string>('analyze_network_packet', { packet });
+      // Call real Rust backend command for deep packet inspection
+      // Packet is already in the correct flat format matching backend
+      const analysis = await invokeCommand<string>('analyze_network_packet', {
+        packet: packet
+      });
 
       clearTimeout(timeout);
       setAnalysisResult(analysis);
@@ -128,11 +117,11 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
 
       setIsAnalyzing(true);
       await invokeCommand('block_ip_addresses', {
-        ips: [packet.source.ip, packet.destination.ip],
+        ips: [packet.source_ip, packet.destination_ip],
         reason: 'Suspicious network activity detected'
       });
 
-      alert(`Blocked IPs:\n- ${packet.source.ip}\n- ${packet.destination.ip}`);
+      alert(`Blocked IPs:\n- ${packet.source_ip}\n- ${packet.destination_ip}`);
     } catch (error) {
       console.error('Failed to block IPs:', error);
       setAnalysisResult(`Error blocking IPs: ${error}`);
@@ -193,12 +182,154 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
     }
   };
 
-  // Network statistics - will be populated from actual analysis
-  const [networkStats] = createSignal({
+  // Network statistics - fetch from backend
+  const [networkStats, setNetworkStats] = createSignal({
     totalPackets: 0,
     suspiciousPackets: 0,
     dataTransferred: '0 MB',
     uniqueConnections: 0
+  });
+
+  // Top connections computed from real packet data
+  const [topConnections, setTopConnections] = createSignal<Array<{
+    ip: string;
+    count: number;
+    type: string;
+  }>>([]);
+
+  // Fetch network statistics on mount and periodically
+  const updateNetworkStats = async () => {
+    try {
+      const stats = await invokeCommand<{
+        total_packets: number;
+        suspicious_packets: number;
+        total_bytes: number;
+        unique_source_ips: string[];
+        unique_dest_ips: string[];
+        ip_packet_counts: Record<string, number>;
+        ip_protocols: Record<string, string>;
+      }>('get_network_statistics');
+
+      // Convert bytes to MB
+      const dataMB = (stats.total_bytes / (1024 * 1024)).toFixed(2);
+
+      // Count unique connections (source + dest IPs)
+      const uniqueIPs = new Set([
+        ...stats.unique_source_ips,
+        ...stats.unique_dest_ips
+      ]);
+
+      setNetworkStats({
+        totalPackets: stats.total_packets,
+        suspiciousPackets: stats.suspicious_packets,
+        dataTransferred: `${dataMB} MB`,
+        uniqueConnections: uniqueIPs.size
+      });
+
+      // Compute top connections from ip_packet_counts
+      if (stats.ip_packet_counts && Object.keys(stats.ip_packet_counts).length > 0) {
+        const connections = Object.entries(stats.ip_packet_counts)
+          .map(([ip, count]) => ({
+            ip,
+            count: count as number,
+            type: (stats.ip_protocols?.[ip] as string) || 'Unknown'
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10); // Top 10 connections
+        setTopConnections(connections);
+      }
+    } catch (error) {
+      console.error('Failed to update network statistics:', error);
+    }
+  };
+
+  // Packet capture controls
+  const startCapture = async () => {
+    try {
+      setIsAnalyzing(true);
+      const interface_name = selectedInterface().trim() || undefined;
+
+      const response = await invokeCommand<string>('start_packet_capture', {
+        interface: interface_name
+      });
+
+      // Extract capture ID from response message
+      const match = response.match(/ID:\s*([a-f0-9-]+)\)/);
+      if (match) {
+        setCurrentCaptureId(match[1]);
+        setIsCapturing(true);
+        setAnalysisResult(`Packet capture started successfully!\n\n${response}`);
+      } else {
+        setAnalysisResult(response);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setAnalysisResult(`Error starting packet capture: ${errorMessage}\n\nPlease ensure:\n- You have administrator/root privileges\n- libpcap/npcap is installed\n- Network interface is available`);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const stopCapture = async () => {
+    const captureId = currentCaptureId();
+    if (!captureId) {
+      setAnalysisResult('No active capture to stop');
+      return;
+    }
+
+    try {
+      setIsAnalyzing(true);
+      const packets = await invokeCommand<NetworkPacket[]>('stop_packet_capture', {
+        capture_id: captureId
+      });
+
+      setIsCapturing(false);
+      setCurrentCaptureId(null);
+      setAnalysisResult(`Packet capture stopped successfully!\n\nCaptured ${packets.length} packets.`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setAnalysisResult(`Error stopping packet capture: ${errorMessage}`);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const updateActiveCaptures = async () => {
+    try {
+      const captures = await invokeCommand<ActiveCaptureInfo[]>('get_active_captures');
+      setActiveCaptures(captures);
+    } catch (error) {
+      console.error('Failed to update active captures:', error);
+    }
+  };
+
+  // Update stats on mount
+  onMount(() => {
+    updateNetworkStats();
+    updateActiveCaptures();
+
+    // Update stats every 5 seconds
+    const interval = setInterval(updateNetworkStats, 5000);
+
+    // Update active captures every 3 seconds
+    const captureInterval = setInterval(updateActiveCaptures, 3000);
+
+    // Cleanup on unmount
+    onCleanup(() => {
+      clearInterval(interval);
+      clearInterval(captureInterval);
+    });
+  });
+
+  // Update capturing state based on active captures
+  createEffect(() => {
+    const captures = activeCaptures();
+    const currentId = currentCaptureId();
+    if (currentId && !captures.find(c => c.capture_id === currentId)) {
+      // Current capture no longer active
+      setIsCapturing(false);
+      setCurrentCaptureId(null);
+    }
   });
 
   return (
@@ -209,23 +340,105 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
       
       {/* Network Statistics Cards */}
       <div class="network-stats-grid">
-        <StatCard 
-          label="Total Packets" 
-          value={networkStats().totalPackets.toString()} 
+        <StatCard
+          label="Total Packets"
+          value={networkStats().totalPackets.toString()}
         />
-        <StatCard 
-          label="Suspicious" 
-          value={networkStats().suspiciousPackets.toString()} 
+        <StatCard
+          label="Suspicious"
+          value={networkStats().suspiciousPackets.toString()}
         />
-        <StatCard 
-          label="Data Transferred" 
-          value={networkStats().dataTransferred} 
+        <StatCard
+          label="Data Transferred"
+          value={networkStats().dataTransferred}
         />
-        <StatCard 
-          label="Connections" 
-          value={networkStats().uniqueConnections.toString()} 
+        <StatCard
+          label="Connections"
+          value={networkStats().uniqueConnections.toString()}
         />
       </div>
+
+      {/* Packet Capture Controls */}
+      <AnalysisPanel
+        title="Packet Capture Controls"
+        icon="📡"
+        className="capture-controls-panel"
+      >
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          {/* Interface selector and capture buttons */}
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input
+              type="text"
+              placeholder="Network interface (e.g., eth0, en0, or leave empty for default)"
+              value={selectedInterface()}
+              onInput={(e) => setSelectedInterface(e.currentTarget.value)}
+              style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--text-primary);"
+              disabled={isCapturing()}
+            />
+            <Show when={!isCapturing()}>
+              <button
+                class="btn btn-primary"
+                onClick={startCapture}
+                disabled={isAnalyzing()}
+                style="min-width: 120px;"
+              >
+                {isAnalyzing() ? '⏳ Starting...' : '▶ Start Capture'}
+              </button>
+            </Show>
+            <Show when={isCapturing()}>
+              <button
+                class="btn btn-secondary"
+                onClick={stopCapture}
+                disabled={isAnalyzing()}
+                style="min-width: 120px; background: var(--danger-color);"
+              >
+                {isAnalyzing() ? '⏳ Stopping...' : '⏹ Stop Capture'}
+              </button>
+            </Show>
+          </div>
+
+          {/* Status indicator */}
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--panel-bg); border-radius: 4px;">
+            <div style={{
+              width: '12px',
+              height: '12px',
+              'border-radius': '50%',
+              background: isCapturing() ? '#2ecc71' : '#95a5a6'
+            }} />
+            <span style="color: var(--text-secondary); font-size: 14px;">
+              {isCapturing() ? `Capturing on ${currentCaptureId() ? 'interface' : 'default interface'}` : 'Not capturing'}
+            </span>
+          </div>
+
+          {/* Active captures list */}
+          <Show when={activeCaptures().length > 0}>
+            <div style="margin-top: 10px;">
+              <h4 style="color: var(--text-primary); margin-bottom: 10px; font-size: 14px;">
+                Active Captures ({activeCaptures().length})
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <For each={activeCaptures()}>
+                  {(capture) => (
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: var(--panel-bg); border-radius: 4px; border-left: 3px solid var(--barbie-pink);">
+                      <div>
+                        <div style="color: var(--text-primary); font-weight: 500;">
+                          {capture.interface_name}
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 12px;">
+                          {capture.packet_count} packets captured
+                        </div>
+                      </div>
+                      <div style="color: var(--text-secondary); font-family: monospace; font-size: 11px;">
+                        {capture.capture_id.substring(0, 8)}...
+                      </div>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
+          </Show>
+        </div>
+      </AnalysisPanel>
 
       <div class="analysis-grid">
         <div class="analysis-main">
@@ -285,21 +498,27 @@ const NetworkAnalysis: Component<NetworkAnalysisProps> = (props) => {
             🎯 Network Insights
           </h3>
           
-          {/* Connection Summary */}
+          {/* Connection Summary - Real data from packet analysis */}
           <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
             <h4 style="margin-bottom: 10px;">🔥 Top Connections</h4>
             <div>
-              <For each={config.get('network').demoConnections}>
-                {(conn) => (
-                  <div class="connection-item">
-                    <div class="connection-header">
-                      <span class="connection-ip">{conn.ip}</span>
-                      <span class="connection-count">{conn.count} packets</span>
+              <Show when={topConnections().length > 0} fallback={
+                <div class="no-data-message" style="color: var(--text-muted); font-style: italic;">
+                  No connections captured yet. Start a packet capture to see top connections.
+                </div>
+              }>
+                <For each={topConnections()}>
+                  {(conn) => (
+                    <div class="connection-item">
+                      <div class="connection-header">
+                        <span class="connection-ip">{conn.ip}</span>
+                        <span class="connection-count">{conn.count} packets</span>
+                      </div>
+                      <div class="connection-type">{conn.type}</div>
                     </div>
-                    <div class="connection-type">{conn.type}</div>
-                  </div>
-                )}
-              </For>
+                  )}
+                </For>
+              </Show>
             </div>
           </div>
 

@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' http://127.0.0.1:3000 https://api.anthropic.com https://api.openai.com https://api.deepseek.com https://api.groq.com https://api.mistral.ai ipc: tauri:; frame-src 'none'; object-src 'none'; base-uri 'self'"
     }
   },
   "productName": "Athena Platform",

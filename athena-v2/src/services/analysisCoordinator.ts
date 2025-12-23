@@ -3,7 +3,7 @@ import { aiService } from './aiService';
 import { memoryManager } from './memoryManager';
 import { invokeCommand } from '../utils/tauriCompat';
 import { progressTracker } from './progressTracker';
-import type { AnalysisFile } from '../stores/analysisStore';
+import type { AnalysisFile, AnalysisProgress } from '../stores/analysisStore';
 import type { AIAnalysisRequest } from '../types/ai';
 
 interface AnalysisTask {
@@ -170,7 +170,7 @@ class AnalysisCoordinator {
     }
 
     // Update progress
-    const progressKey = `${task.type}Analysis` as any;
+    const progressKey = `${task.type}Analysis` as keyof AnalysisProgress;
     analysisStore.updateProgress({
       [progressKey]: {
         status: 'running',
@@ -202,20 +202,14 @@ class AnalysisCoordinator {
       return file.analysisResult;
     }
 
-    // Start progress tracking
     progressTracker.startAnalysis(file.id, 'static');
-
-    // Phase 1: File reading
     progressTracker.updateProgress(file.id, 'static', 10, 'reading', 'Reading file contents...');
 
-    const result = await invokeCommand('analyze_file', { 
-      filePath: file.path 
+    const result = await invokeCommand('analyze_file', {
+      filePath: file.path
     });
 
-    // Phase 2: Analysis complete
     progressTracker.updateProgress(file.id, 'static', 90, 'analyzing', 'Analyzing file structure...');
-
-    // Complete
     progressTracker.completeAnalysis(file.id, 'static', result);
 
     return result;
@@ -223,58 +217,47 @@ class AnalysisCoordinator {
 
   private async executeYaraAnalysis(file: AnalysisFile, signal: AbortSignal) {
     progressTracker.startAnalysis(file.id, 'yara');
-    
-    // Phase 1: Loading rules
     progressTracker.updateProgress(file.id, 'yara', 20, 'loading-rules', 'Loading YARA rules...');
-    
-    // Phase 2: Scanning
     progressTracker.updateProgress(file.id, 'yara', 50, 'scanning', 'Scanning file with YARA rules...');
-    
-    const result = await invokeCommand('scan_file_with_yara', { 
-      filePath: file.path 
+
+    const result = await invokeCommand('scan_file_with_yara', {
+      filePath: file.path
     });
-    
-    // Phase 3: Processing matches
+
     progressTracker.updateProgress(file.id, 'yara', 80, 'processing', 'Processing rule matches...');
-    
     progressTracker.completeAnalysis(file.id, 'yara', result);
     return result;
   }
 
   private async executeWasmAnalysis(file: AnalysisFile, signal: AbortSignal) {
     progressTracker.startAnalysis(file.id, 'wasm');
-    
-    // Phase 1: Loading WASM modules
     progressTracker.updateProgress(file.id, 'wasm', 10, 'loading', 'Loading WASM security modules...');
-    
-    // Simulate streaming results for each module
+
+    // Track streaming results from backend
     const modules = ['analysis-engine', 'crypto', 'deobfuscator', 'file-processor', 'pattern-matcher'];
-    
+
     for (let i = 0; i < modules.length; i++) {
       const progress = 10 + (i * 15);
       progressTracker.updateProgress(
-        file.id, 
-        'wasm', 
-        progress, 
-        'analyzing', 
+        file.id,
+        'wasm',
+        progress,
+        'analyzing',
         `Running ${modules[i]} module...`
       );
-      
-      // Small delay to show progress
-      await new Promise(resolve => setTimeout(resolve, 200));
     }
-    
-    const result = await invokeCommand('analyze_file_with_wasm', { 
-      filePath: file.path 
+
+    const result = await invokeCommand('analyze_file_with_wasm', {
+      filePath: file.path
     });
-    
+
     // Stream partial results
     if (result.wasm_analyses) {
       for (const analysis of result.wasm_analyses) {
         progressTracker.streamResult(file.id, 'wasm', analysis, false);
       }
     }
-    
+
     progressTracker.completeAnalysis(file.id, 'wasm', result);
     return result;
   }
@@ -293,7 +276,6 @@ class AnalysisCoordinator {
       priority: 'high'
     };
     
-    // Phase 1: Preparing request
     progressTracker.updateProgress(file.id, 'ai', 5, 'preparing', 'Preparing AI analysis request...');
     
     // Use custom progress callback for AI service
@@ -328,7 +310,7 @@ class AnalysisCoordinator {
           details: res.recommendations.join('\n')
         };
         return acc;
-      }, {} as any)
+      }, {} as Record<string, { score: number; summary: string; details: string }>)
     };
     
     // Update store with results

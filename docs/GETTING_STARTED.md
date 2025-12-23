@@ -1,5 +1,7 @@
 # Getting Started with Athena
 
+**Version:** 2.0 (Tauri) | **Last Updated:** December 2025 | **Status:** In Development
+
 ## Table of Contents
 
 - [Quick Start (2 Minutes)](#quick-start-2-minutes)
@@ -22,6 +24,7 @@ Get Athena running in under 2 minutes!
 ### Prerequisites
 
 - **Node.js v18+** - [Download here](https://nodejs.org/)
+- **Rust 1.75+** - [Download here](https://rustup.rs/)
 - **Git** - [Download here](https://git-scm.com/downloads)
 
 ### One-Command Setup & Launch
@@ -29,10 +32,14 @@ Get Athena running in under 2 minutes!
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/athena.git
-cd athena
+cd athena/athena-v2
 
-# Launch Athena Interactive CLI
-./scripts/athena
+# Development mode (recommended for first-time setup)
+npm install
+npm run tauri:dev
+
+# Or production build
+npm run tauri:build
 ```
 
 **That's it!** 🎉
@@ -173,16 +180,20 @@ This section provides comprehensive setup instructions for users who need detail
 
 ### Overview
 
-Athena is an enterprise-grade malware analysis platform that leverages multiple AI providers (Claude, OpenAI, DeepSeek) and high-performance WebAssembly modules to analyze and deobfuscate potentially malicious code. The platform has been modernized with production-ready features including:
+Athena is a **Tauri 2.0 desktop application** (December 2025) that leverages 6 AI providers and 9 WebAssembly security modules for comprehensive malware analysis.
 
-- **WebAssembly Security Modules** for high-performance analysis
-- **Multi-AI Provider Support** with automatic failover
-- **Distributed Caching** with Redis
-- **Resilience Patterns** (Circuit Breakers, Bulkheads)
-- **Real-time Streaming** analysis
-- **Container Isolation** for secure execution
-- **Comprehensive Monitoring** with APM integration
-- **Feature Flags** for runtime configuration
+**Platform Stack:**
+- **Desktop Framework**: Tauri 2.0 (Windows, macOS, Linux)
+- **Backend**: Rust with 50+ commands, Wasmtime 29.0 WASM runtime
+- **Frontend**: SolidJS with TypeScript, Vite 7.1.10
+- **Testing**: 169 tests, >80% coverage
+
+**WASM Security Modules:**
+- Analysis Engine, Crypto, Deobfuscator, Disassembler, File Processor
+- Network Analysis, Pattern Matcher, Sandbox, Security
+
+**AI Providers:** Claude, OpenAI, DeepSeek, Gemini, Groq, Mistral
+- Real health checks, circuit breaker, automatic failover
 
 ### Complete Setup Flow
 

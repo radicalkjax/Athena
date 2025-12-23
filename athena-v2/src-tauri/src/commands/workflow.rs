@@ -39,6 +39,7 @@ pub async fn start_job(
 
     // Spawn executor
     let executor = JobExecutor::new(
+        app.clone(),
         store.inner().clone(),
         tx,
         wasm_runtime.inner().clone(),

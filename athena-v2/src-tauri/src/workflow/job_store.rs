@@ -77,7 +77,10 @@ impl JobStore {
     }
 
     pub fn create_job(&self, job: &Job) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock().unwrap_or_else(|poisoned| {
+            eprintln!("JobStore mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
 
         conn.execute(
             "INSERT INTO jobs (id, workflow_type, status, progress, created_at, input)
@@ -96,7 +99,10 @@ impl JobStore {
     }
 
     pub fn update_job(&self, job: &Job) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock().unwrap_or_else(|poisoned| {
+            eprintln!("JobStore mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
 
         conn.execute(
             "UPDATE jobs SET
@@ -122,7 +128,10 @@ impl JobStore {
     }
 
     pub fn add_log(&self, job_id: &str, log: &LogEntry) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock().unwrap_or_else(|poisoned| {
+            eprintln!("JobStore mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
 
         conn.execute(
             "INSERT INTO job_logs (job_id, timestamp, level, message)
@@ -139,7 +148,10 @@ impl JobStore {
     }
 
     pub fn get_job(&self, job_id: &str) -> Result<Option<Job>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock().unwrap_or_else(|poisoned| {
+            eprintln!("JobStore mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
 
         let mut stmt = conn.prepare(
             "SELECT id, workflow_type, status, progress, created_at, started_at, completed_at, input, output, error
@@ -149,13 +161,48 @@ impl JobStore {
         let job = stmt.query_row([job_id], |row| {
             Ok(Job {
                 id: row.get(0)?,
-                workflow_type: serde_json::from_str(&row.get::<_, String>(1)?).unwrap(),
-                status: serde_json::from_str(&row.get::<_, String>(2)?).unwrap(),
+                workflow_type: serde_json::from_str(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e)
+                    ))?,
+                status: serde_json::from_str(&row.get::<_, String>(2)?)
+                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
+                        2,
+                        rusqlite::types::Type::Text,
+                        Box::new(e)
+                    ))?,
                 progress: row.get(3)?,
-                created_at: row.get::<_, String>(4)?.parse().unwrap(),
-                started_at: row.get::<_, Option<String>>(5)?.map(|s| s.parse().unwrap()),
-                completed_at: row.get::<_, Option<String>>(6)?.map(|s| s.parse().unwrap()),
-                input: serde_json::from_str(&row.get::<_, String>(7)?).unwrap(),
+                created_at: row.get::<_, String>(4)?
+                    .parse()
+                    .map_err(|e: chrono::ParseError| rusqlite::Error::FromSqlConversionFailure(
+                        4,
+                        rusqlite::types::Type::Text,
+                        Box::new(e)
+                    ))?,
+                started_at: row.get::<_, Option<String>>(5)?
+                    .map(|s| s.parse())
+                    .transpose()
+                    .map_err(|e: chrono::ParseError| rusqlite::Error::FromSqlConversionFailure(
+                        5,
+                        rusqlite::types::Type::Text,
+                        Box::new(e)
+                    ))?,
+                completed_at: row.get::<_, Option<String>>(6)?
+                    .map(|s| s.parse())
+                    .transpose()
+                    .map_err(|e: chrono::ParseError| rusqlite::Error::FromSqlConversionFailure(
+                        6,
+                        rusqlite::types::Type::Text,
+                        Box::new(e)
+                    ))?,
+                input: serde_json::from_str(&row.get::<_, String>(7)?)
+                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
+                        7,
+                        rusqlite::types::Type::Text,
+                        Box::new(e)
+                    ))?,
                 output: row.get::<_, Option<String>>(8)?.and_then(|s| serde_json::from_str(&s).ok()),
                 error: row.get(9)?,
                 logs: Vec::new(),  // Loaded separately
@@ -170,8 +217,19 @@ impl JobStore {
 
             let logs = log_stmt.query_map([&job.id], |row| {
                 Ok(LogEntry {
-                    timestamp: row.get::<_, String>(0)?.parse().unwrap(),
-                    level: serde_json::from_str(&row.get::<_, String>(1)?).unwrap(),
+                    timestamp: row.get::<_, String>(0)?
+                        .parse()
+                        .map_err(|e: chrono::ParseError| rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e)
+                        ))?,
+                    level: serde_json::from_str(&row.get::<_, String>(1)?)
+                        .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
+                            1,
+                            rusqlite::types::Type::Text,
+                            Box::new(e)
+                        ))?,
                     message: row.get(2)?,
                 })
             })?;
@@ -184,7 +242,10 @@ impl JobStore {
     }
 
     pub fn list_jobs(&self, status: Option<JobStatus>, limit: usize) -> Result<Vec<Job>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock().unwrap_or_else(|poisoned| {
+            eprintln!("JobStore mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
 
         let (query, params_vec): (String, Vec<String>) = if let Some(status) = status {
             (
@@ -224,7 +285,10 @@ impl JobStore {
     }
 
     pub fn delete_job(&self, job_id: &str) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock().unwrap_or_else(|poisoned| {
+            eprintln!("JobStore mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
 
         conn.execute("DELETE FROM job_logs WHERE job_id = ?1", [job_id])?;
         conn.execute("DELETE FROM jobs WHERE id = ?1", [job_id])?;

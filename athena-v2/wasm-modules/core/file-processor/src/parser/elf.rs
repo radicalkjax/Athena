@@ -47,6 +47,16 @@ pub fn parse_elf(buffer: &[u8], format: FileFormat) -> ProcessorResult<ParsedFil
     attributes.insert("entry_point".to_string(), format!("{:#x}", elf.entry));
     attributes.insert("is_lib".to_string(), elf.is_lib.to_string());
 
+    // Extract library dependencies (DT_NEEDED entries)
+    let libraries: Vec<String> = elf.libraries.iter()
+        .map(|lib| lib.to_string())
+        .collect();
+
+    if !libraries.is_empty() {
+        attributes.insert("libraries".to_string(), libraries.join(", "));
+        attributes.insert("library_count".to_string(), libraries.len().to_string());
+    }
+
     let metadata = FileMetadata {
         size: buffer.len(),
         hash: super::calculate_sha256(buffer),
@@ -67,8 +77,19 @@ pub fn parse_elf(buffer: &[u8], format: FileFormat) -> ProcessorResult<ParsedFil
         let offset = section.sh_offset as usize;
         let size = section.sh_size as usize;
 
-        // Calculate entropy for this section
-        let section_data = buffer.get(offset..offset.saturating_add(size))
+        // Calculate entropy for this section with overflow protection
+        let end = offset.checked_add(size).unwrap_or(usize::MAX);
+        if end > buffer.len() {
+            // Section extends beyond file bounds - mark as suspicious
+            suspicious_indicators.push(SuspiciousIndicator {
+                indicator_type: "malformed_section".to_string(),
+                description: format!("Section '{}' extends beyond file bounds", name),
+                severity: SuspiciousSeverity::High,
+                location: Some(format!("Section: {}", name)),
+                evidence: format!("Offset: {:#x}, Size: {:#x}, File size: {:#x}", offset, size, buffer.len()),
+            });
+        }
+        let section_data = buffer.get(offset..end.min(buffer.len()))
             .unwrap_or(&[]);
         let entropy = calculate_entropy(section_data);
 
@@ -225,6 +246,16 @@ pub fn extract_elf_metadata(buffer: &[u8], metadata: &mut FileMetadata) -> Proce
     metadata.attributes.insert("architecture".to_string(), arch.to_string());
     metadata.attributes.insert("entry_point".to_string(), format!("{:#x}", elf.entry));
     metadata.attributes.insert("is_lib".to_string(), elf.is_lib.to_string());
+
+    // Extract library dependencies (DT_NEEDED entries)
+    let libraries: Vec<String> = elf.libraries.iter()
+        .map(|lib| lib.to_string())
+        .collect();
+
+    if !libraries.is_empty() {
+        metadata.attributes.insert("libraries".to_string(), libraries.join(", "));
+        metadata.attributes.insert("library_count".to_string(), libraries.len().to_string());
+    }
 
     Ok(())
 }

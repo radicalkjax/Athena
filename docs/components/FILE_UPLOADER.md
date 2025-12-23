@@ -1,97 +1,36 @@
-# FileUploader Component
+# FileUploadArea Component
 
-The FileUploader component provides a comprehensive file management interface for malware analysis, featuring drag-and-drop support, file validation, progress tracking, and seamless integration with the file manager service.
+**Status:** December 2025 - In Development
+**Framework:** SolidJS 1.9.5
+**Location:** `/athena-v2/src/components/solid/analysis/FileUploadArea.tsx`
+
+The FileUploadArea component provides a comprehensive file management interface for malware sample uploads, featuring drag-and-drop support, file validation, quarantine storage integration, and batch analysis capabilities.
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Architecture](#architecture)
-- [Upload State Machine](#upload-state-machine)
-- [File Validation Flow](#file-validation-flow)
-- [Drag and Drop Interaction](#drag-and-drop-interaction)
-- [Component Structure](#component-structure)
-- [File Manager Integration](#file-manager-integration)
-- [Progress Tracking](#progress-tracking)
-- [Platform-Specific Implementations](#platform-specific-implementations)
-- [Rendering States](#rendering-states)
-- [Styling](#styling)
+- [Component Architecture](#component-architecture)
+- [Reactive State Management](#reactive-state-management)
+- [Upload Flow](#upload-flow)
+- [File Validation](#file-validation)
+- [Quarantine Integration](#quarantine-integration)
+- [Drag and Drop](#drag-and-drop)
 - [Usage Example](#usage-example)
-- [Related Documentation](#related-documentation)
+- [Props and Interfaces](#props-and-interfaces)
+- [Tauri Commands](#tauri-commands)
 
 ## Overview
 
-The FileUploader component is responsible for:
+The FileUploadArea component handles:
 
-1. Allowing users to upload files for analysis via click or drag-and-drop
-2. Displaying a list of uploaded files with metadata
-3. Managing file selection for analysis
-4. Providing file deletion functionality
-5. Handling platform-specific file operations (web vs. native)
-6. Validating file types and sizes
-7. Tracking upload progress
-8. Managing file storage and retrieval
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph TD
-    subgraph "FileUploader Component"
-        A[FileUploader<br/>━━━━━━━━<br/>• File Management<br/>• Upload Interface<br/>• Selection Logic]
-    end
-    
-    subgraph "User Interactions"
-        B[Click Upload<br/>━━━━━━━━<br/>• File Dialog<br/>• Selection]
-        C[Drag & Drop<br/>━━━━━━━━<br/>• Drag Enter<br/>• Drop Files]
-        D[File Actions<br/>━━━━━━━━<br/>• Select<br/>• Delete]
-    end
-    
-    subgraph "File Processing"
-        E[Validation<br/>━━━━━━━━<br/>• Type Check<br/>• Size Check<br/>• Security Scan]
-        F[Storage<br/>━━━━━━━━<br/>• Web: Blob URL<br/>• Native: FileSystem]
-    end
-    
-    subgraph "State Management"
-        G[Zustand Store<br/>━━━━━━━━<br/>• File List<br/>• Selection<br/>• CRUD Actions]
-    end
-    
-    B --> A
-    C --> A
-    D --> A
-    A --> E
-    E --> F
-    F --> G
-    
-    style A fill:#6d105a
-    style B fill:#e8f4d4
-    style C fill:#e8f4d4
-    style D fill:#f9d0c4
-    style E fill:#f9d0c4
-    style F fill:#6d105a
-    style G fill:#e8f4d4
-```
-
-## Architecture
-
-### Component Architecture
+1. **File Upload** - Drag-and-drop or click-to-browse file upload
+2. **Quarantine Storage** - Automatic quarantine of uploaded malware samples
+3. **Staged Samples** - List and manage samples ready for analysis
+4. **Batch Analysis** - Select multiple samples for concurrent analysis
+5. **Docker Integration** - Check Docker availability for sandbox execution
+6. **Analysis Configuration** - Configure analysis types and sandbox settings
+7. **Progress Tracking** - Real-time upload and analysis progress
+8. **Error Handling** - Clear error messages and validation feedback
 
 ```mermaid
 %%{init: {
@@ -99,1310 +38,550 @@ graph TD
   'themeVariables': {
     'primaryColor': '#6d105a',
     'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
     'lineColor': '#333333',
     'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph LR
-    subgraph "Component Layer"
-        A[FileUploader<br/>━━━━━━━━<br/>• React Component<br/>• UI Rendering<br/>• Event Handling]
-    end
-    
-    subgraph "State Layer"
-        B[Local State<br/>━━━━━━━━<br/>• loading: boolean<br/>• uploadProgress: number<br/>• error: string<br/>• isDragging: boolean]
-        C[Store State<br/>━━━━━━━━<br/>• malwareFiles: File[]<br/>• selectedMalwareId<br/>• CRUD Actions]
-    end
-    
-    subgraph "Service Layer"
-        D[File Manager<br/>━━━━━━━━<br/>• initFileSystem()<br/>• pickFile()<br/>• deleteFile()<br/>• listMalwareFiles()]
-    end
-    
-    subgraph "Platform Layer"
-        E[Web APIs<br/>━━━━━━━━<br/>• File API<br/>• Blob URLs<br/>• FileReader]
-        F[Native APIs<br/>━━━━━━━━<br/>• DocumentPicker<br/>• FileSystem<br/>• Expo APIs]
-    end
-    
-    A --> B
-    A --> C
-    A --> D
-    D --> E
-    D --> F
-    
-    style A fill:#6d105a
-    style B fill:#f9d0c4
-    style C fill:#e8f4d4
-    style D fill:#6d105a
-    style E fill:#f9d0c4
-    style F fill:#f9d0c4
-```
-
-## Upload State Machine
-
-### File Upload Lifecycle
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-stateDiagram-v2
-    [*] --> Idle: Component Mounted
-    
-    Idle --> DragEnter: Drag Enter
-    Idle --> FileDialog: Click Upload
-    
-    DragEnter --> DragOver: Drag Over
-    DragOver --> DragLeave: Drag Leave
-    DragLeave --> Idle
-    DragOver --> Drop: Drop Files
-    
-    FileDialog --> FileSelected: File Selected
-    FileDialog --> Idle: Cancel
-    
-    Drop --> Validating: Process Files
-    FileSelected --> Validating: Process File
-    
-    Validating --> TypeCheck: Validate
-    TypeCheck --> SizeCheck: Valid Type
-    TypeCheck --> ValidationError: Invalid Type
-    
-    SizeCheck --> SecurityScan: Valid Size
-    SizeCheck --> ValidationError: Too Large
-    
-    SecurityScan --> Uploading: Safe
-    SecurityScan --> ValidationError: Suspicious
-    
-    ValidationError --> ShowError: Display Error
-    ShowError --> Idle: Dismiss
-    
-    Uploading --> Progress: Upload Start
-    Progress --> Progress: Update %
-    Progress --> Processing: Upload Complete
-    
-    Processing --> StoreFile: Create Entry
-    StoreFile --> SelectFile: Auto Select
-    SelectFile --> Success: Complete
-    
-    Success --> ShowSuccess: Display Toast
-    ShowSuccess --> Idle: Dismiss
-    
-    state Error {
-        [*] --> UploadError
-        UploadError --> Retry: User Retry
-        UploadError --> Cancel: User Cancel
-        Retry --> Validating
-        Cancel --> Idle
-    }
-    
-    Uploading --> Error: Upload Failed
-    Processing --> Error: Process Failed
-```
-
-## File Validation Flow
-
-### Validation Pipeline
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-flowchart TD
-    Start[File Input]
-    
-    subgraph "Type Validation"
-        CheckExt{Check<br/>Extension}
-        CheckMime{Check<br/>MIME Type}
-        
-        AllowedTypes[Allowed Types<br/>━━━━━━━━<br/>• .exe, .dll, .sys<br/>• .js, .py, .sh<br/>• .zip, .rar, .7z<br/>• .pdf, .doc, .xls]
-        
-        BlockedTypes[Blocked Types<br/>━━━━━━━━<br/>• Media files<br/>• System files<br/>• Temp files]
-    end
-    
-    subgraph "Size Validation"
-        CheckSize{Size<br/>Check}
-        
-        SizeLimits[Size Limits<br/>━━━━━━━━<br/>• Max: 100MB<br/>• Min: 1 byte<br/>• Warn: >50MB]
-    end
-    
-    subgraph "Security Validation"
-        QuickScan{Quick<br/>Scan}
-        
-        SecurityChecks[Security Checks<br/>━━━━━━━━<br/>• Known signatures<br/>• Archive bombs<br/>• Path traversal<br/>• Hidden files]
-    end
-    
-    subgraph "Content Analysis"
-        ReadHeader{Read<br/>Header}
-        
-        ContentChecks[Content Checks<br/>━━━━━━━━<br/>• Magic bytes<br/>• File structure<br/>• Encoding check]
-    end
-    
-    Accept[✓ Accept File]
-    Reject[✗ Reject File]
-    
-    Start --> CheckExt
-    CheckExt -->|Valid| CheckMime
-    CheckExt -->|Invalid| Reject
-    
-    CheckMime -->|Valid| CheckSize
-    CheckMime -->|Invalid| Reject
-    
-    CheckSize -->|Valid| QuickScan
-    CheckSize -->|Too Large| Reject
-    
-    QuickScan -->|Safe| ReadHeader
-    QuickScan -->|Suspicious| Reject
-    
-    ReadHeader -->|Valid| Accept
-    ReadHeader -->|Invalid| Reject
-    
-    style Start fill:#6d105a
-    style Accept fill:#e8f4d4
-    style Reject fill:#f9d0c4
-    style AllowedTypes fill:#e8f4d4
-    style BlockedTypes fill:#f9d0c4
-    style SizeLimits fill:#f9d0c4
-    style SecurityChecks fill:#f9d0c4
-    style ContentChecks fill:#6d105a
-```
-
-## Drag and Drop Interaction
-
-### Drag and Drop Flow
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-sequenceDiagram
-    participant User
-    participant DOM as DOM Events
-    participant Component as FileUploader
-    participant State as Component State
-    participant Validation as File Validation
-    participant Store as Zustand Store
-    
-    User->>DOM: Drag files over component
-    DOM->>Component: onDragEnter event
-    Component->>State: setIsDragging(true)
-    State->>Component: Update UI (highlight)
-    
-    User->>DOM: Continue dragging
-    DOM->>Component: onDragOver event
-    Component->>DOM: preventDefault()
-    Note over Component: Prevent default browser behavior
-    
-    alt User drops files
-        User->>DOM: Drop files
-        DOM->>Component: onDrop event
-        Component->>DOM: preventDefault()
-        Component->>State: setIsDragging(false)
-        Component->>Component: Extract files from event
-        
-        loop For each file
-            Component->>Validation: Validate file
-            alt File valid
-                Validation-->>Component: Valid
-                Component->>Component: Create MalwareFile object
-                Component->>Store: addMalwareFile(file)
-                Component->>State: Update progress
-            else File invalid
-                Validation-->>Component: Invalid (reason)
-                Component->>State: setError(reason)
-            end
-        end
-        
-        Component->>Store: selectMalwareFile(firstFile)
-        Component->>User: Show success toast
-        
-    else User cancels
-        User->>DOM: Drag leave area
-        DOM->>Component: onDragLeave event
-        Component->>State: setIsDragging(false)
-        State->>Component: Update UI (normal)
-    end
-```
-
-### Visual Drag States
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph TD
-    subgraph "Normal State"
-        A[Upload Area<br/>━━━━━━━━<br/>📁 Drop files here<br/>or click to browse]
-    end
-    
-    subgraph "Drag Enter State"
-        B[Upload Area<br/>━━━━━━━━<br/>✨ Drop files here<br/>Border: Animated<br/>Background: Highlight]
-    end
-    
-    subgraph "Drag Over State"
-        C[Upload Area<br/>━━━━━━━━<br/>📥 Release to upload<br/>Border: Pulsing<br/>Scale: 1.02]
-    end
-    
-    subgraph "Processing State"
-        D[Upload Area<br/>━━━━━━━━<br/>⏳ Processing files...<br/>Progress: 45%<br/>Disabled: true]
-    end
-    
-    A -->|Drag Enter| B
-    B -->|Drag Over| C
-    C -->|Drop| D
-    B -->|Drag Leave| A
-    D -->|Complete| A
-    
-    style A fill:#6d105a
-    style B fill:#f9d0c4
-    style C fill:#e8f4d4
-    style D fill:#f9d0c4
-```
-
-## File Manager Integration
-
-### Service Integration Flow
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
+    'tertiaryColor': '#f9d0c4'
   }
 }}%%
 graph TB
-    subgraph "FileUploader Component"
-        A[Component<br/>━━━━━━━━<br/>• UI Logic<br/>• Event Handlers<br/>• State Management]
+    subgraph "FileUploadArea Component"
+        A[FileUploadArea<br/>━━━━━━━━<br/>• SolidJS Component<br/>• Reactive State<br/>• Tauri Integration]
     end
-    
-    subgraph "File Manager Service"
-        B[Service Interface<br/>━━━━━━━━<br/>• initFileSystem()<br/>• pickFile()<br/>• deleteFile()<br/>• listMalwareFiles()]
-        
-        subgraph "Platform Implementations"
-            C[Web Implementation<br/>━━━━━━━━<br/>• File API<br/>• Blob URLs<br/>• IndexedDB]
-            D[Native Implementation<br/>━━━━━━━━<br/>• Expo FileSystem<br/>• DocumentPicker<br/>• Local Storage]
-        end
+
+    subgraph "User Actions"
+        B[Drag & Drop<br/>━━━━━━━━<br/>• File Input<br/>• Validation]
+        C[File Selection<br/>━━━━━━━━<br/>• Browse Dialog<br/>• Multi-select]
     end
-    
-    subgraph "Storage Layer"
-        E[Web Storage<br/>━━━━━━━━<br/>• Blob URLs<br/>• Memory Cache<br/>• IndexedDB]
-        F[Native Storage<br/>━━━━━━━━<br/>• Document Dir<br/>• File System<br/>• SQLite]
+
+    subgraph "Backend Integration"
+        D[Quarantine Service<br/>━━━━━━━━<br/>• upload_to_quarantine<br/>• list_quarantined_samples<br/>• check_docker_available]
+        E[Analysis Service<br/>━━━━━━━━<br/>• analyze_sample<br/>• get_analysis_stats]
     end
-    
+
     subgraph "State Management"
-        G[Zustand Store<br/>━━━━━━━━<br/>• File Registry<br/>• Selection State<br/>• Persistence]
+        F[SolidJS Signals<br/>━━━━━━━━<br/>• createSignal<br/>• createEffect<br/>• analysisStore]
     end
-    
-    A --> B
-    B --> C
-    B --> D
-    C --> E
-    D --> F
-    E --> G
-    F --> G
-    
-    style A fill:#6d105a
-    style B fill:#e8f4d4
-    style C fill:#f9d0c4
-    style D fill:#f9d0c4
-    style E fill:#f9d0c4
-    style F fill:#f9d0c4
-    style G fill:#e8f4d4
-```
 
-## Progress Tracking
-
-### Upload Progress Flow
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-sequenceDiagram
-    participant UI as User Interface
-    participant Component as FileUploader
-    participant Progress as Progress State
-    participant Service as File Service
-    participant Store as Zustand Store
-    
-    UI->>Component: Select file
-    Component->>Progress: setUploadProgress(0)
-    Component->>UI: Show progress bar
-    
-    Component->>Service: Start upload
-    
-    loop Upload chunks
-        Service->>Service: Process chunk
-        Service->>Progress: Update progress
-        Progress->>Component: onProgress(percentage)
-        Component->>Progress: setUploadProgress(percentage)
-        Component->>UI: Update progress bar
-        
-        Note over UI: Progress: 0% → 25% → 50% → 75% → 100%
-    end
-    
-    Service->>Component: Upload complete
-    Component->>Progress: setUploadProgress(100)
-    Component->>Store: addMalwareFile(file)
-    Component->>UI: Show success
-    
-    Component->>Progress: Reset after delay
-    Progress->>Component: setUploadProgress(0)
-    Component->>UI: Hide progress bar
-```
-
-### Progress UI States
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph LR
-    subgraph "Initial State"
-        A[Upload Button<br/>━━━━━━━━<br/>📤 Upload File<br/>Enabled: true]
-    end
-    
-    subgraph "Uploading State"
-        B[Progress Bar<br/>━━━━━━━━<br/>▓▓▓▓░░░░ 45%<br/>Cancel Button]
-    end
-    
-    subgraph "Processing State"
-        C[Processing<br/>━━━━━━━━<br/>⚙️ Processing...<br/>Indeterminate]
-    end
-    
-    subgraph "Complete State"
-        D[Success<br/>━━━━━━━━<br/>✅ Upload Complete<br/>File Added]
-    end
-    
-    A -->|Start| B
-    B -->|100%| C
-    C -->|Done| D
-    D -->|Reset| A
-    
-    style A fill:#6d105a
-    style B fill:#f9d0c4
-    style C fill:#f9d0c4
-    style D fill:#e8f4d4
-```
-
-## Component Structure
-
-### Component Hierarchy
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph TD
-    subgraph "FileUploader Root"
-        A[FileUploader Component]
-        
-        subgraph "State Management"
-            B[Local State<br/>━━━━━━━━<br/>• loading<br/>• uploadProgress<br/>• error<br/>• isDragging<br/>• toast]
-            C[Store State<br/>━━━━━━━━<br/>• malwareFiles<br/>• selectedMalwareId<br/>• CRUD actions]
-        end
-        
-        subgraph "UI Components"
-            D[Header<br/>━━━━━━━━<br/>• Upload Button<br/>• Title]
-            E[Drop Zone<br/>━━━━━━━━<br/>• Drag Area<br/>• Instructions]
-            F[File List<br/>━━━━━━━━<br/>• File Items<br/>• Actions]
-            G[Toast<br/>━━━━━━━━<br/>• Success/Error<br/>• Messages]
-        end
-        
-        subgraph "File Item"
-            H[File Icon<br/>━━━━━━━━<br/>• Type Based<br/>• Dynamic]
-            I[File Info<br/>━━━━━━━━<br/>• Name<br/>• Size<br/>• Type]
-            J[Actions<br/>━━━━━━━━<br/>• Select<br/>• Delete]
-        end
-    end
-    
-    A --> B
-    A --> C
+    B --> A
+    C --> A
     A --> D
     A --> E
     A --> F
-    A --> G
-    F --> H
-    F --> I
-    F --> J
-    
-    style A fill:#6d105a
-    style B fill:#f9d0c4
-    style C fill:#e8f4d4
-    style D fill:#6d105a
-    style E fill:#6d105a
-    style F fill:#6d105a
-    style G fill:#f9d0c4
-    style H fill:#e8f4d4
-    style I fill:#e8f4d4
-    style J fill:#f9d0c4
 ```
 
-## Platform-Specific Implementations
+## Component Architecture
 
-### Platform Detection and Routing
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-flowchart TD
-    Start[File Operation Request]
-    
-    Check{Platform<br/>Check}
-    
-    subgraph "Web Platform"
-        WebAPI[Web File API<br/>━━━━━━━━<br/>• HTML5 File API<br/>• FileReader API<br/>• Blob URLs]
-        
-        WebPick[File Input<br/>━━━━━━━━<br/>• <input type="file"><br/>• Click trigger<br/>• onChange handler]
-        
-        WebStore[Web Storage<br/>━━━━━━━━<br/>• Blob URLs<br/>• URL.createObjectURL<br/>• Memory storage]
-        
-        WebRead[File Reading<br/>━━━━━━━━<br/>• FileReader<br/>• readAsText()<br/>• readAsDataURL()]
-    end
-    
-    subgraph "Native Platform"
-        NativeAPI[Native APIs<br/>━━━━━━━━<br/>• Expo FileSystem<br/>• DocumentPicker<br/>• Platform Storage]
-        
-        NativePick[Document Picker<br/>━━━━━━━━<br/>• System picker<br/>• Type filters<br/>• Multi-select]
-        
-        NativeStore[File System<br/>━━━━━━━━<br/>• documentDirectory<br/>• copyAsync()<br/>• Persistent storage]
-        
-        NativeRead[File Access<br/>━━━━━━━━<br/>• readAsStringAsync<br/>• getInfoAsync<br/>• Direct access]
-    end
-    
-    Start --> Check
-    Check -->|typeof document !== 'undefined'| WebAPI
-    Check -->|React Native| NativeAPI
-    
-    WebAPI --> WebPick
-    WebAPI --> WebStore
-    WebAPI --> WebRead
-    
-    NativeAPI --> NativePick
-    NativeAPI --> NativeStore
-    NativeAPI --> NativeRead
-    
-    style Start fill:#6d105a
-    style WebAPI fill:#f9d0c4
-    style NativeAPI fill:#f9d0c4
-    style WebStore fill:#e8f4d4
-    style NativeStore fill:#e8f4d4
-```
-
-## Rendering States
-
-### Visual Component States
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph TD
-    subgraph "Loading State"
-        A[LoadingView<br/>━━━━━━━━<br/>🔄 ActivityIndicator<br/>📝 "Loading files..."]
-    end
-    
-    subgraph "Empty State"
-        B[EmptyView<br/>━━━━━━━━<br/>📁 No files icon<br/>📝 "No files yet"<br/>🔗 Upload prompt]
-    end
-    
-    subgraph "File List State"
-        C[Header<br/>━━━━━━━━<br/>📤 Upload Button]
-        
-        D[File Item 1<br/>━━━━━━━━<br/>📄 file.exe<br/>2.3 MB<br/>✓ Selected]
-        
-        E[File Item 2<br/>━━━━━━━━<br/>📄 malware.dll<br/>1.2 MB<br/>○ Not Selected]
-        
-        F[Drop Zone<br/>━━━━━━━━<br/>⚡ Drag files here<br/>or click to browse]
-    end
-    
-    subgraph "Error State"
-        G[ErrorView<br/>━━━━━━━━<br/>⚠️ Error Icon<br/>📝 Error Message<br/>🔁 Dismiss]
-    end
-    
-    C --> D
-    C --> E
-    C --> F
-    
-    style A fill:#f9d0c4
-    style B fill:#6d105a
-    style C fill:#6d105a
-    style D fill:#e8f4d4
-    style E fill:#6d105a
-    style F fill:#f9d0c4
-    style G fill:#f9d0c4
-```
-
-### Mock UI Representation
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph TD
-    subgraph "FileUploader UI"
-        Header["<div style='background:#f9f9f9;padding:10px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between'>
-            <span style='flex:1'></span>
-            <button style='background:#4A90E2;color:white;padding:6px 12px;border-radius:4px'>📤 Upload</button>
-        </div>"]
-        
-        DropZone["<div style='border:2px dashed #ccc;padding:20px;margin:10px;border-radius:8px;text-align:center;background:#f0f8ff'>
-            📁 Drop files here or click to browse<br/>
-            <small>Supports: .exe, .dll, .js, .py, .zip, etc.</small>
-        </div>"]
-        
-        File1["<div style='background:#4A90E2;padding:12px;margin:8px;border-radius:8px;display:flex;color:white'>
-            <span style='margin-right:10px'>📄</span>
-            <div style='flex:1'>
-                <strong>suspicious.exe</strong><br/>
-                <small>2.3 MB</small>
-            </div>
-            <span style='cursor:pointer'>🗑️</span>
-        </div>"]
-        
-        File2["<div style='background:#F0F0F0;padding:12px;margin:8px;border-radius:8px;display:flex'>
-            <span style='margin-right:10px'>📄</span>
-            <div style='flex:1'>
-                <strong>malware.dll</strong><br/>
-                <small>1.2 MB</small>
-            </div>
-            <span style='cursor:pointer;color:#FF6B6B'>🗑️</span>
-        </div>"]
-        
-        Container["<div style='background:#f9f9f9;border-radius:8px;border:1px solid #ddd'>"]
-    end
-    
-    Container --> Header
-    Container --> DropZone
-    Container --> File1
-    Container --> File2
-```
-
-## Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `onFileSelect` | `(file: MalwareFile) => void` | Callback function that is called when a file is selected for analysis |
-
-## State
-
-The component maintains the following state:
-
-| State | Type | Description |
-|-------|------|-------------|
-| `loading` | `boolean` | Indicates whether the component is loading files |
-| `error` | `string \| null` | Error message if loading or file operations fail |
-
-Additionally, the component uses the following state from the global store:
-
-| Store State | Type | Description |
-|-------------|------|-------------|
-| `malwareFiles` | `MalwareFile[]` | List of uploaded malware files |
-| `selectedMalwareId` | `string \| null` | ID of the currently selected file |
-| `selectMalwareFile` | `(id: string \| null) => void` | Function to update the selected file ID |
-| `addMalwareFile` | `(file: MalwareFile) => void` | Function to add a file to the store |
-| `removeMalwareFile` | `(id: string) => void` | Function to remove a file from the store |
-
-## Key Functions
-
-### `loadMalwareFiles`
+### SolidJS Component Structure
 
 ```typescript
-const loadMalwareFiles = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    
-    // Check if running on web
-    const isWeb = typeof document !== 'undefined';
-    
-    if (isWeb) {
-      // On web, we can't load files from the file system
-      // We'll just check if there are any files in the store
-      
-      // If a file is already selected, make sure it's in the malware files
-      if (selectedMalwareId) {
-        const selectedFile = malwareFiles.find(file => file.id === selectedMalwareId);
-        if (selectedFile) {
-          onFileSelect(selectedFile);
-        }
-      }
-    } else {
-      // Initialize file system
-      await fileManagerService.initFileSystem();
-      
-      // Load existing malware files if the store is empty
-      if (malwareFiles.length === 0) {
-        const files = await fileManagerService.listMalwareFiles();
-        files.forEach(file => {
-          addMalwareFile(file);
-        });
-      }
-      
-      // If a file is already selected, make sure it's in the malware files
-      if (selectedMalwareId) {
-        const selectedFile = malwareFiles.find(file => file.id === selectedMalwareId);
-        if (selectedFile) {
-          onFileSelect(selectedFile);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error loading malware files:', error);
-    setError('Failed to load malware files.');
-  } finally {
-    setLoading(false);
-  }
+export const FileUploadArea: Component = () => {
+  // Reactive signals for state
+  const [isDragging, setIsDragging] = createSignal(false);
+  const [isUploading, setIsUploading] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+  const [stagedSamples, setStagedSamples] = createSignal<StagedSample[]>([]);
+  const [selectedSamples, setSelectedSamples] = createSignal<Set<string>>(new Set());
+  const [dockerAvailable, setDockerAvailable] = createSignal<boolean | null>(null);
+
+  // Effects for lifecycle management
+  onMount(() => {
+    loadStagedSamples();
+    checkDockerStatus();
+  });
+
+  onCleanup(() => {
+    // Cleanup subscriptions
+  });
+
+  // Render with reactive JSX
+  return (
+    <AnalysisPanel title="File Upload & Analysis">
+      {/* Component content */}
+    </AnalysisPanel>
+  );
 };
 ```
 
-### `handleFileUpload`
+### Key Interfaces
 
 ```typescript
-const handleFileUpload = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    
-    // Check if running on web
-    const isWeb = typeof document !== 'undefined';
-    
-    if (isWeb) {
-      // Web implementation using standard File API
-      
-      // Create a file input element
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '*/*';
-      
-      // Create a promise to handle the file selection
-      const filePromise = new Promise<MalwareFile | null>((resolve) => {
-        input.onchange = async (e) => {
-          const target = e.target as HTMLInputElement;
-          const files = target.files;
-          
-          if (files && files.length > 0) {
-            const selectedFile = files[0];
-            
-            // Read file content for small text files
-            let content = '';
-            if (
-              selectedFile.size < 1024 * 1024 && // Less than 1MB
-              (selectedFile.type.includes('text') || 
-               selectedFile.name.endsWith('.js') ||
-               // ... other text file extensions
-              )
-            ) {
-              const reader = new FileReader();
-              content = await new Promise<string>((resolve) => {
-                reader.onload = () => resolve(reader.result as string);
-                reader.readAsText(selectedFile);
-              });
-            }
-            
-            // Create a MalwareFile object
-            const fileId = Math.random().toString(36).substring(2, 15);
-            const malwareFile: MalwareFile = {
-              id: fileId,
-              name: selectedFile.name,
-              size: selectedFile.size,
-              type: selectedFile.type,
-              uri: URL.createObjectURL(selectedFile), // Create a blob URL
-              content,
-            };
-            
-            resolve(malwareFile);
-          } else {
-            resolve(null);
-          }
-        };
-        
-        // Trigger the file dialog
-        input.click();
-      });
-      
-      // Wait for file selection
-      const file = await filePromise;
-      
-      if (file) {
-        // Add file to store
-        addMalwareFile(file);
-        
-        // Select the file
-        selectMalwareFile(file.id);
-        onFileSelect(file);
-        
-        // Show success message
-        Alert.alert('Success', `File "${file.name}" uploaded successfully.`);
-      }
-    } else {
-      // Native implementation using Expo File System
-      
-      // Initialize file system first
-      await fileManagerService.initFileSystem();
-      
-      // Pick a file
-      const file = await fileManagerService.pickFile();
-      
-      if (file) {
-        // Add file to store
-        addMalwareFile(file);
-        
-        // Select the file
-        selectMalwareFile(file.id);
-        onFileSelect(file);
-        
-        // Show success message
-        Alert.alert('Success', `File "${file.name}" uploaded successfully.`);
-      }
-    }
-  } catch (error) {
-    console.error('Error uploading file:', error);
-    setError(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    Alert.alert('Error', `Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  } finally {
-    setLoading(false);
-  }
-};
+interface StagedSample {
+  sha256: string;
+  original_filename: string;
+  size: number;
+  file_type: string;
+  mime_type: string;
+  status: string;
+  uploaded_at: string;
+  tags: string[];
+}
+
+interface AnalysisConfig {
+  staticAnalysis: boolean;
+  dynamicAnalysis: boolean;
+  aiEnsemble: boolean;
+  reverseEngineering: boolean;
+  sandboxOS: 'linux' | 'windows' | 'macos';
+  sandboxArch: 'x86_64' | 'arm64';
+  sandboxImage: string;
+  sandboxTimeout: number;
+  sandboxMemory: number;
+  sandboxCPU: number;
+  captureNetwork: boolean;
+}
+
+interface UploadProgress {
+  current: number;
+  total: number;
+  percentage: number;
+  status: string;
+}
 ```
 
-### `handleFileSelect`
+## Reactive State Management
+
+### SolidJS Signals
+
+The component uses SolidJS signals for reactive state:
 
 ```typescript
-const handleFileSelect = (file: MalwareFile) => {
-  selectMalwareFile(file.id);
-  onFileSelect(file);
-};
-```
+// Drag state
+const [isDragging, setIsDragging] = createSignal(false);
 
-### `handleFileDelete`
+// Upload state
+const [isUploading, setIsUploading] = createSignal(false);
+const [uploadProgress, setUploadProgress] = createSignal<UploadProgress | null>(null);
 
-```typescript
-const handleFileDelete = async (fileId: string) => {
-  try {
-    // Check if the file exists in the store
-    const fileToDelete = malwareFiles.find(f => f.id === fileId);
-    if (!fileToDelete) {
-      Alert.alert('Error', 'File not found.');
-      return;
-    }
-    
-    // Check if running on web
-    const isWeb = typeof document !== 'undefined';
-    
-    if (isWeb) {
-      // On web, we just need to revoke the blob URL if it exists
-      if (fileToDelete.uri && fileToDelete.uri.startsWith('blob:')) {
-        URL.revokeObjectURL(fileToDelete.uri);
-      }
-    } else {
-      // Delete file from file system
-      await fileManagerService.deleteFile(fileToDelete.uri);
-    }
-    
-    // Remove file from store
-    removeMalwareFile(fileId);
-    
-    // If the deleted file was selected, clear selection
-    if (selectedMalwareId === fileId) {
-      selectMalwareFile(null);
-    }
-    
-    // Show success message
-    Alert.alert('Success', `File "${fileToDelete.name}" deleted successfully.`);
-  } catch (error) {
-    console.error('Error deleting file:', error);
-    Alert.alert('Error', `Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-};
-```
+// Error and success messages
+const [error, setError] = createSignal<string | null>(null);
+const [successMessage, setSuccessMessage] = createSignal<string | null>(null);
 
-## Platform-Specific Implementations
+// Samples management
+const [stagedSamples, setStagedSamples] = createSignal<StagedSample[]>([]);
+const [selectedSamples, setSelectedSamples] = createSignal<Set<string>>(new Set());
 
-The FileUploader component uses different implementations for web and native platforms:
+// Analysis state
+const [isAnalyzing, setIsAnalyzing] = createSignal(false);
+const [dockerAvailable, setDockerAvailable] = createSignal<boolean | null>(null);
 
-### Web Implementation
-
-On web platforms, the component uses the browser's File API:
-
-1. Creates a hidden file input element
-2. Triggers a click on the input element to open the file picker dialog
-3. Reads the selected file's content (for text files)
-4. Creates a blob URL for the file
-5. Creates a MalwareFile object and adds it to the store
-
-### Native Implementation
-
-On native platforms (iOS and Android), the component uses Expo's DocumentPicker and FileSystem APIs:
-
-1. Initializes the file system
-2. Uses DocumentPicker to open the file picker dialog
-3. Copies the selected file to the app's documents directory
-4. Creates a MalwareFile object and adds it to the store
-
-## Rendering Logic
-
-The component renders different views based on its state:
-
-### Loading State
-
-```jsx
-<ThemedView style={styles.loadingContainer}>
-  <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-  <ThemedText style={styles.loadingText}>Loading files...</ThemedText>
-</ThemedView>
-```
-
-### Header
-
-```jsx
-<View style={styles.header}>
-  <View style={{ flex: 1 }}></View>
-  <View style={styles.buttonContainer}>
-    <TouchableOpacity
-      style={[styles.button, styles.uploadButton]}
-      onPress={handleFileUpload}
-    >
-      <IconSymbol name="arrow.up.doc" size={16} color="#FFFFFF" />
-      <ThemedText style={styles.buttonText}>Upload</ThemedText>
-    </TouchableOpacity>
-  </View>
-</View>
-```
-
-### Error State
-
-```jsx
-<ThemedView style={styles.errorContainer}>
-  <IconSymbol name="exclamationmark.triangle" size={16} color="#FF6B6B" />
-  <ThemedText style={styles.errorText}>{error}</ThemedText>
-</ThemedView>
-```
-
-### Empty State
-
-```jsx
-<ThemedView style={styles.emptyContainer}>
-  <AiFillAliwangwang size={32} color="#AAAAAA" />
-  <ThemedText style={styles.emptyText}>
-    No files yet. Upload a file to get started.
-  </ThemedText>
-</ThemedView>
-```
-
-### File List
-
-```jsx
-<ThemedView style={styles.fileListContainer}>
-  {malwareFiles.map(file => (
-    <TouchableOpacity
-      key={file.id}
-      style={[
-        styles.fileItem,
-        selectedMalwareId === file.id && styles.selectedFileItem,
-      ]}
-      onPress={() => handleFileSelect(file)}
-    >
-      <View style={styles.fileIconContainer}>
-        <IconSymbol
-          name={file.type.includes('text') ? 'doc.text' : 'doc'}
-          size={24}
-          color={selectedMalwareId === file.id ? '#FFFFFF' : Colors[colorScheme ?? 'light'].text}
-        />
-      </View>
-      <View style={styles.fileInfo}>
-        <ThemedText
-          style={[
-            styles.fileName,
-            selectedMalwareId === file.id && styles.selectedFileText,
-          ]}
-        >
-          {truncateString(file.name, 20)}
-        </ThemedText>
-        <ThemedText
-          style={[
-            styles.fileSize,
-            selectedMalwareId === file.id && styles.selectedFileText,
-          ]}
-        >
-          {formatFileSize(file.size)}
-        </ThemedText>
-      </View>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => handleFileDelete(file.id)}
-      >
-        <FaTrash
-          size={18}
-          color={selectedMalwareId === file.id ? '#FFFFFF' : '#FF6B6B'}
-        />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  ))}
-</ThemedView>
-```
-
-## Styling
-
-The component uses a StyleSheet for styling:
-
-```javascript
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 10,
-    borderRadius: 8,
-    padding: 10,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  uploadButton: {
-    backgroundColor: '#4A90E2',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  fileListContainer: {
-    maxHeight: 300,
-  },
-  fileItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: '#F0F0F0',
-  },
-  selectedFileItem: {
-    backgroundColor: '#4A90E2',
-  },
-  fileIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  fileInfo: {
-    flex: 1,
-  },
-  fileName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  fileSize: {
-    fontSize: 14,
-    opacity: 0.7,
-    color: '#000000',
-  },
-  selectedFileText: {
-    color: '#FFFFFF',
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#FFF0F0',
-    borderRadius: 4,
-    marginBottom: 10,
-  },
-  errorText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#FF6B6B',
-  },
-  emptyContainer: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    marginTop: 10,
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#AAAAAA',
-  },
+// Configuration
+const [analysisConfig, setAnalysisConfig] = createSignal<AnalysisConfig>({
+  staticAnalysis: true,
+  dynamicAnalysis: true,
+  aiEnsemble: true,
+  reverseEngineering: false,
+  sandboxOS: 'linux',
+  sandboxArch: 'x86_64',
+  // ... other config
 });
+```
+
+### Effects and Lifecycle
+
+```typescript
+// Load samples on mount
+onMount(async () => {
+  await loadStagedSamples();
+  await checkDockerStatus();
+
+  // Set up event listeners if needed
+});
+
+// Cleanup on unmount
+onCleanup(() => {
+  // Clean up any subscriptions or event listeners
+  // Release resources
+});
+
+// Reactive effects
+createEffect(() => {
+  // Auto-clear error messages after 5 seconds
+  const errorMsg = error();
+  if (errorMsg) {
+    const timer = setTimeout(() => setError(null), 5000);
+    onCleanup(() => clearTimeout(timer));
+  }
+});
+```
+
+## Upload Flow
+
+### File Upload Process
+
+```mermaid
+%%{init: {'theme': 'base'}}%%
+sequenceDiagram
+    participant User
+    participant Component as FileUploadArea
+    participant Tauri as Tauri Commands
+    participant Backend as Rust Backend
+    participant Quarantine as Quarantine Storage
+
+    User->>Component: Drop file or click upload
+    Component->>Component: Validate file
+
+    alt File validation passes
+        Component->>Tauri: invoke('upload_to_quarantine', path)
+        Tauri->>Backend: Process upload
+        Backend->>Backend: Compute SHA-256
+        Backend->>Backend: Check for duplicates
+        Backend->>Quarantine: Store in quarantine
+        Quarantine-->>Backend: Upload result
+        Backend-->>Tauri: Return result
+        Tauri-->>Component: UploadResult
+        Component->>Component: Update staged samples
+        Component->>User: Show success message
+    else Validation fails
+        Component->>User: Show error message
+    end
+```
+
+### Upload Handler
+
+```typescript
+const handleFileSelect = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const files = input.files;
+
+  if (!files || files.length === 0) return;
+
+  setIsUploading(true);
+  setError(null);
+
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Update progress
+      setUploadProgress({
+        current: i + 1,
+        total: files.length,
+        percentage: ((i + 1) / files.length) * 100,
+        status: `Uploading ${file.name}...`
+      });
+
+      // Upload to quarantine via Tauri
+      const result = await invokeCommand<UploadResult>('upload_to_quarantine', {
+        filePath: file.path // In Tauri, file has path property
+      });
+
+      logger.info('File uploaded to quarantine', {
+        filename: file.name,
+        sha256: result.sha256
+      });
+    }
+
+    // Reload staged samples
+    await loadStagedSamples();
+    setSuccessMessage('Files uploaded successfully!');
+
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Upload failed';
+    setError(errorMsg);
+    logger.error('Upload error', { error: errorMsg });
+  } finally {
+    setIsUploading(false);
+    setUploadProgress(null);
+  }
+};
+```
+
+## File Validation
+
+### Client-Side Validation
+
+```typescript
+const validateFile = (file: File): { valid: boolean; error?: string } => {
+  // Size validation (max 100MB)
+  const MAX_SIZE = 100 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    return { valid: false, error: 'File exceeds 100MB limit' };
+  }
+
+  if (file.size === 0) {
+    return { valid: false, error: 'File is empty' };
+  }
+
+  // Type validation (basic check)
+  const allowedExtensions = [
+    '.exe', '.dll', '.sys', '.bin',
+    '.js', '.py', '.sh', '.bat',
+    '.zip', '.rar', '.7z', '.tar',
+    '.pdf', '.doc', '.xls', '.apk'
+  ];
+
+  const hasAllowedExt = allowedExtensions.some(ext =>
+    file.name.toLowerCase().endsWith(ext)
+  );
+
+  if (!hasAllowedExt) {
+    return {
+      valid: false,
+      error: 'Unsupported file type. Please upload executables, scripts, or archives.'
+    };
+  }
+
+  return { valid: true };
+};
+```
+
+## Quarantine Integration
+
+### Load Staged Samples
+
+```typescript
+const loadStagedSamples = async () => {
+  if (!isTauri()) {
+    logger.warn('Quarantine not available in web mode');
+    return;
+  }
+
+  try {
+    const samples = await invokeCommand<StagedSample[]>('list_quarantined_samples');
+    setStagedSamples(samples);
+    logger.info(`Loaded ${samples.length} staged samples`);
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to load samples';
+    setError(errorMsg);
+    logger.error('Failed to load staged samples', { error: errorMsg });
+  }
+};
+```
+
+### Batch Analysis
+
+```typescript
+const handleBatchAnalysis = async () => {
+  const selected = selectedSamples();
+  if (selected.size === 0) {
+    setError('Please select at least one sample to analyze');
+    return;
+  }
+
+  setIsAnalyzing(true);
+  setError(null);
+
+  try {
+    const config = analysisConfig();
+
+    for (const sha256 of selected) {
+      await invokeCommand('analyze_sample', {
+        sha256,
+        config: {
+          static_analysis: config.staticAnalysis,
+          dynamic_analysis: config.dynamicAnalysis,
+          ai_ensemble: config.aiEnsemble,
+          reverse_engineering: config.reverseEngineering,
+          sandbox_config: {
+            os: config.sandboxOS,
+            arch: config.sandboxArch,
+            image: config.sandboxImage,
+            timeout_secs: config.sandboxTimeout,
+            memory_mb: config.sandboxMemory,
+            cpu_cores: config.sandboxCPU,
+            capture_network: config.captureNetwork
+          }
+        }
+      });
+
+      logger.info('Analysis started', { sha256 });
+    }
+
+    setSuccessMessage(`Analysis started for ${selected.size} sample(s)`);
+    setSelectedSamples(new Set());
+
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Analysis failed';
+    setError(errorMsg);
+    logger.error('Batch analysis error', { error: errorMsg });
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
+```
+
+## Drag and Drop
+
+### Drag Event Handlers
+
+```typescript
+const handleDragEnter = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setIsDragging(true);
+};
+
+const handleDragLeave = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Only set dragging false if leaving the drop zone entirely
+  if (e.currentTarget === e.target) {
+    setIsDragging(false);
+  }
+};
+
+const handleDragOver = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+const handleDrop = async (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setIsDragging(false);
+
+  const files = e.dataTransfer?.files;
+  if (!files || files.length === 0) return;
+
+  // Process dropped files
+  await processFiles(Array.from(files));
+};
+```
+
+### JSX Rendering with Drag States
+
+```tsx
+<div
+  class={`upload-dropzone ${isDragging() ? 'dragging' : ''}`}
+  onDragEnter={handleDragEnter}
+  onDragLeave={handleDragLeave}
+  onDragOver={handleDragOver}
+  onDrop={handleDrop}
+>
+  <Show when={!isUploading()} fallback={<UploadProgress />}>
+    <div class="upload-icon">📁</div>
+    <p>Drop files here or click to browse</p>
+    <input
+      type="file"
+      multiple
+      onChange={handleFileSelect}
+      style={{ display: 'none' }}
+      ref={fileInputRef}
+    />
+  </Show>
+</div>
 ```
 
 ## Usage Example
 
-```jsx
-import { FileUploader } from '@/components/FileUploader';
-import { MalwareFile } from '@/types';
+### Basic Implementation
 
-export default function HomeScreen() {
-  const [selectedFile, setSelectedFile] = useState<MalwareFile | null>(null);
-  const [analysisReady, setAnalysisReady] = useState(false);
-  
-  const handleFileSelect = (file: MalwareFile) => {
-    setSelectedFile(file);
-    setAnalysisReady(true);
-    console.log('File selected for analysis:', file.name);
-  };
-  
+```tsx
+import { FileUploadArea } from '@/components/solid/analysis/FileUploadArea';
+
+export const AnalysisPage: Component = () => {
   return (
-    <View style={styles.container}>
-      <FileUploader onFileSelect={handleFileSelect} />
-      
-      {selectedFile && (
-        <View style={styles.fileInfo}>
-          <Text>Selected File: {selectedFile.name}</Text>
-          <Text>Size: {formatFileSize(selectedFile.size)}</Text>
-          <Text>Type: {selectedFile.type}</Text>
-          {analysisReady && (
-            <Button onPress={startAnalysis}>Start Analysis</Button>
-          )}
-        </View>
-      )}
-    </View>
+    <div class="analysis-container">
+      <FileUploadArea />
+    </div>
   );
+};
+```
+
+### Integration with Analysis Dashboard
+
+```tsx
+import { FileUploadArea } from '@/components/solid/analysis/FileUploadArea';
+import { AnalysisDashboard } from '@/components/solid/analysis/AnalysisDashboard';
+import { analysisStore } from '@/stores/analysisStore';
+
+export const MainAnalysisPage: Component = () => {
+  return (
+    <div class="main-analysis">
+      {/* File upload section */}
+      <FileUploadArea />
+
+      {/* Analysis dashboard */}
+      <Show when={analysisStore.currentJob()}>
+        <AnalysisDashboard jobId={analysisStore.currentJob()!.id} />
+      </Show>
+    </div>
+  );
+};
+```
+
+## Props and Interfaces
+
+### Component Props
+
+```typescript
+// FileUploadArea has no props - it's a standalone component
+export const FileUploadArea: Component = () => { ... };
+```
+
+### State Interfaces
+
+```typescript
+interface UploadResult {
+  sha256: string;
+  is_duplicate: boolean;
+  file_type: string;
+  size: number;
+  message: string;
 }
+
+interface StagedSample {
+  sha256: string;
+  original_filename: string;
+  size: number;
+  file_type: string;
+  mime_type: string;
+  status: string;
+  uploaded_at: string;
+  tags: string[];
+}
+
+interface AnalysisConfig {
+  staticAnalysis: boolean;
+  dynamicAnalysis: boolean;
+  aiEnsemble: boolean;
+  reverseEngineering: boolean;
+  sandboxOS: 'linux' | 'windows' | 'macos';
+  sandboxArch: 'x86_64' | 'arm64';
+  sandboxImage: string;
+  sandboxTimeout: number;
+  sandboxMemory: number;
+  sandboxCPU: number;
+  captureNetwork: boolean;
+}
+```
+
+## Tauri Commands
+
+### Backend Commands Used
+
+| Command | Purpose | Parameters | Return Type |
+|---------|---------|------------|-------------|
+| `upload_to_quarantine` | Upload file to quarantine | `{ filePath: string }` | `UploadResult` |
+| `list_quarantined_samples` | List staged samples | None | `StagedSample[]` |
+| `analyze_sample` | Start sample analysis | `{ sha256: string, config: AnalysisConfig }` | `void` |
+| `check_docker_available` | Check Docker status | None | `boolean` |
+| `get_analysis_stats` | Get analysis statistics | None | `AnalysisStats` |
+
+### Command Invocation
+
+```typescript
+import { invokeCommand } from '@/utils/tauriCompat';
+
+// Upload file
+const result = await invokeCommand<UploadResult>('upload_to_quarantine', {
+  filePath: '/path/to/malware.exe'
+});
+
+// List samples
+const samples = await invokeCommand<StagedSample[]>('list_quarantined_samples');
+
+// Start analysis
+await invokeCommand('analyze_sample', {
+  sha256: 'abc123...',
+  config: analysisConfig()
+});
 ```
 
 ## Related Documentation
 
-- [Architecture Overview](../ARCHITECTURE.md) - System-wide architecture and design patterns
-- [API Integration](../API_INTEGRATION.md) - API layer and service integration details
-- [Getting Started](../GETTING_STARTED.md) - Setup and configuration guide
-- [User Guide](../USER_GUIDE.md) - End-user documentation
-- [Container Isolation](../CONTAINER_ISOLATION.md) - Security and isolation features
+- [AnalysisDashboard](./ANALYSIS_RESULTS.md) - Display analysis results
+- [AIProviderStatus](./AI_MODEL_SELECTOR.md) - AI provider management
+- [Architecture Overview](../ARCHITECTURE.md) - System design
+- [Tauri Integration](../../athena-v2/src/utils/tauriCompat.ts) - Tauri compatibility layer

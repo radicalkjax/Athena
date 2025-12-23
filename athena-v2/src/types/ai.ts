@@ -45,6 +45,16 @@ export interface AIAnalysisResult {
   error?: string;
 }
 
+export interface AIProviderStatus {
+  configured: boolean;
+  enabled: boolean;
+  circuit_state: string;
+  queue_length: number;
+  avg_latency_ms: number | null;
+  healthy: boolean;
+  last_error: string | null;
+}
+
 export interface EnsembleAnalysisResult {
   id: string;
   fileHash: string;

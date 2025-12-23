@@ -15,8 +15,8 @@ export const isTauri = () => {
 // Wrapper for invoke command
 export const invokeCommand = async (command: string, args?: any): Promise<any> => {
   if (isTauri()) {
-    // @ts-ignore - Dynamic import for Tauri API
-    const { invoke } = window.__TAURI__.tauri;
+    // Tauri 2.0 uses @tauri-apps/api/core
+    const { invoke } = await import('@tauri-apps/api/core');
     return invoke(command, args);
   }
   
@@ -32,41 +32,34 @@ export const invokeCommand = async (command: string, args?: any): Promise<any> =
       return '';
       
     case 'get_system_status':
-      // Return mock system info for web
-      return {
-        cpu_usage: Math.random() * 100,
-        memory_usage: Math.random() * 100,
-        platform: 'web',
-      };
-      
+      throw new Error('System monitoring is not available in web mode. Please use the desktop application.');
+
     case 'analyze_file':
-      // Mock analysis for web demo
-      return {
-        file_type: 'demo',
-        analysis: 'Running in web mode - analysis limited',
-        timestamp: new Date().toISOString(),
-      };
+      throw new Error('File analysis requires the desktop application. Web mode does not support this feature.');
       
     default:
-      console.warn(`Command "${command}" not available in web mode`);
-      return null;
+      throw new Error(`Command "${command}" is not available in web mode. Please use the desktop application.`);
   }
 };
 
 // File dialog wrapper
 export const openFileDialog = async (): Promise<string | string[] | null> => {
   if (isTauri()) {
-    // @ts-ignore - Tauri API
-    const { open } = window.__TAURI__.dialog;
-    return open({
-      multiple: false,
-      filters: [{
-        name: 'All Files',
-        extensions: ['*']
-      }]
-    });
+    try {
+      // Tauri 2.0 uses plugin-dialog
+      // Omit filters to allow ALL file types
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const result = await open({
+        multiple: false,
+        title: 'Select Malware Sample'
+      });
+      return result;
+    } catch (err) {
+      console.error('Failed to open file dialog:', err);
+      throw new Error(`File dialog failed: ${err}`);
+    }
   }
-  
+
   // Web fallback - use HTML file input
   return new Promise((resolve) => {
     const input = document.createElement('input');

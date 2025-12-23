@@ -1,5 +1,6 @@
 import { Component, For } from 'solid-js';
 import { preloadService } from '../../../services/preloadService';
+import { AIProviderStatus } from '../providers/AIProviderStatus';
 
 interface SidebarProps {
   activePanel: string;
@@ -26,7 +27,8 @@ export const Sidebar: Component<SidebarProps> = (props) => {
     { id: 'hex', label: 'Hex Editor', icon: '🔢' },
     { id: 'disassembly', label: 'Disassembly', icon: '⚙️' },
     { id: 'network', label: 'Network Analysis', icon: '🌐' },
-    { id: 'memory', label: 'Memory Analysis', icon: '🧠' }
+    { id: 'memory', label: 'Memory Analysis', icon: '🧠' },
+    { id: 'container', label: 'Container Sandbox', icon: '🐳' }
   ];
   
   const advancedFeatures: Feature[] = [
@@ -125,39 +127,8 @@ export const Sidebar: Component<SidebarProps> = (props) => {
         </div>
       </div>
       
-      {/* AI Ensemble Status */}
-      <div class="ensemble-status">
-        <div class="ensemble-header">
-          <span aria-hidden="true">🤖</span>
-          <span>AI Provider Status</span>
-        </div>
-        <div class="agent-status-grid">
-          <div class="agent-status">
-            <div class="agent-status-dot" aria-label="Online"></div>
-            <span>Claude 3.5</span>
-          </div>
-          <div class="agent-status">
-            <div class="agent-status-dot" aria-label="Online"></div>
-            <span>GPT-4 Turbo</span>
-          </div>
-          <div class="agent-status">
-            <div class="agent-status-dot analyzing" aria-label="Analyzing"></div>
-            <span>DeepSeek V3</span>
-          </div>
-          <div class="agent-status">
-            <div class="agent-status-dot" aria-label="Online"></div>
-            <span>Claude 3 Opus</span>
-          </div>
-          <div class="agent-status">
-            <div class="agent-status-dot" aria-label="Online"></div>
-            <span>GPT-4o</span>
-          </div>
-          <div class="agent-status">
-            <div class="agent-status-dot" aria-label="Online"></div>
-            <span>Gemini Pro</span>
-          </div>
-        </div>
-      </div>
+      {/* AI Ensemble Status - fetches real status from backend */}
+      <AIProviderStatus />
     </nav>
   );
 };

@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::sync::{Arc, Mutex};
 use tauri::State;
+use tauri::path::SafePathBuf;
 use crate::commands::wasm_runtime::WasmRuntime;
+use crate::metrics::{DISASSEMBLY_DURATION, INSTRUCTIONS_DISASSEMBLED};
 
 #[derive(Serialize, Deserialize)]
 pub struct DisassemblyResult {
@@ -110,11 +112,12 @@ const DISASSEMBLER_MODULE: &str = "disassembler";
 #[tauri::command]
 pub async fn disassemble_file(
     runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
-    file_path: String,
+    file_path: SafePathBuf,
     offset: Option<u64>,
     length: Option<usize>,
 ) -> Result<DisassemblyResult, String> {
-    let data = fs::read(&file_path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let metrics_start = std::time::Instant::now();
+    let data = fs::read(file_path.as_ref()).map_err(|e| format!("Failed to read file: {}", e))?;
 
     let start = offset.unwrap_or(0);
     let len = length.unwrap_or(100);
@@ -201,12 +204,23 @@ pub async fn disassemble_file(
         },
     ];
 
+    let architecture = "x86_64".to_string();
+
+    // Record disassembly metrics
+    INSTRUCTIONS_DISASSEMBLED
+        .with_label_values(&[&architecture])
+        .observe(instructions.len() as f64);
+
+    DISASSEMBLY_DURATION
+        .with_label_values(&[&architecture, "success"])
+        .observe(metrics_start.elapsed().as_secs_f64());
+
     Ok(DisassemblyResult {
         instructions,
         functions,
         strings: strings.into_iter().take(50).collect(),
         entry_point: Some(start),
-        architecture: "x86_64".to_string(),
+        architecture,
         sections,
     })
 }
@@ -214,10 +228,10 @@ pub async fn disassemble_file(
 #[tauri::command]
 pub async fn get_control_flow_graph(
     runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
-    file_path: String,
+    file_path: SafePathBuf,
     function_address: u64,
 ) -> Result<ControlFlowGraph, String> {
-    let data = fs::read(&file_path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let data = fs::read(file_path.as_ref()).map_err(|e| format!("Failed to read file: {}", e))?;
 
     // Call WASM disassembler for CFG analysis
     let args = vec![

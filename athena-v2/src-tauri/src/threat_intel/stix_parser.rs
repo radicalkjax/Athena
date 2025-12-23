@@ -1,7 +1,7 @@
 use super::{ThreatIndicator, ThreatIntelligence};
 use anyhow::{Context, Result};
 use rust_stix2::{bundles::Bundle, domain_objects::sdo::DomainObjectType, object::StixObject};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 /// Parse STIX 2.x JSON bundle into our ThreatIntelligence format
 pub fn parse_stix_bundle(stix_json: &str) -> Result<Vec<ThreatIntelligence>> {
@@ -49,7 +49,7 @@ fn parse_indicator(
 ) -> Option<ThreatIntelligence> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or(Duration::from_secs(0))
         .as_secs();
 
     let description = indicator.description.clone();
@@ -110,7 +110,7 @@ fn parse_malware(
 ) -> Option<ThreatIntelligence> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or(Duration::from_secs(0))
         .as_secs();
 
     let name = malware.name.clone().unwrap_or_else(|| "Unknown".to_string());
@@ -166,7 +166,7 @@ fn parse_attack_pattern(
 ) -> Option<ThreatIntelligence> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or(Duration::from_secs(0))
         .as_secs();
 
     let name = attack_pattern.name.clone();
@@ -211,7 +211,7 @@ fn parse_threat_actor(
 ) -> Option<ThreatIntelligence> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or(Duration::from_secs(0))
         .as_secs();
 
     let name = actor.name.clone();
@@ -256,7 +256,7 @@ fn parse_campaign(
 ) -> Option<ThreatIntelligence> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or(Duration::from_secs(0))
         .as_secs();
 
     let name = campaign.name.clone();

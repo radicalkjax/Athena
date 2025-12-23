@@ -1,4 +1,4 @@
-use super::{AIProvider, AIProviderConfig, AnalysisRequest, AnalysisResponse, IOCs, ThreatLevel};
+use super::{AIProvider, AIProviderConfig, AnalysisRequest, AnalysisResponse, IOCs, ThreatLevel, ModelInfo, register_circuit_breaker};
 use crate::ai_providers::circuit_breaker::CircuitBreaker;
 use crate::ai_providers::retry::{RetryConfig, with_retry};
 use crate::metrics::{AI_REQUEST_DURATION, AI_REQUEST_COUNTER, AI_TOKEN_USAGE, AI_COST_ESTIMATE};
@@ -7,12 +7,13 @@ use chrono::Utc;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::sync::Arc;
 use std::time::Instant;
 
 pub struct DeepSeekProvider {
     config: AIProviderConfig,
     client: Client,
-    circuit_breaker: CircuitBreaker,
+    circuit_breaker: Arc<CircuitBreaker>,
     retry_config: RetryConfig,
 }
 
@@ -52,7 +53,13 @@ impl DeepSeekProvider {
             .build()
             .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
 
-        let circuit_breaker = CircuitBreaker::new_with_name("deepseek".to_string(), 3, 2, 60);
+        let circuit_breaker = Arc::new(CircuitBreaker::new_with_name("deepseek".to_string(), 3, 2, 60));
+
+        // Register with global registry (spawn to avoid blocking)
+        let breaker_clone = circuit_breaker.clone();
+        tokio::spawn(async move {
+            register_circuit_breaker("deepseek", breaker_clone).await;
+        });
 
         // Configure retry with 5 attempts, 1s initial delay, exponential backoff
         let retry_config = RetryConfig {
@@ -320,7 +327,7 @@ impl AIProvider for DeepSeekProvider {
             max_tokens: 10,
             temperature: 0.0,
         };
-        
+
         let base_url = self.config.base_url.as_deref().unwrap_or("https://api.deepseek.com");
         let response = self.client
             .post(format!("{}/v1/chat/completions", base_url))
@@ -331,6 +338,68 @@ impl AIProvider for DeepSeekProvider {
             .await?;
 
         Ok(response.status().is_success())
+    }
+
+    async fn list_models(&self) -> Result<Vec<ModelInfo>, Box<dyn Error + Send + Sync>> {
+        let base_url = self.config.base_url.as_deref().unwrap_or("https://api.deepseek.com");
+        let response = self.client
+            .get(format!("{}/v1/models", base_url))
+            .header("Authorization", format!("Bearer {}", self.config.api_key))
+            .send()
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
+
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to fetch DeepSeek models: {}", error_text)
+            )));
+        }
+
+        let models_response: DeepSeekModelsResponse = response.json().await
+            .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
+
+        let models: Vec<ModelInfo> = models_response.data
+            .into_iter()
+            .map(|m| ModelInfo {
+                id: m.id.clone(),
+                name: format_deepseek_model_name(&m.id),
+                description: Some(format!("DeepSeek model owned by {}", m.owned_by)),
+                context_window: get_deepseek_context_window(&m.id),
+                max_output_tokens: Some(8192),
+            })
+            .collect();
+
+        Ok(models)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct DeepSeekModelsResponse {
+    data: Vec<DeepSeekModelData>,
+}
+
+#[derive(Debug, Deserialize)]
+struct DeepSeekModelData {
+    id: String,
+    owned_by: String,
+}
+
+fn format_deepseek_model_name(id: &str) -> String {
+    match id {
+        "deepseek-chat" => "DeepSeek Chat (V3)".to_string(),
+        "deepseek-reasoner" => "DeepSeek Reasoner (V3)".to_string(),
+        "deepseek-coder" => "DeepSeek Coder".to_string(),
+        _ => id.replace("-", " ").to_string(),
+    }
+}
+
+fn get_deepseek_context_window(id: &str) -> Option<u32> {
+    match id {
+        "deepseek-chat" | "deepseek-reasoner" => Some(64000),
+        "deepseek-coder" => Some(128000),
+        _ => Some(64000),
     }
 }
 

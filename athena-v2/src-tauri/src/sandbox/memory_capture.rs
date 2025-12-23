@@ -5,7 +5,6 @@
 
 use serde::{Serialize, Deserialize};
 use std::path::PathBuf;
-use std::collections::HashMap;
 
 /// Trigger conditions for memory dumps
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -237,11 +236,6 @@ impl MemoryCaptureManager {
         Self { config }
     }
 
-    /// Get the configuration
-    pub fn config(&self) -> &MemoryCaptureConfig {
-        &self.config
-    }
-
     /// Generate shell script commands for memory dumping in container
     pub fn generate_dump_script(&self, sample_pid_var: &str) -> String {
         let mut script = String::new();
@@ -311,18 +305,6 @@ MEMORY_DUMP_PID=$!
         }
 
         script
-    }
-
-    /// Generate script to dump on process exit
-    pub fn generate_exit_dump_script(&self, sample_pid_var: &str) -> String {
-        if self.config.triggers.contains(&DumpTrigger::ProcessExit) {
-            format!(
-                "\n# Dump on process exit\ndump_memory ${} \"exit\"\n",
-                sample_pid_var
-            )
-        } else {
-            String::new()
-        }
     }
 
     /// Parse memory regions from /proc/PID/maps content
@@ -425,114 +407,6 @@ MEMORY_DUMP_PID=$!
 
         findings
     }
-
-    /// Calculate statistics from memory regions
-    pub fn calculate_statistics(&self, regions: &[MemoryRegion], dump_count: u64) -> MemoryStatistics {
-        let mut stats = MemoryStatistics {
-            dump_count,
-            region_count: regions.len() as u64,
-            ..Default::default()
-        };
-
-        for region in regions {
-            stats.total_memory_bytes += region.size;
-
-            if region.is_heap {
-                stats.heap_size_bytes += region.size;
-            }
-            if region.is_stack {
-                stats.stack_size_bytes += region.size;
-            }
-            if region.executable {
-                stats.executable_region_count += 1;
-            }
-            if region.permissions.contains('r')
-                && region.permissions.contains('w')
-                && region.permissions.contains('x')
-            {
-                stats.rwx_region_count += 1;
-            }
-        }
-
-        stats
-    }
-
-    /// Extract printable strings from memory data
-    pub fn extract_strings(&self, data: &[u8]) -> Vec<ExtractedString> {
-        let mut strings = Vec::new();
-        let mut current_string = String::new();
-        let mut start_addr: u64 = 0;
-
-        for (i, &byte) in data.iter().enumerate() {
-            // Check if printable ASCII
-            if byte >= 0x20 && byte <= 0x7E {
-                if current_string.is_empty() {
-                    start_addr = i as u64;
-                }
-                current_string.push(byte as char);
-            } else {
-                // End of potential string
-                if current_string.len() >= self.config.min_string_length {
-                    strings.push(ExtractedString {
-                        content: current_string.clone(),
-                        address: start_addr,
-                        length: current_string.len(),
-                        encoding: "ASCII".to_string(),
-                    });
-                }
-                current_string.clear();
-            }
-        }
-
-        // Don't forget the last string
-        if current_string.len() >= self.config.min_string_length {
-            strings.push(ExtractedString {
-                content: current_string.clone(),
-                address: start_addr,
-                length: current_string.len(),
-                encoding: "ASCII".to_string(),
-            });
-        }
-
-        strings
-    }
-
-    /// Check if a string is suspicious
-    pub fn is_suspicious_string(&self, s: &str) -> Option<SuspiciousFinding> {
-        let suspicious_patterns = [
-            ("powershell", "PowerShell execution", "T1059.001"),
-            ("cmd.exe", "Command shell", "T1059.003"),
-            ("/bin/sh", "Shell execution", "T1059.004"),
-            ("/bin/bash", "Bash execution", "T1059.004"),
-            ("CreateRemoteThread", "Remote thread injection", "T1055"),
-            ("VirtualAllocEx", "Remote memory allocation", "T1055"),
-            ("WriteProcessMemory", "Process memory write", "T1055"),
-            ("NtUnmapViewOfSection", "Process hollowing", "T1055.012"),
-            ("Mimikatz", "Credential dumping tool", "T1003"),
-            ("lsass.exe", "LSASS access", "T1003.001"),
-            ("password", "Credential harvesting", "T1003"),
-            ("bitcoin", "Cryptocurrency targeting", "T1496"),
-            ("ransom", "Ransomware indicator", "T1486"),
-            (".onion", "Tor hidden service", "T1090.003"),
-            ("cobaltstrike", "Cobalt Strike beacon", "S0154"),
-        ];
-
-        let lower = s.to_lowercase();
-        for (pattern, desc, mitre) in suspicious_patterns {
-            if lower.contains(pattern) {
-                return Some(SuspiciousFinding {
-                    finding_type: SuspiciousFindingType::SuspiciousString,
-                    description: format!("{}: found '{}' in memory", desc, pattern),
-                    address: None,
-                    region: None,
-                    confidence: 0.7,
-                    mitre_attack_id: Some(mitre.to_string()),
-                });
-            }
-        }
-
-        None
-    }
 }
 
 impl Default for MemoryCaptureManager {
@@ -586,30 +460,6 @@ mod tests {
 
         assert_eq!(findings.len(), 1);
         assert!(matches!(findings[0].finding_type, SuspiciousFindingType::RwxMemory));
-    }
-
-    #[test]
-    fn test_extract_strings() {
-        let manager = MemoryCaptureManager::new();
-
-        let data = b"Hello World\x00\x00\x00test string\x00\x01\x02\x03";
-        let strings = manager.extract_strings(data);
-
-        assert_eq!(strings.len(), 2);
-        assert_eq!(strings[0].content, "Hello World");
-        assert_eq!(strings[1].content, "test string");
-    }
-
-    #[test]
-    fn test_suspicious_string_detection() {
-        let manager = MemoryCaptureManager::new();
-
-        let finding = manager.is_suspicious_string("C:\\Windows\\System32\\cmd.exe");
-        assert!(finding.is_some());
-        assert_eq!(finding.unwrap().mitre_attack_id, Some("T1059.003".to_string()));
-
-        let finding = manager.is_suspicious_string("normal harmless string");
-        assert!(finding.is_none());
     }
 
     #[test]

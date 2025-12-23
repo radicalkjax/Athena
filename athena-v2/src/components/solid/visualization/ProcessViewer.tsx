@@ -176,9 +176,9 @@ export default function ProcessViewer() {
           
           <div class="sort-controls" style="display: flex; align-items: center; gap: 10px;">
             <label style="color: #888;">Sort by:</label>
-            <select 
-              value={sortBy()} 
-              onChange={(e) => setSortBy(e.currentTarget.value as any)}
+            <select
+              value={sortBy()}
+              onChange={(e) => setSortBy(e.currentTarget.value as 'cpu' | 'memory' | 'name')}
               class="input-field"
               style="width: auto;"
             >

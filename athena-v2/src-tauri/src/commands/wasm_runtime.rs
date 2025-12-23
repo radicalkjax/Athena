@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tauri::State;
+use tauri::path::SafePathBuf;
 use wasmtime::*;
 use wasmtime::component::{Component, Linker, ResourceTable, Val as ComponentVal, InstancePre, Instance, ResourceAny};
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView, WasiCtxView};
@@ -11,13 +12,21 @@ use chrono::Utc;
 use uuid::Uuid;
 use crate::metrics::{WASM_INIT_DURATION, WASM_OPERATION_DURATION, WASM_OPERATION_COUNTER, WASM_MODULE_SIZE, WASM_MEMORY_USAGE};
 
+/// Default fuel units for WASM execution (prevents infinite loops)
+/// 10 million fuel units ≈ ~1 second of execution on typical hardware
+/// Adjust based on actual workload requirements
+const DEFAULT_FUEL_UNITS: u64 = 10_000_000;
+
+/// Maximum session age before cleanup (30 minutes)
+const SESSION_TTL_SECS: i64 = 30 * 60;
+
 /// Session for managing stateful WASM component interactions
 /// This allows resources created in one call to be used in subsequent calls
 pub struct WasmSession {
     pub session_id: String,
     pub module_id: String,
-    pub store: Store<WasmStore>,
-    pub instance: Instance,
+    pub(crate) store: Store<WasmStore>,
+    pub(crate) instance: Instance,
     /// Maps handle IDs to ResourceAny values within this session
     pub resource_handles: HashMap<String, ResourceAny>,
     pub created_at: chrono::DateTime<Utc>,
@@ -58,13 +67,13 @@ pub struct ResourceHandle {
     pub session_id: String,
 }
 
-/// Global session storage - manages active WASM sessions
+// Global session storage - manages active WASM sessions
 lazy_static::lazy_static! {
     static ref SESSIONS: Arc<Mutex<HashMap<String, WasmSession>>> =
         Arc::new(Mutex::new(HashMap::new()));
 }
 
-struct WasmStore {
+pub(crate) struct WasmStore {
     wasi: WasiCtx,
     limiter: StoreLimits,
     table: ResourceTable,
@@ -391,6 +400,10 @@ impl WasmRuntime {
         // Trap handling
         config.coredump_on_trap(false); // Don't generate coredumps
 
+        // CRITICAL: Enable fuel consumption for CPU time limiting
+        // This prevents infinite loops and denial-of-service attacks in malicious WASM
+        config.consume_fuel(true);
+
         // Configure PoolingInstanceAllocator for production (DeepWiki v38 recommendation)
         // Provides faster instantiation, security isolation, and predictable resource usage
         let mut pooling_config = PoolingAllocationConfig::new();
@@ -488,7 +501,7 @@ pub async fn load_wasm_module(
 pub async fn load_wasm_module_from_file(
     runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
     module_id: String,
-    file_path: String,
+    file_path: SafePathBuf,
 ) -> Result<WasmModule, String> {
     let start_time = Instant::now();
 
@@ -498,7 +511,7 @@ pub async fn load_wasm_module_from_file(
         .ok_or("WASM runtime not initialized")?;
 
     // Use Component::from_file - the recommended approach per Wasmtime 37.0 docs
-    let component = Component::from_file(&runtime.engine, &file_path)
+    let component = Component::from_file(&runtime.engine, file_path.as_ref())
         .map_err(|e| {
             // Record failed initialization
             WASM_INIT_DURATION
@@ -878,6 +891,11 @@ pub async fn execute_wasm_function(
     let mut store = Store::new(&runtime.engine, WasmStore::new());
     store.limiter(|state| &mut state.limiter);
 
+    // CRITICAL: Set fuel limit to prevent infinite loops and CPU exhaustion
+    // This is the enforcement mechanism - config.consume_fuel(true) only enables tracking
+    store.set_fuel(DEFAULT_FUEL_UNITS)
+        .map_err(|e| format!("Failed to set fuel limit: {}", e))?;
+
     // Fast instantiation using pre-instantiated component
     let instance = instance_pre.instantiate(&mut store)
         .map_err(|e| format!("Failed to instantiate component: {}", e))?;
@@ -954,7 +972,10 @@ pub async fn execute_wasm_function(
 
     // Record metrics
     {
-        let mut metrics = METRICS.lock().unwrap();
+        let mut metrics = METRICS.lock().unwrap_or_else(|poisoned| {
+            eprintln!("METRICS mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
         let tracker = metrics.entry(module_id.clone())
             .or_insert_with(|| MetricsTracker::new(module_id.clone()));
 
@@ -1021,7 +1042,10 @@ pub async fn get_wasm_memory_usage(
 
     // Since we create Store per-execution and don't store them,
     // we return the peak memory usage from metrics instead
-    let metrics = METRICS.lock().unwrap();
+    let metrics = METRICS.lock().unwrap_or_else(|poisoned| {
+        eprintln!("METRICS mutex was poisoned, recovering...");
+        poisoned.into_inner()
+    });
 
     let total_memory: u64 = metrics.values()
         .map(|tracker| tracker.get_metrics().memory_used)
@@ -1032,7 +1056,10 @@ pub async fn get_wasm_memory_usage(
 
 #[tauri::command]
 pub async fn get_wasm_metrics(module_id: String) -> Result<WasmMetrics, String> {
-    let metrics = METRICS.lock().unwrap();
+    let metrics = METRICS.lock().unwrap_or_else(|poisoned| {
+        eprintln!("METRICS mutex was poisoned, recovering...");
+        poisoned.into_inner()
+    });
 
     metrics.get(&module_id)
         .map(|tracker| tracker.get_metrics())
@@ -1041,7 +1068,10 @@ pub async fn get_wasm_metrics(module_id: String) -> Result<WasmMetrics, String> 
 
 #[tauri::command]
 pub async fn get_all_wasm_metrics() -> Result<HashMap<String, WasmMetrics>, String> {
-    let metrics = METRICS.lock().unwrap();
+    let metrics = METRICS.lock().unwrap_or_else(|poisoned| {
+        eprintln!("METRICS mutex was poisoned, recovering...");
+        poisoned.into_inner()
+    });
 
     Ok(metrics.iter()
         .map(|(module_id, tracker)| (module_id.clone(), tracker.get_metrics()))
@@ -1050,7 +1080,10 @@ pub async fn get_all_wasm_metrics() -> Result<HashMap<String, WasmMetrics>, Stri
 
 #[tauri::command]
 pub async fn reset_wasm_metrics(module_id: String) -> Result<String, String> {
-    let mut metrics = METRICS.lock().unwrap();
+    let mut metrics = METRICS.lock().unwrap_or_else(|poisoned| {
+        eprintln!("METRICS mutex was poisoned, recovering...");
+        poisoned.into_inner()
+    });
 
     if metrics.remove(&module_id).is_some() {
         Ok(format!("Metrics reset for module: {}", module_id))
@@ -1061,7 +1094,10 @@ pub async fn reset_wasm_metrics(module_id: String) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn reset_all_wasm_metrics() -> Result<String, String> {
-    let mut metrics = METRICS.lock().unwrap();
+    let mut metrics = METRICS.lock().unwrap_or_else(|poisoned| {
+        eprintln!("METRICS mutex was poisoned, recovering...");
+        poisoned.into_inner()
+    });
     let count = metrics.len();
     metrics.clear();
     Ok(format!("Reset metrics for {} modules", count))
@@ -1094,6 +1130,10 @@ pub async fn create_wasm_session(
     // Create a new Store for this session
     let mut store = Store::new(&runtime_ref.engine, WasmStore::new());
     store.limiter(|state| &mut state.limiter);
+
+    // CRITICAL: Set fuel limit for session-based execution
+    store.set_fuel(DEFAULT_FUEL_UNITS)
+        .map_err(|e| format!("Failed to set fuel limit: {}", e))?;
 
     // Instantiate the component
     let instance = instance_pre.instantiate(&mut store)
@@ -1138,6 +1178,21 @@ pub async fn execute_session_function(
     let session = sessions
         .get_mut(&session_id)
         .ok_or(format!("Session '{}' not found", session_id))?;
+
+    // Check session age and reject if too old (security: prevent resource exhaustion)
+    let age = Utc::now().signed_duration_since(session.created_at);
+    if age.num_seconds() > SESSION_TTL_SECS {
+        // Remove the expired session
+        let expired_id = session_id.clone();
+        drop(sessions);
+        let mut sessions = SESSIONS.lock().map_err(|e| e.to_string())?;
+        sessions.remove(&expired_id);
+        return Err(format!("Session '{}' has expired (max age: {} minutes)", expired_id, SESSION_TTL_SECS / 60));
+    }
+
+    // CRITICAL: Refill fuel before each execution (sessions reuse the same store)
+    session.store.set_fuel(DEFAULT_FUEL_UNITS)
+        .map_err(|e| format!("Failed to set fuel limit: {}", e))?;
 
     // Get the function from the instance
     let func = session.instance.get_func(&mut session.store, &function_name)
@@ -1200,7 +1255,10 @@ pub async fn execute_session_function(
 
     // Record metrics
     {
-        let mut metrics = METRICS.lock().unwrap();
+        let mut metrics = METRICS.lock().unwrap_or_else(|poisoned| {
+            eprintln!("METRICS mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        });
         let tracker = metrics.entry(session.module_id.clone())
             .or_insert_with(|| MetricsTracker::new(session.module_id.clone()));
         tracker.record_execution(duration, memory_used, memory_used, true);
@@ -1255,6 +1313,36 @@ pub async fn get_session_info(session_id: String) -> Result<serde_json::Value, S
     } else {
         Err(format!("Session '{}' not found", session_id))
     }
+}
+
+/// Clean up expired sessions (call periodically or on-demand)
+/// Returns the number of sessions cleaned up
+#[tauri::command]
+pub async fn cleanup_expired_sessions() -> Result<u32, String> {
+    let mut sessions = SESSIONS.lock().map_err(|e| e.to_string())?;
+    let now = Utc::now();
+
+    // Find expired sessions
+    let expired_ids: Vec<String> = sessions
+        .iter()
+        .filter_map(|(id, session)| {
+            let age = now.signed_duration_since(session.created_at);
+            if age.num_seconds() > SESSION_TTL_SECS {
+                Some(id.clone())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let count = expired_ids.len() as u32;
+
+    // Remove expired sessions
+    for id in expired_ids {
+        sessions.remove(&id);
+    }
+
+    Ok(count)
 }
 
 /// Drop a specific resource from a session

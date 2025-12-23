@@ -64,14 +64,14 @@ pub fn analyze_packet(data: &[u8]) -> Result<PacketAnalysis> {
                         let header = ipv4_slice.header();
                         analysis.source_ip = Some(std::net::Ipv4Addr::from(header.source()).to_string());
                         analysis.dest_ip = Some(std::net::Ipv4Addr::from(header.destination()).to_string());
-                        analysis.protocol = protocol_name(u8::from(header.protocol())).to_string();
+                        analysis.protocol = protocol_name(u8::from(header.protocol()));
                     }
                     NetSlice::Ipv6(ipv6_slice) => {
                         // Extract source and destination using header methods
                         let header = ipv6_slice.header();
                         analysis.source_ip = Some(std::net::Ipv6Addr::from(header.source()).to_string());
                         analysis.dest_ip = Some(std::net::Ipv6Addr::from(header.destination()).to_string());
-                        analysis.protocol = protocol_name(u8::from(header.next_header())).to_string();
+                        analysis.protocol = protocol_name(u8::from(header.next_header()));
                     }
                 }
             }
@@ -162,7 +162,7 @@ pub fn parse_packet_details(data: &[u8]) -> Result<PacketInfo> {
                     version: 4,
                     source: std::net::Ipv4Addr::from(header.source()).to_string(),
                     destination: std::net::Ipv4Addr::from(header.destination()).to_string(),
-                    protocol: protocol_name(u8::from(header.protocol())).to_string(),
+                    protocol: protocol_name(u8::from(header.protocol())),
                     ttl: Some(header.ttl()),
                     total_length: Some(header.total_len()),
                 })
@@ -173,7 +173,7 @@ pub fn parse_packet_details(data: &[u8]) -> Result<PacketInfo> {
                     version: 6,
                     source: std::net::Ipv6Addr::from(header.source()).to_string(),
                     destination: std::net::Ipv6Addr::from(header.destination()).to_string(),
-                    protocol: protocol_name(u8::from(header.next_header())).to_string(),
+                    protocol: protocol_name(u8::from(header.next_header())),
                     ttl: Some(header.hop_limit()),
                     total_length: Some(header.payload_length() + 40), // IPv6 header is 40 bytes
                 })
@@ -247,17 +247,29 @@ fn format_mac(mac: &[u8; 6]) -> String {
     )
 }
 
-fn protocol_name(proto: u8) -> &'static str {
+fn protocol_name(proto: u8) -> String {
     match proto {
-        1 => "ICMP",
-        6 => "TCP",
-        17 => "UDP",
-        41 => "IPv6",
-        47 => "GRE",
-        50 => "ESP",
-        51 => "AH",
-        58 => "ICMPv6",
-        _ => "Unknown",
+        0 => "HOPOPT".to_string(),      // IPv6 Hop-by-Hop Option
+        1 => "ICMP".to_string(),
+        2 => "IGMP".to_string(),
+        4 => "IPv4-encap".to_string(),
+        6 => "TCP".to_string(),
+        17 => "UDP".to_string(),
+        27 => "RDP".to_string(),
+        41 => "IPv6-encap".to_string(),
+        43 => "IPv6-Route".to_string(),
+        44 => "IPv6-Frag".to_string(),
+        47 => "GRE".to_string(),
+        50 => "ESP".to_string(),
+        51 => "AH".to_string(),
+        58 => "ICMPv6".to_string(),
+        59 => "IPv6-NoNxt".to_string(),
+        60 => "IPv6-Opts".to_string(),
+        89 => "OSPF".to_string(),
+        103 => "PIM".to_string(),
+        112 => "VRRP".to_string(),
+        132 => "SCTP".to_string(),
+        _ => format!("Proto-{}", proto),  // Show protocol number for unknown protocols
     }
 }
 

@@ -34,26 +34,11 @@ const WasmBridge: Component<Props> = (props) => {
     setResult(null);
 
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + Math.random() * 15;
-        });
-      }, 500);
+      // Show initial loading state
+      setCurrentPhase('Initializing WASM runtime...');
+      setProgress(10);
 
-      // Update phases
-      setCurrentPhase('Loading analysis module...');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setCurrentPhase('Preparing sandbox environment...');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setCurrentPhase(`Running ${props.analysisType} analysis...`);
-
+      // Prepare analysis request
       const request: WasmAnalysisRequest = {
         fileData: props.fileData,
         analysisType: props.analysisType,
@@ -64,9 +49,15 @@ const WasmBridge: Component<Props> = (props) => {
         },
       };
 
+      setCurrentPhase('Loading analysis module...');
+      setProgress(20);
+
+      setCurrentPhase(`Running ${props.analysisType} analysis...`);
+      setProgress(30);
+
       const analysisResult = await wasmService.analyzeWithWasm(request);
-      
-      clearInterval(progressInterval);
+
+      // Complete
       setProgress(100);
       setCurrentPhase('Analysis complete');
       setResult(analysisResult);

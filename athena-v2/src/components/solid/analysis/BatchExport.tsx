@@ -202,7 +202,7 @@ const BatchExport: Component<BatchExportProps> = (props) => {
               <label>Export Format</label>
               <select
                 value={exportOptions.format}
-                onChange={(e) => setExportOptions('format', e.currentTarget.value as any)}
+                onChange={(e) => setExportOptions('format', e.currentTarget.value as ExportOptions['format'])}
               >
                 <option value="json">JSON</option>
                 <option value="csv">CSV</option>
@@ -232,7 +232,7 @@ const BatchExport: Component<BatchExportProps> = (props) => {
               <label>File Naming</label>
               <select
                 value={namingOption()}
-                onChange={(e) => setNamingOption(e.currentTarget.value as any)}
+                onChange={(e) => setNamingOption(e.currentTarget.value as 'original' | 'sequential' | 'custom')}
               >
                 <option value="original">Original Filename</option>
                 <option value="sequential">Sequential (export_1, export_2...)</option>

@@ -1,7 +1,8 @@
-import { Component, createSignal, For, Show, onMount } from 'solid-js';
-import { createStore } from 'solid-js/store';
+import { Component, createSignal, createMemo, For, Show, onMount } from 'solid-js';
+import { createStore, produce } from 'solid-js/store';
 import './CustomWorkflows.css';
 import { jobService, type ProgressUpdate } from '../../../services/jobService';
+import { analysisStore } from '../../../stores/analysisStore';
 
 interface WorkflowNode {
   id: string;
@@ -56,7 +57,14 @@ const actionNodes = [
 const CustomWorkflows: Component = () => {
   const [workflows, setWorkflows] = createStore<Workflow[]>([]);
   const [isDesigning, setIsDesigning] = createSignal(false);
-  const [draggedNode, setDraggedNode] = createSignal<any>(null);
+
+  // Use signals for canvas nodes/connections for reactivity
+  const [canvasNodes, setCanvasNodes] = createSignal<WorkflowNode[]>([]);
+  const [canvasConnections, setCanvasConnections] = createSignal<WorkflowConnection[]>([]);
+  const [workflowName, setWorkflowName] = createSignal('New Workflow');
+  const [workflowId, setWorkflowId] = createSignal('');
+
+  // Keep store for workflow metadata
   const [currentWorkflow, setCurrentWorkflow] = createStore<Workflow>({
     id: '',
     name: '',
@@ -73,6 +81,13 @@ const CustomWorkflows: Component = () => {
   const [executionProgress, setExecutionProgress] = createSignal(0);
   const [executionMessage, setExecutionMessage] = createSignal('');
 
+  // Palette selection - click to select, click canvas to place
+  const [selectedPaletteNode, setSelectedPaletteNode] = createSignal<any>(null);
+
+  // Canvas node dragging state
+  const [draggingNodeId, setDraggingNodeId] = createSignal<string | null>(null);
+  const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
+
   let canvasRef: HTMLDivElement | undefined;
 
   onMount(() => {
@@ -83,8 +98,31 @@ const CustomWorkflows: Component = () => {
     // Load saved workflows from storage
     const saved = localStorage.getItem('athena-workflows');
     if (saved) {
-      setWorkflows(JSON.parse(saved));
-    } else {
+      try {
+        const parsed = JSON.parse(saved);
+        // Validate that parsed data is an array of workflows
+        if (!Array.isArray(parsed)) {
+          console.warn('Invalid workflows format: expected array');
+          localStorage.removeItem('athena-workflows');
+        } else {
+          // Validate each workflow has required fields
+          const validWorkflows = parsed.filter((w: unknown) => {
+            if (typeof w !== 'object' || w === null) return false;
+            const workflow = w as Record<string, unknown>;
+            return typeof workflow.id === 'string' &&
+                   typeof workflow.name === 'string' &&
+                   Array.isArray(workflow.nodes);
+          });
+          setWorkflows(validWorkflows);
+          return;
+        }
+      } catch (err) {
+        console.warn('Failed to parse saved workflows:', err);
+        localStorage.removeItem('athena-workflows');
+      }
+    }
+    // Fall through to default workflows if parsing fails or no saved data
+    {
       // Add default workflows
       setWorkflows([
         {
@@ -148,8 +186,13 @@ const CustomWorkflows: Component = () => {
   };
 
   const createNewWorkflow = () => {
+    const newId = crypto.randomUUID();
+    setWorkflowId(newId);
+    setWorkflowName('New Workflow');
+    setCanvasNodes([]);
+    setCanvasConnections([]);
     setCurrentWorkflow({
-      id: crypto.randomUUID(),
+      id: newId,
       name: 'New Workflow',
       description: '',
       nodes: [],
@@ -161,48 +204,180 @@ const CustomWorkflows: Component = () => {
   };
 
   const saveCurrentWorkflow = () => {
-    if (currentWorkflow.name && currentWorkflow.nodes.length > 0) {
-      const existing = workflows.findIndex(w => w.id === currentWorkflow.id);
+    const nodes = canvasNodes();
+    const connections = canvasConnections();
+    const name = workflowName();
+
+    if (name && nodes.length > 0) {
+      const workflowToSave: Workflow = {
+        id: workflowId() || crypto.randomUUID(),
+        name: name,
+        description: currentWorkflow.description,
+        nodes: nodes,
+        connections: connections,
+        createdAt: currentWorkflow.createdAt,
+        updatedAt: new Date(),
+      };
+
+      const existing = workflows.findIndex(w => w.id === workflowToSave.id);
       if (existing >= 0) {
-        setWorkflows(existing, currentWorkflow);
+        setWorkflows(existing, workflowToSave);
       } else {
-        setWorkflows([...workflows, currentWorkflow]);
+        setWorkflows([...workflows, workflowToSave]);
       }
       saveWorkflows();
       setIsDesigning(false);
     }
   };
 
-  const handleNodeDragStart = (_e: DragEvent, nodeType: any) => {
-    setDraggedNode(nodeType);
+  // Click on palette node to select it for placement
+  const handlePaletteNodeClick = (nodeType: any) => {
+    setSelectedPaletteNode(nodeType);
   };
 
-  const handleCanvasDrop = (e: DragEvent) => {
-    e.preventDefault();
-    const node = draggedNode();
-    if (node && canvasRef) {
+  // Click on canvas to place selected palette node OR start dragging existing node
+  const handleCanvasClick = (e: MouseEvent) => {
+    // Only handle direct canvas clicks, not clicks on nodes
+    if ((e.target as HTMLElement).closest('.workflow-node')) {
+      return;
+    }
+
+    const paletteNode = selectedPaletteNode();
+    if (paletteNode && canvasRef) {
       const rect = canvasRef.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const x = e.clientX - rect.left - 75;
+      const y = e.clientY - rect.top - 30;
+
+      // Determine node category
+      const isConditionNode = conditionNodes.some(n => n.type === paletteNode.type);
+      const isActionNode = actionNodes.some(n => n.type === paletteNode.type);
+      const nodeType: WorkflowNode['type'] = isConditionNode ? 'condition'
+        : isActionNode ? 'action'
+        : 'analysis';
 
       const newNode: WorkflowNode = {
         id: `node-${Date.now()}`,
-        type: 'analysis',
-        name: node.name,
-        config: { type: node.type },
-        position: { x, y },
-        inputs: getNodeInputs(node.type),
-        outputs: getNodeOutputs(node.type),
+        type: nodeType,
+        name: paletteNode.name,
+        config: { type: paletteNode.type },
+        position: { x: Math.max(0, x), y: Math.max(0, y) },
+        inputs: getNodeInputs(paletteNode.type),
+        outputs: getNodeOutputs(paletteNode.type),
       };
 
-      setCurrentWorkflow('nodes', [...currentWorkflow.nodes, newNode]);
+      setCanvasNodes((prev) => [...prev, newNode]);
+      setSelectedPaletteNode(null); // Clear selection after placing
     }
-    setDraggedNode(null);
   };
 
-  const handleCanvasDragOver = (e: DragEvent) => {
+  // Mouse down on canvas node - start dragging
+  const handleNodeMouseDown = (e: MouseEvent, nodeId: string) => {
+    // Don't drag if clicking delete button or ports
+    if ((e.target as HTMLElement).closest('.delete-node, .port')) {
+      return;
+    }
+
     e.preventDefault();
+    e.stopPropagation();
+
+    const node = canvasNodes().find(n => n.id === nodeId);
+    if (!node || !canvasRef) return;
+
+    const rect = canvasRef.getBoundingClientRect();
+    setDraggingNodeId(nodeId);
+    setDragOffset({
+      x: e.clientX - rect.left - node.position.x,
+      y: e.clientY - rect.top - node.position.y
+    });
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!canvasRef) return;
+      const dragId = draggingNodeId();
+      if (!dragId) return;
+
+      const rect = canvasRef.getBoundingClientRect();
+      const offset = dragOffset();
+      const x = Math.max(0, moveEvent.clientX - rect.left - offset.x);
+      const y = Math.max(0, moveEvent.clientY - rect.top - offset.y);
+
+      setCanvasNodes((prev) =>
+        prev.map((n) => n.id === dragId ? { ...n, position: { x, y } } : n)
+      );
+    };
+
+    const handleMouseUp = () => {
+      setDraggingNodeId(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
+
+  // Node dimensions for connector position calculations (must match CSS)
+  const NODE_WIDTH = 150;
+  const NODE_HEIGHT = 70;
+
+  // Get connector position based on side
+  const getConnectorPosition = (node: WorkflowNode, side: string) => {
+    const x = node.position.x;
+    const y = node.position.y;
+
+    switch (side) {
+      case 'top':
+        return { x: x + NODE_WIDTH / 2, y: y };
+      case 'right':
+        return { x: x + NODE_WIDTH, y: y + NODE_HEIGHT / 2 };
+      case 'bottom':
+        return { x: x + NODE_WIDTH / 2, y: y + NODE_HEIGHT };
+      case 'left':
+        return { x: x, y: y + NODE_HEIGHT / 2 };
+      default:
+        // Default to right side for output
+        return { x: x + NODE_WIDTH, y: y + NODE_HEIGHT / 2 };
+    }
+  };
+
+  // Reactive memo for connection paths - recalculates when nodes or connections change
+  const connectionPaths = createMemo(() => {
+    const nodes = canvasNodes();
+    const connections = canvasConnections();
+
+    return connections.map(conn => {
+      const fromNode = nodes.find(n => n.id === conn.from);
+      const toNode = nodes.find(n => n.id === conn.to);
+
+      if (!fromNode || !toNode) return { id: conn.id, d: '' };
+
+      const fromPos = getConnectorPosition(fromNode, conn.fromPort);
+      const toPos = getConnectorPosition(toNode, conn.toPort);
+
+      // Calculate control points for a smooth bezier curve
+      const dx = Math.abs(toPos.x - fromPos.x);
+      const dy = Math.abs(toPos.y - fromPos.y);
+      const curvature = Math.min(50, Math.max(dx, dy) / 2);
+
+      // Determine control point offsets based on connector sides
+      let cp1x = fromPos.x, cp1y = fromPos.y;
+      let cp2x = toPos.x, cp2y = toPos.y;
+
+      if (conn.fromPort === 'right') cp1x += curvature;
+      else if (conn.fromPort === 'left') cp1x -= curvature;
+      else if (conn.fromPort === 'top') cp1y -= curvature;
+      else if (conn.fromPort === 'bottom') cp1y += curvature;
+
+      if (conn.toPort === 'right') cp2x += curvature;
+      else if (conn.toPort === 'left') cp2x -= curvature;
+      else if (conn.toPort === 'top') cp2y -= curvature;
+      else if (conn.toPort === 'bottom') cp2y += curvature;
+
+      return {
+        id: conn.id,
+        d: `M ${fromPos.x} ${fromPos.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${toPos.x} ${toPos.y}`
+      };
+    });
+  });
 
   const getNodeInputs = (type: string): string[] => {
     const inputs: Record<string, string[]> = {
@@ -247,9 +422,16 @@ const CustomWorkflows: Component = () => {
   };
 
   const deleteNode = (nodeId: string) => {
-    setCurrentWorkflow('nodes', nodes => nodes.filter(n => n.id !== nodeId));
-    setCurrentWorkflow('connections', conns => 
-      conns.filter(c => c.from !== nodeId && c.to !== nodeId)
+    // Update signals
+    setCanvasNodes(prev => prev.filter(n => n.id !== nodeId));
+    setCanvasConnections(prev => prev.filter(c => c.from !== nodeId && c.to !== nodeId));
+
+    // Update store
+    setCurrentWorkflow(
+      produce((state) => {
+        state.nodes = state.nodes.filter(n => n.id !== nodeId);
+        state.connections = state.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+      })
     );
     setSelectedNode(null);
   };
@@ -269,7 +451,15 @@ const CustomWorkflows: Component = () => {
         fromPort: start.port,
         toPort: port,
       };
-      setCurrentWorkflow('connections', [...currentWorkflow.connections, newConnection]);
+      // Update signal
+      setCanvasConnections(prev => [...prev, newConnection]);
+
+      // Update store
+      setCurrentWorkflow(
+        produce((state) => {
+          state.connections.push(newConnection);
+        })
+      );
     }
     setConnecting(false);
     setConnectionStart(null);
@@ -280,6 +470,14 @@ const CustomWorkflows: Component = () => {
       // Validate workflow has nodes
       if (!workflow.nodes || workflow.nodes.length === 0) {
         alert('Workflow has no nodes to execute');
+        return;
+      }
+
+      // Check if a file is uploaded (required for workflows)
+      const currentFile = analysisStore.currentFile;
+      if (!currentFile) {
+        setExecutionMessage('Please upload a file before executing the workflow');
+        alert('Please upload a file before executing the workflow');
         return;
       }
 
@@ -306,6 +504,7 @@ const CustomWorkflows: Component = () => {
       // Start the job
       setExecutionMessage('Starting workflow execution...');
       setExecutionProgress(0);
+      setRunningJobId('starting'); // Show progress UI immediately
 
       const jobId = await jobService.startJob(workflowType, workflowInput);
       setRunningJobId(jobId);
@@ -334,7 +533,6 @@ const CustomWorkflows: Component = () => {
 
             // Show results
             if (job.output) {
-              console.log('Workflow output:', job.output);
               alert(`Workflow completed successfully!\n\nResults:\n${JSON.stringify(job.output, null, 2)}`);
             }
 
@@ -446,11 +644,14 @@ const CustomWorkflows: Component = () => {
       <Show when={!isDesigning()} fallback={
         <div class="workflow-designer">
           <div class="designer-header">
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Workflow Name"
-              value={currentWorkflow.name}
-              onInput={(e) => setCurrentWorkflow('name', e.currentTarget.value)}
+              value={workflowName()}
+              onInput={(e) => {
+                setWorkflowName(e.currentTarget.value);
+                setCurrentWorkflow('name', e.currentTarget.value);
+              }}
               class="workflow-name-input"
             />
             <div class="designer-actions">
@@ -466,13 +667,28 @@ const CustomWorkflows: Component = () => {
           <div class="designer-content">
             <div class="nodes-palette">
               <h3>Analysis Nodes</h3>
+              <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
+                {selectedPaletteNode()
+                  ? `Click canvas to place "${selectedPaletteNode().name}"`
+                  : 'Click a node, then click canvas to place'}
+              </p>
+              <p style="font-size: 12px; color: var(--barbie-pink); margin-bottom: 10px;">
+                Nodes on canvas: {canvasNodes().length}
+              </p>
+              <Show when={selectedPaletteNode()}>
+                <button
+                  style="margin-bottom: 10px; padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; width: 100%;"
+                  onClick={() => setSelectedPaletteNode(null)}
+                >
+                  Cancel Selection
+                </button>
+              </Show>
               <div class="node-category">
                 <For each={analysisNodes}>
                   {(node) => (
-                    <div 
-                      class="palette-node"
-                      draggable
-                      onDragStart={(e) => handleNodeDragStart(e, node)}
+                    <div
+                      class={`palette-node ${selectedPaletteNode()?.type === node.type ? 'selected' : ''}`}
+                      onClick={() => handlePaletteNodeClick(node)}
                     >
                       <span class="node-icon">{node.icon}</span>
                       <span class="node-name">{node.name}</span>
@@ -485,10 +701,9 @@ const CustomWorkflows: Component = () => {
               <div class="node-category">
                 <For each={conditionNodes}>
                   {(node) => (
-                    <div 
-                      class="palette-node condition"
-                      draggable
-                      onDragStart={(e) => handleNodeDragStart(e, node)}
+                    <div
+                      class={`palette-node condition ${selectedPaletteNode()?.type === node.type ? 'selected' : ''}`}
+                      onClick={() => handlePaletteNodeClick(node)}
                     >
                       <span class="node-icon">{node.icon}</span>
                       <span class="node-name">{node.name}</span>
@@ -501,10 +716,9 @@ const CustomWorkflows: Component = () => {
               <div class="node-category">
                 <For each={actionNodes}>
                   {(node) => (
-                    <div 
-                      class="palette-node action"
-                      draggable
-                      onDragStart={(e) => handleNodeDragStart(e, node)}
+                    <div
+                      class={`palette-node action ${selectedPaletteNode()?.type === node.type ? 'selected' : ''}`}
+                      onClick={() => handlePaletteNodeClick(node)}
                     >
                       <span class="node-icon">{node.icon}</span>
                       <span class="node-name">{node.name}</span>
@@ -514,75 +728,71 @@ const CustomWorkflows: Component = () => {
               </div>
             </div>
 
-            <div 
-              class="workflow-canvas"
-              ref={canvasRef}
-              onDrop={handleCanvasDrop}
-              onDragOver={handleCanvasDragOver}
+            <div
+              class={`workflow-canvas ${selectedPaletteNode() ? 'placing-node' : ''}`}
+              ref={(el) => { canvasRef = el; }}
+              onClick={handleCanvasClick}
             >
               <svg class="connections-svg">
-                <For each={currentWorkflow.connections}>
-                  {(conn) => {
-                    const fromNode = currentWorkflow.nodes.find(n => n.id === conn.from);
-                    const toNode = currentWorkflow.nodes.find(n => n.id === conn.to);
-                    if (fromNode && toNode) {
-                      return (
-                        <line
-                          x1={fromNode.position.x + 100}
-                          y1={fromNode.position.y + 30}
-                          x2={toNode.position.x}
-                          y2={toNode.position.y + 30}
-                          stroke="#ff6b9d"
-                          stroke-width="2"
-                        />
-                      );
-                    }
-                    return null;
-                  }}
+                <For each={connectionPaths()}>
+                  {(path) => (
+                    <Show when={path.d}>
+                      <path
+                        d={path.d}
+                        stroke="#ff6b9d"
+                        stroke-width="2"
+                        fill="none"
+                        stroke-linecap="round"
+                      />
+                    </Show>
+                  )}
                 </For>
               </svg>
 
-              <For each={currentWorkflow.nodes}>
+              <For each={canvasNodes()}>
                 {(node) => (
-                  <div 
-                    class={`workflow-node ${selectedNode()?.id === node.id ? 'selected' : ''}`}
+                  <div
+                    class={`workflow-node ${selectedNode()?.id === node.id ? 'selected' : ''} ${draggingNodeId() === node.id ? 'dragging' : ''}`}
                     style={{
+                      position: 'absolute',
                       left: `${node.position.x}px`,
-                      top: `${node.position.y}px`
+                      top: `${node.position.y}px`,
+                      cursor: 'move'
                     }}
+                    onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                     onClick={() => selectNode(node)}
                   >
+                    {/* Connection dots on all four sides */}
+                    <div
+                      class="connector connector-top"
+                      onClick={(e) => { e.stopPropagation(); startConnection(node.id, 'top'); }}
+                      title="Top connector"
+                    />
+                    <div
+                      class="connector connector-right"
+                      onClick={(e) => { e.stopPropagation(); startConnection(node.id, 'right'); }}
+                      title="Right connector"
+                    />
+                    <div
+                      class="connector connector-bottom"
+                      onClick={(e) => { e.stopPropagation(); completeConnection(node.id, 'bottom'); }}
+                      title="Bottom connector"
+                    />
+                    <div
+                      class="connector connector-left"
+                      onClick={(e) => { e.stopPropagation(); completeConnection(node.id, 'left'); }}
+                      title="Left connector"
+                    />
+
                     <div class="node-header">
                       <span>{node.name}</span>
-                      <button onClick={() => deleteNode(node.id)} class="delete-node">
+                      <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} class="delete-node">
                         ×
                       </button>
                     </div>
-                    
-                    <div class="node-ports">
-                      <div class="input-ports">
-                        <For each={node.inputs}>
-                          {(port) => (
-                            <div 
-                              class="port input"
-                              onClick={() => completeConnection(node.id, port)}
-                              title={port}
-                            />
-                          )}
-                        </For>
-                      </div>
-                      
-                      <div class="output-ports">
-                        <For each={node.outputs}>
-                          {(port) => (
-                            <div 
-                              class="port output"
-                              onClick={() => startConnection(node.id, port)}
-                              title={port}
-                            />
-                          )}
-                        </For>
-                      </div>
+
+                    <div class="node-body">
+                      <span class="node-type-badge">{node.type}</span>
                     </div>
                   </div>
                 )}
@@ -612,6 +822,12 @@ const CustomWorkflows: Component = () => {
                 <div class="workflow-actions">
                   <button
                     onClick={() => {
+                      // Populate signals for reactivity
+                      setWorkflowId(workflow.id);
+                      setWorkflowName(workflow.name);
+                      setCanvasNodes([...workflow.nodes]);
+                      setCanvasConnections([...workflow.connections]);
+                      // Also set store for compatibility
                       setCurrentWorkflow(workflow);
                       setIsDesigning(true);
                     }}
@@ -622,14 +838,15 @@ const CustomWorkflows: Component = () => {
                   <button
                     onClick={() => runWorkflow(workflow)}
                     class="run-button"
-                    disabled={runningJobId() !== null}
+                    disabled={runningJobId() !== null || !analysisStore.currentFile}
+                    title={!analysisStore.currentFile ? 'Please upload a file first' : ''}
                   >
                     ▶️ Run
                   </button>
                 </div>
-                <Show when={runningJobId() !== null && executionMessage()}>
+                <Show when={runningJobId()}>
                   <div class="workflow-execution-status">
-                    <div class="execution-message">{executionMessage()}</div>
+                    <div class="execution-message">{executionMessage() || 'Initializing...'}</div>
                     <div class="execution-progress-bar">
                       <div
                         class="execution-progress-fill"

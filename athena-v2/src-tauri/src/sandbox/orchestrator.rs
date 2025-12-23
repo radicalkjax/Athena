@@ -8,7 +8,9 @@ use std::io::Read;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
-use super::memory_capture::{MemoryDump, DumpTrigger};
+use super::memory_capture::{MemoryDump, DumpTrigger, MemoryCaptureConfig, MemoryCaptureManager};
+use super::anti_evasion::AntiEvasionManager;
+use super::video_capture::{VideoCaptureConfig, VideoRecording, VideoCaptureManager};
 
 /// Sandbox execution errors
 #[derive(Debug)]
@@ -50,9 +52,17 @@ pub enum OsType {
 pub struct SandboxConfig {
     pub os_type: OsType,
     pub timeout: Duration,
+    /// Enable network traffic capture (creates network.pcap)
     pub capture_network: bool,
-    pub capture_screenshots: bool,
     pub memory_limit: u64,
+    /// Anti-evasion tier: None = disabled, Some(1) = tier1, Some(2) = tier2
+    pub anti_evasion_tier: Option<u8>,
+    /// Memory capture configuration
+    pub memory_capture_config: Option<MemoryCaptureConfig>,
+    /// Enable video recording of execution
+    pub capture_video: bool,
+    /// Video capture configuration (if enabled)
+    pub video_config: Option<VideoCaptureConfig>,
 }
 
 impl Default for SandboxConfig {
@@ -61,8 +71,11 @@ impl Default for SandboxConfig {
             os_type: OsType::Linux,
             timeout: Duration::from_secs(120),
             capture_network: true,
-            capture_screenshots: false,
             memory_limit: 512 * 1024 * 1024, // 512MB
+            anti_evasion_tier: None, // Disabled by default
+            memory_capture_config: None,
+            capture_video: false, // Disabled by default
+            video_config: None,
         }
     }
 }
@@ -82,6 +95,8 @@ pub struct ExecutionReport {
     pub stderr: String,
     pub mitre_attacks: Vec<MitreAttack>,
     pub memory_dumps: Vec<MemoryDump>,
+    /// Video recording of execution (if video capture was enabled)
+    pub video_recording: Option<VideoRecording>,
 }
 
 /// A behavioral event detected during execution
@@ -170,14 +185,12 @@ impl SandboxOrchestrator {
         println!("[Sandbox] Sample: {:?}", file_path);
         println!("[Sandbox] Timeout: {:?}", config.timeout);
 
-        // Step 1: Create sandbox container
         let container_id = self.create_sandbox_container(&config).await?;
         println!("[Sandbox] Container created: {}", container_id);
 
-        // Ensure cleanup happens even if execution fails
         let result = self.execute_in_sandbox(&container_id, &file_path, &config).await;
 
-        // Step 5: Cleanup container
+        // Always cleanup container, even on failure
         if let Err(e) = self.cleanup_container(&container_id).await {
             eprintln!("[Sandbox] Warning: Cleanup failed: {}", e);
         }
@@ -205,6 +218,7 @@ impl SandboxOrchestrator {
             stderr,
             mitre_attacks,
             memory_dumps,
+            video_recording: None, // Will be set by execute_in_sandbox if video capture is enabled
         })
     }
 
@@ -214,19 +228,17 @@ impl SandboxOrchestrator {
         file_path: &PathBuf,
         config: &SandboxConfig,
     ) -> Result<(i32, String, String, Vec<BehaviorEvent>, Vec<FileOperation>, Vec<NetworkConnection>, Vec<ProcessInfo>, HashMap<String, u64>, Vec<MemoryDump>), SandboxError> {
-        // Step 2: Copy sample to container
         self.copy_file_to_container(container_id, file_path, "/sandbox/input/sample").await?;
         println!("[Sandbox] Sample copied to container");
 
-        // Step 3: Execute with monitoring
         let (exit_code, stdout, stderr) = self.execute_with_monitoring(
             container_id,
             "/sandbox/input/sample",
             config.timeout,
+            config,
         ).await?;
         println!("[Sandbox] Execution complete: exit_code={}", exit_code);
 
-        // Step 4: Extract and parse results
         let (behavioral_events, file_operations, network_connections, processes, syscall_summary, memory_dumps) =
             self.extract_behavioral_data(container_id).await?;
         println!("[Sandbox] Extracted {} behavioral events, {} file operations, {} memory dumps",
@@ -241,25 +253,61 @@ impl SandboxOrchestrator {
             OsType::Windows => "athena-sandbox-windows:latest",
         };
 
+        // Verify sandbox image exists before attempting to create container
+        self.verify_image_exists(image).await?;
+
         // Create container with security restrictions
         let mut host_config = bollard::models::HostConfig::default();
         host_config.memory = Some(config.memory_limit as i64);
         host_config.memory_swap = Some(config.memory_limit as i64); // No swap
         host_config.nano_cpus = Some(1_000_000_000); // 1 CPU
-        host_config.network_mode = Some("none".to_string()); // Network isolation
-        host_config.readonly_rootfs = Some(false); // Need writable /sandbox/output
+
+        // Configure network based on capture_network setting
+        if config.capture_network {
+            // Enable network with isolation - creates a bridge network for capturing traffic
+            // This allows tcpdump to capture packets while still isolating from host
+            host_config.network_mode = Some("bridge".to_string());
+        } else {
+            // Complete network isolation
+            host_config.network_mode = Some("none".to_string());
+        }
+
+        // Enable read-only root filesystem for additional security
+        host_config.readonly_rootfs = Some(true);
+
+        // Create tmpfs mounts for writable directories
+        let mut tmpfs = HashMap::new();
+        tmpfs.insert("/tmp".to_string(), "size=64M,mode=1777".to_string());
+        tmpfs.insert("/sandbox/input".to_string(), "size=128M,mode=0755".to_string());
+        tmpfs.insert("/sandbox/output".to_string(), "size=512M,mode=0755".to_string());
+        tmpfs.insert("/sandbox/output/memory".to_string(), "size=256M,mode=0755".to_string());
+        tmpfs.insert("/sandbox/output/screenshots".to_string(), "size=128M,mode=0755".to_string());
+        host_config.tmpfs = Some(tmpfs);
+
+        // Apply seccomp profile to restrict syscalls
+        let seccomp_json = super::seccomp::to_docker_seccomp_json()
+            .map_err(|e| SandboxError::ContainerCreation(format!("Failed to generate seccomp profile: {}", e)))?;
+
         host_config.security_opt = Some(vec![
-            "no-new-privileges".to_string(),
+            "no-new-privileges:true".to_string(),
+            format!("seccomp={}", seccomp_json),
         ]);
         host_config.cap_drop = Some(vec!["ALL".to_string()]);
-        // Add essential capabilities for strace
-        host_config.cap_add = Some(vec!["SYS_PTRACE".to_string()]);
+
+        // Add essential capabilities
+        let mut caps = vec!["SYS_PTRACE".to_string()]; // For strace
+        if config.capture_network {
+            // Add NET_RAW and NET_ADMIN for tcpdump
+            caps.push("NET_RAW".to_string());
+            caps.push("NET_ADMIN".to_string());
+        }
+        host_config.cap_add = Some(caps);
         host_config.pids_limit = Some(256); // Limit number of processes
 
         let container_config = Config {
             image: Some(image.to_string()),
             host_config: Some(host_config),
-            network_disabled: Some(true),
+            network_disabled: Some(!config.capture_network), // Disable network unless capturing
             attach_stdout: Some(true),
             attach_stderr: Some(true),
             tty: Some(false),
@@ -284,6 +332,42 @@ impl SandboxOrchestrator {
             .map_err(|e| SandboxError::ContainerCreation(format!("Failed to start container: {}", e)))?;
 
         Ok(container.id)
+    }
+
+    /// Verify that the sandbox Docker image exists before attempting to create a container.
+    /// Provides a helpful error message directing users to build the image if missing.
+    async fn verify_image_exists(&self, image: &str) -> Result<(), SandboxError> {
+        use bollard::image::ListImagesOptions;
+
+        let options = ListImagesOptions::<String> {
+            all: false,
+            ..Default::default()
+        };
+
+        let images = self.docker
+            .list_images(Some(options))
+            .await
+            .map_err(|e| SandboxError::DockerConnection(format!("Failed to list Docker images: {}", e)))?;
+
+        let image_exists = images.iter().any(|img| {
+            img.repo_tags.iter().any(|tag| tag == image)
+        });
+
+        if !image_exists {
+            let build_instructions = if image.contains("windows") {
+                "Run 'docker/build-sandbox.sh --with-windows' on a Windows Docker host"
+            } else {
+                "Run 'docker/build-sandbox.sh' to build the sandbox image"
+            };
+
+            return Err(SandboxError::ContainerCreation(format!(
+                "Sandbox image '{}' not found. {}. \
+                The sandbox requires a pre-built Docker image with monitoring tools (strace, inotify, tcpdump).",
+                image, build_instructions
+            )));
+        }
+
+        Ok(())
     }
 
     async fn copy_file_to_container(
@@ -312,9 +396,9 @@ impl SandboxOrchestrator {
         let tar_data = archive_builder.into_inner()
             .map_err(|e| SandboxError::FileCopy(format!("Failed to finalize tar archive: {}", e)))?;
 
-        // Upload to container
+        // Upload to container at the specified path
         let options = UploadToContainerOptions {
-            path: "/sandbox/input/",
+            path: container_path,
             ..Default::default()
         };
 
@@ -331,7 +415,146 @@ impl SandboxOrchestrator {
         container_id: &str,
         sample_path: &str,
         timeout: Duration,
+        config: &SandboxConfig,
     ) -> Result<(i32, String, String), SandboxError> {
+        // Apply anti-evasion measures if configured
+        if let Some(tier) = config.anti_evasion_tier {
+            println!("[Sandbox] Applying anti-evasion tier {}", tier);
+
+            // Create anti-evasion manager with custom config if needed
+            // Currently using default config, but this allows for future customization
+            use super::anti_evasion::AntiEvasionConfig;
+            let anti_evasion_config = AntiEvasionConfig::default();
+            let anti_evasion = AntiEvasionManager::with_config(anti_evasion_config);
+
+            // Generate appropriate script based on tier
+            let script = if tier >= 2 {
+                // Tier 2 includes both tier 1 environment setup and tier 2 behavioral simulation
+                format!("{}\n{}",
+                    anti_evasion.generate_tier1_script(),
+                    anti_evasion.generate_tier2_script()
+                )
+            } else {
+                // Tier 1 only
+                anti_evasion.generate_tier1_script()
+            };
+
+            // Upload anti-evasion script to container
+            self.upload_script_to_container(container_id, &script, "/tmp/anti_evasion.sh").await?;
+
+            // Make script executable
+            self.execute_simple_command(container_id, vec!["chmod", "+x", "/tmp/anti_evasion.sh"]).await?;
+
+            // Execute anti-evasion script
+            println!("[Sandbox] Executing anti-evasion setup script");
+            let (exit_code, stdout, stderr) = self.execute_script(container_id, "/tmp/anti_evasion.sh", Duration::from_secs(30)).await?;
+
+            if exit_code != 0 {
+                eprintln!("[Sandbox] Warning: Anti-evasion script exited with code {}", exit_code);
+                eprintln!("[Sandbox] Anti-evasion stderr: {}", stderr);
+            } else {
+                println!("[Sandbox] Anti-evasion setup complete");
+                if !stdout.is_empty() {
+                    println!("[Sandbox] Anti-evasion output: {}", stdout);
+                }
+            }
+        }
+
+        // Start network capture if enabled
+        if config.capture_network {
+            println!("[Sandbox] Starting network capture");
+
+            // Create network capture script
+            let network_script = r#"#!/bin/bash
+# Start tcpdump in background to capture all network traffic
+tcpdump -i any -w /sandbox/output/network.pcap 2>/dev/null &
+TCPDUMP_PID=$!
+echo $TCPDUMP_PID > /tmp/tcpdump.pid
+echo "Network capture started (PID: $TCPDUMP_PID)"
+"#;
+
+            // Upload and execute network capture script
+            self.upload_script_to_container(container_id, network_script, "/tmp/start_network_capture.sh").await?;
+            self.execute_simple_command(container_id, vec!["chmod", "+x", "/tmp/start_network_capture.sh"]).await?;
+
+            let (exit_code, stdout, stderr) = self.execute_script(
+                container_id,
+                "/tmp/start_network_capture.sh",
+                Duration::from_secs(5)
+            ).await?;
+
+            if exit_code != 0 {
+                eprintln!("[Sandbox] Warning: Network capture script exited with code {}", exit_code);
+                eprintln!("[Sandbox] Network capture stderr: {}", stderr);
+            } else {
+                println!("[Sandbox] Network capture started successfully");
+                if !stdout.is_empty() {
+                    println!("[Sandbox] Network capture output: {}", stdout);
+                }
+            }
+        }
+
+        // Set up memory capture if configured
+        if let Some(mem_config) = &config.memory_capture_config {
+            println!("[Sandbox] Setting up memory capture");
+            let mem_mgr = MemoryCaptureManager::with_config(mem_config.clone());
+
+            // Generate and upload memory dump script
+            // Note: We use SAMPLE_PID as a placeholder that will be replaced by the monitor_agent.sh script
+            let dump_script = mem_mgr.generate_dump_script("SAMPLE_PID");
+
+            // Upload memory dump script to container
+            self.upload_script_to_container(container_id, &dump_script, "/tmp/memory_capture.sh").await?;
+
+            // Make script executable
+            self.execute_simple_command(container_id, vec!["chmod", "+x", "/tmp/memory_capture.sh"]).await?;
+
+            println!("[Sandbox] Memory capture script ready");
+
+            // The monitor_agent.sh script will source this and use the dump_memory function
+            // We'll also need to add the exit dump script at the end
+        }
+
+        // Start video recording if enabled
+        if config.capture_video {
+            println!("[Sandbox] Starting video capture");
+            let video_manager = VideoCaptureManager::with_config(
+                config.video_config.clone().unwrap_or_default()
+            );
+
+            // Generate and upload start script
+            let start_script = video_manager.generate_start_script("/sandbox/output");
+            self.upload_script_to_container(container_id, &start_script, "/tmp/start_video.sh").await?;
+            self.execute_simple_command(container_id, vec!["chmod", "+x", "/tmp/start_video.sh"]).await?;
+
+            // Execute start script (non-blocking - processes run in background)
+            println!("[Sandbox] Executing video recording start script");
+            let (exit_code, stdout, stderr) = self.execute_script(
+                container_id,
+                "/tmp/start_video.sh",
+                Duration::from_secs(10)
+            ).await?;
+
+            if exit_code != 0 {
+                eprintln!("[Sandbox] Warning: Video capture start script exited with code {}", exit_code);
+                eprintln!("[Sandbox] Video stderr: {}", stderr);
+            } else {
+                println!("[Sandbox] Video capture started successfully");
+                if !stdout.is_empty() {
+                    println!("[Sandbox] Video output: {}", stdout);
+                }
+            }
+
+            // Optional: Start user simulation for anti-evasion
+            let user_sim_script = video_manager.generate_user_simulation_script();
+            self.upload_script_to_container(container_id, &user_sim_script, "/tmp/user_sim.sh").await?;
+            self.execute_simple_command(container_id, vec!["chmod", "+x", "/tmp/user_sim.sh"]).await?;
+
+            // Start user simulation in background (fire and forget)
+            println!("[Sandbox] Starting user simulation for anti-evasion");
+            let _ = self.execute_script(container_id, "/tmp/user_sim.sh", Duration::from_secs(5)).await;
+        }
+
         let timeout_str = timeout.as_secs().to_string();
         let exec_config = CreateExecOptions {
             cmd: Some(vec![
@@ -390,6 +613,82 @@ impl SandboxOrchestrator {
             .map_err(|e| SandboxError::Execution(format!("Failed to inspect exec: {}", e)))?;
         let exit_code = inspect.exit_code.unwrap_or(-1) as i32;
 
+        // Stop network capture if it was enabled
+        if config.capture_network {
+            println!("[Sandbox] Stopping network capture");
+
+            // Create stop script that kills tcpdump gracefully
+            let stop_network_script = r#"#!/bin/bash
+if [ -f /tmp/tcpdump.pid ]; then
+    TCPDUMP_PID=$(cat /tmp/tcpdump.pid)
+    if kill -0 $TCPDUMP_PID 2>/dev/null; then
+        kill -TERM $TCPDUMP_PID
+        # Wait up to 2 seconds for tcpdump to finish writing
+        for i in {1..20}; do
+            if ! kill -0 $TCPDUMP_PID 2>/dev/null; then
+                break
+            fi
+            sleep 0.1
+        done
+        echo "Network capture stopped (PID: $TCPDUMP_PID)"
+    else
+        echo "tcpdump process not running"
+    fi
+else
+    echo "No tcpdump PID file found"
+fi
+"#;
+
+            self.upload_script_to_container(container_id, stop_network_script, "/tmp/stop_network_capture.sh").await?;
+            self.execute_simple_command(container_id, vec!["chmod", "+x", "/tmp/stop_network_capture.sh"]).await?;
+
+            let (stop_code, stop_stdout, stop_stderr) = self.execute_script(
+                container_id,
+                "/tmp/stop_network_capture.sh",
+                Duration::from_secs(5)
+            ).await?;
+
+            if stop_code != 0 {
+                eprintln!("[Sandbox] Warning: Network capture stop script exited with code {}", stop_code);
+                eprintln!("[Sandbox] Stop stderr: {}", stop_stderr);
+            } else {
+                println!("[Sandbox] Network capture stopped successfully");
+                if !stop_stdout.is_empty() {
+                    println!("[Sandbox] Stop output: {}", stop_stdout);
+                }
+            }
+        }
+
+        // Stop video recording if it was enabled
+        if config.capture_video {
+            println!("[Sandbox] Stopping video capture");
+            let video_manager = VideoCaptureManager::with_config(
+                config.video_config.clone().unwrap_or_default()
+            );
+
+            // Generate and upload stop script
+            let stop_script = video_manager.generate_stop_script("/sandbox/output");
+            self.upload_script_to_container(container_id, &stop_script, "/tmp/stop_video.sh").await?;
+            self.execute_simple_command(container_id, vec!["chmod", "+x", "/tmp/stop_video.sh"]).await?;
+
+            // Execute stop script
+            println!("[Sandbox] Executing video recording stop script");
+            let (stop_code, stop_stdout, stop_stderr) = self.execute_script(
+                container_id,
+                "/tmp/stop_video.sh",
+                Duration::from_secs(10)
+            ).await?;
+
+            if stop_code != 0 {
+                eprintln!("[Sandbox] Warning: Video capture stop script exited with code {}", stop_code);
+                eprintln!("[Sandbox] Stop stderr: {}", stop_stderr);
+            } else {
+                println!("[Sandbox] Video capture stopped successfully");
+                if !stop_stdout.is_empty() {
+                    println!("[Sandbox] Stop output: {}", stop_stdout);
+                }
+            }
+        }
         Ok((exit_code, stdout, stderr))
     }
 
@@ -429,6 +728,7 @@ impl SandboxOrchestrator {
         let mut pcap_bytes: Vec<u8> = Vec::new();
         let mut memory_dumps: Vec<MemoryDump> = Vec::new();
         let mut dump_sizes: HashMap<String, u64> = HashMap::new();
+        let mut memory_maps_files: HashMap<String, String> = HashMap::new(); // filename -> content
 
         if let Ok(entries) = archive.entries() {
             for entry_result in entries {
@@ -457,6 +757,12 @@ impl SandboxOrchestrator {
                                 if filename.starts_with("core_") || filename.starts_with("region_") || filename.starts_with("dump_") {
                                     let size = entry.header().size().unwrap_or(0);
                                     dump_sizes.insert(filename, size);
+                                } else if filename.starts_with("maps_") && filename.ends_with(".txt") {
+                                    // Read memory maps file for analysis
+                                    let mut maps_content = String::new();
+                                    if entry.read_to_string(&mut maps_content).is_ok() {
+                                        memory_maps_files.insert(filename, maps_content);
+                                    }
                                 }
                             }
                         }
@@ -512,6 +818,45 @@ impl SandboxOrchestrator {
                     process_name: format!("process_{}", pid),
                     command_line: String::new(),
                 });
+            }
+        }
+
+        // Analyze memory maps if available using MemoryCaptureManager
+        let mut behavioral_events = behavioral_events; // Make mutable
+        if !memory_maps_files.is_empty() {
+            let mem_mgr = MemoryCaptureManager::new();
+
+            for (filename, maps_content) in &memory_maps_files {
+                println!("[Sandbox] Analyzing memory maps from {}", filename);
+
+                // Parse memory regions
+                let regions = mem_mgr.parse_memory_maps(maps_content);
+
+                // Analyze for suspicious patterns
+                let findings = mem_mgr.analyze_regions(&regions);
+
+                if !findings.is_empty() {
+                    println!("[Sandbox] Found {} suspicious memory patterns in {}", findings.len(), filename);
+
+                    // Convert memory findings to behavioral events
+                    for finding in findings {
+                        behavioral_events.push(BehaviorEvent {
+                            timestamp: SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .unwrap_or(Duration::ZERO)
+                                .as_millis() as u64,
+                            event_type: "MemoryAnomaly".to_string(),
+                            description: finding.description,
+                            severity: match finding.confidence {
+                                c if c >= 0.9 => "Critical",
+                                c if c >= 0.7 => "High",
+                                c if c >= 0.5 => "Medium",
+                                _ => "Low",
+                            }.to_string(),
+                            mitre_attack_id: finding.mitre_attack_id,
+                        });
+                    }
+                }
             }
         }
 
@@ -628,7 +973,11 @@ impl SandboxOrchestrator {
             return connections;
         }
 
-        // Check PCAP magic number
+        // Check PCAP magic number - bounds checked above
+        if pcap_data.len() < 4 {
+            eprintln!("[Sandbox] PCAP data too short for magic number");
+            return connections;
+        }
         let magic = u32::from_le_bytes([pcap_data[0], pcap_data[1], pcap_data[2], pcap_data[3]]);
         let is_le = magic == 0xa1b2c3d4 || magic == 0xa1b23c4d;
         let is_be = magic == 0xd4c3b2a1 || magic == 0x4d3cb2a1;
@@ -649,6 +998,11 @@ impl SandboxOrchestrator {
 
         while offset + 16 <= pcap_data.len() && packet_count < max_packets {
             // Packet header: timestamp (8 bytes), captured length (4 bytes), original length (4 bytes)
+            // Bounds check for packet header access
+            if offset + 12 > pcap_data.len() {
+                eprintln!("[Sandbox] PCAP packet header truncated at offset {}", offset);
+                break;
+            }
             let incl_len = if is_le {
                 u32::from_le_bytes([pcap_data[offset + 8], pcap_data[offset + 9], pcap_data[offset + 10], pcap_data[offset + 11]]) as usize
             } else {
@@ -665,20 +1019,46 @@ impl SandboxOrchestrator {
             if incl_len >= 34 { // Minimum: 14 (Ethernet) + 20 (IP)
                 let packet = &pcap_data[offset..offset + incl_len];
 
-                // Check Ethernet type (bytes 12-13)
+                // Check Ethernet type (bytes 12-13) - bounds check
+                if packet.len() < 14 {
+                    offset += incl_len;
+                    packet_count += 1;
+                    continue;
+                }
                 let eth_type = u16::from_be_bytes([packet[12], packet[13]]);
 
                 if eth_type == 0x0800 { // IPv4
                     let ip_header_start = 14;
 
+                    // Bounds check for IP header (minimum 20 bytes)
+                    if packet.len() < ip_header_start + 20 {
+                        offset += incl_len;
+                        packet_count += 1;
+                        continue;
+                    }
+
                     if packet.len() > ip_header_start + 20 {
                         let ip_proto = packet[ip_header_start + 9];
+
+                        // Bounds check for source IP (bytes 12-15)
+                        if packet.len() < ip_header_start + 16 {
+                            offset += incl_len;
+                            packet_count += 1;
+                            continue;
+                        }
                         let src_ip = format!("{}.{}.{}.{}",
                             packet[ip_header_start + 12],
                             packet[ip_header_start + 13],
                             packet[ip_header_start + 14],
                             packet[ip_header_start + 15]
                         );
+
+                        // Bounds check for destination IP (bytes 16-19)
+                        if packet.len() < ip_header_start + 20 {
+                            offset += incl_len;
+                            packet_count += 1;
+                            continue;
+                        }
                         let dst_ip = format!("{}.{}.{}.{}",
                             packet[ip_header_start + 16],
                             packet[ip_header_start + 17],
@@ -691,7 +1071,10 @@ impl SandboxOrchestrator {
 
                         match ip_proto {
                             6 => { // TCP
-                                if packet.len() > transport_start + 4 {
+                                // Bounds check for TCP ports (need 4 bytes)
+                                if packet.len() < transport_start + 4 {
+                                    // Skip if not enough data for ports
+                                } else if packet.len() > transport_start + 4 {
                                     let src_port = u16::from_be_bytes([packet[transport_start], packet[transport_start + 1]]);
                                     let dst_port = u16::from_be_bytes([packet[transport_start + 2], packet[transport_start + 3]]);
 
@@ -718,7 +1101,10 @@ impl SandboxOrchestrator {
                                 }
                             }
                             17 => { // UDP
-                                if packet.len() > transport_start + 4 {
+                                // Bounds check for UDP ports (need 4 bytes)
+                                if packet.len() < transport_start + 4 {
+                                    // Skip if not enough data for ports
+                                } else if packet.len() > transport_start + 4 {
                                     let src_port = u16::from_be_bytes([packet[transport_start], packet[transport_start + 1]]);
                                     let dst_port = u16::from_be_bytes([packet[transport_start + 2], packet[transport_start + 3]]);
 
@@ -856,6 +1242,141 @@ impl SandboxOrchestrator {
 
         Ok(())
     }
+
+    /// Helper method to upload a script to the container
+    async fn upload_script_to_container(
+        &self,
+        container_id: &str,
+        script_content: &str,
+        container_path: &str,
+    ) -> Result<(), SandboxError> {
+        let bytes = script_content.as_bytes();
+
+        // Create tar archive in memory
+        let mut archive_builder = tar::Builder::new(Vec::new());
+        let mut header = tar::Header::new_gnu();
+        header.set_size(bytes.len() as u64);
+        header.set_mode(0o755);
+        header.set_cksum();
+
+        // Extract filename from path
+        let filename = std::path::Path::new(container_path)
+            .file_name()
+            .ok_or_else(|| SandboxError::FileCopy("Invalid container path".to_string()))?
+            .to_string_lossy();
+
+        archive_builder.append_data(&mut header, filename.as_ref(), bytes)
+            .map_err(|e| SandboxError::FileCopy(format!("Failed to create tar archive: {}", e)))?;
+
+        let tar_data = archive_builder.into_inner()
+            .map_err(|e| SandboxError::FileCopy(format!("Failed to finalize tar archive: {}", e)))?;
+
+        // Extract directory from path
+        let dir_path = std::path::Path::new(container_path)
+            .parent()
+            .ok_or_else(|| SandboxError::FileCopy("Invalid container path".to_string()))?
+            .to_string_lossy();
+
+        // Upload to container
+        let options = UploadToContainerOptions {
+            path: dir_path.as_ref(),
+            ..Default::default()
+        };
+
+        self.docker
+            .upload_to_container(container_id, Some(options), tar_data.into())
+            .await
+            .map_err(|e| SandboxError::FileCopy(format!("Failed to upload script to container: {}", e)))?;
+
+        Ok(())
+    }
+
+    /// Helper method to execute a simple command in the container (no output capture)
+    async fn execute_simple_command(
+        &self,
+        container_id: &str,
+        cmd: Vec<&str>,
+    ) -> Result<(), SandboxError> {
+        let exec_config = CreateExecOptions {
+            cmd: Some(cmd),
+            attach_stdout: Some(false),
+            attach_stderr: Some(false),
+            ..Default::default()
+        };
+
+        let exec = self.docker.create_exec(container_id, exec_config)
+            .await
+            .map_err(|e| SandboxError::Execution(format!("Failed to create exec: {}", e)))?;
+
+        self.docker.start_exec(&exec.id, None)
+            .await
+            .map_err(|e| SandboxError::Execution(format!("Failed to execute command: {}", e)))?;
+
+        Ok(())
+    }
+
+    /// Helper method to execute a script and capture output
+    async fn execute_script(
+        &self,
+        container_id: &str,
+        script_path: &str,
+        timeout: Duration,
+    ) -> Result<(i32, String, String), SandboxError> {
+        let exec_config = CreateExecOptions {
+            cmd: Some(vec!["/bin/bash", script_path]),
+            attach_stdout: Some(true),
+            attach_stderr: Some(true),
+            ..Default::default()
+        };
+
+        let exec = self.docker.create_exec(container_id, exec_config)
+            .await
+            .map_err(|e| SandboxError::Execution(format!("Failed to create exec: {}", e)))?;
+
+        // Execute with timeout
+        let exec_result = tokio::time::timeout(
+            timeout,
+            self.docker.start_exec(&exec.id, None),
+        )
+        .await
+        .map_err(|_| SandboxError::Timeout)?
+        .map_err(|e| SandboxError::Execution(format!("Script execution failed: {}", e)))?;
+
+        let mut stdout = String::new();
+        let mut stderr = String::new();
+
+        match exec_result {
+            StartExecResults::Attached { mut output, .. } => {
+                while let Some(result) = output.next().await {
+                    match result {
+                        Ok(log) => match &log {
+                            bollard::container::LogOutput::StdOut { .. } => {
+                                stdout.push_str(&String::from_utf8_lossy(&log.into_bytes()));
+                            }
+                            bollard::container::LogOutput::StdErr { .. } => {
+                                stderr.push_str(&String::from_utf8_lossy(&log.into_bytes()));
+                            }
+                            _ => {}
+                        },
+                        Err(e) => {
+                            eprintln!("[Sandbox] Error reading script output: {}", e);
+                        }
+                    }
+                }
+            }
+            StartExecResults::Detached => {
+                return Err(SandboxError::Execution("Unexpected detached execution".to_string()));
+            }
+        }
+
+        // Get exit code
+        let inspect = self.docker.inspect_exec(&exec.id)
+            .await
+            .map_err(|e| SandboxError::Execution(format!("Failed to inspect exec: {}", e)))?;
+        let exit_code = inspect.exit_code.unwrap_or(-1) as i32;
+
+        Ok((exit_code, stdout, stderr))
+    }
 }
 
 #[cfg(test)]
@@ -878,8 +1399,11 @@ mod tests {
             os_type: OsType::Linux,
             timeout: Duration::from_secs(10),
             capture_network: false,
-            capture_screenshots: false,
             memory_limit: 256 * 1024 * 1024,
+            anti_evasion_tier: None,
+            memory_capture_config: None,
+            capture_video: false,
+            video_config: None,
         };
 
         // Test with /bin/echo (harmless)
@@ -891,6 +1415,52 @@ mod tests {
         let report = result.unwrap();
         println!("Report: {:?}", report);
         assert_eq!(report.exit_code, 0);
+    }
+
+    #[tokio::test]
+    #[ignore] // Only run when Docker is available and image is built
+    async fn test_anti_evasion_tier1() {
+        let orchestrator = SandboxOrchestrator::new().await.unwrap();
+
+        let config = SandboxConfig {
+            os_type: OsType::Linux,
+            timeout: Duration::from_secs(10),
+            capture_network: false,
+            memory_limit: 256 * 1024 * 1024,
+            anti_evasion_tier: Some(1), // Enable tier 1
+            memory_capture_config: None,
+            capture_video: false,
+            video_config: None,
+        };
+
+        let result = orchestrator
+            .execute_sample(PathBuf::from("/bin/echo"), config)
+            .await;
+
+        assert!(result.is_ok(), "Sandbox execution with anti-evasion failed: {:?}", result.err());
+    }
+
+    #[tokio::test]
+    #[ignore] // Only run when Docker is available and image is built
+    async fn test_anti_evasion_tier2() {
+        let orchestrator = SandboxOrchestrator::new().await.unwrap();
+
+        let config = SandboxConfig {
+            os_type: OsType::Linux,
+            timeout: Duration::from_secs(10),
+            capture_network: false,
+            memory_limit: 256 * 1024 * 1024,
+            anti_evasion_tier: Some(2), // Enable tier 2 (includes tier 1)
+            memory_capture_config: None,
+            capture_video: false,
+            video_config: None,
+        };
+
+        let result = orchestrator
+            .execute_sample(PathBuf::from("/bin/echo"), config)
+            .await;
+
+        assert!(result.is_ok(), "Sandbox execution with tier 2 anti-evasion failed: {:?}", result.err());
     }
 
     #[test]
@@ -991,5 +1561,76 @@ mod tests {
             let connections = orchestrator.parse_pcap(&invalid_pcap);
             assert!(connections.is_empty());
         }
+    }
+
+    #[test]
+    fn test_memory_capture_manager_integration() {
+        // Test that MemoryCaptureManager can be used to analyze memory maps
+        use crate::sandbox::memory_capture::MemoryCaptureManager;
+
+        let mem_mgr = MemoryCaptureManager::new();
+
+        // Sample memory maps with suspicious RWX region
+        let maps_content = r#"00400000-00452000 r-xp 00000000 08:01 1234 /bin/sample
+00651000-00652000 r--p 00051000 08:01 1234 /bin/sample
+00652000-00653000 rw-p 00052000 08:01 1234 /bin/sample
+7f9a8c000000-7f9a8c021000 rwxp 00000000 00:00 0 [heap]
+7fff12345000-7fff12366000 rw-p 00000000 00:00 0 [stack]
+"#;
+
+        let regions = mem_mgr.parse_memory_maps(maps_content);
+        assert_eq!(regions.len(), 5);
+
+        // Analyze for suspicious patterns
+        let findings = mem_mgr.analyze_regions(&regions);
+
+        // Should detect RWX heap (suspicious)
+        assert!(findings.len() > 0, "Should detect suspicious RWX heap region");
+        assert!(findings.iter().any(|f| matches!(
+            f.finding_type,
+            crate::sandbox::memory_capture::SuspiciousFindingType::ExecutableHeap
+        )));
+    }
+
+    #[tokio::test]
+    #[ignore] // Only run when Docker is available and image is built
+    async fn test_memory_capture_config() {
+        use crate::sandbox::memory_capture::{MemoryCaptureConfig, DumpTrigger};
+
+        let orchestrator = SandboxOrchestrator::new().await.unwrap();
+
+        // Configure memory capture
+        let mem_config = MemoryCaptureConfig {
+            enabled: true,
+            triggers: vec![
+                DumpTrigger::ProcessStart,
+                DumpTrigger::ProcessExit,
+            ],
+            max_dump_size: 100 * 1024 * 1024, // 100MB
+            dump_interval_ms: 5000,
+            auto_dump_on_suspicious: true,
+            suspicious_syscalls: vec!["ptrace".to_string(), "mprotect".to_string()],
+            extract_strings: true,
+            min_string_length: 4,
+        };
+
+        let config = SandboxConfig {
+            os_type: OsType::Linux,
+            timeout: Duration::from_secs(10),
+            capture_network: false,
+            memory_limit: 256 * 1024 * 1024,
+            anti_evasion_tier: None,
+            memory_capture_config: Some(mem_config),
+            capture_video: false,
+            video_config: None,
+        };
+
+        // Test with /bin/echo (harmless)
+        let result = orchestrator
+            .execute_sample(PathBuf::from("/bin/echo"), config)
+            .await;
+
+        assert!(result.is_ok(), "Sandbox execution with memory capture failed: {:?}", result.err());
+        // Note: Actual memory dumps depend on the monitor_agent.sh script supporting the memory capture hooks
     }
 }

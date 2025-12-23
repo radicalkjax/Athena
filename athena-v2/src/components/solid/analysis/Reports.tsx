@@ -26,7 +26,7 @@ interface GeneratedReport {
   fileName: string;
   template: string;
   createdAt: Date;
-  format: 'pdf' | 'html' | 'json';
+  format: 'pdf' | 'html' | 'json' | 'stix';
   status: 'generating' | 'completed' | 'error';
   url?: string;
   content?: any;
@@ -68,6 +68,19 @@ const defaultTemplates: ReportTemplate[] = [
       { id: 'containment', title: 'Containment Steps', enabled: true, order: 4 },
       { id: 'remediation', title: 'Remediation', enabled: true, order: 5 },
     ]
+  },
+  {
+    id: 'campaign',
+    name: 'Campaign Report',
+    description: 'Comprehensive threat campaign analysis',
+    sections: [
+      { id: 'campaign-overview', title: 'Campaign Overview', enabled: true, order: 1 },
+      { id: 'threat-actor', title: 'Threat Actor Profile', enabled: true, order: 2 },
+      { id: 'campaign-iocs', title: 'Campaign IOCs', enabled: true, order: 3 },
+      { id: 'campaign-ttps', title: 'Tactics & Techniques', enabled: true, order: 4 },
+      { id: 'timeline', title: 'Attack Timeline', enabled: true, order: 5 },
+      { id: 'related-samples', title: 'Related Samples', enabled: true, order: 6 },
+    ]
   }
 ];
 
@@ -77,9 +90,19 @@ const Reports: Component = () => {
   const [selectedFile, setSelectedFile] = createSignal<string | null>(null);
   const [generatedReports, setGeneratedReports] = createStore<GeneratedReport[]>([]);
   const [isGenerating, setIsGenerating] = createSignal(false);
-  const [exportFormat, setExportFormat] = createSignal<'pdf' | 'html' | 'json'>('pdf');
+  const [exportFormat, setExportFormat] = createSignal<'pdf' | 'html' | 'json' | 'stix'>('pdf');
   const [customizingTemplate, setCustomizingTemplate] = createSignal(false);
   const [showBatchExport, setShowBatchExport] = createSignal(false);
+
+  // Campaign report specific state
+  const [campaignName, setCampaignName] = createSignal('');
+  const [selectedSamples, setSelectedSamples] = createSignal<string[]>([]);
+
+  // STIX export options
+  const [includeIndicators, setIncludeIndicators] = createSignal(true);
+  const [includeRelationships, setIncludeRelationships] = createSignal(true);
+  const [includeAttackPatterns, setIncludeAttackPatterns] = createSignal(true);
+  const [includeThreatActors, setIncludeThreatActors] = createSignal(false);
 
   onMount(() => {
     loadReports();
@@ -88,7 +111,33 @@ const Reports: Component = () => {
   const loadReports = () => {
     const saved = localStorage.getItem('athena-reports');
     if (saved) {
-      setGeneratedReports(JSON.parse(saved));
+      try {
+        const parsed = JSON.parse(saved);
+        // Validate that parsed data is an array of reports
+        if (!Array.isArray(parsed)) {
+          console.warn('Invalid reports format: expected array');
+          localStorage.removeItem('athena-reports');
+          return;
+        }
+        // Validate each report has required fields
+        const validReports = parsed.filter((r: unknown) => {
+          if (typeof r !== 'object' || r === null) return false;
+          const report = r as Record<string, unknown>;
+          return typeof report.id === 'string' &&
+                 typeof report.fileId === 'string' &&
+                 typeof report.fileName === 'string' &&
+                 typeof report.template === 'string' &&
+                 typeof report.format === 'string';
+        }).map((r: Record<string, unknown>) => ({
+          ...r,
+          // Parse createdAt back to Date if it's a string
+          createdAt: r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt as string)
+        }));
+        setGeneratedReports(validReports as GeneratedReport[]);
+      } catch (err) {
+        console.warn('Failed to parse saved reports:', err);
+        localStorage.removeItem('athena-reports');
+      }
     }
   };
 
@@ -100,8 +149,24 @@ const Reports: Component = () => {
     const template = selectedTemplate();
     const fileId = selectedFile();
     const file = analysisStore.state.files.find(f => f.id === fileId);
-    
-    if (!template || !file) return;
+
+    if (!template) return;
+
+    // Campaign reports have different requirements
+    if (template.id === 'campaign') {
+      if (!campaignName().trim()) {
+        alert('Please enter a campaign name');
+        return;
+      }
+      if (selectedSamples().length === 0) {
+        alert('Please select at least one sample for the campaign report');
+        return;
+      }
+      await generateCampaignReport();
+      return;
+    }
+
+    if (!file) return;
 
     setIsGenerating(true);
 
@@ -111,32 +176,96 @@ const Reports: Component = () => {
       fileName: file.name,
       template: template.name,
       createdAt: new Date(),
-      format: exportFormat(),
+      format: exportFormat() as 'pdf' | 'html' | 'json',
       status: 'generating'
     };
 
     setGeneratedReports([...generatedReports, report]);
 
     try {
-      const content = await compileReportContent(file, template);
-      
-      if (exportFormat() === 'json') {
-        // For JSON, just save the content
-        report.content = content;
+      // Handle STIX export
+      if (exportFormat() === 'stix') {
+        const stixData = await invokeCommand<string>('export_stix_format', {
+          analysisId: file.hash || file.id,
+          includeIndicators: includeIndicators(),
+          includeRelationships: includeRelationships(),
+        });
+
+        report.content = JSON.parse(stixData);
         report.status = 'completed';
       } else {
-        // For PDF/HTML, generate via backend
-        const result = await invokeCommand('generate_report', {
-          content,
-          format: exportFormat(),
-          fileName: `${file.name}_report_${Date.now()}`
-        });
-        
-        report.url = result.url;
-        report.status = 'completed';
+        const content = await compileReportContent(file, template);
+
+        if (exportFormat() === 'json') {
+          // For JSON, just save the content
+          report.content = content;
+          report.status = 'completed';
+        } else {
+          // For PDF/HTML, generate via backend
+          const result = await invokeCommand('generate_report', {
+            content,
+            format: exportFormat(),
+            fileName: `${file.name}_report_${Date.now()}`
+          });
+
+          report.url = result.url;
+          report.status = 'completed';
+        }
       }
     } catch (error) {
       console.error('Failed to generate report:', error);
+      report.status = 'error';
+    }
+
+    // Update report status
+    const index = generatedReports.findIndex(r => r.id === report.id);
+    if (index >= 0) {
+      setGeneratedReports(index, report);
+    }
+
+    saveReports();
+    setIsGenerating(false);
+  };
+
+  const generateCampaignReport = async () => {
+    setIsGenerating(true);
+
+    const report: GeneratedReport = {
+      id: crypto.randomUUID(),
+      fileId: 'campaign',
+      fileName: campaignName(),
+      template: 'Campaign Report',
+      createdAt: new Date(),
+      format: exportFormat() as 'pdf' | 'html' | 'json',
+      status: 'generating'
+    };
+
+    setGeneratedReports([...generatedReports, report]);
+
+    try {
+      // Get the format (map 'stix' to 'json' for campaign reports)
+      const format = exportFormat() === 'stix' ? 'json' : exportFormat();
+
+      const reportData = await invokeCommand<number[]>('generate_campaign_report', {
+        campaignName: campaignName(),
+        samples: selectedSamples(),
+        format,
+      });
+
+      // Convert byte array to string
+      const decoder = new TextDecoder();
+      const reportString = decoder.decode(new Uint8Array(reportData));
+
+      if (format === 'json') {
+        report.content = JSON.parse(reportString);
+      } else {
+        // For HTML/Markdown, store as string
+        report.content = reportString;
+      }
+
+      report.status = 'completed';
+    } catch (error) {
+      console.error('Failed to generate campaign report:', error);
       report.status = 'error';
     }
 
@@ -223,7 +352,7 @@ const Reports: Component = () => {
           title: 'MITRE ATT&CK Mapping',
           techniques: extractMitreTechniques(file),
           tactics: ['Initial Access', 'Execution', 'Persistence', 'Defense Evasion'],
-          heatmap: generateAttackHeatmap()
+          heatmap: generateAttackHeatmap(file)
         };
 
       case 'static-analysis':
@@ -246,7 +375,7 @@ const Reports: Component = () => {
             summary: data.summary,
             confidence: data.score / 100
           })),
-          aggregatedInsights: generateAggregatedInsights()
+          aggregatedInsights: generateAggregatedInsights(file)
         };
 
       case 'ioc-extraction':
@@ -309,62 +438,151 @@ const Reports: Component = () => {
     return techniques;
   };
 
-  const generateAttackHeatmap = () => {
-    // Generate heatmap data for MITRE ATT&CK matrix
-    return {
-      'initial-access': 0.3,
-      'execution': 0.8,
-      'persistence': 0.6,
-      'privilege-escalation': 0.4,
-      'defense-evasion': 0.7,
-      'credential-access': 0.2,
-      'discovery': 0.5,
-      'lateral-movement': 0.3,
-      'collection': 0.4,
-      'command-and-control': 0.6,
-      'exfiltration': 0.3,
-      'impact': 0.5
+  const generateAttackHeatmap = (file: any): Record<string, number> => {
+    // Generate heatmap data from actual analysis results
+    const result = file?.analysisResult;
+    const heatmap: Record<string, number> = {
+      'initial-access': 0,
+      'execution': 0,
+      'persistence': 0,
+      'privilege-escalation': 0,
+      'defense-evasion': 0,
+      'credential-access': 0,
+      'discovery': 0,
+      'lateral-movement': 0,
+      'collection': 0,
+      'command-and-control': 0,
+      'exfiltration': 0,
+      'impact': 0
     };
+
+    if (!result) return heatmap;
+
+    // Analyze imports for technique indicators
+    const suspiciousImports = result.imports?.filter((i: any) => i.suspicious) || [];
+    suspiciousImports.forEach((imp: any) => {
+      const name = (imp.name || '').toLowerCase();
+      if (name.includes('createremotethread') || name.includes('virtualalloc')) heatmap['execution'] = (heatmap['execution'] || 0) + 0.3;
+      if (name.includes('regsetvalue') || name.includes('createservice')) heatmap['persistence'] = (heatmap['persistence'] || 0) + 0.3;
+      if (name.includes('adjusttoken') || name.includes('impersonate')) heatmap['privilege-escalation'] = (heatmap['privilege-escalation'] || 0) + 0.3;
+      if (name.includes('crypt') || name.includes('encode')) heatmap['defense-evasion'] = (heatmap['defense-evasion'] || 0) + 0.3;
+      if (name.includes('lsass') || name.includes('credential')) heatmap['credential-access'] = (heatmap['credential-access'] || 0) + 0.3;
+      if (name.includes('socket') || name.includes('http')) heatmap['command-and-control'] = (heatmap['command-and-control'] || 0) + 0.3;
+    });
+
+    // Cap values at 1.0
+    Object.keys(heatmap).forEach(key => {
+      const value = heatmap[key];
+      heatmap[key] = Math.min(1.0, value !== undefined ? value : 0);
+    });
+
+    return heatmap;
   };
 
   const extractIOCs = (file: any, type: string) => {
     // Extract from various analysis results
     const iocs: string[] = [];
-    
+    const result = file?.analysisResult;
+
+    if (!result) return iocs;
+
+    // Extract from strings
+    if (result.strings && type === 'network') {
+      result.strings.forEach((s: string) => {
+        if (s.match(/https?:\/\//) || s.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/)) {
+          iocs.push(s);
+        }
+      });
+    }
+
     // From AI analysis
     Object.values(file.results?.aiAnalysis || {}).forEach((ai: any) => {
       if (ai.details && ai.details.includes(type)) {
         // Parse IOCs from details
       }
     });
-    
-    return iocs;
+
+    return iocs.slice(0, 20); // Limit to 20 items
   };
 
-  const generateAggregatedInsights = () => {
+  const generateAggregatedInsights = (file?: any) => {
+    if (!file?.analysisResult) {
+      return {
+        consensusThreatLevel: 'Unknown',
+        confidenceScore: 0,
+        primaryThreatType: 'Not analyzed',
+        suggestedActions: ['Upload and analyze a file to get insights']
+      };
+    }
+
+    const result = file.analysisResult;
+    const score = file.results?.malwareScore || calculateOverallRisk(file);
+
+    // Determine threat level based on actual analysis
+    let threatLevel = 'Low';
+    if (score > 70) threatLevel = 'Critical';
+    else if (score > 50) threatLevel = 'High';
+    else if (score > 30) threatLevel = 'Medium';
+
+    // Determine primary threat type from signatures and analysis
+    let threatType = 'Unknown';
+    if (result.signatures?.length > 0) {
+      threatType = result.signatures[0].name || 'Unknown';
+    } else if (result.format_info?.is_packed) {
+      threatType = 'Packed/Obfuscated Binary';
+    } else if (result.entropy > 7) {
+      threatType = 'Potentially Encrypted/Packed';
+    }
+
+    // Generate actions based on findings
+    const actions = [];
+    if (score > 50) actions.push('Consider isolation and quarantine');
+    if (result.imports?.some((i: any) => i.suspicious)) actions.push('Review suspicious API calls');
+    if (result.anomalies?.length > 0) actions.push('Investigate structural anomalies');
+    if (actions.length === 0) actions.push('Continue standard monitoring');
+
     return {
-      consensusThreatLevel: 'High',
-      confidenceScore: 0.87,
-      primaryThreatType: 'Banking Trojan',
-      suggestedActions: [
-        'Immediate isolation required',
-        'Full forensic analysis recommended',
-        'Check for lateral movement indicators'
-      ]
+      consensusThreatLevel: threatLevel,
+      confidenceScore: Math.min(1, score / 100),
+      primaryThreatType: threatType,
+      suggestedActions: actions
     };
   };
 
   const downloadReport = (report: GeneratedReport) => {
-    if (report.format === 'json' && report.content) {
-      const blob = new Blob([JSON.stringify(report.content, null, 2)], { type: 'application/json' });
+    if ((report.format === 'json' || report.format === 'stix') && report.content) {
+      const contentType = report.format === 'stix' ? 'application/stix+json' : 'application/json';
+      const extension = report.format === 'stix' ? 'stix.json' : 'json';
+      const blob = new Blob([JSON.stringify(report.content, null, 2)], { type: contentType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${report.fileName}_report_${report.id}.json`;
+      a.download = `${report.fileName}_report_${report.id}.${extension}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (typeof report.content === 'string') {
+      // For HTML/Markdown campaign reports
+      const contentType = report.format === 'html' ? 'text/html' : 'text/markdown';
+      const extension = report.format === 'html' ? 'html' : 'md';
+      const blob = new Blob([report.content], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${report.fileName}_report_${report.id}.${extension}`;
       a.click();
       URL.revokeObjectURL(url);
     } else if (report.url) {
-      window.open(report.url, '_blank');
+      // Add URL validation to prevent javascript: URLs and other dangerous schemes
+      try {
+        const url = new URL(report.url);
+        if (url.protocol === 'http:' || url.protocol === 'https:' || url.protocol === 'blob:') {
+          window.open(report.url, '_blank', 'noopener,noreferrer');
+        } else {
+          console.error('Invalid URL protocol:', url.protocol);
+        }
+      } catch (e) {
+        console.error('Invalid URL:', report.url, e);
+      }
     }
   };
 
@@ -397,19 +615,57 @@ const Reports: Component = () => {
 
       <div class="report-generator">
         <div class="generator-section">
-          <h3>1. Select File</h3>
-          <select 
-            value={selectedFile() || ''}
-            onChange={(e) => setSelectedFile(e.currentTarget.value)}
-            class="file-selector"
-          >
-            <option value="">Choose a file...</option>
-            <For each={analysisStore.state.files.filter(f => f.status === 'completed')}>
-              {(file) => (
-                <option value={file.id}>{file.name}</option>
-              )}
-            </For>
-          </select>
+          <h3>1. Select File{selectedTemplate()?.id === 'campaign' ? 's' : ''}</h3>
+          <Show when={selectedTemplate()?.id === 'campaign'}>
+            <div class="campaign-inputs">
+              <input
+                type="text"
+                placeholder="Campaign Name (e.g., APT28 Operation XYZ)"
+                value={campaignName()}
+                onInput={(e) => setCampaignName(e.currentTarget.value)}
+                class="campaign-name-input"
+              />
+              <div class="samples-selector">
+                <label>Select Related Samples:</label>
+                <For each={analysisStore.state.files.filter(f => f.status === 'completed')}>
+                  {(file) => (
+                    <label class="sample-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedSamples().includes(file.hash || file.id)}
+                        onChange={(e) => {
+                          const id = file.hash || file.id;
+                          if (e.currentTarget.checked) {
+                            setSelectedSamples([...selectedSamples(), id]);
+                          } else {
+                            setSelectedSamples(selectedSamples().filter(s => s !== id));
+                          }
+                        }}
+                      />
+                      <span>{file.name} ({file.hash?.substring(0, 8) || file.id.substring(0, 8)})</span>
+                    </label>
+                  )}
+                </For>
+                <Show when={analysisStore.state.files.filter(f => f.status === 'completed').length === 0}>
+                  <p class="no-files">No analyzed files available. Complete file analysis first.</p>
+                </Show>
+              </div>
+            </div>
+          </Show>
+          <Show when={selectedTemplate()?.id !== 'campaign'}>
+            <select
+              value={selectedFile() || ''}
+              onChange={(e) => setSelectedFile(e.currentTarget.value)}
+              class="file-selector"
+            >
+              <option value="">Choose a file...</option>
+              <For each={analysisStore.state.files.filter(f => f.status === 'completed')}>
+                {(file) => (
+                  <option value={file.id}>{file.name}</option>
+                )}
+              </For>
+            </select>
+          </Show>
         </div>
 
         <div class="generator-section">
@@ -473,17 +729,18 @@ const Reports: Component = () => {
           <h3>4. Export Format</h3>
           <div class="format-options">
             <label class="format-option">
-              <input 
+              <input
                 type="radio"
                 name="format"
                 value="pdf"
                 checked={exportFormat() === 'pdf'}
                 onChange={() => setExportFormat('pdf')}
+                disabled={selectedTemplate()?.id === 'campaign'}
               />
               <span>📑 PDF</span>
             </label>
             <label class="format-option">
-              <input 
+              <input
                 type="radio"
                 name="format"
                 value="html"
@@ -493,7 +750,7 @@ const Reports: Component = () => {
               <span>🌐 HTML</span>
             </label>
             <label class="format-option">
-              <input 
+              <input
                 type="radio"
                 name="format"
                 value="json"
@@ -502,12 +759,66 @@ const Reports: Component = () => {
               />
               <span>📊 JSON</span>
             </label>
+            <label class="format-option">
+              <input
+                type="radio"
+                name="format"
+                value="stix"
+                checked={exportFormat() === 'stix'}
+                onChange={() => setExportFormat('stix')}
+              />
+              <span>🔒 STIX 2.1</span>
+            </label>
           </div>
+
+          <Show when={exportFormat() === 'stix'}>
+            <div class="stix-options">
+              <h4>STIX Export Options</h4>
+              <label class="stix-checkbox">
+                <input
+                  type="checkbox"
+                  checked={includeIndicators()}
+                  onChange={(e) => setIncludeIndicators(e.currentTarget.checked)}
+                />
+                <span>Include Indicators</span>
+              </label>
+              <label class="stix-checkbox">
+                <input
+                  type="checkbox"
+                  checked={includeRelationships()}
+                  onChange={(e) => setIncludeRelationships(e.currentTarget.checked)}
+                />
+                <span>Include Relationships</span>
+              </label>
+              <label class="stix-checkbox">
+                <input
+                  type="checkbox"
+                  checked={includeAttackPatterns()}
+                  onChange={(e) => setIncludeAttackPatterns(e.currentTarget.checked)}
+                />
+                <span>Include Attack Patterns</span>
+              </label>
+              <label class="stix-checkbox">
+                <input
+                  type="checkbox"
+                  checked={includeThreatActors()}
+                  onChange={(e) => setIncludeThreatActors(e.currentTarget.checked)}
+                />
+                <span>Include Threat Actors</span>
+              </label>
+            </div>
+          </Show>
         </div>
 
-        <button 
+        <button
           onClick={generateReport}
-          disabled={!selectedFile() || !selectedTemplate() || isGenerating()}
+          disabled={
+            !selectedTemplate() ||
+            isGenerating() ||
+            (selectedTemplate()?.id === 'campaign'
+              ? (!campaignName().trim() || selectedSamples().length === 0)
+              : !selectedFile())
+          }
           class="generate-button"
         >
           {isGenerating() ? '⏳ Generating...' : '🚀 Generate Report'}

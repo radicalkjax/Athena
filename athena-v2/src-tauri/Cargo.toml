@@ -73,6 +73,7 @@ der-parser = "9.0"
 der = "0.7"
 sequoia-openpgp = "1.18"
 dirs = "5.0"
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 
 # Prometheus metrics with Pushgateway support (per DeepWiki for desktop apps)
 prometheus = { version = "0.13", features = ["push"] }
@@ -86,6 +87,16 @@ once_cell = "1.20"
 # Docker container support
 bollard = "0.16"
 tar = "0.4"
+
+# File type detection (magic bytes)
+infer = "0.16"
+
+[dev-dependencies]
+tempfile = "3.12"
+
+[lib]
+name = "athena_v2"
+path = "src/lib.rs"
 
 [features]
 default = ["custom-protocol"]

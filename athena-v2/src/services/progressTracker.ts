@@ -140,10 +140,10 @@ class ProgressTracker {
   startAnalysis(fileId: string, analysisType: string) {
     const key = `${fileId}-${analysisType}`;
     this.startTimes.set(key, Date.now());
-    
+
     this.emitProgress({
       fileId,
-      analysisType: analysisType as any,
+      analysisType: analysisType as ProgressUpdate['analysisType'],
       phase: 'initializing',
       progress: 0,
       message: `Starting ${analysisType} analysis...`,
@@ -152,16 +152,16 @@ class ProgressTracker {
   }
 
   updateProgress(
-    fileId: string, 
-    analysisType: string, 
-    progress: number, 
-    phase: string, 
+    fileId: string,
+    analysisType: string,
+    progress: number,
+    phase: string,
     message: string,
     details?: any
   ) {
     this.emitProgress({
       fileId,
-      analysisType: analysisType as any,
+      analysisType: analysisType as ProgressUpdate['analysisType'],
       phase,
       progress,
       message,
@@ -172,7 +172,7 @@ class ProgressTracker {
   completeAnalysis(fileId: string, analysisType: string, result: any) {
     const key = `${fileId}-${analysisType}`;
     const startTime = this.startTimes.get(key);
-    
+
     if (startTime) {
       const duration = Date.now() - startTime;
       // Update average estimate
@@ -182,7 +182,7 @@ class ProgressTracker {
 
     this.emitProgress({
       fileId,
-      analysisType: analysisType as any,
+      analysisType: analysisType as ProgressUpdate['analysisType'],
       phase: 'completed',
       progress: 100,
       message: `${analysisType} analysis completed`,

@@ -1,4 +1,4 @@
-use super::{AIProvider, AIProviderConfig, AnalysisRequest, AnalysisResponse, IOCs, ThreatLevel};
+use super::{AIProvider, AIProviderConfig, AnalysisRequest, AnalysisResponse, IOCs, ThreatLevel, ModelInfo, register_circuit_breaker};
 use crate::ai_providers::circuit_breaker::CircuitBreaker;
 use crate::ai_providers::retry::{RetryConfig, with_retry};
 use crate::metrics::{AI_REQUEST_DURATION, AI_REQUEST_COUNTER, AI_TOKEN_USAGE, AI_COST_ESTIMATE};
@@ -7,12 +7,13 @@ use chrono::Utc;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::sync::Arc;
 use std::time::Instant;
 
 pub struct OpenAIProvider {
     config: AIProviderConfig,
     client: Client,
-    circuit_breaker: CircuitBreaker,
+    circuit_breaker: Arc<CircuitBreaker>,
     retry_config: RetryConfig,
 }
 
@@ -47,6 +48,18 @@ struct Choice {
     message: Message,
 }
 
+#[derive(Debug, Deserialize)]
+struct ModelsResponse {
+    data: Vec<ModelData>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ModelData {
+    id: String,
+    #[serde(default)]
+    owned_by: String,
+}
+
 impl OpenAIProvider {
     pub fn new(config: AIProviderConfig) -> Result<Self, Box<dyn Error + Send + Sync>> {
         // Configure reqwest Client per DeepWiki best practices for production
@@ -59,7 +72,13 @@ impl OpenAIProvider {
             .build()
             .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
 
-        let circuit_breaker = CircuitBreaker::new_with_name("openai".to_string(), 3, 2, 60);
+        let circuit_breaker = Arc::new(CircuitBreaker::new_with_name("openai".to_string(), 3, 2, 60));
+
+        // Register with global registry (spawn to avoid blocking)
+        let breaker_clone = circuit_breaker.clone();
+        tokio::spawn(async move {
+            register_circuit_breaker("openai", breaker_clone).await;
+        });
 
         // Configure retry with 5 attempts, 1s initial delay, exponential backoff
         let retry_config = RetryConfig {
@@ -328,7 +347,7 @@ impl AIProvider for OpenAIProvider {
                 format_type: "json_object".to_string(),
             },
         };
-        
+
         let base_url = self.config.base_url.as_deref().unwrap_or("https://api.openai.com");
         let response = self.client
             .post(format!("{}/v1/chat/completions", base_url))
@@ -340,6 +359,80 @@ impl AIProvider for OpenAIProvider {
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
 
         Ok(response.status().is_success())
+    }
+
+    async fn list_models(&self) -> Result<Vec<ModelInfo>, Box<dyn Error + Send + Sync>> {
+        let base_url = self.config.base_url.as_deref().unwrap_or("https://api.openai.com");
+        let response = self.client
+            .get(format!("{}/v1/models", base_url))
+            .header("Authorization", format!("Bearer {}", self.config.api_key))
+            .send()
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
+
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to fetch OpenAI models: {}", error_text)
+            )));
+        }
+
+        let models_response: ModelsResponse = response.json().await
+            .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
+
+        // Filter to only chat models (gpt-*) and sort by name
+        let mut models: Vec<ModelInfo> = models_response.data
+            .into_iter()
+            .filter(|m| m.id.starts_with("gpt-") && !m.id.contains("instruct"))
+            .map(|m| ModelInfo {
+                id: m.id.clone(),
+                name: format_model_name(&m.id),
+                description: Some(format!("OpenAI model owned by {}", m.owned_by)),
+                context_window: get_openai_context_window(&m.id),
+                max_output_tokens: get_openai_max_output(&m.id),
+            })
+            .collect();
+
+        models.sort_by(|a, b| b.id.cmp(&a.id)); // Sort descending so newest models first
+        Ok(models)
+    }
+}
+
+fn format_model_name(id: &str) -> String {
+    // Convert model ID to human-readable name
+    id.replace("-", " ")
+        .split_whitespace()
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().chain(chars).collect(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn get_openai_context_window(id: &str) -> Option<u32> {
+    match id {
+        id if id.contains("gpt-4o") => Some(128000),
+        id if id.contains("gpt-4-turbo") => Some(128000),
+        id if id.contains("gpt-4-32k") => Some(32768),
+        id if id.contains("gpt-4") => Some(8192),
+        id if id.contains("gpt-3.5-turbo-16k") => Some(16384),
+        id if id.contains("gpt-3.5") => Some(16385),
+        _ => None,
+    }
+}
+
+fn get_openai_max_output(id: &str) -> Option<u32> {
+    match id {
+        id if id.contains("gpt-4o") => Some(16384),
+        id if id.contains("gpt-4-turbo") => Some(4096),
+        id if id.contains("gpt-4") => Some(8192),
+        id if id.contains("gpt-3.5") => Some(4096),
+        _ => Some(4096),
     }
 }
 

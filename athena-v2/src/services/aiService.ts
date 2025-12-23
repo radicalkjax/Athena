@@ -18,16 +18,17 @@ class AIService {
       const promises = requests.map(async (request) => {
         try {
           const result = await this.processSingleRequest(request);
-          const callback = this.requestQueue.get((request as any).analysisId);
+          // Use fileHash as the queue key since AIAnalysisRequest doesn't have analysisId
+          const callback = this.requestQueue.get(request.fileHash);
           if (callback) {
             callback(result);
-            this.requestQueue.delete((request as any).analysisId);
+            this.requestQueue.delete(request.fileHash);
           }
         } catch (error) {
           console.error('Batch processing error:', error);
         }
       });
-      
+
       await Promise.all(promises);
     }, { batchSize: 5, delay: 200 });
   }

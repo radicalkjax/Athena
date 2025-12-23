@@ -1,7 +1,8 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tauri::State;
+use tauri::{State, AppHandle};
+use tauri::path::SafePathBuf;
 use std::sync::Mutex;
 use crate::commands::wasm_runtime::WasmRuntime;
 use crate::commands::file_analysis::FileAnalysisResult;
@@ -47,17 +48,25 @@ const SANDBOX_MODULE: &str = "sandbox";
 
 #[tauri::command]
 pub async fn analyze_file_with_wasm(
+    _app: AppHandle,
     runtime: State<'_, Arc<Mutex<Option<WasmRuntime>>>>,
-    file_path: String,
+    file_path: SafePathBuf,
 ) -> Result<EnhancedFileAnalysis, String> {
     let _start = std::time::Instant::now();
 
+    // SafePathBuf automatically validates that path doesn't contain ".." to prevent traversal
+    let validated_path = file_path.as_ref();
+
+    // Create a new SafePathBuf for the analyze_file call
+    let safe_path_for_analysis = SafePathBuf::new(validated_path.to_path_buf())
+        .map_err(|e| format!("Invalid path: {}", e))?;
+
     // First, perform basic file analysis
-    let basic_analysis = crate::commands::file_analysis::analyze_file(file_path.clone())
+    let basic_analysis = crate::commands::file_analysis::analyze_file(safe_path_for_analysis, None)
         .await?;
 
     // Read file data for WASM analysis
-    let file_data = std::fs::read(&file_path)
+    let file_data = std::fs::read(validated_path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
     let mut wasm_analyses = Vec::new();
@@ -452,10 +461,18 @@ pub async fn load_wasm_security_modules(
             module_dir, wasm_name);
 
         // Use Component::from_file approach (recommended by Wasmtime docs)
+        let safe_path = match SafePathBuf::new(wasm_path.clone().into()) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Invalid WASM path {}: {}", wasm_path, e);
+                continue;
+            }
+        };
+
         match crate::commands::wasm_runtime::load_wasm_module_from_file(
             runtime.clone(),
             name.to_string(),
-            wasm_path.clone(),
+            safe_path,
         ).await {
             Ok(_) => {
                 loaded_modules.push(name.to_string());

@@ -1,37 +1,126 @@
-import { createSignal, Show, For } from 'solid-js';
+import { createSignal, createEffect, Show, For } from 'solid-js';
 import DisassemblyViewer from '../visualization/DisassemblyViewer';
 import ControlFlowGraph from '../visualization/ControlFlowGraph';
 import AnalysisPanel from '../shared/AnalysisPanel';
 import { StatCard } from '../shared/StatCard';
+import { invokeCommand } from '../../../utils/tauriCompat';
+import { analysisStore } from '../../../stores/analysisStore';
+import type { DisassemblyResult } from '../../../types/disassembly';
 import './Disassembly.css';
 
 interface DisassemblyProps {
   filePath?: string;
 }
 
+interface FunctionInfo {
+  name: string;
+  address: string;
+  size: string;
+  type: string;
+}
+
 export default function Disassembly(props: DisassemblyProps) {
   const [activeView, setActiveView] = createSignal<'disassembly' | 'cfg'>('disassembly');
   const [selectedFunction, setSelectedFunction] = createSignal<number | null>(null);
+  const [isLoading, setIsLoading] = createSignal(false);
+  const [offset, setOffset] = createSignal<string>('0');
+  const [length, setLength] = createSignal<string>('100');
+  const [showAdvanced, setShowAdvanced] = createSignal(false);
 
   const handleAddressClick = (address: number) => {
     setSelectedFunction(address);
     setActiveView('cfg');
   };
 
-  // Mock assembly statistics
-  const [asmStats] = createSignal({
-    functions: '147',
-    instructions: '12.4K',
-    imports: '89',
-    strings: '234'
+  // Assembly statistics - populated from backend
+  const [asmStats, setAsmStats] = createSignal({
+    functions: '0',
+    instructions: '0',
+    imports: '0',
+    strings: '0'
   });
 
-  const [functions] = createSignal([
-    { name: 'main', address: '0x401000', size: '0x324', type: 'entry' },
-    { name: 'decrypt_payload', address: '0x401324', size: '0x156', type: 'suspicious' },
-    { name: 'check_debugger', address: '0x40147A', size: '0x87', type: 'anti-debug' },
-    { name: 'network_connect', address: '0x401501', size: '0x1A2', type: 'network' }
-  ]);
+  const [functions, setFunctions] = createSignal<FunctionInfo[]>([]);
+
+  // Load disassembly with offset/length support
+  const loadDisassembly = async () => {
+    const filePath = props.filePath || analysisStore.currentFile?.path;
+    if (!filePath) return;
+
+    setIsLoading(true);
+    try {
+      // Parse offset and length from inputs
+      const offsetValue = parseInt(offset(), 10);
+      const lengthValue = parseInt(length(), 10);
+
+      // Build command parameters
+      const params: {
+        filePath: string;
+        offset?: number;
+        length?: number;
+      } = { filePath };
+
+      // Only include offset/length if they're valid and non-default
+      if (!isNaN(offsetValue) && offsetValue > 0) {
+        params.offset = offsetValue;
+      }
+      if (!isNaN(lengthValue) && lengthValue > 0 && lengthValue !== 100) {
+        params.length = lengthValue;
+      }
+
+      // Get disassembly statistics from backend
+      const result = await invokeCommand<DisassemblyResult>('disassemble_file', params);
+
+      if (result) {
+        // Update stats from real data
+        setAsmStats({
+          functions: result.functions?.length?.toString() || '0',
+          instructions: formatNumber(result.instruction_count || result.instructions?.length || 0),
+          imports: result.imports?.length?.toString() || '0',
+          strings: result.strings?.length?.toString() || '0'
+        });
+
+        // Update function list from real data
+        if (result.functions && Array.isArray(result.functions)) {
+          setFunctions(result.functions.map((fn) => ({
+            name: fn.name || 'unknown',
+            address: `0x${(fn.address || 0).toString(16)}`,
+            size: `0x${(fn.size || 0).toString(16)}`,
+            type: classifyFunction(fn.name || '')
+          })));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load disassembly:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch disassembly data when file changes
+  createEffect(() => {
+    const filePath = props.filePath || analysisStore.currentFile?.path;
+    if (filePath) {
+      loadDisassembly();
+    }
+  });
+
+  // Format large numbers for display
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  // Classify function type based on name
+  const classifyFunction = (name: string): string => {
+    const lower = name.toLowerCase();
+    if (lower.includes('main') || lower.includes('start') || lower.includes('entry')) return 'entry';
+    if (lower.includes('decrypt') || lower.includes('encode') || lower.includes('crypt')) return 'suspicious';
+    if (lower.includes('debug') || lower.includes('check') || lower.includes('anti')) return 'anti-debug';
+    if (lower.includes('socket') || lower.includes('connect') || lower.includes('http') || lower.includes('send')) return 'network';
+    return 'normal';
+  };
 
   return (
     <div class="content-panel">
@@ -68,10 +157,60 @@ export default function Disassembly(props: DisassemblyProps) {
       </Show>
 
       <Show when={props.filePath}>
+        {/* Advanced Controls */}
+        <div style="margin-bottom: 20px;">
+          <button
+            class="btn btn-secondary"
+            onClick={() => setShowAdvanced(!showAdvanced())}
+            style="margin-bottom: 10px;"
+          >
+            {showAdvanced() ? '▼' : '▶'} Advanced Options
+          </button>
+
+          <Show when={showAdvanced()}>
+            <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
+              <div>
+                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">
+                  Offset (bytes)
+                </label>
+                <input
+                  type="number"
+                  value={offset()}
+                  onInput={(e) => setOffset(e.currentTarget.value)}
+                  placeholder="0"
+                  min="0"
+                  style="width: 100%; padding: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);"
+                />
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">
+                  Max Instructions
+                </label>
+                <input
+                  type="number"
+                  value={length()}
+                  onInput={(e) => setLength(e.currentTarget.value)}
+                  placeholder="100"
+                  min="1"
+                  max="10000"
+                  style="width: 100%; padding: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);"
+                />
+              </div>
+              <button
+                class="btn btn-primary"
+                onClick={loadDisassembly}
+                disabled={isLoading()}
+              >
+                {isLoading() ? 'Loading...' : '🔄 Reload'}
+              </button>
+            </div>
+          </Show>
+        </div>
+
         <div class="analysis-grid">
           <div class="analysis-main">
-            <AnalysisPanel 
-              title={activeView() === 'disassembly' ? 'Assembly View' : 'Control Flow Graph'} 
+            <AnalysisPanel
+              title={activeView() === 'disassembly' ? 'Assembly View' : 'Control Flow Graph'}
               icon={activeView() === 'disassembly' ? '📋' : '🌐'}
               actions={
                 <div class="view-toggle">

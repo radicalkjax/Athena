@@ -1,12 +1,17 @@
 # API Integration Architecture
 
+**Last Updated:** December 2025
+**Architecture:** Tauri 2.0 Desktop Application
+**Backend:** Rust with embedded axum API server
+**Status:** In Development
+
 ## Table of Contents
 
 - [Overview](#overview)
-- [API Gateway Architecture](#api-gateway-architecture)
+- [Embedded API Server](#embedded-api-server)
 - [AI Provider Integration](#ai-provider-integration)
 - [Resilience Patterns](#resilience-patterns)
-- [Streaming Analysis](#streaming-analysis)
+- [WASM Integration](#wasm-integration)
 - [Caching Strategy](#caching-strategy)
 - [Security & Authentication](#security--authentication)
 - [Performance Optimization](#performance-optimization)
@@ -16,117 +21,21 @@
 
 ## Overview
 
-Athena's API integration architecture provides a robust, scalable foundation for interacting with multiple AI providers and internal services. The system implements enterprise-grade patterns including circuit breakers, bulkheads, distributed caching, and comprehensive monitoring.
+Athena's API integration architecture is built as a **Tauri 2.0 desktop application** with an **embedded axum HTTP server** running on port 3000. The Rust backend provides robust, type-safe integration with AI providers and WASM modules, implementing enterprise-grade patterns including circuit breakers, retry logic with exponential backoff, and comprehensive monitoring.
 
 ### Key Features
 
-- **Unified API Gateway** with CORS handling and rate limiting
-- **Multi-Provider Support** with automatic failover
-- **Streaming Analysis** via WebSocket and SSE
-- **Resilience Patterns** for fault tolerance
-- **Distributed Caching** with Redis
-- **Real-time Monitoring** with APM integration
+- **Embedded axum API Server** (port 3000) - no external dependencies
+- **Tauri 2.0 Integration** - desktop-first architecture
+- **Multi-Provider AI Support** (Claude, OpenAI, DeepSeek, Gemini, Mistral, Groq)
+- **Circuit Breaker Pattern** - implemented in Rust with automatic recovery
+- **Retry with Exponential Backoff** - transient error handling
+- **Wasmtime 29.0 Component Model** - WASM module execution
+- **Real-time Status Checks** - actual provider availability
+- **Prometheus Metrics** - performance monitoring
+- **Type-Safe Commands** - all Tauri commands return `Result<T, String>`
 
-### High-Level API Flow
-
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-graph TB
-    subgraph "Client Applications"
-        Web[Web App]
-        Mobile[Mobile App]
-        CLI[CLI Tools]
-        SDK[SDK/Library]
-    end
-    
-    subgraph "API Gateway Layer"
-        LB[Load Balancer]
-        Gateway[API Gateway]
-        
-        subgraph "Gateway Components"
-            Auth[Authentication]
-            RateLimit[Rate Limiter]
-            Validator[Request Validator]
-            Router[Request Router]
-            Cache[Cache Manager]
-        end
-    end
-    
-    subgraph "Service Mesh"
-        Discovery[Service Discovery]
-        Config[Config Service]
-        Health[Health Monitor]
-    end
-    
-    subgraph "Business Services"
-        Analysis[Analysis Service]
-        AI[AI Manager]
-        Container[Container Service]
-        Batch[Batch Processor]
-        Stream[Stream Manager]
-    end
-    
-    subgraph "Infrastructure Services"
-        Queue[Message Queue]
-        Redis[(Redis Cache)]
-        DB[(PostgreSQL)]
-        Files[File Storage]
-    end
-    
-    Web --> LB
-    Mobile --> LB
-    CLI --> LB
-    SDK --> LB
-    
-    LB --> Gateway
-    Gateway --> Auth
-    Auth --> RateLimit
-    RateLimit --> Validator
-    Validator --> Router
-    Router --> Cache
-    
-    Router --> Discovery
-    Discovery --> Analysis
-    Discovery --> AI
-    Discovery --> Container
-    Discovery --> Batch
-    Discovery --> Stream
-    
-    Analysis --> Queue
-    Analysis --> Redis
-    Analysis --> DB
-    AI --> Redis
-    Container --> DB
-    Batch --> Queue
-    Stream --> Redis
-    
-    Config --> Gateway
-    Health --> Gateway
-```
-
-## API Gateway Architecture
-
-The API Gateway serves as the single entry point for all client requests, providing consistent handling of cross-cutting concerns:
+### Architecture: Tauri 2.0 Desktop Application
 
 ```mermaid
 %%{init: {
@@ -151,167 +60,362 @@ The API Gateway serves as the single entry point for all client requests, provid
   }
 }}%%
 graph TB
-    subgraph "Client Layer"
-        Web[Web App]
-        Mobile[Mobile App]
-        CLI[CLI Tools]
-    end
-    
-    subgraph "API Gateway"
-        Gateway[Gateway Router]
-        MW[Middleware Stack]
-        
-        subgraph "Middleware"
-            CORS[CORS Handler]
-            Auth[Authentication]
-            RateLimit[Rate Limiter]
-            Logger[Request Logger]
-            Error[Error Handler]
+    subgraph "Tauri Desktop Application"
+        subgraph "Frontend Layer - SolidJS"
+            UI[SolidJS UI Components]
+            TauriAPI[Tauri API Client]
+        end
+
+        subgraph "Embedded Rust Backend"
+            subgraph "Axum HTTP Server :3000"
+                Health[/health - Health Check]
+                WASM[/api/v1/wasm/* - WASM Endpoints]
+                Metrics[/metrics - Prometheus]
+            end
+
+            subgraph "Tauri Commands"
+                FileOps[File Operations]
+                Analysis[Analysis Commands]
+                AICommands[AI Provider Commands]
+                WASMRuntime[WASM Runtime]
+                Sandbox[Sandbox Commands]
+            end
+
+            subgraph "AI Provider Layer"
+                CircuitBreaker[Circuit Breaker]
+                RetryLogic[Retry with Backoff]
+                Queue[Queue Manager]
+
+                Claude[Claude API]
+                OpenAI[OpenAI API]
+                DeepSeek[DeepSeek API]
+                Gemini[Gemini API]
+                Mistral[Mistral API]
+                Groq[Groq API]
+            end
+
+            subgraph "WASM Layer - Wasmtime 29.0"
+                WasmEngine[Wasmtime Engine]
+                Components[Component Model Modules]
+            end
         end
     end
-    
-    subgraph "Service Layer"
-        Analysis[Analysis Service]
-        AI[AI Manager]
-        Container[Container Service]
-        Batch[Batch Processor]
-    end
-    
-    Web --> Gateway
-    Mobile --> Gateway
-    CLI --> Gateway
-    
-    Gateway --> MW
-    MW --> CORS
-    MW --> Auth
-    MW --> RateLimit
-    MW --> Logger
-    MW --> Error
-    
-    MW --> Analysis
-    MW --> AI
-    MW --> Container
-    MW --> Batch
+
+    UI --> TauriAPI
+    TauriAPI --> FileOps
+    TauriAPI --> Analysis
+    TauriAPI --> AICommands
+    TauriAPI --> WASMRuntime
+
+    Health -.->|HTTP localhost:3000| UI
+    WASM -.->|HTTP localhost:3000| UI
+    Metrics -.->|HTTP localhost:3000| UI
+
+    AICommands --> CircuitBreaker
+    CircuitBreaker --> RetryLogic
+    RetryLogic --> Queue
+    Queue --> Claude
+    Queue --> OpenAI
+    Queue --> DeepSeek
+    Queue --> Gemini
+    Queue --> Mistral
+    Queue --> Groq
+
+    WASMRuntime --> WasmEngine
+    WasmEngine --> Components
 ```
 
-### Gateway Implementation
+## Embedded API Server
 
-```typescript
-// API Gateway with comprehensive middleware
-class APIGateway {
-  private static instance: APIGateway;
-  private errorHandler: APIErrorHandler;
-  private cache: AnalysisCacheManager;
-  
-  async handleRequest(endpoint: string, options: RequestOptions) {
-    const span = apmManager.startSpan('api.request', {
-      endpoint,
-      method: options.method
-    });
-    
-    try {
-      // Check cache for GET requests
-      if (options.method === 'GET') {
-        const cached = await this.cache.get(this.getCacheKey(endpoint, options));
-        if (cached) {
-          span.tags.cache_hit = true;
-          return cached;
-        }
-      }
-      
-      // Apply rate limiting
-      await this.rateLimiter.check(endpoint);
-      
-      // Execute request with circuit breaker
-      const result = await circuitBreakerFactory.execute(
-        `api.${endpoint}`,
-        async () => this.executeRequest(endpoint, options)
-      );
-      
-      // Cache successful responses
-      if (options.method === 'GET') {
-        await this.cache.set(this.getCacheKey(endpoint, options), result);
-      }
-      
-      return result;
-    } catch (error) {
-      return this.errorHandler.handle(error);
-    } finally {
-      apmManager.finishSpan(span);
-    }
-  }
+The axum HTTP server runs embedded within the Tauri application, starting automatically on port 3000. It provides REST endpoints for WASM functionality while the main communication channel uses Tauri IPC commands.
+
+### Server Implementation (Rust)
+
+The embedded server is implemented in `src-tauri/src/api_server.rs`:
+
+```rust
+use axum::{Router, routing::{get, post}};
+use tower_http::cors::{CorsLayer, AllowOrigin};
+use tokio::net::TcpListener;
+
+/// Start the API server on the specified port
+pub async fn start_api_server(
+    app_handle: AppHandle,
+    port: u16,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let state = ApiState {
+        app_handle: app_handle.clone(),
+    };
+    let app = create_router(state);
+
+    let addr = format!("127.0.0.1:{}", port);
+    let listener = TcpListener::bind(&addr).await?;
+
+    println!("🚀 API server listening on http://{}", addr);
+    println!("   Endpoints:");
+    println!("   - GET  /health");
+    println!("   - GET  /api/v1/wasm/capabilities");
+    println!("   - POST /api/v1/wasm/init");
+    println!("   - POST /api/v1/wasm/load");
+    println!("   - POST /api/v1/wasm/analyze");
+    println!("   - POST /api/v1/wasm/execute");
+    println!("   - GET  /api/v1/wasm/metrics");
+    println!("   - GET  /metrics (Prometheus)");
+
+    axum::serve(listener, app).await?;
+    Ok(())
+}
+
+fn create_router(state: ApiState) -> Router {
+    // SECURITY: CORS restricted to localhost only
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::list([
+            "http://127.0.0.1:1420".parse::<HeaderValue>().unwrap(),
+            "http://localhost:1420".parse::<HeaderValue>().unwrap(),
+            "tauri://localhost".parse::<HeaderValue>().unwrap(),
+        ]))
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
+
+    Router::new()
+        .route("/health", get(health_check))
+        .route("/api/v1/wasm/capabilities", get(get_capabilities))
+        .route("/api/v1/wasm/analyze", post(analyze_file))
+        .route("/api/v1/wasm/execute", post(execute_function))
+        .route("/api/v1/wasm/metrics", get(get_metrics))
+        .route("/api/v1/wasm/init", post(initialize_runtime))
+        .route("/api/v1/wasm/load", post(load_modules))
+        .route("/metrics", get(metrics::metrics_handler))
+        .layer(cors)
+        .with_state(state)
 }
 ```
 
+### Available Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check status |
+| `/api/v1/wasm/capabilities` | GET | List WASM modules and runtime info |
+| `/api/v1/wasm/init` | POST | Initialize WASM runtime |
+| `/api/v1/wasm/load` | POST | Load security modules |
+| `/api/v1/wasm/analyze` | POST | Analyze file with WASM |
+| `/api/v1/wasm/execute` | POST | Execute WASM function |
+| `/api/v1/wasm/metrics` | GET | WASM module metrics |
+| `/metrics` | GET | Prometheus metrics |
+
+### Security Features
+
+- **Localhost Only**: CORS restricted to `127.0.0.1`, `localhost`, and `tauri://localhost`
+- **No External Access**: Server binds to `127.0.0.1` (not `0.0.0.0`)
+- **Type-Safe**: All handlers use Rust type system for validation
+- **Error Handling**: Consistent error responses with proper HTTP status codes
+
 ## AI Provider Integration
 
-The AI integration layer implements a sophisticated manager pattern with automatic failover, load balancing, and provider health monitoring:
+The AI integration layer is implemented in **Rust** with sophisticated resilience patterns including circuit breakers, retry with exponential backoff, queue management, and real-time health monitoring. The system supports 6 AI providers with automatic failover:
 
-### Provider Failover Sequence
+**Supported Providers:**
+- Claude (Anthropic) - Primary
+- OpenAI - Primary
+- DeepSeek - Secondary
+- Gemini (Google) - Secondary
+- Mistral - Secondary
+- Groq - Secondary
 
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#6d105a',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#ffffff',
-    'lineColor': '#333333',
-    'secondaryColor': '#e8f4d4',
-    'secondaryTextColor': '#333333',
-    'secondaryBorderColor': '#333333',
-    'tertiaryColor': '#f9d0c4',
-    'tertiaryTextColor': '#333333',
-    'tertiaryBorderColor': '#333333',
-    'background': '#ffffff',
-    'mainBkg': '#6d105a',
-    'secondBkg': '#e8f4d4',
-    'tertiaryBkg': '#f9d0c4',
-    'textColor': '#333333',
-    'fontFamily': 'Arial, sans-serif'
-  }
-}}%%
-sequenceDiagram
-    participant Client
-    participant AIManager
-    participant CircuitBreaker
-    participant Bulkhead
-    participant Provider1[Claude]
-    participant Provider2[OpenAI]
-    participant Provider3[DeepSeek]
-    participant Cache
-    participant APM
-    
-    Client->>AIManager: analyze(code)
-    AIManager->>AIManager: Sort providers by priority
-    
-    loop For each provider
-        AIManager->>CircuitBreaker: check(provider)
-        
-        alt Circuit Closed
-            CircuitBreaker->>Bulkhead: acquire()
-            Bulkhead->>Provider1: analyze()
-            
-            alt Success
-                Provider1-->>Bulkhead: result
-                Bulkhead-->>CircuitBreaker: release()
-                CircuitBreaker->>Cache: store()
-                CircuitBreaker->>APM: metrics
-                CircuitBreaker-->>AIManager: result
-                AIManager-->>Client: result
-            else Failure
-                Provider1-->>Bulkhead: error
-                Bulkhead-->>CircuitBreaker: release()
-                CircuitBreaker->>CircuitBreaker: record failure
-                CircuitBreaker-->>AIManager: try next
-            end
-        else Circuit Open
-            CircuitBreaker-->>AIManager: skip provider
-        end
-    end
+**Implementation:** `/Users/kali/Athena/Athena/athena-v2/src-tauri/src/ai_providers/`
+
+### Circuit Breaker Pattern (Rust Implementation)
+
+The circuit breaker is implemented in `src-tauri/src/ai_providers/circuit_breaker.rs`:
+
+```rust
+#[derive(Debug, Clone)]
+pub enum CircuitState {
+    Closed,              // Normal operation
+    Open(Instant),       // Provider failing, reject requests
+    HalfOpen,           // Testing if provider recovered
+}
+
+pub struct CircuitBreaker {
+    provider_name: String,
+    failure_threshold: u32,      // Open after N failures
+    success_threshold: u32,      // Close after N successes in half-open
+    timeout: Duration,           // Time before half-open retry
+
+    failure_count: AtomicU32,
+    success_count: AtomicU32,
+    state: Arc<RwLock<CircuitState>>,
+}
+
+impl CircuitBreaker {
+    pub async fn call<F, T>(&self, f: F) -> Result<T, Box<dyn Error>>
+    where
+        F: Future<Output = Result<T, Box<dyn Error>>>,
+    {
+        match self.get_state().await {
+            CircuitState::Open(opened_at) => {
+                if opened_at.elapsed() >= self.timeout {
+                    self.transition_to_half_open().await;
+                } else {
+                    // Record rate limit hit
+                    AI_RATE_LIMIT_HITS
+                        .with_label_values(&[&self.provider_name])
+                        .inc();
+                    return Err("Circuit breaker is open".into());
+                }
+            }
+            _ => {}
+        }
+
+        let result = f.await;
+
+        match result {
+            Ok(value) => {
+                self.on_success().await;
+                Ok(value)
+            }
+            Err(error) => {
+                self.on_failure().await;
+                Err(error)
+            }
+        }
+    }
+}
 ```
 
-### AI Provider Architecture
+**States:**
+- **Closed**: Normal operation, requests pass through
+- **Open**: Circuit tripped after failure threshold, requests rejected immediately
+- **HalfOpen**: Testing recovery, limited requests allowed
+
+**Configuration:**
+- Failure threshold: 3 consecutive failures → Open
+- Success threshold: 2 successes in HalfOpen → Closed
+- Timeout: 30 seconds before HalfOpen retry
+
+### Retry with Exponential Backoff (Rust Implementation)
+
+Implemented in `src-tauri/src/ai_providers/retry.rs`:
+
+```rust
+#[derive(Debug, Clone)]
+pub struct RetryConfig {
+    pub max_retries: u32,           // Default: 3
+    pub initial_delay_ms: u64,      // Default: 1000ms
+    pub max_delay_ms: u64,          // Default: 30000ms
+    pub backoff_multiplier: f64,    // Default: 2.0
+}
+
+/// Determines if an error is transient and should be retried
+pub fn is_retryable_error(error: &Box<dyn Error>) -> bool {
+    let error_msg = error.to_string().to_lowercase();
+
+    // Retry on network errors
+    error_msg.contains("timeout") ||
+    error_msg.contains("connection") ||
+    error_msg.contains("dns") ||
+
+    // Retry on rate limiting (429)
+    error_msg.contains("rate limit") ||
+    error_msg.contains("429") ||
+
+    // Retry on server errors (500-504)
+    error_msg.contains("500") ||
+    error_msg.contains("502") ||
+    error_msg.contains("503") ||
+    error_msg.contains("504") ||
+
+    // Don't retry auth errors (401, 403)
+    // Don't retry validation errors (400, 422)
+}
+
+/// Execute operation with retry and exponential backoff
+pub async fn with_retry<F, Fut, T>(
+    config: RetryConfig,
+    mut operation: F,
+    provider_name: &str,
+) -> Result<T, Box<dyn Error>>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = Result<T, Box<dyn Error>>>,
+{
+    let mut attempt = 0;
+    let mut delay = config.initial_delay_ms;
+
+    loop {
+        match operation().await {
+            Ok(result) => return Ok(result),
+            Err(error) => {
+                attempt += 1;
+
+                if !is_retryable_error(&error) || attempt >= config.max_retries {
+                    return Err(error);
+                }
+
+                // Add jitter (±25%) to prevent thundering herd
+                let jitter = (rand::random::<f64>() - 0.5) * 0.5;
+                let actual_delay = (delay as f64 * (1.0 + jitter)) as u64;
+
+                println!("[{}] Retry {}/{} after {}ms: {}",
+                    provider_name, attempt, config.max_retries,
+                    actual_delay, error);
+
+                sleep(Duration::from_millis(actual_delay)).await;
+
+                // Exponential backoff with cap
+                delay = (delay as f64 * config.backoff_multiplier) as u64;
+                delay = delay.min(config.max_delay_ms);
+            }
+        }
+    }
+}
+```
+
+**Features:**
+- **Exponential Backoff**: Delay doubles each retry (1s → 2s → 4s)
+- **Jitter**: Random ±25% to prevent thundering herd
+- **Max Delay Cap**: 30 seconds maximum
+- **Intelligent Error Detection**: Only retries transient errors
+- **Configurable**: Per-provider retry settings
+
+### Real AI Provider Status Checks
+
+All providers implement real health checks (no simulation):
+
+```rust
+// In src-tauri/src/commands/ai_analysis.rs
+#[tauri::command]
+pub async fn get_ai_provider_status() -> Result<HashMap<String, ProviderStatus>, String> {
+    let providers = vec!["claude", "openai", "deepseek", "gemini", "mistral", "groq"];
+    let mut statuses = HashMap::new();
+
+    for provider in providers {
+        let status = check_provider_health(provider).await;
+        statuses.insert(provider.to_string(), status);
+    }
+
+    Ok(statuses)
+}
+
+async fn check_provider_health(provider: &str) -> ProviderStatus {
+    // Real API health check with timeout
+    let result = timeout(
+        Duration::from_secs(5),
+        make_test_request(provider)
+    ).await;
+
+    match result {
+        Ok(Ok(_)) => ProviderStatus::Available,
+        Ok(Err(e)) if e.contains("auth") => ProviderStatus::NoApiKey,
+        Ok(Err(e)) if e.contains("rate") => ProviderStatus::RateLimited,
+        Err(_) => ProviderStatus::Timeout,
+        _ => ProviderStatus::Error,
+    }
+}
+```
+
+### AI Provider Architecture (Updated December 2025)
 
 ```mermaid
 %%{init: {

@@ -1,20 +1,51 @@
-# Quick Start: Docker Container Support
+# Quick Start: Docker Container Support - Athena v2
+
+**Last Updated**: December 22, 2025
+**Status**: Available
+**Implementation**: Tauri 2.0 + bollard 0.16
 
 ## TL;DR
 
-Athena now supports Docker containers for isolated malware analysis. Here's how to use it in 5 minutes.
+Athena v2 supports Docker containers for isolated malware analysis using native Tauri commands. Here's how to use it in 5 minutes.
 
 ## Prerequisites
 
-1. **Install Docker**
-   - macOS: `brew install --cask docker` or download from docker.com
-   - Linux: `sudo apt-get install docker.io`
-   - Windows: Download Docker Desktop
+### 1. Install Docker
 
-2. **Start Docker**
-   ```bash
-   docker info  # Verify it's running
-   ```
+**macOS**:
+```bash
+# Using Homebrew
+brew install --cask docker
+
+# Or download from docker.com
+```
+
+**Linux (Ubuntu/Debian)**:
+```bash
+sudo apt-get update
+sudo apt-get install docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+# Logout and login for group changes to take effect
+```
+
+**Windows**:
+- Download Docker Desktop from docker.com
+- Install and restart Windows
+- Ensure WSL2 is enabled
+
+### 2. Verify Docker
+
+```bash
+# Check Docker is running
+docker info
+
+# Pull test image (optional but recommended)
+docker pull alpine:latest
+```
 
 ## Quick Start (Backend)
 
@@ -255,13 +286,20 @@ for (const file of files) {
 3. **Set appropriate timeouts** (don't wait too long)
 4. **Clean up containers** when done (prevents resource leaks)
 
+## File Locations
+
+All container-related code is in the athena-v2 directory:
+
+- **Backend Implementation**: `/Users/kali/Athena/Athena/athena-v2/src-tauri/src/commands/container.rs`
+- **Frontend Service**: `/Users/kali/Athena/Athena/athena-v2/src/services/containerService.ts`
+- **UI Component**: `/Users/kali/Athena/Athena/athena-v2/src/components/solid/analysis/ContainerSandbox.tsx`
+- **Types**: `/Users/kali/Athena/Athena/athena-v2/src/types/container.ts`
+
 ## Next Steps
 
-- Read full guide: `/DOCKER_CONTAINER_GUIDE.md`
-- View implementation: `/athena-v2/CONTAINER_IMPLEMENTATION.md`
-- Backend code: `/athena-v2/src-tauri/src/commands/container.rs`
-- Frontend service: `/athena-v2/src/services/containerService.ts`
-- UI component: `/athena-v2/src/components/solid/analysis/ContainerSandbox.tsx`
+- Read full implementation guide: `/Users/kali/Athena/Athena/docs/implementation/CONTAINER_IMPLEMENTATION.md`
+- Review Tauri development guide: `/Users/kali/Athena/Athena/docs/implementation/TAURI_DEVELOPMENT_GUIDE.md`
+- See security guidelines: `/Users/kali/Athena/Athena/.claude/rules/security.md`
 
 ## Complete Example
 
@@ -325,4 +363,4 @@ analyzeSuspiciousFile('/samples/suspicious.exe')
 
 ---
 
-**Ready to use!** All code compiles and is production-ready.
+**Ready to use!** All code compiles and is functional.

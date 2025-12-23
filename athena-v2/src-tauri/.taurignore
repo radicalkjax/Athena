@@ -1,0 +1,6 @@
+*.db
+*.db-shm
+*.db-wal
+jobs.db
+jobs.db-shm
+jobs.db-wal

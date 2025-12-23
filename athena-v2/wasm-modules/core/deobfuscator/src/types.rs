@@ -37,6 +37,9 @@ pub enum ObfuscationTechnique {
     XorEncryption { key: Vec<u8> },
     Rc4Encryption,
     SimpleSubstitution,
+    AesEncryption,
+    DesEncryption,
+    CryptoConstants { algorithm: String },
     
     // JavaScript specific
     JsEvalChain,
@@ -82,6 +85,14 @@ pub struct ExtractedString {
     pub confidence: f32,
     pub context: String,
     pub offset: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CryptoDetection {
+    pub algorithm: String,
+    pub offset: usize,
+    pub confidence: f32,
+    pub context: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

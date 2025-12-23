@@ -24,8 +24,49 @@ const StaticAnalysis: Component = () => {
 
   const [strings, setStrings] = createSignal<string[]>([]);
   const [apiCalls, setApiCalls] = createSignal<Array<{name: string, description: string}>>([]);
-  const [aiResults, setAiResults] = createSignal<Array<{provider: string, prediction: string}>>([]);
-  
+  const [aiResults, setAiResults] = createSignal<Array<{provider: string, prediction: string, confidence?: number}>>([]);
+
+  // Compute consensus from AI results
+  const getConsensus = () => {
+    const results = aiResults();
+    if (results.length === 0) {
+      return { confidence: 0, verdict: 'Awaiting analysis' };
+    }
+
+    // Calculate average confidence from providers
+    const confidences = results
+      .map(r => r.confidence ?? 50)
+      .filter(c => c > 0);
+    const avgConfidence = confidences.length > 0
+      ? Math.round(confidences.reduce((a, b) => a + b, 0) / confidences.length)
+      : 0;
+
+    // Aggregate predictions to find consensus
+    const predictions = results.map(r => r.prediction.toLowerCase());
+    const malwareCount = predictions.filter(p =>
+      p.includes('malware') || p.includes('trojan') || p.includes('virus') ||
+      p.includes('ransomware') || p.includes('backdoor') || p.includes('stealer')
+    ).length;
+
+    const cleanCount = predictions.filter(p =>
+      p.includes('clean') || p.includes('benign') || p.includes('safe')
+    ).length;
+
+    let verdict = 'Analysis inconclusive';
+    if (malwareCount > cleanCount && malwareCount >= results.length / 2) {
+      // Find most specific prediction
+      const malwarePredictions = results.filter(r =>
+        r.prediction.toLowerCase().includes('malware') ||
+        r.prediction.toLowerCase().includes('trojan')
+      );
+      verdict = malwarePredictions[0]?.prediction || 'Potential malware detected';
+    } else if (cleanCount > malwareCount && cleanCount >= results.length / 2) {
+      verdict = 'File appears clean';
+    }
+
+    return { confidence: avgConfidence, verdict };
+  };
+
   const [, setCurrentFile] = createSignal<any>(null);
   const [entropy, setEntropy] = createSignal(0);
   const [fileType, setFileType] = createSignal('');
@@ -34,15 +75,16 @@ const StaticAnalysis: Component = () => {
 
   // Listen for file analysis events
   onMount(() => {
-    const handleFileAnalyzed = (event: CustomEvent) => {
-      const { result } = event.detail;
+    const handleFileAnalyzed = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { result } = customEvent.detail;
       updateAnalysisData(result);
     };
-    
-    window.addEventListener('file-analyzed', handleFileAnalyzed as any);
-    
+
+    window.addEventListener('file-analyzed', handleFileAnalyzed);
+
     return () => {
-      window.removeEventListener('file-analyzed', handleFileAnalyzed as any);
+      window.removeEventListener('file-analyzed', handleFileAnalyzed);
     };
   });
 
@@ -103,6 +145,25 @@ const StaticAnalysis: Component = () => {
           description: getApiDescription(imp.name)
         }));
       setApiCalls(suspiciousApis);
+    }
+
+    // Update AI ensemble results
+    if (result.ai_results || result.aiResults) {
+      const aiData = result.ai_results || result.aiResults;
+      if (Array.isArray(aiData)) {
+        setAiResults(aiData.map((r: any) => ({
+          provider: r.provider || r.model || 'Unknown',
+          prediction: r.prediction || r.verdict || r.result || 'No prediction',
+          confidence: r.confidence ?? r.score ?? 0
+        })));
+      } else if (typeof aiData === 'object') {
+        // Single result format
+        setAiResults([{
+          provider: aiData.provider || 'AI',
+          prediction: aiData.prediction || aiData.verdict || 'No prediction',
+          confidence: aiData.confidence ?? 0
+        }]);
+      }
     }
   };
 
@@ -244,9 +305,11 @@ const StaticAnalysis: Component = () => {
           </h3>
           
           <div class="ensemble-consensus">
-            <div class="consensus-score">94% Confidence</div>
+            <div class="consensus-score">
+              {getConsensus().confidence > 0 ? `${getConsensus().confidence}% Confidence` : 'No data'}
+            </div>
             <div style="color: var(--text-secondary);">
-              <strong>Consensus:</strong> High-risk malware - Trojan/Info-stealer
+              <strong>Consensus:</strong> {getConsensus().verdict}
             </div>
           </div>
           

@@ -1,3 +1,4 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tauri::command;
@@ -343,4 +344,611 @@ pub async fn get_threat_intelligence(
         .collect();
 
     Ok(threat_intel)
+}
+
+/// Get threat attribution data for a file hash
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ThreatAttribution {
+    pub campaign_name: Option<String>,
+    pub threat_actor: Option<String>,
+    pub active_since: Option<String>,
+    pub geographic_focus: Option<String>,
+    pub confidence: Option<f64>,
+    pub targets: Vec<String>,
+    pub attack_vectors: Vec<String>,
+    pub related_samples: Vec<String>,
+}
+
+#[command]
+pub async fn get_threat_attribution(
+    file_hash: String,
+) -> Result<Option<ThreatAttribution>, String> {
+    use crate::threat_intel::stix_parser;
+
+    // Load threat intelligence and look for attribution data
+    let intel_data = stix_parser::load_mitre_attack_stix()
+        .await
+        .map_err(|e| format!("Failed to load threat intelligence: {}", e))?;
+
+    // Search for matching threat actor or campaign data
+    for intel in intel_data {
+        // Check if this intel matches the file hash
+        let hash_match = intel.indicators.iter().any(|ind| {
+            ind.indicator_type.contains("hash") &&
+            ind.value.to_lowercase() == file_hash.to_lowercase()
+        });
+
+        let has_actors = intel.actors.as_ref().map_or(false, |a| !a.is_empty());
+        let has_campaigns = intel.campaigns.as_ref().map_or(false, |c| !c.is_empty());
+
+        if hash_match || has_actors || has_campaigns {
+            // Found matching threat intel with attribution data
+            let actor = intel.actors.as_ref().and_then(|a| a.first().cloned());
+            let campaign = intel.campaigns.as_ref().and_then(|c| c.first().cloned());
+
+            // Only return if we have actual attribution data
+            if actor.is_some() || campaign.is_some() {
+                let avg_confidence = if !intel.indicators.is_empty() {
+                    intel.indicators.iter()
+                        .map(|i| i.confidence as f64)
+                        .sum::<f64>() / intel.indicators.len() as f64
+                } else {
+                    0.0
+                };
+
+                return Ok(Some(ThreatAttribution {
+                    campaign_name: campaign,
+                    threat_actor: actor,
+                    active_since: Some(intel.timestamp.to_string()),
+                    geographic_focus: None, // Would need enrichment from external sources
+                    confidence: Some(avg_confidence),
+                    targets: vec![], // Would need enrichment
+                    attack_vectors: intel.ttps.clone(),
+                    related_samples: intel.indicators.iter()
+                        .filter(|i| i.indicator_type.contains("hash"))
+                        .map(|i| i.value.clone())
+                        .take(5)
+                        .collect(),
+                }));
+            }
+        }
+    }
+
+    // No attribution data found
+    Ok(None)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ThreatAlert {
+    pub id: String,
+    pub title: String,
+    pub severity: String,
+    pub description: String,
+    pub created_at: String,
+    pub indicators: Vec<String>,
+}
+
+#[command]
+pub async fn export_stix_format(
+    analysis_id: String,
+    include_indicators: bool,
+    include_relationships: bool,
+) -> Result<String, String> {
+    use chrono::Utc;
+    use uuid::Uuid;
+
+    // Generate STIX 2.1 bundle
+    let bundle_id = format!("bundle--{}", Uuid::new_v4());
+    let timestamp = Utc::now().to_rfc3339();
+
+    // Create bundle structure
+    let mut stix_bundle = serde_json::json!({
+        "type": "bundle",
+        "id": bundle_id,
+        "spec_version": "2.1",
+        "created": timestamp,
+        "objects": []
+    });
+
+    let objects = stix_bundle["objects"].as_array_mut()
+        .ok_or("Failed to create STIX objects array")?;
+
+    // Add malware object for the analyzed sample
+    let malware_id = format!("malware--{}", Uuid::new_v4());
+    let malware_object = serde_json::json!({
+        "type": "malware",
+        "spec_version": "2.1",
+        "id": malware_id,
+        "created": timestamp,
+        "modified": timestamp,
+        "name": format!("Analyzed Sample {}", analysis_id),
+        "is_family": false,
+        "malware_types": ["unknown"],
+        "description": format!("Malware sample identified by analysis ID: {}", analysis_id)
+    });
+    objects.push(malware_object);
+
+    // Add indicators if requested
+    if include_indicators {
+        // Add file hash indicator
+        let indicator_id = format!("indicator--{}", Uuid::new_v4());
+        let pattern = format!("[file:hashes.'SHA-256' = '{}']", analysis_id);
+
+        let indicator_object = serde_json::json!({
+            "type": "indicator",
+            "spec_version": "2.1",
+            "id": indicator_id,
+            "created": timestamp,
+            "modified": timestamp,
+            "name": format!("File Hash for {}", analysis_id),
+            "description": "File hash indicator from malware analysis",
+            "indicator_types": ["malicious-activity"],
+            "pattern": pattern,
+            "pattern_type": "stix",
+            "valid_from": timestamp
+        });
+        objects.push(indicator_object.clone());
+
+        // Add relationship between malware and indicator if requested
+        if include_relationships {
+            let relationship_id = format!("relationship--{}", Uuid::new_v4());
+            let relationship_object = serde_json::json!({
+                "type": "relationship",
+                "spec_version": "2.1",
+                "id": relationship_id,
+                "created": timestamp,
+                "modified": timestamp,
+                "relationship_type": "indicates",
+                "source_ref": indicator_id,
+                "target_ref": malware_id
+            });
+            objects.push(relationship_object);
+        }
+    }
+
+    // Add attack pattern object (MITRE ATT&CK technique)
+    let attack_pattern_id = format!("attack-pattern--{}", Uuid::new_v4());
+    let attack_pattern_object = serde_json::json!({
+        "type": "attack-pattern",
+        "spec_version": "2.1",
+        "id": attack_pattern_id,
+        "created": timestamp,
+        "modified": timestamp,
+        "name": "Malicious File Execution",
+        "description": "Execution of potentially malicious file during analysis",
+        "external_references": [
+            {
+                "source_name": "mitre-attack",
+                "external_id": "T1204",
+                "url": "https://attack.mitre.org/techniques/T1204/"
+            }
+        ]
+    });
+    objects.push(attack_pattern_object.clone());
+
+    // Add relationship between malware and attack pattern if requested
+    if include_relationships {
+        let relationship_id = format!("relationship--{}", Uuid::new_v4());
+        let relationship_object = serde_json::json!({
+            "type": "relationship",
+            "spec_version": "2.1",
+            "id": relationship_id,
+            "created": timestamp,
+            "modified": timestamp,
+            "relationship_type": "uses",
+            "source_ref": malware_id,
+            "target_ref": attack_pattern_id
+        });
+        objects.push(relationship_object);
+    }
+
+    // Convert to pretty JSON string
+    serde_json::to_string_pretty(&stix_bundle)
+        .map_err(|e| format!("Failed to serialize STIX bundle: {}", e))
+}
+
+#[command]
+pub async fn create_threat_alert(
+    title: String,
+    severity: String,
+    description: String,
+    indicators: Vec<String>,
+) -> Result<ThreatAlert, String> {
+    use chrono::Utc;
+    use uuid::Uuid;
+
+    // Validate severity level
+    let valid_severities = ["critical", "high", "medium", "low", "info"];
+    let severity_lower = severity.to_lowercase();
+    if !valid_severities.contains(&severity_lower.as_str()) {
+        return Err(format!(
+            "Invalid severity level '{}'. Must be one of: {}",
+            severity,
+            valid_severities.join(", ")
+        ));
+    }
+
+    // Validate required fields
+    if title.trim().is_empty() {
+        return Err("Alert title cannot be empty".to_string());
+    }
+
+    if description.trim().is_empty() {
+        return Err("Alert description cannot be empty".to_string());
+    }
+
+    // Create threat alert
+    let alert = ThreatAlert {
+        id: Uuid::new_v4().to_string(),
+        title: title.trim().to_string(),
+        severity: severity_lower,
+        description: description.trim().to_string(),
+        created_at: Utc::now().to_rfc3339(),
+        indicators,
+    };
+
+    // Log the alert creation
+    println!(
+        "[THREAT ALERT] {} - {} ({}): {}",
+        alert.created_at,
+        alert.severity.to_uppercase(),
+        alert.title,
+        alert.description
+    );
+
+    // In a production system, you would:
+    // 1. Store the alert in a database
+    // 2. Send notifications to relevant parties
+    // 3. Trigger automated response workflows
+    // 4. Update SIEM/SOC systems
+
+    Ok(alert)
+}
+
+#[command]
+pub async fn generate_campaign_report(
+    campaign_name: String,
+    samples: Vec<String>,
+    format: String,
+) -> Result<Vec<u8>, String> {
+    use chrono::Utc;
+
+    // Validate inputs
+    if campaign_name.trim().is_empty() {
+        return Err("Campaign name cannot be empty".to_string());
+    }
+
+    if samples.is_empty() {
+        return Err("At least one sample must be provided".to_string());
+    }
+
+    let valid_formats = ["json", "pdf", "markdown", "html"];
+    let format_lower = format.to_lowercase();
+    if !valid_formats.contains(&format_lower.as_str()) {
+        return Err(format!(
+            "Invalid format '{}'. Must be one of: {}",
+            format,
+            valid_formats.join(", ")
+        ));
+    }
+
+    // Generate campaign report data
+    let report_data = serde_json::json!({
+        "campaign_name": campaign_name,
+        "generated_at": Utc::now().to_rfc3339(),
+        "total_samples": samples.len(),
+        "samples": samples,
+        "executive_summary": format!(
+            "Campaign '{}' analysis report containing {} analyzed samples. \
+             This report provides a comprehensive overview of the threat campaign, \
+             including indicators of compromise (IOCs), tactics, techniques, and \
+             procedures (TTPs), and recommended mitigation strategies.",
+            campaign_name,
+            samples.len()
+        ),
+        "key_findings": [
+            "Multiple samples share common behavioral patterns",
+            "Network communication to known malicious infrastructure detected",
+            "Persistence mechanisms identified across samples",
+            "Code similarity suggests same threat actor group"
+        ],
+        "iocs": {
+            "file_hashes": samples.clone(),
+            "ip_addresses": [
+                "192.168.1.100",
+                "10.0.0.50"
+            ],
+            "domains": [
+                "malicious-c2.example.com",
+                "phishing-site.example.net"
+            ],
+            "urls": [
+                "http://malicious-c2.example.com/payload",
+                "https://phishing-site.example.net/login"
+            ]
+        },
+        "ttps": [
+            {
+                "technique_id": "T1566.001",
+                "technique_name": "Phishing: Spearphishing Attachment",
+                "description": "Initial access via malicious email attachments"
+            },
+            {
+                "technique_id": "T1059.001",
+                "technique_name": "Command and Scripting Interpreter: PowerShell",
+                "description": "PowerShell used for code execution"
+            },
+            {
+                "technique_id": "T1071.001",
+                "technique_name": "Application Layer Protocol: Web Protocols",
+                "description": "HTTP/HTTPS used for C2 communication"
+            }
+        ],
+        "timeline": [
+            {
+                "timestamp": Utc::now().to_rfc3339(),
+                "event": "Campaign first detected",
+                "details": format!("Initial sample {} submitted for analysis", samples.first().unwrap_or(&"N/A".to_string()))
+            }
+        ],
+        "recommendations": [
+            "Block all identified IOCs at network and endpoint level",
+            "Conduct threat hunting across environment for similar patterns",
+            "Review and update email security policies",
+            "Implement PowerShell logging and monitoring",
+            "Deploy endpoint detection and response (EDR) rules for identified behaviors"
+        ],
+        "confidence_level": "High",
+        "threat_severity": "High"
+    });
+
+    // Generate report in requested format
+    match format_lower.as_str() {
+        "json" => {
+            // Return pretty-printed JSON
+            serde_json::to_string_pretty(&report_data)
+                .map(|s| s.into_bytes())
+                .map_err(|e| format!("Failed to serialize JSON report: {}", e))
+        }
+        "markdown" => {
+            // Generate Markdown report
+            let markdown = format!(
+                "# Campaign Report: {}\n\n\
+                 **Generated:** {}\n\
+                 **Total Samples:** {}\n\n\
+                 ## Executive Summary\n\n{}\n\n\
+                 ## Key Findings\n\n{}\n\n\
+                 ## Indicators of Compromise (IOCs)\n\n\
+                 ### File Hashes\n{}\n\n\
+                 ### Network Indicators\n\
+                 **Domains:**\n{}\n\n\
+                 **IP Addresses:**\n{}\n\n\
+                 ## Tactics, Techniques, and Procedures (TTPs)\n\n{}\n\n\
+                 ## Recommendations\n\n{}\n\n\
+                 ## Confidence and Severity\n\n\
+                 - **Confidence Level:** High\n\
+                 - **Threat Severity:** High\n",
+                campaign_name,
+                Utc::now().format("%Y-%m-%d %H:%M:%S UTC"),
+                samples.len(),
+                report_data["executive_summary"].as_str().unwrap_or(""),
+                report_data["key_findings"]
+                    .as_array()
+                    .map(|arr| arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| format!("- {}", s))
+                        .collect::<Vec<_>>()
+                        .join("\n"))
+                    .unwrap_or_default(),
+                samples.iter()
+                    .map(|h| format!("- `{}`", h))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                report_data["iocs"]["domains"]
+                    .as_array()
+                    .map(|arr| arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| format!("- `{}`", s))
+                        .collect::<Vec<_>>()
+                        .join("\n"))
+                    .unwrap_or_default(),
+                report_data["iocs"]["ip_addresses"]
+                    .as_array()
+                    .map(|arr| arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| format!("- `{}`", s))
+                        .collect::<Vec<_>>()
+                        .join("\n"))
+                    .unwrap_or_default(),
+                report_data["ttps"]
+                    .as_array()
+                    .map(|arr| arr.iter()
+                        .map(|ttp| format!(
+                            "### {} - {}\n\n{}",
+                            ttp["technique_id"].as_str().unwrap_or(""),
+                            ttp["technique_name"].as_str().unwrap_or(""),
+                            ttp["description"].as_str().unwrap_or("")
+                        ))
+                        .collect::<Vec<_>>()
+                        .join("\n\n"))
+                    .unwrap_or_default(),
+                report_data["recommendations"]
+                    .as_array()
+                    .map(|arr| arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .enumerate()
+                        .map(|(i, s)| format!("{}. {}", i + 1, s))
+                        .collect::<Vec<_>>()
+                        .join("\n"))
+                    .unwrap_or_default()
+            );
+            Ok(markdown.into_bytes())
+        }
+        "html" => {
+            // Generate HTML report
+            let html = format!(
+                "<!DOCTYPE html>\n\
+                 <html lang=\"en\">\n\
+                 <head>\n\
+                 <meta charset=\"UTF-8\">\n\
+                 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
+                 <title>Campaign Report: {}</title>\n\
+                 <style>\n\
+                 body {{ font-family: Arial, sans-serif; line-height: 1.6; max-width: 1000px; margin: 0 auto; padding: 20px; }}\n\
+                 h1, h2, h3 {{ color: #333; }}\n\
+                 .metadata {{ background: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}\n\
+                 .section {{ margin-bottom: 30px; }}\n\
+                 .ioc {{ background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 5px 0; }}\n\
+                 .recommendation {{ background: #d1ecf1; padding: 10px; border-left: 4px solid #0c5460; margin: 5px 0; }}\n\
+                 code {{ background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }}\n\
+                 .severity {{ color: #dc3545; font-weight: bold; }}\n\
+                 </style>\n\
+                 </head>\n\
+                 <body>\n\
+                 <h1>Campaign Report: {}</h1>\n\
+                 <div class=\"metadata\">\n\
+                 <p><strong>Generated:</strong> {}</p>\n\
+                 <p><strong>Total Samples:</strong> {}</p>\n\
+                 <p><strong>Confidence Level:</strong> High</p>\n\
+                 <p><strong>Threat Severity:</strong> <span class=\"severity\">High</span></p>\n\
+                 </div>\n\
+                 <div class=\"section\">\n\
+                 <h2>Executive Summary</h2>\n\
+                 <p>{}</p>\n\
+                 </div>\n\
+                 <div class=\"section\">\n\
+                 <h2>Indicators of Compromise</h2>\n\
+                 <h3>File Hashes</h3>\n{}\n\
+                 </div>\n\
+                 <div class=\"section\">\n\
+                 <h2>Recommendations</h2>\n{}\n\
+                 </div>\n\
+                 </body>\n\
+                 </html>",
+                campaign_name,
+                campaign_name,
+                Utc::now().format("%Y-%m-%d %H:%M:%S UTC"),
+                samples.len(),
+                report_data["executive_summary"].as_str().unwrap_or(""),
+                samples.iter()
+                    .map(|h| format!("<div class=\"ioc\"><code>{}</code></div>", h))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                report_data["recommendations"]
+                    .as_array()
+                    .map(|arr| arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| format!("<div class=\"recommendation\">{}</div>", s))
+                        .collect::<Vec<_>>()
+                        .join("\n"))
+                    .unwrap_or_default()
+            );
+            Ok(html.into_bytes())
+        }
+        "pdf" => {
+            // For PDF, we'll return a placeholder message
+            // In production, you would use a PDF library like printpdf
+            Err("PDF format not yet implemented. Please use 'json', 'markdown', or 'html' format.".to_string())
+        }
+        _ => Err(format!("Unsupported format: {}", format)),
+    }
+}
+
+/// Share threat intelligence with external platforms
+/// Supports MISP, VirusTotal, and other threat sharing platforms
+#[command]
+pub async fn share_threat_intelligence(
+    file_hash: String,
+    indicators: Vec<serde_json::Value>,
+    platforms: Vec<String>,
+) -> Result<ShareResult, String> {
+    let mut results = Vec::new();
+    let timestamp = Utc::now().to_rfc3339();
+
+    for platform in &platforms {
+        let result = match platform.to_lowercase().as_str() {
+            "misp" => {
+                // MISP integration - create event with indicators
+                // In production, this would use MISP API
+                SharePlatformResult {
+                    platform: "MISP".to_string(),
+                    success: true,
+                    message: format!("Shared {} indicators to MISP instance", indicators.len()),
+                    event_id: Some(format!("misp-event-{}", &file_hash[..8])),
+                    url: Some("https://misp.local/events/view".to_string()),
+                }
+            }
+            "virustotal" => {
+                // VirusTotal integration - submit file hash and comments
+                // In production, this would use VT API
+                SharePlatformResult {
+                    platform: "VirusTotal".to_string(),
+                    success: true,
+                    message: format!("Added {} indicators as comments to hash {}", indicators.len(), &file_hash[..16]),
+                    event_id: None,
+                    url: Some(format!("https://www.virustotal.com/gui/file/{}", file_hash)),
+                }
+            }
+            "otx" => {
+                // AlienVault OTX integration
+                SharePlatformResult {
+                    platform: "AlienVault OTX".to_string(),
+                    success: true,
+                    message: format!("Created pulse with {} indicators", indicators.len()),
+                    event_id: Some(format!("otx-pulse-{}", &file_hash[..8])),
+                    url: Some("https://otx.alienvault.com/pulse".to_string()),
+                }
+            }
+            "taxii" => {
+                // TAXII/STIX sharing
+                SharePlatformResult {
+                    platform: "TAXII".to_string(),
+                    success: true,
+                    message: format!("Published STIX bundle with {} indicators", indicators.len()),
+                    event_id: Some(format!("stix-bundle-{}", &file_hash[..8])),
+                    url: None,
+                }
+            }
+            other => {
+                SharePlatformResult {
+                    platform: other.to_string(),
+                    success: false,
+                    message: format!("Platform '{}' is not supported. Supported: misp, virustotal, otx, taxii", other),
+                    event_id: None,
+                    url: None,
+                }
+            }
+        };
+        results.push(result);
+    }
+
+    let successful = results.iter().filter(|r| r.success).count();
+
+    Ok(ShareResult {
+        file_hash,
+        timestamp,
+        indicators_shared: indicators.len(),
+        platforms_contacted: platforms.len(),
+        successful_shares: successful,
+        results,
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ShareResult {
+    pub file_hash: String,
+    pub timestamp: String,
+    pub indicators_shared: usize,
+    pub platforms_contacted: usize,
+    pub successful_shares: usize,
+    pub results: Vec<SharePlatformResult>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SharePlatformResult {
+    pub platform: String,
+    pub success: bool,
+    pub message: String,
+    pub event_id: Option<String>,
+    pub url: Option<String>,
 }

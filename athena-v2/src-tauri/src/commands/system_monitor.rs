@@ -149,7 +149,7 @@ pub async fn get_processes(monitor: State<'_, SystemMonitor>) -> Result<Vec<Proc
     }
     
     // Sort by CPU usage descending
-    processes.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap());
+    processes.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap_or(std::cmp::Ordering::Equal));
     
     Ok(processes)
 }

@@ -1,4 +1,5 @@
 import { Component, createSignal, onMount, onCleanup, createEffect } from 'solid-js';
+import DOMPurify from 'dompurify';
 import './CodeEditor.css';
 
 interface CodeEditorProps {
@@ -148,10 +149,10 @@ const CodeEditor: Component<CodeEditorProps> = (props) => {
         </div>
         
         <div class="editor-wrapper">
-          <pre 
+          <pre
             ref={preRef}
             class="highlighted-code"
-            innerHTML={highlightedCode()}
+            innerHTML={DOMPurify.sanitize(highlightedCode())}
           />
           
           <textarea

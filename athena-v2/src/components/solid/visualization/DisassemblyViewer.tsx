@@ -173,7 +173,7 @@ export default function DisassemblyViewer(props: DisassemblyViewerProps) {
           <div>{loadingProgress()}</div>
           <Show when={hasTimedOut()}>
             <div style="color: var(--warning-color); margin-top: 15px; max-width: 600px;">
-              Disassembly is taking longer than expected. This is normal for large binaries (>10MB) or complex executables with many functions.
+              Disassembly is taking longer than expected. This is normal for large binaries ({'>'} 10MB) or complex executables with many functions.
             </div>
           </Show>
         </div>

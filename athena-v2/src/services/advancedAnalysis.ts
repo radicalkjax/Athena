@@ -159,11 +159,12 @@ class AdvancedAnalysisService {
 
     // Add YARA match events
     yaraMatches.forEach(match => {
+      const severity = match.meta.severity as 'low' | 'medium' | 'high' | 'critical' | undefined;
       events.push({
         timestamp: Date.now(),
         type: 'detection',
         description: `YARA rule matched: ${match.rule}`,
-        severity: match.meta.severity as any || 'high',
+        severity: severity || 'high',
         details: match
       });
     });

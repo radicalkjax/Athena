@@ -202,6 +202,12 @@ impl VolatilityRunner {
         }
     }
 
+    /// Analyze a memory dump with default plugins from config
+    pub async fn analyze_dump_default(&self, dump_path: &Path) -> Result<VolatilityAnalysis, String> {
+        let plugin_refs: Vec<&str> = self.config.plugins.iter().map(|s| s.as_str()).collect();
+        self.analyze_dump(dump_path, &plugin_refs).await
+    }
+
     /// Analyze a memory dump with specified plugins
     pub async fn analyze_dump(
         &self,
@@ -212,7 +218,10 @@ impl VolatilityRunner {
 
         // Validate dump file exists
         if !dump_path.exists() {
-            return Err(format!("Dump file not found: {}", dump_path.display()));
+            let filename = dump_path.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| "unknown".to_string());
+            return Err(format!("Dump file not found: {}", filename));
         }
 
         let mut analysis = VolatilityAnalysis::default();
@@ -249,7 +258,7 @@ impl VolatilityRunner {
     /// Run pslist plugin
     async fn run_pslist(&self, dump_path: &Path) -> Result<Vec<VolProcess>, String> {
         let output = self
-            .run_plugin(dump_path, "windows.pslist", &["--json"])
+            .run_plugin(dump_path, "windows.pslist", &[])
             .await?;
 
         // Parse JSON output
@@ -259,7 +268,7 @@ impl VolatilityRunner {
     /// Run malfind plugin
     async fn run_malfind(&self, dump_path: &Path) -> Result<Vec<MalfindHit>, String> {
         let output = self
-            .run_plugin(dump_path, "windows.malfind", &["--json"])
+            .run_plugin(dump_path, "windows.malfind", &[])
             .await?;
 
         self.parse_malfind_output(&output)
@@ -268,7 +277,7 @@ impl VolatilityRunner {
     /// Run netscan plugin
     async fn run_netscan(&self, dump_path: &Path) -> Result<Vec<VolNetConn>, String> {
         let output = self
-            .run_plugin(dump_path, "windows.netscan", &["--json"])
+            .run_plugin(dump_path, "windows.netscan", &[])
             .await?;
 
         self.parse_netscan_output(&output)
@@ -277,7 +286,7 @@ impl VolatilityRunner {
     /// Run dlllist plugin
     async fn run_dlllist(&self, dump_path: &Path) -> Result<Vec<ModuleInfo>, String> {
         let output = self
-            .run_plugin(dump_path, "windows.dlllist", &["--json"])
+            .run_plugin(dump_path, "windows.dlllist", &[])
             .await?;
 
         self.parse_dlllist_output(&output)
@@ -286,7 +295,7 @@ impl VolatilityRunner {
     /// Run handles plugin
     async fn run_handles(&self, dump_path: &Path) -> Result<Vec<HandleInfo>, String> {
         let output = self
-            .run_plugin(dump_path, "windows.handles", &["--json"])
+            .run_plugin(dump_path, "windows.handles", &[])
             .await?;
 
         self.parse_handles_output(&output)
@@ -303,6 +312,9 @@ impl VolatilityRunner {
         cmd.arg("-f")
             .arg(dump_path)
             .arg(plugin);
+
+        // Add output format from config
+        cmd.arg(format!("--{}", &self.config.output_format));
 
         for arg in extra_args {
             cmd.arg(arg);
@@ -390,23 +402,23 @@ impl VolatilityRunner {
     }
 
     fn parse_malfind_entry(&self, obj: &serde_json::Value) -> Option<MalfindHit> {
-        let disasm = obj
+        let disasm: Vec<String> = obj
             .get("Disasm")
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
                     .filter_map(|v| v.as_str().map(String::from))
-                    .collect()
+                    .collect::<Vec<String>>()
             })
             .unwrap_or_default();
 
-        let hex = obj
+        let hex: Vec<String> = obj
             .get("Hexdump")
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
                     .filter_map(|v| v.as_str().map(String::from))
-                    .collect()
+                    .collect::<Vec<String>>()
             })
             .unwrap_or_default();
 

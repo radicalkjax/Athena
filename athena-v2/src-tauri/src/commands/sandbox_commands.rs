@@ -1,4 +1,5 @@
 use tauri::command;
+use tauri::path::SafePathBuf;
 use crate::sandbox::{
     SandboxOrchestrator,
     SandboxConfig,
@@ -13,6 +14,8 @@ use crate::sandbox::{
     // Volatility types
     VolatilityRunner,
     VolatilityAnalysis,
+    // Anti-evasion types
+    anti_evasion::{AntiEvasionManager, EvasionAttempt, VmArtifact},
 };
 use std::path::PathBuf;
 use std::time::Duration;
@@ -21,10 +24,12 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SandboxExecutionRequest {
     pub file_path: String,
+    pub os_type: Option<String>,           // "linux" or "windows"
     pub timeout_secs: Option<u64>,
     pub capture_network: Option<bool>,
-    pub capture_screenshots: Option<bool>,
     pub memory_limit_mb: Option<u64>,
+    pub cpu_limit: Option<f64>,            // CPU cores (e.g., 1.0 = 1 core)
+    pub anti_evasion_tier: Option<u8>,     // 0=disabled, 1=basic, 2=advanced
 }
 
 /// Check if the Docker sandbox is available
@@ -36,14 +41,17 @@ pub async fn check_sandbox_available() -> Result<bool, String> {
 /// Execute a sample in the sandbox with full monitoring
 #[command]
 pub async fn execute_sample_in_sandbox(
-    file_path: String,
+    file_path: SafePathBuf,
     timeout_secs: Option<u64>,
     capture_network: Option<bool>,
 ) -> Result<ExecutionReport, String> {
     // Validate file exists
-    let path = PathBuf::from(&file_path);
+    let path = file_path.as_ref();
     if !path.exists() {
-        return Err(format!("File not found: {}", file_path));
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+        return Err(format!("File not found: {}", filename));
     }
 
     // Create orchestrator
@@ -56,13 +64,16 @@ pub async fn execute_sample_in_sandbox(
         os_type: OsType::Linux,
         timeout: Duration::from_secs(timeout_secs.unwrap_or(120)),
         capture_network: capture_network.unwrap_or(true),
-        capture_screenshots: false,
         memory_limit: 512 * 1024 * 1024, // 512MB default
+        anti_evasion_tier: None, // Disabled by default
+        memory_capture_config: None, // No memory capture by default
+        capture_video: false, // No video by default
+        video_config: None, // No video config
     };
 
     // Execute
     orchestrator
-        .execute_sample(path, config)
+        .execute_sample(path.to_path_buf(), config)
         .await
         .map_err(|e| format!("Sandbox execution failed: {}", e))
 }
@@ -72,11 +83,25 @@ pub async fn execute_sample_in_sandbox(
 pub async fn execute_sample_with_config(
     request: SandboxExecutionRequest,
 ) -> Result<ExecutionReport, String> {
-    // Validate file exists
-    let path = PathBuf::from(&request.file_path);
+    // SECURITY: Validate file path to prevent directory traversal attacks
+    // SafePathBuf rejects paths containing ".." components
+    let safe_path = SafePathBuf::new(PathBuf::from(&request.file_path))
+        .map_err(|e| format!("Invalid path: {}", e))?;
+
+    let path = safe_path.as_ref();
     if !path.exists() {
-        return Err(format!("File not found: {}", request.file_path));
+        // Only show filename in error message, not full path (security best practice)
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+        return Err(format!("File not found: {}", filename));
     }
+
+    // Parse OS type
+    let os_type = match request.os_type.as_deref() {
+        Some("windows") => OsType::Windows,
+        _ => OsType::Linux, // Default to Linux
+    };
 
     // Create orchestrator
     let orchestrator = SandboxOrchestrator::new()
@@ -85,16 +110,19 @@ pub async fn execute_sample_with_config(
 
     // Build config
     let config = SandboxConfig {
-        os_type: OsType::Linux,
+        os_type,
         timeout: Duration::from_secs(request.timeout_secs.unwrap_or(120)),
         capture_network: request.capture_network.unwrap_or(true),
-        capture_screenshots: request.capture_screenshots.unwrap_or(false),
         memory_limit: request.memory_limit_mb.unwrap_or(512) * 1024 * 1024,
+        anti_evasion_tier: request.anti_evasion_tier,
+        memory_capture_config: None, // No memory capture by default
+        capture_video: false, // No video by default
+        video_config: None, // No video config
     };
 
     // Execute
     orchestrator
-        .execute_sample(path, config)
+        .execute_sample(path.to_path_buf(), config)
         .await
         .map_err(|e| format!("Sandbox execution failed: {}", e))
 }
@@ -348,6 +376,63 @@ fn get_mitigation_for_technique(technique_id: &str) -> String {
     .to_string()
 }
 
+/// Execute a sample with video recording enabled
+#[command]
+pub async fn execute_sample_with_video(
+    file_path: SafePathBuf,
+    timeout_secs: Option<u64>,
+    video_width: Option<u32>,
+    video_height: Option<u32>,
+    video_fps: Option<u32>,
+) -> Result<ExecutionReport, String> {
+    use crate::sandbox::video_capture::VideoCaptureConfig;
+
+    // Validate file exists
+    let path = file_path.as_ref();
+    if !path.exists() {
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+        return Err(format!("File not found: {}", filename));
+    }
+
+    // Create orchestrator
+    let orchestrator = SandboxOrchestrator::new()
+        .await
+        .map_err(|e| format!("Failed to initialize sandbox: {}", e))?;
+
+    // Build video config
+    let video_config = VideoCaptureConfig {
+        enabled: true,
+        width: video_width.unwrap_or(1280),
+        height: video_height.unwrap_or(720),
+        frame_rate: video_fps.unwrap_or(15),
+        codec: "libx264".to_string(),
+        preset: "ultrafast".to_string(),
+        max_duration: timeout_secs.unwrap_or(120),
+        capture_screenshots: true,
+        screenshot_interval_ms: 5000,
+    };
+
+    // Build config with video enabled
+    let config = SandboxConfig {
+        os_type: OsType::Linux,
+        timeout: Duration::from_secs(timeout_secs.unwrap_or(120)),
+        capture_network: true,
+        memory_limit: 512 * 1024 * 1024,
+        anti_evasion_tier: Some(1), // Enable tier 1 anti-evasion for video mode
+        memory_capture_config: None,
+        capture_video: true,
+        video_config: Some(video_config),
+    };
+
+    // Execute
+    orchestrator
+        .execute_sample(path.to_path_buf(), config)
+        .await
+        .map_err(|e| format!("Sandbox execution with video failed: {}", e))
+}
+
 /// Convert SandboxError to a user-friendly error message
 #[command]
 pub fn format_sandbox_error(error_type: String, details: String) -> Result<String, String> {
@@ -449,33 +534,41 @@ pub struct ThreatScoreResult {
 /// - API hooks
 #[command]
 pub async fn analyze_memory_with_volatility(
-    dump_path: String,
+    dump_path: SafePathBuf,
     plugins: Vec<String>,
 ) -> Result<VolatilityAnalysis, String> {
+    use crate::sandbox::VolatilityConfig;
+
     // Validate dump file exists
-    let path = PathBuf::from(&dump_path);
+    let path = dump_path.as_ref();
     if !path.exists() {
-        return Err(format!("Memory dump not found: {}", dump_path));
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+        return Err(format!("Memory dump not found: {}", filename));
     }
 
-    // Create Volatility runner
-    let runner = VolatilityRunner::new();
+    // Create custom config if plugins are specified, otherwise use default
+    let runner = if plugins.is_empty() {
+        // Use default config with standard plugins
+        VolatilityRunner::new()
+    } else {
+        // Create custom config with user-specified plugins
+        let config = VolatilityConfig {
+            plugins: plugins.clone(),
+            ..Default::default()
+        };
+        VolatilityRunner::with_config(config)
+    };
 
     // Check if Volatility is available
     if !runner.is_available() {
         return Err("Volatility 3 is not installed or not in PATH. Install with: pip install volatility3".to_string());
     }
 
-    // Default plugins if none specified
-    let plugins_to_run: Vec<&str> = if plugins.is_empty() {
-        vec!["pslist", "malfind", "netscan"]
-    } else {
-        plugins.iter().map(|s| s.as_str()).collect()
-    };
-
-    // Run analysis
+    // Use analyze_dump_default which uses the config's plugins
     runner
-        .analyze_dump(&path, &plugins_to_run)
+        .analyze_dump_default(path)
         .await
         .map_err(|e| format!("Volatility analysis failed: {}", e))
 }
@@ -483,7 +576,10 @@ pub async fn analyze_memory_with_volatility(
 /// Check if Volatility 3 is available
 #[command]
 pub fn check_volatility_available() -> Result<VolatilityStatus, String> {
-    let runner = VolatilityRunner::new();
+    use crate::sandbox::VolatilityConfig;
+
+    let config = VolatilityConfig::default();
+    let runner = VolatilityRunner::with_config(config.clone());
     let available = runner.is_available();
     let version = if available {
         runner.get_version().unwrap_or_else(|_| "unknown".to_string())
@@ -495,15 +591,8 @@ pub fn check_volatility_available() -> Result<VolatilityStatus, String> {
         available,
         version,
         plugins: if available {
-            vec![
-                "windows.pslist".to_string(),
-                "windows.malfind".to_string(),
-                "windows.netscan".to_string(),
-                "windows.dlllist".to_string(),
-                "windows.handles".to_string(),
-                "linux.pslist".to_string(),
-                "linux.malfind".to_string(),
-            ]
+            // Return the configured plugins from the runner's config
+            config.plugins
         } else {
             vec![]
         },
@@ -515,6 +604,169 @@ pub struct VolatilityStatus {
     pub available: bool,
     pub version: String,
     pub plugins: Vec<String>,
+}
+
+/// Analyze sandbox execution results to detect if malware attempted VM/sandbox evasion
+///
+/// This command examines the syscalls and behavioral events from a sandbox execution
+/// to identify potential evasion techniques such as:
+/// - VM detection (checking /proc/scsi, DMI, Docker markers)
+/// - Debugger detection (ptrace TRACEME)
+/// - Sleep evasion (long sleep calls to timeout sandbox)
+///
+/// Returns a list of detected evasion attempts with timestamps, descriptions, and
+/// whether the anti-evasion measures successfully blocked them.
+#[command]
+pub fn detect_sandbox_evasion(
+    report: ExecutionReport,
+) -> Result<Vec<EvasionAttempt>, String> {
+    let manager = AntiEvasionManager::new();
+    let mut evasion_attempts = Vec::new();
+
+    // Check syscalls from the syscall summary
+    // The syscall_summary is a HashMap<String, u64> with syscall names and counts
+    // We need to check behavioral events for more detailed syscall arguments
+    for event in &report.behavioral_events {
+        // Look for syscall-related events
+        if event.event_type.contains("syscall") ||
+           event.event_type == "openat" ||
+           event.event_type == "open" ||
+           event.event_type == "ptrace" ||
+           event.event_type == "nanosleep" ||
+           event.event_type == "clock_nanosleep" {
+
+            // The description field contains the syscall details/arguments
+            if let Some(attempt) = manager.detect_evasion_attempt(
+                &event.event_type,
+                &event.description,
+            ) {
+                evasion_attempts.push(attempt);
+            }
+        }
+    }
+
+    // Also check the syscall summary for high-level patterns
+    for (syscall_name, count) in &report.syscall_summary {
+        // Check for suspicious patterns like many openat calls (VM detection attempts)
+        if syscall_name == "openat" && *count > 10 {
+            // Create a generic description for bulk detection attempts
+            let description = format!("Multiple file access attempts ({} calls)", count);
+            if let Some(attempt) = manager.detect_evasion_attempt(
+                syscall_name,
+                &description,
+            ) {
+                evasion_attempts.push(attempt);
+            }
+        }
+    }
+
+    Ok(evasion_attempts)
+}
+
+/// Get list of VM artifacts that the anti-evasion system hides
+///
+/// Returns the list of artifacts that Athena's anti-evasion tier 1 environment
+/// obfuscation attempts to hide from malware, including:
+/// - Docker container markers (/.dockerenv, cgroup entries)
+/// - VM hypervisor flags (/proc/cpuinfo)
+/// - VM tools processes
+/// - Guest additions
+/// - Suspicious MAC addresses
+/// - VM-specific BIOS strings
+#[command]
+pub fn get_hidden_vm_artifacts() -> Result<Vec<String>, String> {
+    let manager = AntiEvasionManager::new();
+    let artifacts = manager.get_artifacts_to_hide();
+
+    // Convert VmArtifact enum to human-readable strings
+    let artifact_descriptions: Vec<String> = artifacts
+        .into_iter()
+        .map(|artifact| match artifact {
+            VmArtifact::ScsiInfo => "/proc/scsi/scsi entries (VM disk identifiers)".to_string(),
+            VmArtifact::CpuInfo => "/proc/cpuinfo hypervisor flag".to_string(),
+            VmArtifact::SysDevices => "/sys/devices/virtual markers".to_string(),
+            VmArtifact::DockerCgroup => "Docker container ID in cgroup".to_string(),
+            VmArtifact::VmToolsProcess => "VM tools processes (vmtoolsd, VBoxService)".to_string(),
+            VmArtifact::GuestAdditions => "Guest additions markers".to_string(),
+            VmArtifact::MacAddress => "VM vendor MAC address prefixes".to_string(),
+            VmArtifact::DiskSerial => "VM disk serial numbers".to_string(),
+            VmArtifact::BiosStrings => "VM BIOS strings (VirtualBox, VMware, QEMU)".to_string(),
+        })
+        .collect();
+
+    Ok(artifact_descriptions)
+}
+
+/// Get video recording information from a recorded video file
+///
+/// Uses ffprobe to extract metadata from a video recording created during
+/// sandbox execution, including duration, resolution, and codec information.
+#[command]
+pub async fn get_video_recording_info(
+    video_path: SafePathBuf,
+) -> Result<VideoRecordingInfo, String> {
+    use crate::sandbox::video_capture::VideoCaptureManager;
+    use std::process::Command;
+
+    // Validate file exists
+    let path = video_path.as_ref();
+    if !path.exists() {
+        let filename = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+        return Err(format!("Video file not found: {}", filename));
+    }
+
+    // Get file size
+    let file_size = std::fs::metadata(path)
+        .map(|m| m.len())
+        .unwrap_or(0);
+
+    // Run ffprobe to get video metadata
+    let output = Command::new("ffprobe")
+        .args([
+            "-v", "quiet",
+            "-print_format", "default",
+            "-show_entries", "format=duration:stream=width,height,codec_name,r_frame_rate",
+            path.to_str().unwrap_or("")
+        ])
+        .output()
+        .map_err(|e| format!("Failed to run ffprobe: {}. Is ffmpeg installed?", e))?;
+
+    if !output.status.success() {
+        return Err(format!("ffprobe failed: {}", String::from_utf8_lossy(&output.stderr)));
+    }
+
+    // Parse the output using VideoCaptureManager
+    let mgr = VideoCaptureManager::new();
+    let ffprobe_output = String::from_utf8_lossy(&output.stdout);
+    let path_str = path.to_str().unwrap_or("");
+
+    let video_recording = mgr.parse_video_info(&ffprobe_output, path_str, file_size)
+        .ok_or_else(|| "Failed to parse video metadata".to_string())?;
+
+    Ok(VideoRecordingInfo {
+        path: video_recording.video_path.to_string_lossy().to_string(),
+        duration_secs: video_recording.duration_ms as f64 / 1000.0,
+        width: video_recording.resolution.0,
+        height: video_recording.resolution.1,
+        frame_rate: video_recording.frame_rate,
+        codec: video_recording.codec,
+        format: video_recording.format,
+        file_size_bytes: video_recording.file_size,
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VideoRecordingInfo {
+    pub path: String,
+    pub duration_secs: f64,
+    pub width: u32,
+    pub height: u32,
+    pub frame_rate: u32,
+    pub codec: String,
+    pub format: String,
+    pub file_size_bytes: u64,
 }
 
 #[cfg(test)]
@@ -727,6 +979,7 @@ mod tests {
             stderr: String::new(),
             mitre_attacks: vec![],
             memory_dumps: vec![],
+            video_recording: None,
         };
 
         let result = calculate_threat_score(low_threat_report).unwrap();
@@ -772,11 +1025,121 @@ mod tests {
                 },
             ],
             memory_dumps: vec![],
+            video_recording: None,
         };
 
         let result = calculate_threat_score(high_threat_report).unwrap();
         assert!(result.score >= 50.0);
         assert!(result.risk_level == "High" || result.risk_level == "Critical");
         assert!(result.contributing_factors.len() > 0);
+    }
+
+    #[test]
+    fn test_detect_sandbox_evasion() {
+        let mut syscalls = HashMap::new();
+        syscalls.insert("openat".to_string(), 5);
+
+        // Create a report with VM detection attempts
+        let report = ExecutionReport {
+            session_id: "test-evasion".to_string(),
+            exit_code: 0,
+            execution_time_ms: 1000,
+            behavioral_events: vec![
+                BehaviorEvent {
+                    timestamp: 1000,
+                    event_type: "openat".to_string(),
+                    description: "/sys/class/dmi/id/product_name".to_string(),
+                    severity: "Medium".to_string(),
+                    mitre_attack_id: None,
+                },
+                BehaviorEvent {
+                    timestamp: 2000,
+                    event_type: "open".to_string(),
+                    description: "/.dockerenv".to_string(),
+                    severity: "Medium".to_string(),
+                    mitre_attack_id: None,
+                },
+                BehaviorEvent {
+                    timestamp: 3000,
+                    event_type: "ptrace".to_string(),
+                    description: "PTRACE_TRACEME".to_string(),
+                    severity: "High".to_string(),
+                    mitre_attack_id: Some("T1622".to_string()),
+                },
+            ],
+            file_operations: vec![],
+            network_connections: vec![],
+            processes_created: vec![],
+            syscall_summary: syscalls,
+            stdout: String::new(),
+            stderr: String::new(),
+            mitre_attacks: vec![],
+            memory_dumps: vec![],
+            video_recording: None,
+        };
+
+        let result = detect_sandbox_evasion(report).unwrap();
+
+        // Should detect at least the VM detection and debugger check
+        assert!(result.len() >= 2);
+
+        // Check for VM detection attempt
+        let vm_detection = result.iter().find(|a| {
+            matches!(a.technique_type, crate::sandbox::anti_evasion::EvasionTechnique::VmDetection)
+        });
+        assert!(vm_detection.is_some());
+
+        // Check for debugger detection attempt
+        let debugger_check = result.iter().find(|a| {
+            matches!(a.technique_type, crate::sandbox::anti_evasion::EvasionTechnique::DebuggerCheck)
+        });
+        assert!(debugger_check.is_some());
+    }
+
+    #[test]
+    fn test_get_hidden_vm_artifacts() {
+        let result = get_hidden_vm_artifacts().unwrap();
+
+        // Should return all 9 artifact types
+        assert_eq!(result.len(), 9);
+
+        // Verify some key artifacts are present
+        assert!(result.iter().any(|s| s.contains("Docker")));
+        assert!(result.iter().any(|s| s.contains("hypervisor")));
+        assert!(result.iter().any(|s| s.contains("BIOS")));
+        assert!(result.iter().any(|s| s.contains("MAC address")));
+    }
+
+    #[test]
+    fn test_detect_sandbox_evasion_no_attempts() {
+        // Report with benign activity
+        let report = ExecutionReport {
+            session_id: "test-benign".to_string(),
+            exit_code: 0,
+            execution_time_ms: 500,
+            behavioral_events: vec![
+                BehaviorEvent {
+                    timestamp: 1000,
+                    event_type: "open".to_string(),
+                    description: "/etc/passwd".to_string(),
+                    severity: "Low".to_string(),
+                    mitre_attack_id: None,
+                },
+            ],
+            file_operations: vec![],
+            network_connections: vec![],
+            processes_created: vec![],
+            syscall_summary: HashMap::new(),
+            stdout: String::new(),
+            stderr: String::new(),
+            mitre_attacks: vec![],
+            memory_dumps: vec![],
+            video_recording: None,
+        };
+
+        let result = detect_sandbox_evasion(report).unwrap();
+
+        // Should detect no evasion attempts
+        assert_eq!(result.len(), 0);
     }
 }

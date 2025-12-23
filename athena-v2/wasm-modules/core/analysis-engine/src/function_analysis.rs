@@ -237,7 +237,21 @@ impl FunctionAnalyzer {
                     }
                 }
 
-                // TODO: Add stack parameters
+                // Add stack parameters (after shadow space at rsp+0x20)
+                let stack_offsets = self.detect_stack_parameters(
+                    statements,
+                    calling_convention,
+                    parameters.len(),
+                );
+                for offset in stack_offsets {
+                    let index = parameters.len();
+                    parameters.push(Parameter {
+                        name: format!("param_{}", index + 1),
+                        param_type: InferredType::Unknown,
+                        location: ParameterLocation::Stack(offset),
+                        index,
+                    });
+                }
             }
             CallingConvention::SystemVAmd64 => {
                 // System V x64: rdi, rsi, rdx, rcx, r8, r9, then stack
@@ -257,7 +271,21 @@ impl FunctionAnalyzer {
                     }
                 }
 
-                // TODO: Add stack parameters
+                // Add stack parameters (at rbp+16, rbp+24, etc.)
+                let stack_offsets = self.detect_stack_parameters(
+                    statements,
+                    calling_convention,
+                    parameters.len(),
+                );
+                for offset in stack_offsets {
+                    let index = parameters.len();
+                    parameters.push(Parameter {
+                        name: format!("param_{}", index + 1),
+                        param_type: InferredType::Unknown,
+                        location: ParameterLocation::Stack(offset),
+                        index,
+                    });
+                }
             }
             CallingConvention::X86Fastcall => {
                 // x86 fastcall: ecx, edx, then stack
@@ -275,6 +303,22 @@ impl FunctionAnalyzer {
                             index: i,
                         });
                     }
+                }
+
+                // Add stack parameters (at ebp+8, ebp+12, etc.)
+                let stack_offsets = self.detect_stack_parameters(
+                    statements,
+                    calling_convention,
+                    parameters.len(),
+                );
+                for offset in stack_offsets {
+                    let index = parameters.len();
+                    parameters.push(Parameter {
+                        name: format!("param_{}", index + 1),
+                        param_type: InferredType::Unknown,
+                        location: ParameterLocation::Stack(offset),
+                        index,
+                    });
                 }
             }
             CallingConvention::Cdecl | CallingConvention::Stdcall => {
@@ -368,6 +412,107 @@ impl FunctionAnalyzer {
         }
 
         (max_offset / 4) as usize // Assume 4-byte parameters
+    }
+
+    /// Detect stack parameters by scanning for memory accesses
+    /// Returns a vector of stack offsets that represent parameters
+    fn detect_stack_parameters(
+        &self,
+        statements: &[IRStmt],
+        calling_convention: &CallingConvention,
+        num_register_params: usize,
+    ) -> Vec<i32> {
+        let mut stack_offsets = HashSet::new();
+
+        // Scan early statements for stack memory accesses
+        for stmt in statements.iter().take(30) {
+            match stmt {
+                IRStmt::Assign { value, .. } | IRStmt::Store { address: value, .. } => {
+                    self.collect_stack_accesses(value, calling_convention, &mut stack_offsets);
+                }
+                IRStmt::Call { args, .. } => {
+                    for arg in args {
+                        self.collect_stack_accesses(arg, calling_convention, &mut stack_offsets);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Sort offsets to maintain parameter order
+        let mut offsets: Vec<i32> = stack_offsets.into_iter().collect();
+        offsets.sort();
+        offsets
+    }
+
+    /// Collect stack accesses that look like parameters
+    fn collect_stack_accesses(
+        &self,
+        value: &IRValue,
+        calling_convention: &CallingConvention,
+        offsets: &mut HashSet<i32>,
+    ) {
+        match value {
+            IRValue::Expr(expr) => {
+                // Look for patterns like [rbp+offset] or [rsp+offset]
+                if expr.operands.len() == 2 {
+                    if let (IRValue::Var(base), IRValue::Const(offset)) =
+                        (&expr.operands[0], &expr.operands[1])
+                    {
+                        let offset_val = *offset;
+
+                        match calling_convention {
+                            CallingConvention::WindowsFastcall => {
+                                // Windows x64: Parameters on stack start after shadow space
+                                // Shadow space is at [rsp+0x20] (32 bytes), parameters at [rsp+0x28]+
+                                if base.name == "rsp" && offset_val >= 0x28 && offset_val <= 0x100 {
+                                    offsets.insert(offset_val as i32);
+                                }
+                                // Also check rbp-based access after prologue
+                                else if base.name == "rbp" && offset_val >= 16 && offset_val <= 256 {
+                                    offsets.insert(offset_val as i32);
+                                }
+                            }
+                            CallingConvention::SystemVAmd64 => {
+                                // System V x64: Parameters on stack after return address
+                                // First stack param at [rbp+16], then [rbp+24], etc.
+                                if base.name == "rbp" && offset_val >= 16 && offset_val <= 256 {
+                                    offsets.insert(offset_val as i32);
+                                }
+                                // Or [rsp+offset] before frame setup
+                                else if base.name == "rsp" && offset_val >= 8 && offset_val <= 256 {
+                                    offsets.insert(offset_val as i32);
+                                }
+                            }
+                            CallingConvention::Cdecl | CallingConvention::Stdcall | CallingConvention::X86Fastcall => {
+                                // x86: Parameters at [ebp+8], [ebp+12], etc.
+                                if base.name == "ebp" && offset_val >= 8 && offset_val <= 128 {
+                                    offsets.insert(offset_val as i32);
+                                }
+                                // Or [esp+offset] before frame setup
+                                else if base.name == "esp" && offset_val >= 4 && offset_val <= 128 {
+                                    offsets.insert(offset_val as i32);
+                                }
+                            }
+                            CallingConvention::Unknown => {
+                                // Try both patterns
+                                if (base.name == "rbp" || base.name == "ebp") && offset_val >= 8 && offset_val <= 256 {
+                                    offsets.insert(offset_val as i32);
+                                } else if (base.name == "rsp" || base.name == "esp") && offset_val >= 8 && offset_val <= 256 {
+                                    offsets.insert(offset_val as i32);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Recursively check nested expressions
+                for operand in &expr.operands {
+                    self.collect_stack_accesses(operand, calling_convention, offsets);
+                }
+            }
+            _ => {}
+        }
     }
 
     fn detect_return_type(&self, statements: &[IRStmt]) -> InferredType {

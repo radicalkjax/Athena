@@ -1603,12 +1603,13 @@ mod _rt {
             val != 0
         }
     }
+    // SAFETY NOTE: Modified from generated code to prevent panics on invalid UTF-8.
+    // For malware analysis, we must handle potentially malicious/corrupted data gracefully.
+    // Original wit-bindgen code used .unwrap() in debug and unchecked in release.
     pub unsafe fn string_lift(bytes: Vec<u8>) -> String {
-        if cfg!(debug_assertions) {
-            String::from_utf8(bytes).unwrap()
-        } else {
-            String::from_utf8_unchecked(bytes)
-        }
+        String::from_utf8(bytes).unwrap_or_else(|e| {
+            String::from_utf8_lossy(&e.into_bytes()).into_owned()
+        })
     }
     pub unsafe fn cabi_dealloc(ptr: *mut u8, size: usize, align: usize) {
         if size == 0 {

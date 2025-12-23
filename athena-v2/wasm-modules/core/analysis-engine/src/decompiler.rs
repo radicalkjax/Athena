@@ -10,6 +10,7 @@
 
 use std::collections::{HashMap, HashSet};
 use crate::disasm::{DisassembledInstruction, BasicBlock};
+use crate::function_analysis::CallingConvention;
 
 /// Intermediate Representation Operation
 #[derive(Clone, Debug)]
@@ -198,6 +199,12 @@ pub enum CStatement {
     },
 }
 
+/// Maximum number of basic blocks to prevent excessive memory usage
+const MAX_BASIC_BLOCKS: usize = 100000;
+
+/// Maximum total instructions across all blocks
+const MAX_TOTAL_INSTRUCTIONS: usize = 1000000;
+
 /// Decompiler
 pub struct Decompiler {
     temp_counter: u32,
@@ -216,6 +223,28 @@ impl Decompiler {
     pub fn decompile(&mut self, blocks: &[BasicBlock]) -> Result<String, String> {
         if blocks.is_empty() {
             return Ok("// No code to decompile".to_string());
+        }
+
+        // Security: Validate input size to prevent excessive memory usage
+        if blocks.len() > MAX_BASIC_BLOCKS {
+            return Err(format!(
+                "Too many basic blocks for decompilation: {} (max: {})",
+                blocks.len(),
+                MAX_BASIC_BLOCKS
+            ));
+        }
+
+        // Count total instructions across all blocks
+        let total_instructions: usize = blocks.iter()
+            .map(|b| b.instructions.len())
+            .sum();
+
+        if total_instructions > MAX_TOTAL_INSTRUCTIONS {
+            return Err(format!(
+                "Too many instructions for decompilation: {} (max: {})",
+                total_instructions,
+                MAX_TOTAL_INSTRUCTIONS
+            ));
         }
 
         // Step 1: Convert assembly to IR
@@ -451,11 +480,114 @@ impl Decompiler {
             self.parse_value(&instr.operands)?
         };
 
+        // Parse arguments based on detected calling convention
+        let args = self.parse_call_arguments(instr)?;
+
+        // Determine return value register (typically rax/eax)
+        let result = self.determine_return_register();
+
         Ok(IRStmt::Call {
             target,
-            args: Vec::new(), // TODO: Parse calling convention
-            result: None,     // TODO: Determine return value
+            args,
+            result: Some(result),
         })
+    }
+
+    /// Parse function call arguments based on calling convention
+    fn parse_call_arguments(&mut self, _instr: &DisassembledInstruction) -> Result<Vec<IRValue>, String> {
+        // Detect architecture from register names that might be used
+        let calling_convention = self.detect_calling_convention();
+
+        let mut args = Vec::new();
+
+        match calling_convention {
+            CallingConvention::WindowsFastcall => {
+                // Windows x64: rcx, rdx, r8, r9, then stack (right-to-left)
+                // We add the register parameters
+                args.push(IRValue::Var(IRVar::new("rcx".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("rdx".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("r8".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("r9".to_string(), 8)));
+            }
+            CallingConvention::SystemVAmd64 => {
+                // System V AMD64 (Linux/macOS): rdi, rsi, rdx, rcx, r8, r9, then stack
+                args.push(IRValue::Var(IRVar::new("rdi".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("rsi".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("rdx".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("rcx".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("r8".to_string(), 8)));
+                args.push(IRValue::Var(IRVar::new("r9".to_string(), 8)));
+            }
+            CallingConvention::X86Fastcall => {
+                // x86 fastcall: ecx, edx, then stack
+                args.push(IRValue::Var(IRVar::new("ecx".to_string(), 4)));
+                args.push(IRValue::Var(IRVar::new("edx".to_string(), 4)));
+            }
+            CallingConvention::Cdecl | CallingConvention::Stdcall => {
+                // x86 cdecl/stdcall: all arguments on stack
+                // Stack args would need more context to parse accurately
+                // For now, we leave args empty and add a comment about stack args
+            }
+            CallingConvention::Unknown => {
+                // Unknown convention - leave args empty
+            }
+        }
+
+        Ok(args)
+    }
+
+    /// Determine the return value register based on calling convention
+    fn determine_return_register(&self) -> IRVar {
+        // Detect architecture from context
+        let calling_convention = self.detect_calling_convention();
+
+        match calling_convention {
+            CallingConvention::WindowsFastcall | CallingConvention::SystemVAmd64 => {
+                // x64: return value in rax
+                IRVar::new("rax".to_string(), 8)
+            }
+            CallingConvention::X86Fastcall | CallingConvention::Cdecl | CallingConvention::Stdcall => {
+                // x86: return value in eax
+                IRVar::new("eax".to_string(), 4)
+            }
+            CallingConvention::Unknown => {
+                // Default to rax for unknown
+                IRVar::new("rax".to_string(), 8)
+            }
+        }
+    }
+
+    /// Detect calling convention from context
+    /// This is a simplified heuristic - in a full implementation, we'd track
+    /// this from the binary metadata or function prologue analysis
+    fn detect_calling_convention(&self) -> CallingConvention {
+        // Heuristic: Check if we've seen any x64 or x86 registers in var_versions
+        let has_x64_regs = self.var_versions.keys().any(|k| {
+            k.starts_with('r') && (k.len() == 3 || k == "rax" || k == "rbx" || k == "rcx" || k == "rdx")
+        });
+
+        let has_x86_regs = self.var_versions.keys().any(|k| {
+            k.starts_with('e') && k.len() == 3
+        });
+
+        // Check for System V specific registers (rdi, rsi)
+        let has_sysv_regs = self.var_versions.keys().any(|k| {
+            k == "rdi" || k == "rsi"
+        });
+
+        if has_x64_regs {
+            if has_sysv_regs {
+                CallingConvention::SystemVAmd64
+            } else {
+                CallingConvention::WindowsFastcall
+            }
+        } else if has_x86_regs {
+            // For x86, default to cdecl (most common)
+            CallingConvention::Cdecl
+        } else {
+            // If we can't determine, default to System V AMD64 (most common on modern systems)
+            CallingConvention::SystemVAmd64
+        }
     }
 
     fn create_conditional_branch(&mut self, instr: &DisassembledInstruction, target: u64) -> Result<IRStmt, String> {
@@ -953,10 +1085,11 @@ impl Decompiler {
                     // Check if this forms a loop (back-edge)
                     if *target < block_addr && !visited.contains(target) {
                         // This looks like a loop back-edge
-                        // Try to detect loop type
+                        // Try to detect the loop condition by analyzing the loop body
+                        let loop_condition = self.find_loop_condition(*target, block_addr, block_map);
                         let loop_body = self.recover_block_structure(*target, block_map, visited)?;
                         statements.push(CStatement::While {
-                            condition: "true".to_string(), // TODO: detect actual condition
+                            condition: loop_condition,
                             body: loop_body,
                         });
                     } else if !visited.contains(target) {
@@ -984,6 +1117,74 @@ impl Decompiler {
         }
 
         Ok(statements)
+    }
+
+    /// Find the loop condition by analyzing blocks in the loop range
+    /// Looks for conditional branches that exit the loop
+    fn find_loop_condition(
+        &self,
+        loop_start: u64,
+        loop_end: u64,
+        block_map: &HashMap<u64, &IRBlock>,
+    ) -> String {
+        // Search all blocks in the loop range for conditional exits
+        for addr in loop_start..=loop_end {
+            if let Some(block) = block_map.get(&addr) {
+                // Look at the last statement in the block
+                if let Some(last_stmt) = block.statements.last() {
+                    if let IRStmt::BranchCond { condition, true_target, false_target } = last_stmt {
+                        // Check if this is a loop exit condition
+                        // (one branch goes outside the loop range)
+                        let true_exits = *true_target < loop_start || *true_target > loop_end;
+                        let false_exits = *false_target < loop_start || *false_target > loop_end;
+
+                        if true_exits && !false_exits {
+                            // True branch exits the loop, so the loop continues when condition is false
+                            // Return the negated condition
+                            return self.negate_condition(&self.value_to_string(condition));
+                        } else if false_exits && !true_exits {
+                            // False branch exits the loop, so the loop continues when condition is true
+                            return self.value_to_string(condition);
+                        }
+                    }
+                }
+            }
+        }
+
+        // No explicit condition found - default to infinite loop
+        "true".to_string()
+    }
+
+    /// Negate a condition string for loop continuation
+    fn negate_condition(&self, condition: &str) -> String {
+        // Handle common patterns first (more specific matches)
+        match condition {
+            // Complex conditions
+            "!CF && !ZF" => "CF || ZF".to_string(),
+            "CF || ZF" => "!CF && !ZF".to_string(),
+            "ZF || (SF != OF)" => "!ZF && (SF == OF)".to_string(),
+            "!ZF && (SF == OF)" => "ZF || (SF != OF)".to_string(),
+            "SF != OF" => "SF == OF".to_string(),
+            "SF == OF" => "SF != OF".to_string(),
+
+            // Simple flags
+            "ZF" => "!ZF".to_string(),
+            "CF" => "!CF".to_string(),
+            "!ZF" => "ZF".to_string(),
+            "!CF" => "CF".to_string(),
+
+            // Generic negation
+            _ => {
+                // Handle simple negation (single flag with ! prefix)
+                if condition.starts_with('!') && !condition.contains("&&") && !condition.contains("||") {
+                    // Simple flag negation - remove the !
+                    condition[1..].to_string()
+                } else {
+                    // Complex condition - wrap in parentheses with !
+                    format!("!({})", condition)
+                }
+            }
+        }
     }
 
     /// Convert IR statement to C statement
@@ -1162,5 +1363,102 @@ mod tests {
         let blocks = vec![];
         let result = decompiler.decompile(&blocks);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_loop_condition_detection() {
+        let decompiler = Decompiler::new();
+
+        // Create a simple loop structure:
+        // Block 0x100: conditional branch (ZF check)
+        // Block 0x110: loop body, jumps back to 0x100
+        let block1 = IRBlock {
+            address: 0x100,
+            statements: vec![
+                IRStmt::BranchCond {
+                    condition: IRValue::Var(IRVar::new("ZF".to_string(), 1)),
+                    true_target: 0x200,  // Exit loop when ZF is set
+                    false_target: 0x110, // Continue to loop body
+                },
+            ],
+            successors: vec![0x200, 0x110],
+            predecessors: vec![],
+        };
+
+        let block2 = IRBlock {
+            address: 0x110,
+            statements: vec![
+                IRStmt::Branch { target: 0x100 }, // Jump back to loop start
+            ],
+            successors: vec![0x100],
+            predecessors: vec![0x100],
+        };
+
+        let block_map: HashMap<u64, &IRBlock> = vec![
+            (0x100, &block1),
+            (0x110, &block2),
+        ].into_iter().collect();
+
+        // Find the loop condition
+        let condition = decompiler.find_loop_condition(0x100, 0x110, &block_map);
+
+        // Should detect that we continue the loop when !ZF
+        assert_eq!(condition, "!ZF");
+    }
+
+    #[test]
+    fn test_negate_condition() {
+        let decompiler = Decompiler::new();
+
+        // Test simple flag negation
+        assert_eq!(decompiler.negate_condition("ZF"), "!ZF");
+        assert_eq!(decompiler.negate_condition("!ZF"), "ZF");
+
+        // Test complex conditions
+        assert_eq!(decompiler.negate_condition("SF != OF"), "SF == OF");
+        assert_eq!(decompiler.negate_condition("!CF && !ZF"), "CF || ZF");
+
+        // Test generic condition
+        assert_eq!(decompiler.negate_condition("custom_condition"), "!(custom_condition)");
+    }
+
+    #[test]
+    fn test_loop_with_multiple_conditions() {
+        let decompiler = Decompiler::new();
+
+        // Test a loop with counter (jl instruction - less than check)
+        // Simulating: for (i = 0; i < 10; i++) { ... }
+        let loop_header = IRBlock {
+            address: 0x1000,
+            statements: vec![
+                IRStmt::BranchCond {
+                    condition: IRValue::Var(IRVar::new("SF != OF".to_string(), 1)),
+                    true_target: 0x1010, // Continue loop (i < 10)
+                    false_target: 0x2000, // Exit loop (i >= 10)
+                },
+            ],
+            successors: vec![0x1010, 0x2000],
+            predecessors: vec![],
+        };
+
+        let loop_body = IRBlock {
+            address: 0x1010,
+            statements: vec![
+                IRStmt::Branch { target: 0x1000 }, // Jump back
+            ],
+            successors: vec![0x1000],
+            predecessors: vec![0x1000],
+        };
+
+        let block_map: HashMap<u64, &IRBlock> = vec![
+            (0x1000, &loop_header),
+            (0x1010, &loop_body),
+        ].into_iter().collect();
+
+        // Find the loop condition
+        let condition = decompiler.find_loop_condition(0x1000, 0x1010, &block_map);
+
+        // Should detect that we continue when SF != OF (less than)
+        assert_eq!(condition, "SF != OF");
     }
 }

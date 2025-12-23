@@ -1,0 +1,77 @@
+# All 41 Missing Tauri Commands (Backend registered, but no frontend usage)
+
+## CRITICAL PRIORITY (12) - Sample Management
+1. register_sample
+2. list_staged_samples
+3. list_all_samples
+4. get_sample_metadata
+5. update_sample_tags
+6. update_sample_notes
+7. read_quarantined_sample
+8. get_quarantine_stats
+9. get_sample_path
+10. sample_exists
+11. cleanup_staging
+12. purge_deleted_samples
+
+## HIGH PRIORITY (8)
+### Network Capture (3)
+13. start_packet_capture
+14. stop_packet_capture
+15. get_active_captures
+
+### YARA Features (3)
+16. auto_generate_yara_rules
+17. load_yara_rules
+18. get_yara_rule_sets
+
+### File Operations (2)
+19. upload_file
+20. get_file_metadata
+
+## MEDIUM PRIORITY (13)
+### Sandbox Execution (2)
+21. execute_sample_with_config
+22. execute_sample_with_video
+
+### Threat Intelligence (3)
+23. get_mitre_attack_details
+24. summarize_file_operations
+25. filter_behavioral_events
+
+### AI Provider Management (7)
+26. get_ai_provider_config
+27. delete_api_key_from_storage
+28. get_ai_queue_size
+29. reset_ai_queue
+30. is_circuit_breaker_open
+31. reset_circuit_breaker
+32. analyze_with_ensemble
+
+### Miscellaneous (1)
+33. get_video_recording_info
+
+## LOW PRIORITY (8)
+### Sandbox Utilities (4)
+34. detect_sandbox_evasion
+35. get_hidden_vm_artifacts
+36. format_sandbox_error
+37. calculate_threat_score
+
+### Cache Management (3)
+38. cache_key_exists
+39. cleanup_cache
+40. clear_ai_cache
+
+### Miscellaneous (2)
+41. cleanup_expired_sessions
+42. get_quarantine_base_dir
+
+Total: 41 commands missing frontend integration
+High Priority: 20 commands
+Medium/Low Priority: 21 commands
+
+---
+
+Generated: 2025-12-22
+Project: Athena v2 Malware Analysis Platform

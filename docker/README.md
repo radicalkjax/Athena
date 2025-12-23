@@ -379,13 +379,13 @@ docker system df
 
 ## Integration with Tauri Desktop App
 
-The Docker services are **optional** for the Tauri desktop application. They provide:
+The Docker services are **optional** for the Tauri desktop application (athena-v2). They provide:
 
 1. **Redis caching** - Faster AI response caching
 2. **Metrics collection** - Performance monitoring
 3. **Log aggregation** - Centralized debugging
 
-The Tauri app (`athena-v2`) runs standalone and only connects to Docker services if available.
+The Tauri app runs standalone and only connects to Docker services if available.
 
 **Check Docker integration:**
 ```bash
@@ -395,6 +395,28 @@ npm run tauri:dev
 # Check if Redis is detected in app logs
 # If not connected, app will use in-memory cache instead
 ```
+
+## WASM Modules (December 2025)
+
+All 9 WASM modules are built using the Component Model and loaded via Wasmtime 29.0:
+
+- **analysis-engine** - CFG, decompiler, emulator
+- **crypto** - AES/DES detection, hash functions
+- **deobfuscator** - Control flow flattening detection
+- **disassembler** - x86/x64/ARM disassembly
+- **file-processor** - PE/ELF/Mach-O parsing
+- **network** - DNS/HTTP/TLS/HTTP2 analysis
+- **pattern-matcher** - YARA-x integration
+- **sandbox** - Syscall tracking, behavioral analysis
+- **security** - Security validation
+
+**Build WASM modules:**
+```bash
+cd athena-v2/wasm-modules/core/<module-name>
+cargo component build --release
+```
+
+**Status**: All modules 100% complete as of December 2025.
 
 ---
 

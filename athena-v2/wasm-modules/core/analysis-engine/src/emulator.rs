@@ -11,6 +11,9 @@
 use std::collections::HashMap;
 use crate::disasm::{DisassembledInstruction, Architecture, Syntax};
 
+/// Maximum memory state size (10MB limit to prevent DoS)
+const MAX_MEMORY_STATE: usize = 10 * 1024 * 1024;
+
 /// Emulator state
 pub struct Emulator {
     /// Register state (name -> value)
@@ -107,10 +110,21 @@ impl Emulator {
     }
 
     /// Load code into memory
-    pub fn load_code(&mut self, base_address: u64, code: &[u8]) {
+    pub fn load_code(&mut self, base_address: u64, code: &[u8]) -> Result<(), String> {
+        // Check if loading this code would exceed memory limit
+        if self.memory.len() + code.len() > MAX_MEMORY_STATE {
+            return Err(format!(
+                "Emulator memory limit exceeded: would reach {} bytes (max: {})",
+                self.memory.len() + code.len(),
+                MAX_MEMORY_STATE
+            ));
+        }
+
         for (i, &byte) in code.iter().enumerate() {
             self.memory.insert(base_address + i as u64, byte);
         }
+
+        Ok(())
     }
 
     /// Add API hook for emulation
@@ -120,7 +134,7 @@ impl Emulator {
 
     /// Emulate execution
     pub fn emulate(&mut self, code: &[u8], base_address: u64) -> Result<EmulationResult, String> {
-        self.load_code(base_address, code);
+        self.load_code(base_address, code)?;
 
         let mut api_calls = Vec::new();
         let mut modified_memory = Vec::new();
@@ -283,9 +297,13 @@ impl Emulator {
         self.sp -= 8;
         self.registers.insert("rsp".to_string(), self.sp);
 
-        // Write to memory
+        // Write to memory with bounds check
         let mut writes = Vec::new();
         for i in 0..8 {
+            // Check memory limit before writing
+            if self.memory.len() >= MAX_MEMORY_STATE {
+                return Err("Emulator memory limit exceeded during push".to_string());
+            }
             let byte = ((value >> (i * 8)) & 0xFF) as u8;
             self.memory.insert(self.sp + i, byte);
             writes.push((self.sp + i, byte));
@@ -346,6 +364,10 @@ impl Emulator {
             self.sp -= 8;
             let return_addr = instr.offset + instr.length as u64;
             for i in 0..8 {
+                // Check memory limit before writing
+                if self.memory.len() >= MAX_MEMORY_STATE {
+                    return Err("Emulator memory limit exceeded during call".to_string());
+                }
                 let byte = ((return_addr >> (i * 8)) & 0xFF) as u8;
                 self.memory.insert(self.sp + i, byte);
             }
@@ -452,13 +474,119 @@ impl Emulator {
         // Look for newly written executable code
         // This is a simplified heuristic - real implementation would be more sophisticated
 
-        // Check if any memory region was modified significantly
-        if self.trace.iter().any(|t| !t.memory_writes.is_empty()) {
-            // TODO: Extract the modified region as unpacked code
-            // For now, return None
+        // Collect all memory writes from the trace
+        let mut write_map: HashMap<u64, u8> = HashMap::new();
+
+        for trace_entry in &self.trace {
+            for &(address, byte) in &trace_entry.memory_writes {
+                write_map.insert(address, byte);
+            }
         }
 
-        None
+        if write_map.is_empty() {
+            return None;
+        }
+
+        // Find contiguous regions
+        let mut addresses: Vec<u64> = write_map.keys().copied().collect();
+        addresses.sort_unstable();
+
+        let mut regions: Vec<(u64, Vec<u8>)> = Vec::new();
+        let mut current_start = addresses[0];
+        let mut current_bytes = Vec::new();
+
+        for &addr in &addresses {
+            // If address is within 16 bytes of last address, consider it part of same region
+            // (allows for small gaps in writes)
+            if current_bytes.is_empty() || addr <= current_start + (current_bytes.len() as u64) + 16 {
+                // Fill any gaps with zeros
+                while current_start + (current_bytes.len() as u64) < addr {
+                    current_bytes.push(0);
+                }
+
+                if let Some(&byte) = write_map.get(&addr) {
+                    current_bytes.push(byte);
+                }
+            } else {
+                // Start new region
+                if !current_bytes.is_empty() {
+                    regions.push((current_start, current_bytes.clone()));
+                }
+                current_start = addr;
+                current_bytes = vec![*write_map.get(&addr).unwrap_or(&0)];
+            }
+        }
+
+        // Add last region
+        if !current_bytes.is_empty() {
+            regions.push((current_start, current_bytes));
+        }
+
+        // Find the largest region that looks like executable code
+        let mut best_region: Option<Vec<u8>> = None;
+        let mut best_score = 0;
+
+        for (_start, bytes) in regions {
+            if bytes.len() < 16 {
+                // Too small to be meaningful code
+                continue;
+            }
+
+            // Score based on size and presence of common x86/x64 code patterns
+            let mut score = bytes.len();
+
+            // Check for common instruction patterns
+            if self.has_code_patterns(&bytes) {
+                score *= 2; // Double score if it looks like code
+            }
+
+            if score > best_score {
+                best_score = score;
+                best_region = Some(bytes);
+            }
+        }
+
+        best_region
+    }
+
+    fn has_code_patterns(&self, bytes: &[u8]) -> bool {
+        if bytes.len() < 4 {
+            return false;
+        }
+
+        let mut pattern_count = 0;
+
+        // Check for common x86/x64 instruction sequences
+        for i in 0..bytes.len().saturating_sub(3) {
+            match &bytes[i..i+2] {
+                // Common function prologs
+                [0x55, 0x48] => pattern_count += 1, // push rbp; rex.W
+                [0x48, 0x89] => pattern_count += 1, // mov (rex.W prefix)
+                [0x48, 0x8B] => pattern_count += 1, // mov (rex.W prefix)
+
+                // Common x86 instructions
+                [0x83, 0xEC] => pattern_count += 1, // sub esp, imm8
+                [0x89, 0xE5] => pattern_count += 1, // mov ebp, esp
+                [0x55, 0x89] => pattern_count += 1, // push ebp; mov
+                [0xC3, _] => pattern_count += 1,    // ret
+                [0xC2, _] => pattern_count += 1,    // ret imm16
+
+                // Common jump/call patterns
+                [0xE8, _] => pattern_count += 1,    // call rel32
+                [0xE9, _] => pattern_count += 1,    // jmp rel32
+                [0x74, _] => pattern_count += 1,    // jz rel8
+                [0x75, _] => pattern_count += 1,    // jnz rel8
+
+                // XOR patterns (common in unpacking)
+                [0x31, _] => pattern_count += 1,    // xor
+                [0x33, _] => pattern_count += 1,    // xor
+
+                _ => {}
+            }
+        }
+
+        // If we found at least 5 code patterns, it likely is code
+        pattern_count >= 5
     }
 }
 
@@ -488,5 +616,146 @@ mod tests {
 
         assert_eq!(emu.memory.get(&0x2000), Some(&0x42));
         assert_eq!(emu.memory.get(&0x2001), Some(&0x43));
+    }
+
+    #[test]
+    fn test_detect_unpacked_code_no_writes() {
+        let emu = Emulator::new(0x1000, 0x10000);
+
+        // No memory writes should return None
+        let result = emu.detect_unpacked_code();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_detect_unpacked_code_with_writes() {
+        let mut emu = Emulator::new(0x1000, 0x10000);
+
+        // Simulate memory writes with executable code pattern
+        // Common x86/x64 function prolog: push rbp; mov rbp, rsp; sub rsp, 0x20
+        let code_pattern = vec![
+            (0x2000, 0x55u8),       // push rbp
+            (0x2001, 0x48),         // REX.W prefix
+            (0x2002, 0x89),         // mov
+            (0x2003, 0xE5),         // rbp, rsp
+            (0x2004, 0x48),         // REX.W prefix
+            (0x2005, 0x83),         // sub
+            (0x2006, 0xEC),         // rsp
+            (0x2007, 0x20),         // 0x20
+            (0x2008, 0x48),         // REX.W prefix
+            (0x2009, 0x8B),         // mov
+            (0x200A, 0x05),         // [rip+X]
+            (0x200B, 0x00),
+            (0x200C, 0x00),
+            (0x200D, 0x00),
+            (0x200E, 0x00),
+            (0x200F, 0xC3),         // ret
+        ];
+
+        // Create trace entry with memory writes
+        let trace_entry = TraceEntry {
+            address: 0x1000,
+            instruction: "unpack loop".to_string(),
+            registers_before: HashMap::new(),
+            registers_after: HashMap::new(),
+            memory_writes: code_pattern,
+        };
+
+        emu.trace.push(trace_entry);
+
+        // Should detect the unpacked code
+        let result = emu.detect_unpacked_code();
+        assert!(result.is_some());
+
+        let unpacked = result.unwrap();
+        assert!(unpacked.len() >= 16);
+        assert_eq!(unpacked[0], 0x55); // push rbp
+        assert_eq!(unpacked[1], 0x48); // REX.W prefix
+    }
+
+    #[test]
+    fn test_has_code_patterns() {
+        let emu = Emulator::new(0x1000, 0x10000);
+
+        // Test with real x86 code pattern
+        let code = vec![
+            0x55,       // push rbp
+            0x48, 0x89, 0xE5,  // mov rbp, rsp
+            0x48, 0x83, 0xEC, 0x20,  // sub rsp, 0x20
+            0x48, 0x8B, 0x05, 0x00, 0x00, 0x00, 0x00,  // mov rax, [rip+X]
+            0xC3,       // ret
+        ];
+
+        assert!(emu.has_code_patterns(&code));
+
+        // Test with non-code data
+        let data = vec![0x00; 32];
+        assert!(!emu.has_code_patterns(&data));
+
+        // Test with too small buffer
+        let small = vec![0x55, 0x48];
+        assert!(!emu.has_code_patterns(&small));
+    }
+
+    #[test]
+    fn test_detect_unpacked_code_multiple_regions() {
+        let mut emu = Emulator::new(0x1000, 0x10000);
+
+        // Create two regions: one with non-code data (larger), one with executable code
+        let mut region1 = Vec::new();
+        for i in 0..20 {
+            region1.push((0x2000 + i, 0x00u8)); // Just zeros, no code patterns
+        }
+
+        let region2 = vec![
+            (0x3000, 0x55u8),       // push rbp
+            (0x3001, 0x48),         // REX.W
+            (0x3002, 0x89),         // mov
+            (0x3003, 0xE5),         // rbp, rsp
+            (0x3004, 0x48),         // REX.W
+            (0x3005, 0x83),         // sub
+            (0x3006, 0xEC),         // rsp
+            (0x3007, 0x20),         // 0x20
+            (0x3008, 0xE8),         // call
+            (0x3009, 0x00),
+            (0x300A, 0x00),
+            (0x300B, 0x00),
+            (0x300C, 0x00),
+            (0x300D, 0xC3),         // ret
+            (0x300E, 0x48),         // REX.W
+            (0x300F, 0x89),         // mov
+            (0x3010, 0xE5),         // rbp, rsp
+            (0x3011, 0x48),         // REX.W
+            (0x3012, 0x83),         // sub
+            (0x3013, 0xEC),         // rsp
+        ];
+
+        let trace1 = TraceEntry {
+            address: 0x1000,
+            instruction: "write data".to_string(),
+            registers_before: HashMap::new(),
+            registers_after: HashMap::new(),
+            memory_writes: region1,
+        };
+
+        let trace2 = TraceEntry {
+            address: 0x1010,
+            instruction: "write code".to_string(),
+            registers_before: HashMap::new(),
+            registers_after: HashMap::new(),
+            memory_writes: region2,
+        };
+
+        emu.trace.push(trace1);
+        emu.trace.push(trace2);
+
+        // Should detect region2 (the one with code patterns) as it has higher score
+        let result = emu.detect_unpacked_code();
+        assert!(result.is_some());
+
+        let unpacked = result.unwrap();
+        // Region2 has code patterns so should be selected despite region1 being present
+        assert!(unpacked.len() >= 16);
+        assert_eq!(unpacked[0], 0x55); // push rbp
     }
 }

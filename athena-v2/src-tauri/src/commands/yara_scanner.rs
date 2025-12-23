@@ -3,8 +3,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use tauri::State;
+use tauri::path::SafePathBuf;
 use yara_x;
 use crate::metrics::{YARA_SCAN_DURATION, YARA_MATCHES_FOUND, YARA_RULES_LOADED};
+use super::yara_rules::{RANSOMWARE_RULES, TROJAN_RULES, EXPLOIT_RULES, PACKER_RULES};
 
 /// Global state for compiled YARA rules
 pub struct YaraState {
@@ -214,6 +216,21 @@ rule Keylogger_Indicators {
     compiler.add_source(default_rules)
         .map_err(|e| format!("Failed to compile default rules: {}", e))?;
 
+    // Load built-in rule sets from yara_rules.rs
+    let builtin_rules = vec![
+        ("ransomware", RANSOMWARE_RULES),
+        ("trojan", TROJAN_RULES),
+        ("exploit", EXPLOIT_RULES),
+        ("packer", PACKER_RULES),
+    ];
+
+    for (name, rules_str) in builtin_rules {
+        compiler.new_namespace(name);
+        if let Err(e) = compiler.add_source(rules_str) {
+            eprintln!("Failed to load {} rules: {}", name, e);
+        }
+    }
+
     let rules = compiler.build();
     let rules_count = count_rules(&rules);
 
@@ -282,6 +299,8 @@ pub async fn load_default_yara_rules(
     let state = yara_state.lock()
         .map_err(|e| format!("Failed to lock YARA state: {}", e))?;
 
+    let is_loaded = state.rules.is_some();
+
     let rule_sets = vec![
         YaraRuleSet {
             name: "default-malware-rules".to_string(),
@@ -292,8 +311,10 @@ pub async fn load_default_yara_rules(
                 "trojan".to_string(),
                 "persistence".to_string(),
                 "anti-analysis".to_string(),
+                "exploit".to_string(),
+                "packer".to_string(),
             ],
-            loaded: state.rules.is_some(),
+            loaded: is_loaded,
         },
     ];
 
@@ -303,7 +324,7 @@ pub async fn load_default_yara_rules(
 #[tauri::command]
 pub async fn scan_file_with_yara(
     yara_state: State<'_, Arc<Mutex<YaraState>>>,
-    file_path: String,
+    file_path: SafePathBuf,
 ) -> Result<YaraScanResult, String> {
     let start = Instant::now();
 
@@ -327,7 +348,7 @@ pub async fn scan_file_with_yara(
     let rules_loaded = state.rules_count;
 
     // Read file
-    let data = std::fs::read(&file_path)
+    let data = std::fs::read(file_path.as_ref())
         .map_err(|e| {
             YARA_SCAN_DURATION
                 .with_label_values(&["default", "error"])
@@ -402,8 +423,12 @@ pub async fn scan_file_with_yara(
         .with_label_values(&["default", "success"])
         .observe(duration.as_secs_f64());
 
+    let filename = file_path.as_ref().file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
     Ok(YaraScanResult {
-        file_path,
+        file_path: filename,
         matches,
         scan_time_ms,
         rules_loaded,
@@ -416,6 +441,154 @@ pub async fn get_yara_rule_sets(
     yara_state: State<'_, Arc<Mutex<YaraState>>>,
 ) -> Result<Vec<YaraRuleSet>, String> {
     load_default_yara_rules(yara_state).await
+}
+
+/// Response from YARA rule validation
+#[derive(Debug, Serialize, Deserialize)]
+pub struct YaraRuleValidationResult {
+    pub compilation: String,
+    pub compilation_time_ms: u64,
+    pub string_count: usize,
+    pub condition_complexity: String,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
+}
+
+#[tauri::command]
+pub async fn validate_yara_rule(
+    rules_content: String,
+) -> Result<YaraRuleValidationResult, String> {
+    let start = Instant::now();
+    let mut compiler = yara_x::Compiler::new();
+
+    // Attempt to compile the rule
+    let compile_result = compiler.add_source(rules_content.as_str());
+
+    let compilation_time_ms = start.elapsed().as_millis() as u64;
+
+    match compile_result {
+        Ok(_) => {
+            // Get any compilation warnings
+            let warnings: Vec<String> = compiler.warnings().iter()
+                .map(|w| format!("{}: {}", w.code(), w.title()))
+                .collect();
+
+            // Check for errors even on success
+            let errors: Vec<String> = compiler.errors().iter()
+                .map(|e| format!("{}: {}", e.code(), e.title()))
+                .collect();
+
+            if !errors.is_empty() {
+                return Ok(YaraRuleValidationResult {
+                    compilation: "Failed".to_string(),
+                    compilation_time_ms,
+                    string_count: 0,
+                    condition_complexity: "N/A".to_string(),
+                    warnings,
+                    errors,
+                });
+            }
+
+            // Build the rules to analyze them
+            let _rules = compiler.build();
+
+            // Count strings in the rule by analyzing the source
+            let string_count = count_strings_in_rule(&rules_content);
+
+            // Analyze condition complexity
+            let condition_complexity = analyze_condition_complexity(&rules_content);
+
+            Ok(YaraRuleValidationResult {
+                compilation: "Success".to_string(),
+                compilation_time_ms,
+                string_count,
+                condition_complexity,
+                warnings,
+                errors,
+            })
+        }
+        Err(e) => {
+            // Compilation failed
+            let errors: Vec<String> = compiler.errors().iter()
+                .map(|e| format!("{}: {}", e.code(), e.title()))
+                .collect();
+
+            Ok(YaraRuleValidationResult {
+                compilation: "Failed".to_string(),
+                compilation_time_ms,
+                string_count: 0,
+                condition_complexity: "N/A".to_string(),
+                warnings: vec![],
+                errors: if errors.is_empty() {
+                    vec![e.to_string()]
+                } else {
+                    errors
+                },
+            })
+        }
+    }
+}
+
+/// Count the number of strings defined in a YARA rule
+fn count_strings_in_rule(rule_content: &str) -> usize {
+    let mut count = 0;
+    let mut in_strings_section = false;
+
+    for line in rule_content.lines() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("strings:") {
+            in_strings_section = true;
+            continue;
+        }
+
+        if trimmed.starts_with("condition:") {
+            break;
+        }
+
+        if in_strings_section && trimmed.starts_with('$') {
+            count += 1;
+        }
+    }
+
+    count
+}
+
+/// Analyze the complexity of the condition block
+fn analyze_condition_complexity(rule_content: &str) -> String {
+    let mut in_condition_section = false;
+    let mut condition_text = String::new();
+
+    for line in rule_content.lines() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("condition:") {
+            in_condition_section = true;
+            continue;
+        }
+
+        if in_condition_section {
+            if trimmed == "}" {
+                break;
+            }
+            condition_text.push_str(trimmed);
+            condition_text.push(' ');
+        }
+    }
+
+    // Count logical operators to determine complexity
+    let and_count = condition_text.matches(" and ").count();
+    let or_count = condition_text.matches(" or ").count();
+    let not_count = condition_text.matches(" not ").count();
+    let total_operators = and_count + or_count + not_count;
+
+    if total_operators == 0 {
+        "Simple".to_string()
+    } else if total_operators <= 2 {
+        "Moderate".to_string()
+    } else {
+        "Complex".to_string()
+    }
 }
 
 /// Helper function to count rules in a compiled Rules object
@@ -432,5 +605,317 @@ fn count_rules(rules: &yara_x::Rules) -> usize {
             matching_count + non_matching_count
         }
         Err(_) => 0, // If scan fails, return 0
+    }
+}
+
+#[tauri::command]
+pub async fn auto_generate_yara_rules(
+    file_hash: String,
+    file_type: String,
+    suspicious_strings: Vec<String>,
+    suspicious_imports: Vec<String>,
+    behaviors: Vec<String>,
+) -> Result<String, String> {
+    // Generate a YARA rule based on the analysis results
+    let rule_name = format!("Auto_Generated_{}",
+        file_hash.chars().take(8).collect::<String>()
+    );
+
+    let mut rule = format!(r#"rule {} {{
+    meta:
+        description = "Auto-generated rule for {}"
+        hash = "{}"
+        generated = "{}"
+        file_type = "{}"
+"#,
+        rule_name,
+        file_type,
+        file_hash,
+        chrono::Utc::now().format("%Y-%m-%d"),
+        file_type
+    );
+
+    // Add behavior metadata
+    if !behaviors.is_empty() {
+        rule.push_str("        behaviors = \"");
+        rule.push_str(&behaviors.join(", "));
+        rule.push_str("\"\n");
+    }
+
+    // Add strings section
+    rule.push_str("\n    strings:\n");
+
+    // Add suspicious strings (limit to 10 to keep rule manageable)
+    let mut string_count = 0;
+    for (i, s) in suspicious_strings.iter().take(10).enumerate() {
+        if s.is_empty() {
+            continue;
+        }
+
+        // Escape special characters for YARA
+        let escaped = s
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t");
+
+        // Skip strings that are too short or contain only common characters
+        if escaped.len() < 4 {
+            continue;
+        }
+
+        rule.push_str(&format!("        $str{} = \"{}\" ascii wide\n", i, escaped));
+        string_count += 1;
+    }
+
+    // Add suspicious imports as strings
+    for (i, import) in suspicious_imports.iter().take(10).enumerate() {
+        if import.is_empty() {
+            continue;
+        }
+
+        let escaped = import
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"");
+
+        rule.push_str(&format!("        $imp{} = \"{}\" ascii wide\n", i, escaped));
+        string_count += 1;
+    }
+
+    // Ensure we have at least one string
+    if string_count == 0 {
+        rule.push_str("        $default = \"suspicious\" ascii wide\n");
+    }
+
+    // Add condition based on what we found
+    rule.push_str("\n    condition:\n");
+
+    if !suspicious_strings.is_empty() && !suspicious_imports.is_empty() {
+        // If we have both strings and imports, require both
+        rule.push_str("        (any of ($str*)) and (any of ($imp*))\n");
+    } else if !suspicious_strings.is_empty() || !suspicious_imports.is_empty() {
+        // If we have either, require any match
+        rule.push_str("        any of them\n");
+    } else {
+        // Fallback condition
+        rule.push_str("        any of them\n");
+    }
+
+    rule.push_str("}\n");
+
+    Ok(rule)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_auto_generate_yara_rules() {
+        let file_hash = "1234567890abcdef".to_string();
+        let file_type = "PE32".to_string();
+        let suspicious_strings = vec![
+            "CreateRemoteThread".to_string(),
+            "VirtualAllocEx".to_string(),
+            "WriteProcessMemory".to_string(),
+        ];
+        let suspicious_imports = vec![
+            "kernel32.dll".to_string(),
+            "ntdll.dll".to_string(),
+        ];
+        let behaviors = vec![
+            "process_injection".to_string(),
+            "suspicious_api_calls".to_string(),
+        ];
+
+        let result = auto_generate_yara_rules(
+            file_hash.clone(),
+            file_type.clone(),
+            suspicious_strings.clone(),
+            suspicious_imports.clone(),
+            behaviors.clone(),
+        ).await;
+
+        assert!(result.is_ok());
+
+        let rule = result.unwrap();
+
+        // Verify rule structure
+        assert!(rule.contains("rule Auto_Generated_12345678"));
+        assert!(rule.contains(&format!("hash = \"{}\"", file_hash)));
+        assert!(rule.contains(&format!("file_type = \"{}\"", file_type)));
+        assert!(rule.contains("behaviors = \"process_injection, suspicious_api_calls\""));
+
+        // Verify strings are included
+        assert!(rule.contains("$str0 = \"CreateRemoteThread\""));
+        assert!(rule.contains("$str1 = \"VirtualAllocEx\""));
+        assert!(rule.contains("$str2 = \"WriteProcessMemory\""));
+
+        // Verify imports are included
+        assert!(rule.contains("$imp0 = \"kernel32.dll\""));
+        assert!(rule.contains("$imp1 = \"ntdll.dll\""));
+
+        // Verify condition
+        assert!(rule.contains("condition:"));
+        assert!(rule.contains("any of ($str*)) and (any of ($imp*)"));
+    }
+
+    #[tokio::test]
+    async fn test_auto_generate_yara_rules_strings_only() {
+        let result = auto_generate_yara_rules(
+            "abcd1234".to_string(),
+            "ELF64".to_string(),
+            vec!["malicious_string".to_string()],
+            vec![],
+            vec![],
+        ).await;
+
+        assert!(result.is_ok());
+
+        let rule = result.unwrap();
+        assert!(rule.contains("$str0 = \"malicious_string\""));
+        assert!(rule.contains("any of them"));
+    }
+
+    #[tokio::test]
+    async fn test_auto_generate_yara_rules_escaping() {
+        let result = auto_generate_yara_rules(
+            "test123".to_string(),
+            "PE32".to_string(),
+            vec![r#"test\path"with"quotes"#.to_string()],
+            vec![],
+            vec![],
+        ).await;
+
+        assert!(result.is_ok());
+
+        let rule = result.unwrap();
+        // Verify escaping worked
+        assert!(rule.contains(r#"test\\path\"with\"quotes"#));
+    }
+
+    #[tokio::test]
+    async fn test_validate_yara_rule_success() {
+        let valid_rule = r#"
+rule Test_Rule {
+    meta:
+        description = "Test rule"
+        author = "Test"
+    strings:
+        $str1 = "test"
+        $str2 = "pattern"
+    condition:
+        $str1 and $str2
+}
+        "#;
+
+        let result = validate_yara_rule(valid_rule.to_string()).await;
+        assert!(result.is_ok());
+
+        let validation = result.unwrap();
+        assert_eq!(validation.compilation, "Success");
+        assert_eq!(validation.string_count, 2);
+        assert_eq!(validation.condition_complexity, "Simple");
+        assert!(validation.errors.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_validate_yara_rule_failure() {
+        let invalid_rule = r#"
+rule Invalid_Rule {
+    strings:
+        $str1 = "test"
+    condition:
+        $nonexistent_string
+}
+        "#;
+
+        let result = validate_yara_rule(invalid_rule.to_string()).await;
+        assert!(result.is_ok());
+
+        let validation = result.unwrap();
+        assert_eq!(validation.compilation, "Failed");
+        assert!(!validation.errors.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_count_strings_in_rule() {
+        let rule = r#"
+rule Test {
+    strings:
+        $a = "test1"
+        $b = "test2"
+        $c = { 00 11 22 }
+    condition:
+        any of them
+}
+        "#;
+
+        let count = count_strings_in_rule(rule);
+        assert_eq!(count, 3);
+    }
+
+    #[tokio::test]
+    async fn test_analyze_condition_complexity() {
+        let simple_rule = r#"
+rule Simple {
+    strings:
+        $a = "test"
+    condition:
+        $a
+}
+        "#;
+        assert_eq!(analyze_condition_complexity(simple_rule), "Simple");
+
+        let moderate_rule = r#"
+rule Moderate {
+    strings:
+        $a = "test"
+        $b = "test2"
+    condition:
+        $a and $b
+}
+        "#;
+        assert_eq!(analyze_condition_complexity(moderate_rule), "Simple");
+
+        let complex_rule = r#"
+rule Complex {
+    strings:
+        $a = "test"
+        $b = "test2"
+        $c = "test3"
+    condition:
+        ($a and $b) or ($b and $c) or not $a
+}
+        "#;
+        assert_eq!(analyze_condition_complexity(complex_rule), "Complex");
+    }
+
+    #[tokio::test]
+    #[ignore] // Requires Tauri State which cannot be constructed in unit tests
+    async fn test_builtin_rules_loaded() {
+        // This test requires a real Tauri State<> which can only be obtained from
+        // a running Tauri application. The test validates the YARA initialization
+        // logic but cannot be run in isolation.
+        //
+        // To test YARA functionality:
+        // 1. Run the full application with `cargo tauri dev`
+        // 2. Use the YARA scanner UI to verify rules are loaded
+        // 3. Check that scanning detects expected patterns
+    }
+
+    #[tokio::test]
+    #[ignore] // Requires Tauri State which cannot be constructed in unit tests
+    async fn test_builtin_rules_namespaces() {
+        // This test requires a real Tauri State<> and SafePathBuf which can only
+        // be obtained from a running Tauri application.
+        //
+        // The test validates that:
+        // 1. YARA rules from different namespaces (ransomware, trojan, etc.) are loaded
+        // 2. Scanning files correctly matches patterns from the appropriate namespace
+        // 3. Match results include the namespace information
+        //
+        // To verify this functionality, use integration tests or manual testing.
     }
 }

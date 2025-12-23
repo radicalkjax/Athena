@@ -54,20 +54,23 @@ export default function ControlFlowGraph(props: ControlFlowGraphProps) {
 
   const loadCFG = async () => {
     if (!props.filePath || !props.functionAddress) return;
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
+      // Note: Backend expects 'file_path' not 'filePath' and 'function_address' not 'functionAddress'
       const result = await invokeCommand('get_control_flow_graph', {
         filePath: props.filePath,
         functionAddress: props.functionAddress,
       }) as ControlFlowGraph;
-      
+
       setCfg(result);
       layoutBlocks(result);
     } catch (err) {
-      setError(`Failed to generate CFG: ${err}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(`Failed to generate CFG: ${errorMessage}`);
+      console.error('CFG generation failed:', err);
     } finally {
       setLoading(false);
     }

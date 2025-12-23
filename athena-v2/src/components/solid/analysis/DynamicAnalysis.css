@@ -267,3 +267,329 @@
   border-radius: 8px;
   border: 1px dashed var(--accent-bg);
 }
+
+/* Advanced Configuration Panel */
+.config-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--accent-bg);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.config-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-item label {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.config-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent-bg);
+  outline: none;
+  cursor: pointer;
+}
+
+.config-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--barbie-pink);
+  cursor: pointer;
+}
+
+.config-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--barbie-pink);
+  cursor: pointer;
+  border: none;
+}
+
+.config-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--code-bg);
+  border: 1px solid var(--accent-bg);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.config-input:focus {
+  outline: none;
+  border-color: var(--barbie-pink);
+}
+
+/* Threat Score Badge */
+.threat-score-badge {
+  background: var(--panel-bg);
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.threat-score-value {
+  font-size: 3rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+
+.threat-score-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.threat-risk-level {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+.threat-factors {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--accent-bg);
+}
+
+.threat-factor {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 5px 0;
+  text-align: left;
+  padding-left: 10px;
+}
+
+/* Event Filter Bar */
+.event-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  background: var(--code-bg);
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.event-filter-bar label {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.event-filter-select {
+  padding: 6px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--accent-bg);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.event-filter-select:focus {
+  outline: none;
+  border-color: var(--barbie-pink);
+}
+
+/* File Operations Summary */
+.file-ops-summary {
+  padding: 15px;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  background: var(--code-bg);
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  display: block;
+  color: var(--barbie-pink);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.top-paths {
+  background: var(--code-bg);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.path-item {
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--accent-bg);
+}
+
+.path-item:last-child {
+  border-bottom: none;
+}
+
+/* Process Tree */
+.process-tree {
+  padding: 15px;
+  background: var(--code-bg);
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+}
+
+.process-node {
+  margin: 8px 0;
+  padding: 8px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--barbie-pink);
+  border-radius: 4px;
+}
+
+.process-pid {
+  color: var(--info-color);
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+.process-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.process-cmd {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-top: 4px;
+  padding-left: 20px;
+}
+
+/* Evasion Detection */
+.evasion-attempts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+}
+
+.evasion-card {
+  background: var(--panel-bg);
+  border-radius: 8px;
+  padding: 15px;
+  border-left: 3px solid;
+}
+
+.evasion-card.blocked {
+  border-left-color: var(--success-color);
+  background: rgba(76, 175, 80, 0.05);
+}
+
+.evasion-card.detected {
+  border-left-color: var(--warning-color);
+  background: rgba(255, 152, 0, 0.05);
+}
+
+.evasion-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.evasion-technique {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.evasion-status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.evasion-status.blocked {
+  background: var(--success-color);
+  color: white;
+}
+
+.evasion-status.detected {
+  background: var(--warning-color);
+  color: white;
+}
+
+.evasion-description {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.evasion-trigger {
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 6px;
+}
+
+/* Hidden Artifacts */
+.hidden-artifacts {
+  padding: 15px;
+}
+
+.artifact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: var(--code-bg);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.artifact-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.artifact-text {
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}

@@ -33,6 +33,19 @@ globalThis.window = globalThis.window || ({} as any);
   },
 };
 
+// Mock @tauri-apps/api/core module
+vi.mock('@tauri-apps/api/core', async () => {
+  return {
+    invoke: mockInvoke,
+  };
+});
+
+// Mock @tauri-apps/plugin-dialog
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+  open: vi.fn(),
+  save: vi.fn(),
+}));
+
 // Export mock functions for use in tests
 export { mockInvoke, mockListen };
 

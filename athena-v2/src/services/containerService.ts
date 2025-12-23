@@ -1,5 +1,86 @@
 import { invoke } from '@tauri-apps/api/core';
 
+/**
+ * SECURITY: Whitelist of allowed commands that can be executed in containers
+ * This prevents command injection attacks by only allowing known-safe binaries
+ */
+const ALLOWED_COMMANDS: Set<string> = new Set([
+  // File analysis tools
+  'file',           // Determine file type
+  'strings',        // Extract strings from binary
+  'hexdump',        // Hex dump of file
+  'xxd',            // Hex dump alternative
+  'readelf',        // ELF file analysis
+  'objdump',        // Object file analysis
+  'nm',             // List symbols
+  'ldd',            // List shared libraries
+
+  // System info (read-only)
+  'cat',            // Read files (sandboxed)
+  'ls',             // List directory
+  'head',           // First lines of file
+  'tail',           // Last lines of file
+  'stat',           // File statistics
+  'md5sum',         // File hash
+  'sha256sum',      // File hash
+  'sha1sum',        // File hash
+
+  // Process monitoring
+  'ps',             // List processes
+  'strace',         // System call tracing
+  'ltrace',         // Library call tracing
+
+  // Network analysis (read-only)
+  'tcpdump',        // Network capture
+  'netstat',        // Network statistics
+
+  // Malware analysis specific
+  'upx',            // Unpacker detection
+  'yara',           // YARA scanning
+]);
+
+/**
+ * Validate that a command is in the whitelist
+ * @throws Error if command is not allowed
+ */
+function validateCommand(command: string[]): void {
+  if (!command || command.length === 0) {
+    throw new Error('Command cannot be empty');
+  }
+
+  const executable = command[0];
+
+  // Extract just the binary name (handle paths like /usr/bin/file)
+  const binaryName = executable.split('/').pop() || executable;
+
+  if (!ALLOWED_COMMANDS.has(binaryName)) {
+    throw new Error(
+      `Command '${binaryName}' is not in the allowed whitelist. ` +
+      `Allowed commands: ${Array.from(ALLOWED_COMMANDS).join(', ')}`
+    );
+  }
+
+  // Additional security: check for shell metacharacters in arguments
+  const dangerousPatterns = [
+    /[;&|`$(){}]/,     // Shell operators
+    /\$\(/,            // Command substitution
+    /`/,               // Backtick substitution
+    />\s*\//,          // Redirect to absolute path
+    /\|\s*\w+/,        // Pipe to command
+  ];
+
+  for (let i = 1; i < command.length; i++) {
+    const arg = command[i];
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(arg)) {
+        throw new Error(
+          `Argument '${arg}' contains potentially dangerous shell metacharacters`
+        );
+      }
+    }
+  }
+}
+
 export interface ContainerInfo {
   id: string;
   name: string;
@@ -57,15 +138,20 @@ export class ContainerService {
 
   /**
    * Execute a command in a running container
+   * SECURITY: Commands are validated against a whitelist before execution
    * @param containerId - Container ID
    * @param command - Command to execute as array (e.g., ["ls", "-la"])
    * @param timeoutSecs - Timeout in seconds
+   * @throws Error if command is not in the allowed whitelist
    */
   static async executeInContainer(
     containerId: string,
     command: string[],
     timeoutSecs: number
   ): Promise<ContainerExecutionResult> {
+    // SECURITY: Validate command against whitelist before execution
+    validateCommand(command);
+
     try {
       return await invoke<ContainerExecutionResult>('execute_in_container', {
         containerId,
@@ -173,8 +259,8 @@ export class ContainerService {
 
   /**
    * Run malware sample in isolated container for behavioral analysis
-   * @param samplePath - Path to malware sample
-   * @param analysisScript - Script to run for analysis
+   * @param samplePath - Path to malware sample (used for file command analysis)
+   * @param analysisScript - Additional script commands to run for analysis
    * @param timeoutSecs - Analysis timeout
    */
   static async runMalwareAnalysis(
@@ -193,12 +279,24 @@ export class ContainerService {
       const container = await this.createSandboxContainer(image, memoryLimit, cpuLimit);
       containerId = container.id;
 
-      // Run analysis
-      const result = await this.executeInContainer(
+      // First, run file type detection on the sample
+      const fileResult = await this.executeInContainer(
         containerId,
-        analysisScript,
-        timeoutSecs
+        ['file', samplePath],
+        30 // 30 second timeout for file command
       );
+
+      // Then run the additional analysis script if provided
+      let result = fileResult;
+      if (analysisScript.length > 0) {
+        result = await this.executeInContainer(
+          containerId,
+          analysisScript,
+          timeoutSecs
+        );
+        // Combine outputs
+        result.stdout = `=== File Analysis ===\n${fileResult.stdout}\n\n=== Script Analysis ===\n${result.stdout}`;
+      }
 
       return result;
     } finally {

@@ -1,6 +1,10 @@
 # Athena Documentation Hub
 
-Welcome to the comprehensive documentation for Athena, the AI-powered malware analysis platform. This hub provides easy navigation to all documentation sections.
+**Version:** 2.0 | **Status:** In Development | **Last Updated:** December 2025
+
+Welcome to the comprehensive documentation for Athena, the AI-powered malware analysis platform. Built exclusively with **Tauri 2.0** for native desktop performance.
+
+> **Project Status:** Core features implemented and under active development.
 
 ## 🚀 Quick Start
 
@@ -302,20 +306,23 @@ The new Athena CLI (`/scripts/athena`) provides a beautiful interactive menu:
 - **🔧 Option 12**: Run Setup
 - **🧪 Option 16**: Run All Tests
 
-### 🆕 Tauri 2.0 Application
+### Tauri 2.0 Application
 
-Athena now includes a high-performance **Tauri 2.0** version for desktop and mobile platforms:
+Athena is built with **Tauri 2.0** as a native desktop application:
 
-- **Desktop**: Windows, macOS (✅ verified), Linux
-- **Mobile**: iOS, Android (landscape mode enforced)
+- **Desktop Platforms**: Windows, macOS (verified on Apple Silicon), Linux
+- **Backend**: Rust with 50+ Tauri commands
+- **Frontend**: SolidJS with TypeScript
+- **WASM Runtime**: Wasmtime 29.0 with Component Model
+- **Build System**: Vite 7.1.10
 - **Documentation**: See [`athena-v2/README.md`](../athena-v2/README.md) for details
 
-To launch the Tauri app:
+**Quick Start:**
 
 ```bash
-./scripts/athena
-# Select option 11
-# Choose your platform
+cd athena-v2
+npm run tauri:dev    # Development mode
+npm run tauri:build  # Production build
 ```
 
 ---

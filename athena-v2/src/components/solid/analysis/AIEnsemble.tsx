@@ -12,13 +12,13 @@ const AIEnsemble: Component = () => {
   ]);
   const [error, setError] = createSignal<string | null>(null);
 
-  const providers: { id: AIProvider; name: string; icon: string; confidence?: number }[] = [
-    { id: 'claude', name: 'Claude 3.5 Sonnet', icon: '🤖', confidence: 92 },
-    { id: 'gpt4', name: 'GPT-4 Turbo', icon: '🧠', confidence: 95 },
-    { id: 'deepseek', name: 'DeepSeek V3', icon: '🔍', confidence: 96 },
-    { id: 'gemini', name: 'Gemini Pro', icon: '🌟', confidence: 97 },
-    { id: 'mistral', name: 'Claude 3 Opus', icon: '💎', confidence: 93 },
-    { id: 'llama', name: 'GPT-4o', icon: '⚡', confidence: 94 }
+  const providers: { id: AIProvider; name: string; icon: string }[] = [
+    { id: 'claude', name: 'Claude 3.5 Sonnet', icon: '🤖' },
+    { id: 'gpt4', name: 'GPT-4 Turbo', icon: '🧠' },
+    { id: 'deepseek', name: 'DeepSeek V3', icon: '🔍' },
+    { id: 'gemini', name: 'Gemini Pro', icon: '🌟' },
+    { id: 'mistral', name: 'Claude 3 Opus', icon: '💎' },
+    { id: 'llama', name: 'GPT-4o', icon: '⚡' }
   ];
 
   createEffect(() => {
