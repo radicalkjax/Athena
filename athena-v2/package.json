@@ -26,8 +26,8 @@
   },
   "dependencies": {
     "@solidjs/router": "^0.10.10",
-    "@tauri-apps/api": "^2.0.0",
-    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/api": "^2.9.1",
+    "@tauri-apps/plugin-dialog": "^2.4.2",
     "@types/uuid": "^10.0.0",
     "dompurify": "^3.3.1",
     "solid-js": "^1.9.9",
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.9",
-    "@tauri-apps/cli": "^2.0.0",
+    "@tauri-apps/cli": "^2.9.6",
     "@testing-library/jest-dom": "^6.1.5",
     "@types/dompurify": "^3.0.5",
     "@vitest/coverage-v8": "^2.1.8",
