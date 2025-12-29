@@ -37,7 +37,7 @@
     "@solidjs/testing-library": "^0.8.9",
     "@tauri-apps/cli": "^2.0.0",
     "@testing-library/jest-dom": "^6.1.5",
-    "@types/dompurify": "^3.0.5",
+    "@types/dompurify": "^3.2.0",
     "@vitest/coverage-v8": "^2.1.8",
     "jsdom": "^25.0.1",
     "typescript": "^5.9.3",
