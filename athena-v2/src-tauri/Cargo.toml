@@ -48,7 +48,7 @@ pnet_packet = "0.35"
 byteorder = "1.5"
 memmap2 = "0.9"
 # Hashing
-md5 = "0.7"
+md5 = "0.8"
 sha1 = "0.10"
 digest = "0.10"
 ssdeep = "0.6"
